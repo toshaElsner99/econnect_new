@@ -1,7 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/cubit/sign_in/sign_in_cubit.dart';
 import 'package:e_connect/main.dart';
-import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
@@ -11,7 +9,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../providers/status_provider.dart';
 import '../../utils/app_preference_constants.dart';
 import '../../widgets/status_bottom_sheet.dart';
 
@@ -28,9 +25,7 @@ void _showStatusBottomSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (context) =>  StatusBottomSheet(onStatusSelected: (status, color, icon) {
-      context.read<StatusProvider>().updateStatus(status, color, icon);
-    },),
+    builder: (context) =>  StatusBottomSheet(),
   );
 }
 
@@ -124,16 +119,19 @@ class _SettingScreenState extends State<SettingScreen> {
                   ],
                 ),
               ),
-              Container(
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: AppColor.borderColor))
+              GestureDetector(
+                onTap: () => commonLogoutDialog(context),
+                child: Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: AppColor.borderColor))
+                  ),
+                  child: Row(children: [
+                    Image.asset(AppImage.logOut,height: 20,width: 20,color: AppColor.borderColor,),
+                    SizedBox(width: 15,),
+                    commonText(text: AppString.logOut)
+                  ],),
                 ),
-                child: Row(children: [
-                  Image.asset(AppImage.logOut,height: 20,width: 20,color: AppColor.borderColor,),
-                  SizedBox(width: 15,),
-                  commonText(text: AppString.logOut)
-                ],),
               )
 
               // Text(

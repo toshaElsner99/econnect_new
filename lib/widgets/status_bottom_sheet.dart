@@ -1,16 +1,15 @@
+import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
+import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
+import 'package:e_connect/utils/common/enums.dart';
 import 'package:flutter/material.dart';
 
 class StatusBottomSheet extends StatelessWidget {
-  final Function(String status, Color color, IconData icon) onStatusSelected;
-  
-  const StatusBottomSheet({
-    super.key, 
-    required this.onStatusSelected,
-  });
+   StatusBottomSheet({super.key,});
 
+  var commonCubit = CommonCubit();
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -51,31 +50,36 @@ class StatusBottomSheet extends StatelessWidget {
             context,
             icon: Icons.check_circle,
             color: Colors.green,
-            text: 'Online',
+            text: AppString.online,
+            index: 0,
           ),
           _buildStatusOption(
             context,
             icon: Icons.access_time_filled_outlined,
             color: Colors.orange,
-            text: 'Away',
+            text: AppString.away,
+            index: 1,
           ),
           _buildStatusOption(
             context,
             icon: Icons.remove_circle,
             color: Colors.red,
-            text: 'Busy',
+            text: AppString.busy,
+            index: 2,
           ),
           _buildStatusOption(
             context,
             icon: Icons.remove_circle,
             color: Colors.red,
-            text: 'Do Not Disturb',
+            text: AppString.dnd,
+            index: 3,
           ),
           _buildStatusOption(
             context,
             icon: Icons.circle_outlined,
             color: AppColor.borderColor,
-            text: 'Offline',
+            text: AppString.offline,
+            index: 4,
           ),
           const SizedBox(height: 16),
         ],
@@ -88,11 +92,11 @@ class StatusBottomSheet extends StatelessWidget {
     required IconData icon,
     required Color color,
     required String text,
+    required int index,
   }) {
     return InkWell(
       onTap: () {
-        onStatusSelected(text, color, icon);
-        Navigator.pop(context);
+        commonCubit.updateStatusCall(status: index == 0 ? UserStatus.online.toString() : index == 1 ? UserStatus.away.toString() : index == 2 ? UserStatus.busy.toString() : index == 3 ? UserStatus.doNotDisturb.toString() : UserStatus.offline.toString());
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

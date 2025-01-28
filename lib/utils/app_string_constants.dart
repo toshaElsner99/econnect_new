@@ -19,6 +19,14 @@ class AppString {
   static const String logOut = "Logout";
   static const String themMode = "Dark Theme";
   static const String status = "Status";
+  static const String online = "Online";
+  static const String away = "Away";
+  static const String busy = "Busy";
+  static const String dnd = "Do Not Disturb";
+  static const String offline = "Offline";
+  static const String logoutTitle = "Are you sure you want to logout";
+  static const String logoutMessage = "from eConnect?";
+  static const String cancel = "Cancel";
 
 
 

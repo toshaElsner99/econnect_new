@@ -1,10 +1,10 @@
+import 'package:e_connect/screens/bottom_nav_tabs/home_screen.dart';
+import 'package:e_connect/screens/bottom_nav_tabs/profile_screen.dart';
 import 'package:e_connect/screens/bottom_nav_tabs/setting_screen.dart';
-import 'package:e_connect/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../../cubit/sign_in/sign_in_model.dart';
 import '../../main.dart';
-import '../../utils/api_service/api_string_constants.dart';
 
 class BottomNavigationScreen extends StatefulWidget {
   const BottomNavigationScreen({super.key});
@@ -17,7 +17,7 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
-    Center(child: Text("Home Screen")),
+    HomeScreen(),
     Center(child: Text("Search Screen")),
     Center(child: Text("Notifications Screen")),
     ProfileScreen(),

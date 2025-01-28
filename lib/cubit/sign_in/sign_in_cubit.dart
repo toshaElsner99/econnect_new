@@ -53,9 +53,4 @@ class SignInCubit extends Cubit<SignInState> {
         commonShowToast("Please enter your email and password",Colors.red);
       }
   }
-
-  Future<void> logOut() async {
-    await clearData();
-    pushAndRemoveUntil(screen: SignInScreen());
-  }
 }

@@ -66,7 +66,7 @@ Future<void> pop() async {
 }
 
 bool statusCode200Check(Map<String, dynamic> response) {
-  return response['statusCode'] == 200;
+  return(response['statusCode'] == 200 || response['statusCode'] == 201);
 }
 
 dynamicSize({required double size,required BuildContext context, bool width = false}){
