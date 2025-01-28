@@ -1,7 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:e_connect/main.dart';
+import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:meta/meta.dart';
 
 import '../../screens/sign_in_screen/sign_in_Screen.dart';
@@ -32,23 +34,20 @@ class CommonCubit extends Cubit<CommonState> {
         reqBody: requestBody,
         headers: header);
     if (statusCode200Check(response)) {
-      pop();
+      getUserByIDCall();
     }
   }
 
   Future<void> getUserByIDCall() async {
-    final queryParams = {
-      "getUserById": signInModel.data?.user?.id,
-    };
     final header = {
       'Authorization': "Bearer ${signInModel.data!.authToken}",
     };
     final response = await ApiService.instance.request(
-        endPoint: ApiString.getUserById,
+        endPoint: "${ApiString.getUserById}/${signInModel.data?.user?.id}",
         method: Method.GET,
-        queryParams: queryParams,
         headers: header);
     if (statusCode200Check(response)) {
+      getUserModel = GetUserModel.fromJson(response);
     }
   }
 }

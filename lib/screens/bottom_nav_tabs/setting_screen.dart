@@ -3,6 +3,7 @@ import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
+import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:e_connect/utils/theme/theme_cubit.dart';
 import 'package:flutter/cupertino.dart';
@@ -71,22 +72,20 @@ class _SettingScreenState extends State<SettingScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                  Row(children: [
-                    getCommonStatusIcons(),
-                    SizedBox(width: 10,),
-                    commonText(text: "Online")
-                  ],),
-                  SizedBox(height: 15),
                   GestureDetector(
-                    onTap: (){
-                      _showStatusBottomSheet(context);
-                    },
+                    onTap: () => _showStatusBottomSheet(context),
                     child: Row(children: [
-                      Image.asset(AppImage.setStatusIcon,scale: 2.5,),
+                      getCommonStatusIcons(status: "${getUserModel?.data?.user?.status}" ),
                       SizedBox(width: 10,),
-                      commonText(text: AppString.setACustomStatus)
+                      commonText(text: capitalizeFirstLetter("${getUserModel?.data?.user?.status}"))
                     ],),
-                  )
+                  ),
+                  SizedBox(height: 15),
+                  Row(children: [
+                    Image.asset(AppImage.setStatusIcon,scale: 2.5,),
+                    SizedBox(width: 10,),
+                    commonText(text: AppString.setACustomStatus)
+                  ],)
                 ],),
               ),
               Container(

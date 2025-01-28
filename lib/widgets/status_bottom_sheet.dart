@@ -6,6 +6,8 @@ import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:e_connect/utils/common/enums.dart';
 import 'package:flutter/material.dart';
 
+import '../utils/common/common_function.dart';
+
 class StatusBottomSheet extends StatelessWidget {
    StatusBottomSheet({super.key,});
 
@@ -96,7 +98,8 @@ class StatusBottomSheet extends StatelessWidget {
   }) {
     return InkWell(
       onTap: () {
-        commonCubit.updateStatusCall(status: index == 0 ? UserStatus.online.toString() : index == 1 ? UserStatus.away.toString() : index == 2 ? UserStatus.busy.toString() : index == 3 ? UserStatus.doNotDisturb.toString() : UserStatus.offline.toString());
+        pop();
+        commonCubit.updateStatusCall(status: index == 0 ? AppString.online.toLowerCase() : index == 1 ? AppString.away.toLowerCase() : index == 2 ? AppString.busy.toLowerCase() : index == 3 ? AppString.dnd.toLowerCase() : AppString.offline.toLowerCase());
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

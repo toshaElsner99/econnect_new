@@ -12,15 +12,22 @@ import 'package:provider/provider.dart';
 import 'package:e_connect/providers/status_provider.dart';
 
 import 'cubit/sign_in/sign_in_model.dart';
+import 'model/get_user_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 late SignInModel signInModel;
+GetUserModel? getUserModel;
 var commonCubit = CommonCubit();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   NetworkStatusService();
   updateSystemUiChrome();
+  // SystemChrome.setPreferredOrientations([
+  //   DeviceOrientation.portraitUp,
+  //   DeviceOrientation.portraitDown,
+  // ]).then((_) {
+  //   runApp(const MyApp());
   runApp(
     MultiBlocProvider(
       providers: [
@@ -49,4 +56,5 @@ void main() async {
       ),
     ),
   );
+  // });
 }

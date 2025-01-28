@@ -43,13 +43,14 @@ updateSystemUiChrome() {
 }
 
 Widget getCommonStatusIcons({String status = ""}){
-  if(status == UserStatus.online.toString()) {
+  print("getIconStatus>>> $status");
+  if(status ==  AppString.online.toLowerCase()) {
     return Icon(Icons.check_circle,size: 25,color: AppColor.lightOrangeColor,);
-  } else if(status == UserStatus.away.toString()){
+  } else if(status == AppString.away.toLowerCase()){
     return Icon(Icons.access_time_filled_outlined,size: 25,color: AppColor.orangeColor,);
-  }else if(status == UserStatus.busy.toString()){
+  }else if(status == AppString.busy.toLowerCase()){
     return Icon(Icons.remove_circle,size: 25,color: AppColor.blueColor,);
-  }else if(status == UserStatus.doNotDisturb.toString()){
+  }else if(status == AppString.dnd.toLowerCase()){
     return Icon(Icons.do_not_disturb_on,size: 25,color: AppColor.redColor,);
   }else {
     return Icon(Icons.circle_outlined,color: AppColor.borderColor,);

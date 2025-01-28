@@ -69,6 +69,13 @@ bool statusCode200Check(Map<String, dynamic> response) {
   return(response['statusCode'] == 200 || response['statusCode'] == 201);
 }
 
+String capitalizeFirstLetter(String input) {
+  if (input.isEmpty) {
+    return input;
+  }
+  return input[0].toUpperCase() + input.substring(1);
+}
+
 dynamicSize({required double size,required BuildContext context, bool width = false}){
   final screenSize = MediaQuery.of(context).size;
   return width ? screenSize.width * (size / screenSize.width) : screenSize.height * (size / screenSize.height);

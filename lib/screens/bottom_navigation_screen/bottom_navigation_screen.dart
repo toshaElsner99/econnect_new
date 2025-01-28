@@ -1,10 +1,12 @@
 import 'package:e_connect/screens/bottom_nav_tabs/home_screen.dart';
 import 'package:e_connect/screens/bottom_nav_tabs/profile_screen.dart';
 import 'package:e_connect/screens/bottom_nav_tabs/setting_screen.dart';
+import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:flutter/material.dart';
 
 import '../../cubit/sign_in/sign_in_model.dart';
 import '../../main.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class BottomNavigationScreen extends StatefulWidget {
   const BottomNavigationScreen({super.key});
@@ -18,9 +20,7 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
 
   final List<Widget> _screens = [
     HomeScreen(),
-    Center(child: Text("Search Screen")),
-    Center(child: Text("Notifications Screen")),
-    ProfileScreen(),
+    SearchMessage(),
     SettingScreen()
   ];
 
@@ -31,11 +31,23 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
   }
 
   load() async {
-      signInModel = (await SignInModel.loadFromPrefs())!;
+    await commonCubit.getUserByIDCall();
+    signInModel = (await SignInModel.loadFromPrefs())!;
     print("signIn>>>>> ${signInModel.data?.user?.fullName}");
     print("signIn>>>>> ${signInModel.data?.user?.avatarUrl}");
   }
+  connect() {
+    ApiString.socket = IO.io(ApiString.baseUrl, <String, dynamic>{
+      "transports": ["websocket"],
+      "autoConnect": false,
+    });
 
+    ApiString.socket?.connect();
+    ApiString.socket?.onConnect((data) {
+      print('Socket-ID:------->${ApiString.socket?.id}');
+      print('connectivity :---->${ApiString.socket?.connected}');
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,14 +68,6 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.search),
             label: "Search",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications),
-            label: "Notifications",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profile",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

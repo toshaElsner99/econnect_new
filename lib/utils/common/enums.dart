@@ -1,1 +1,1 @@
-enum UserStatus { online, offline, busy, away, doNotDisturb}
+// enum UserStatus { online, offline, busy, away, doNotDisturb}
