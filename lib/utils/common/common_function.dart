@@ -38,6 +38,23 @@ class NoLeadingSpacesFormatter extends TextInputFormatter {
     );
   }
 }
+void pushScreenWithTransition( Widget screen) {
+  Navigator.of(navigatorKey!.currentState!.context).push(
+    PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) => screen,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1), // Start from bottom
+            end: Offset.zero, // Move to normal position
+          ).animate(animation),
+          child: child,
+        );
+      },
+    ),
+  );
+}
 
 Future<void> pushScreen({required Widget screen}) async {
   Navigator.push(

@@ -24,6 +24,8 @@ class User {
   String? thumbnailAvatarUrl;
   bool? isAutomatic;
   String? lastActiveTime;
+  String? roleId;
+  String? roleName;
 
   User({
     this.id,
@@ -48,6 +50,8 @@ class User {
     this.thumbnailAvatarUrl,
     this.isAutomatic,
     this.lastActiveTime,
+    this.roleId,
+    this.roleName,
   });
 
   User.fromJson(Map<String, dynamic> json) {
@@ -75,6 +79,8 @@ class User {
     thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
     isAutomatic = json['isAutomatic'];
     lastActiveTime = json['last_active_time'];
+    roleId = json['role_id'];
+    roleName = json['role_name'];
   }
 
   Map<String, dynamic> toJson() {
@@ -103,6 +109,8 @@ class User {
     data['thumbnail_avatarUrl'] = thumbnailAvatarUrl;
     data['isAutomatic'] = isAutomatic;
     data['last_active_time'] = lastActiveTime;
+    data['role_id'] = roleId;
+    data['role_name'] = roleName;
     return data;
   }
 }
