@@ -13,23 +13,29 @@ import '../app_string_constants.dart';
 import 'common_function.dart';
 import 'enums.dart';
 
-startLoading(){
+startLoading() {
   navigatorKey.currentState!.context.read<LoadingCubit>().startLoading();
 }
-stopLoading(){
+
+stopLoading() {
   navigatorKey.currentState!.context.read<LoadingCubit>().stopLoading();
 }
 
-ToastFuture commonShowToast(String msg,[Color? bgColor]) {
+ToastFuture commonShowToast(String msg, [Color? bgColor]) {
   return showToastWidget(
     duration: const Duration(seconds: 5),
     Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-          color: bgColor ?? Colors.white, borderRadius: BorderRadius.circular(5)),
-      margin: const EdgeInsets.only(bottom: 25,left: 20,right: 20),
-      child: commonText(text: msg,color: bgColor == null ? Colors.black : Colors.white,fontSize: 16,textAlign: TextAlign.center,
-      fontWeight: FontWeight.w600),
+          color: bgColor ?? Colors.white,
+          borderRadius: BorderRadius.circular(5)),
+      margin: const EdgeInsets.only(bottom: 25, left: 20, right: 20),
+      child: commonText(
+          text: msg,
+          color: bgColor == null ? Colors.black : Colors.white,
+          fontSize: 16,
+          textAlign: TextAlign.center,
+          fontWeight: FontWeight.w600),
     ),
     position: const ToastPosition(align: Alignment.bottomCenter),
   );
@@ -42,18 +48,37 @@ updateSystemUiChrome() {
       statusBarIconBrightness: Brightness.dark));
 }
 
-Widget getCommonStatusIcons({String status = ""}){
+Widget getCommonStatusIcons({String status = ""}) {
   print("getIconStatus>>> $status");
-  if(status ==  AppString.online.toLowerCase()) {
-    return Icon(Icons.check_circle,size: 25,color: AppColor.lightOrangeColor,);
-  } else if(status == AppString.away.toLowerCase()){
-    return Icon(Icons.access_time_filled_outlined,size: 25,color: AppColor.orangeColor,);
-  }else if(status == AppString.busy.toLowerCase()){
-    return Icon(Icons.remove_circle,size: 25,color: AppColor.blueColor,);
-  }else if(status == AppString.dnd.toLowerCase()){
-    return Icon(Icons.do_not_disturb_on,size: 25,color: AppColor.redColor,);
-  }else {
-    return Icon(Icons.circle_outlined,color: AppColor.borderColor,);
+  if (status == AppString.online.toLowerCase()) {
+    return Icon(
+      Icons.check_circle,
+      size: 25,
+      color: AppColor.greenColor,
+    );
+  } else if (status == AppString.away.toLowerCase()) {
+    return Icon(
+      Icons.access_time_filled_outlined,
+      size: 25,
+      color: AppColor.orangeColor,
+    );
+  } else if (status == AppString.busy.toLowerCase()) {
+    return Icon(
+      Icons.remove_circle,
+      size: 25,
+      color: AppColor.blueColor,
+    );
+  } else if (status == AppString.dnd.toLowerCase()) {
+    return Icon(
+      Icons.do_not_disturb_on,
+      size: 25,
+      color: AppColor.redColor,
+    );
+  } else {
+    return Icon(
+      Icons.circle_outlined,
+      color: AppColor.borderColor,
+    );
   }
 }
 
@@ -168,7 +193,9 @@ Widget showLogOutDialog() {
   );
 }
 
-void commonLogoutDialog(BuildContext context,) {
+void commonLogoutDialog(
+  BuildContext context,
+) {
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -208,12 +235,13 @@ Widget commonText({
         decoration: decoration,
         fontSize: fontSize,
         fontWeight: fontWeight,
-        fontFamily: isHelonikFamily == true ? AppFonts.helonikETDFontFamily : AppFonts.interFamily,
+        fontFamily: isHelonikFamily == true
+            ? AppFonts.helonikETDFontFamily
+            : AppFonts.interFamily,
       ),
     ),
   );
 }
-
 
 Widget commonTextFormField({
   required TextEditingController controller,
@@ -245,22 +273,22 @@ Widget commonTextFormField({
     textInputAction: textInputAction,
     initialValue: initialValue,
     inputFormatters: inputFormatters,
-  //   inputFormatters:  isInputFormatForEmail == true? [
-  //   // FilteringTextInputFormatter.allow(RegExp(r'[ a-zA-Z]')),
-  //     NoLeadingSpacesFormatter()
-  //     // LengthLimitingTextInputFormatter(20),
-  //     ] : inputFormatters /*[
-  //     FilteringTextInputFormatter.allow(RegExp(r'[ a-zA-Z]')),
-  //     NoLeadingSpacesFormatter(),
-  //     LengthLimitingTextInputFormatter(15),
-  // ]*/,
+    //   inputFormatters:  isInputFormatForEmail == true? [
+    //   // FilteringTextInputFormatter.allow(RegExp(r'[ a-zA-Z]')),
+    //     NoLeadingSpacesFormatter()
+    //     // LengthLimitingTextInputFormatter(20),
+    //     ] : inputFormatters /*[
+    //     FilteringTextInputFormatter.allow(RegExp(r'[ a-zA-Z]')),
+    //     NoLeadingSpacesFormatter(),
+    //     LengthLimitingTextInputFormatter(15),
+    // ]*/,
     style: const TextStyle(
         color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14),
     decoration: InputDecoration(
       labelText: labelText,
       hintText: hintText,
       errorMaxLines: errorMaxLines,
-      prefixIcon:  prefixIcon,
+      prefixIcon: prefixIcon,
       suffixIcon: suffixIcon,
       suffix: suffixWidget,
       prefix: prefixWidget,
@@ -278,10 +306,10 @@ Widget commonTextFormField({
       focusedErrorBorder: const OutlineInputBorder(
         borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
       ),
-        disabledBorder: const OutlineInputBorder(
+      disabledBorder: const OutlineInputBorder(
         borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
       ),
-        enabledBorder: const OutlineInputBorder(
+      enabledBorder: const OutlineInputBorder(
         borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
@@ -301,7 +329,6 @@ Widget commonTextFormField({
     ),
   );
 }
-
 
 Widget commonImageHolder({
   double radius = 25,
@@ -349,7 +376,8 @@ Widget commonElevatedButton({
       ),
       elevation: WidgetStateProperty.all(0),
       fixedSize: WidgetStateProperty.all(const Size(double.maxFinite, 46)),
-      backgroundColor: WidgetStateProperty.all(backgroundColor ?? AppColor.commonAppColor),
+      backgroundColor:
+          WidgetStateProperty.all(backgroundColor ?? AppColor.commonAppColor),
     ),
     child: Text(
       buttonText,
@@ -400,3 +428,150 @@ Widget commonElevatedButton({
 //
 //     ],);
 // }
+
+Widget commonButtonForHeaderFavoriteInfoCallMute(
+    {required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required BuildContext context,
+    required int totalButtons,
+    bool isSelected = false}) {
+  double buttonWidth = MediaQuery.of(context).size.width / (totalButtons + 1);
+  return InkWell(
+    onTap: onTap,
+    child: Container(
+      width: buttonWidth,
+      height: 60,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+          color: isSelected ? AppColor.appBarColor : AppColor.boxBgColor),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? AppColor.blueCommonColor : AppColor.whiteColor,
+            size: 20,
+          ),
+          const SizedBox(height: 4),
+          commonText(
+            text: label,
+            color: isSelected ? AppColor.blueCommonColor : AppColor.borderColor,
+            fontSize: 12,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+void showChatSettingsBottomSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColor.dialogBgColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColor.blackColor.withOpacity(0.3),
+              blurRadius: 10,
+              spreadRadius: 5,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Sheet handle indicator
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColor.whiteColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey[800]!,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  commonButtonForHeaderFavoriteInfoCallMute(
+                    icon: Icons.star,
+                    label: 'Favorited',
+                    onTap: () {},
+                    context: context,
+                    totalButtons: 4
+                  ),
+                  commonButtonForHeaderFavoriteInfoCallMute(
+                    icon: Icons.notifications_off,
+                    label: 'Mute',
+                    onTap: () {},
+                    context: context,
+                    totalButtons: 4
+                  ),
+                  commonButtonForHeaderFavoriteInfoCallMute(
+                    icon: Icons.edit,
+                    label: 'Set Header',
+                    onTap: () {},
+                    context: context,
+                    totalButtons: 4
+                  ),
+                  commonButtonForHeaderFavoriteInfoCallMute(
+                    icon: Icons.call,
+                    label: 'Start Call',
+                    onTap: () {},
+                    context: context,
+                    totalButtons: 4
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Colors.grey[800]!,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: ListTile(
+                leading: const Icon(Icons.info_outline, color: Colors.white),
+                title: const Text('View info', 
+                  style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  // Add your view info logic here
+                },
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.close, color: AppColor.redColor),
+              title: Text('Close direct message', 
+                style: TextStyle(color: AppColor.redColor)),
+              onTap: () {
+                Navigator.pop(context);
+                // Add your close chat logic here
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      );
+    },
+  );
+}

@@ -1,5 +1,6 @@
 import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/screens/splash_screen/splash_screen.dart';
+import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:e_connect/utils/loading_widget/loading_widget.dart';
@@ -34,6 +35,7 @@ void main() async {
         BlocProvider<LoadingCubit>(create: (_) => LoadingCubit()),
         BlocProvider<CommonCubit>(create: (_) => CommonCubit()),
         BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()..loadThemeMode(),),
+        ChangeNotifierProvider<FileServiceProvider>(create: (_) => FileServiceProvider()),
       ],
       child: OKToast(
         child: BlocConsumer<ThemeCubit, ThemeState>(

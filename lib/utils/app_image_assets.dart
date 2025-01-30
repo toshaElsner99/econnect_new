@@ -11,5 +11,10 @@ class AppImage{
   static const logOut = "$path/log_out.png";
   static const darkModeIcon = "$path/night-mode.png";
   static const lightModeIcon = "$path/light-mode.png";
-
+  static const audioFile = "$path/audio.png";
+  static const commonFile = "$path/common.png";
+  static const excelFile = "$path/excel.png";
+  static const pdfFile = "$path/pdf.png";
+  static const textFile = "$path/text.png";
+  static const videoFile = "$path/video.png";
 }

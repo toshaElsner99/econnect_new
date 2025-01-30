@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import '../../utils/api_service/api_string_constants.dart';
+import '../chat/single_chat_message_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,10 +39,16 @@ class _HomeScreenState extends State<HomeScreen> {
     @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(children: [
-
-
-      ],),
+      body: Center(
+        child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SingleChatScreen()),
+              );
+            },
+            child: Text("CHAT")),
+      )
     );
   }
 }

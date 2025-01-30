@@ -1,4 +1,7 @@
 
+import 'dart:io';
+
+import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -138,3 +141,50 @@ String? validateNonEmpty(String? value, String returnMsg) {
   return null;
 }
 
+bool isImage(String extension) {
+  return ['jpg', 'png', 'jpeg'].contains(extension.toLowerCase());
+}
+
+Widget getFileIcon(String? extension, String? filePath) {
+  if (extension == null || filePath == null) {
+    return Image.asset(AppImage.commonFile, fit: BoxFit.contain);
+  }
+
+  if (isImage(extension)) {
+    return Image.file(
+        File(filePath),
+        fit: BoxFit.cover);
+  }
+
+  String iconPath;
+  switch (extension) {
+    case 'mp3':
+    case 'wav':
+    case 'aac':
+      iconPath = AppImage.audioFile;
+      break;
+    case 'mp4':
+    case 'avi':
+    case 'mov':
+    case 'mkv':
+      iconPath = AppImage.videoFile;
+      break;
+    case 'xls':
+    case 'xlsx':
+      iconPath = AppImage.excelFile;
+      break;
+    case 'pdf':
+      iconPath = AppImage.pdfFile;
+      break;
+    case 'txt':
+      iconPath = AppImage.textFile;
+      break;
+    default:
+      iconPath = AppImage.commonFile;
+  }
+
+  return Padding(
+    padding: const EdgeInsets.all(8.0),
+    child: Image.asset(iconPath, fit: BoxFit.contain),
+  );
+}
