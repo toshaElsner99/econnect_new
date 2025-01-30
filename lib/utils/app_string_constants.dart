@@ -16,7 +16,7 @@ class AppString {
   static const String eConnect = "Econnect";
   static const String setACustomStatus = "Set a custom Status";
   static const String profile = "Profile";
-  static const String logOut = "Logout";
+  static const String logout = "Logout";
   static const String themMode = "Dark Theme";
   static const String status = "Status";
   static const String online = "Online";
@@ -24,11 +24,14 @@ class AppString {
   static const String busy = "Busy";
   static const String dnd = "Do Not Disturb";
   static const String offline = "Offline";
-  static const String logoutTitle = "Are you sure you want to logout";
+  static const String logoutTitle = "Are you sure you want to logout from Elsner Connect ?";
   static const String logoutMessage = "from eConnect?";
   static const String cancel = "Cancel";
-
-
+  static const String inMeeting = "In a meeting";
+  static const String outForLunch = "Out for lunch";
+  static const String outSick = "Out sick";
+  static const String workingFromHome = "Working from home";
+  static const String onVacation = "On a vacation";
 
 }
 

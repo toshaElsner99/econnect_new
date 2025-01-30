@@ -16,4 +16,9 @@ class ApiString{
   static const updateStatus = "user/update";
   static const getUserById = "user/getUserById";
   static const favoriteListGet = "favouriteLists/get";
+  static const channelList = "channels/get";
+  static const directMessageChatList = "chatList/get";
+  static const createChannel = "channels/add";
+  static const browseChannel = "user/search-user-channel";
+
 }

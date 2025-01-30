@@ -1,9 +1,7 @@
 import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
-import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
-import 'package:e_connect/utils/common/enums.dart';
 import 'package:flutter/material.dart';
 
 import '../utils/common/common_function.dart';
@@ -65,7 +63,7 @@ class StatusBottomSheet extends StatelessWidget {
           _buildStatusOption(
             context,
             icon: Icons.remove_circle,
-            color: Colors.red,
+            color: Colors.blue,
             text: AppString.busy,
             index: 2,
           ),

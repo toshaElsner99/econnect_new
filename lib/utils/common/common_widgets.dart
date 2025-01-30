@@ -1,11 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/main.dart';
+import 'package:e_connect/screens/sign_in_screen/sign_in_Screen.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
+import 'package:e_connect/utils/common/prefrance_function.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oktoast/oktoast.dart';
+import '../../cubit/common_cubit/common_cubit.dart';
 import '../api_service/api_string_constants.dart';
 import '../app_color_constants.dart';
 import '../app_fonts_constants.dart';
@@ -14,6 +18,11 @@ import 'common_function.dart';
 import 'enums.dart';
 
 startLoading() {
+
+
+var commonCubit = CommonCubit();
+
+startLoading(){
   navigatorKey.currentState!.context.read<LoadingCubit>().startLoading();
 }
 
@@ -22,6 +31,238 @@ stopLoading() {
 }
 
 ToastFuture commonShowToast(String msg, [Color? bgColor]) {
+void commonProfilePreview(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (context) => const ProfilePreviewSheet(),
+  );
+}
+
+class ProfilePreviewSheet extends StatelessWidget {
+  const ProfilePreviewSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+      ),
+      decoration: const BoxDecoration(
+        // color: Color(0xFF1B1E23),
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header with close button
+          _buildHeader(context),
+
+          // Profile Settings Section
+          _buildProfileSettings(),
+
+          // Profile Details Form
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Profile Settings'),
+                  const SizedBox(height: 24),
+
+                  // Full Name Field
+                  _buildProfileField(
+                    title: 'Full Name',
+                    value: signInModel.data?.user?.fullName ?? '',
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Username Field
+                  _buildProfileField(
+                    title: 'Username',
+                    value: signInModel.data?.user?.username ?? '',
+                    readOnly: true,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Profile Picture Section
+                  _buildProfilePictureSection(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 16, 8, 16),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: AppColor.borderColor.withOpacity(0.1),
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          commonText(
+            text: 'Profile',
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(
+              Icons.close,
+              size: 28,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileSettings() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColor.borderColor.withOpacity(0.1),
+        border: Border(
+          bottom: BorderSide(
+            color: AppColor.borderColor.withOpacity(0.1),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.settings,
+            size: 24,
+          ),
+          const SizedBox(width: 16),
+          commonText(
+            text: 'Profile Settings',
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return commonText(
+      text: title,
+      fontSize: 28,
+      fontWeight: FontWeight.bold,
+    );
+  }
+
+  Widget _buildProfileField({
+    required String title,
+    required String value,
+    bool readOnly = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        commonText(
+          text: title,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColor.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColor.borderColor.withOpacity(0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: commonText(
+                  text: value,
+                  fontSize: 16,
+                ),
+              ),
+              if (readOnly)
+                Icon(
+                  Icons.lock_outline,
+                  size: 18,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfilePictureSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        commonText(
+          text: 'Profile Picture',
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: Column(
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColor.borderColor.withOpacity(0.2),
+                    width: 2,
+                  ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(60),
+                  child: commonImageHolder(radius: 60),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton.icon(
+                onPressed: () {
+                  // Handle profile picture update
+                },
+                icon: Icon(
+                  Icons.camera_alt_outlined,
+                  color: AppColor.commonAppColor,
+                  size: 20,
+                ),
+                label: commonText(
+                  text: 'Change Picture',
+                  color: AppColor.commonAppColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+ToastFuture commonShowToast(String msg,[Color? bgColor]) {
   return showToastWidget(
     duration: const Duration(seconds: 5),
     Container(
@@ -48,160 +289,23 @@ updateSystemUiChrome() {
       statusBarIconBrightness: Brightness.dark));
 }
 
-Widget getCommonStatusIcons({String status = ""}) {
-  print("getIconStatus>>> $status");
-  if (status == AppString.online.toLowerCase()) {
-    return Icon(
-      Icons.check_circle,
-      size: 25,
-      color: AppColor.greenColor,
-    );
-  } else if (status == AppString.away.toLowerCase()) {
-    return Icon(
-      Icons.access_time_filled_outlined,
-      size: 25,
-      color: AppColor.orangeColor,
-    );
-  } else if (status == AppString.busy.toLowerCase()) {
-    return Icon(
-      Icons.remove_circle,
-      size: 25,
-      color: AppColor.blueColor,
-    );
-  } else if (status == AppString.dnd.toLowerCase()) {
-    return Icon(
-      Icons.do_not_disturb_on,
-      size: 25,
-      color: AppColor.redColor,
-    );
-  } else {
-    return Icon(
-      Icons.circle_outlined,
-      color: AppColor.borderColor,
-    );
+  void showLogoutDialog(BuildContext context,) {
+  showGeneralDialog(
+  context: context,
+  barrierDismissible: false,
+  barrierColor: Colors.black.withOpacity(0.5),
+  transitionDuration: const Duration(milliseconds: 300),
+  pageBuilder: (context, animation, secondaryAnimation) {
+  return commonLogoutDialog();
+  },
+  transitionBuilder: (context, animation, secondaryAnimation, child) {
+  return FadeTransition(
+  opacity: animation,
+  child: child,
+  );
+  },
+  );
   }
-}
-
-// Widget commonLogoutDialog(){
-//   return Dialog();
-// }
-
-Widget showLogOutDialog() {
-  return WillPopScope(
-    onWillPop: () async => false,
-    child: Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1B1E23),
-          // color: AppColor.commonAppColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Warning Icon
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColor.redColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.logout_rounded,
-                color: AppColor.redColor,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title
-            commonText(
-              text: AppString.logoutTitle,
-              color: Colors.white,
-              fontSize: 20,
-              textAlign: TextAlign.center,
-              fontWeight: FontWeight.bold,
-            ),
-            const SizedBox(height: 12),
-
-            // Message
-            commonText(
-              text: AppString.logoutMessage,
-              color: Colors.grey,
-              fontSize: 16,
-              textAlign: TextAlign.center,
-              fontWeight: FontWeight.w400,
-            ),
-            const SizedBox(height: 24),
-
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => navigatorKey.currentState?.pop(),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: AppColor.borderColor),
-                      ),
-                    ),
-                    child: commonText(
-                      text: AppString.cancel,
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // Logout Button
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      commonCubit.logOut();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColor.commonAppColor,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: commonText(
-                      text: AppString.logOut,
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-void commonLogoutDialog(
-  BuildContext context,
-) {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => showLogOutDialog(),
-  );
-}
 
 Widget commonText({
   required String text,

@@ -14,6 +14,7 @@ part 'common_state.dart';
 
 class CommonCubit extends Cubit<CommonState> {
   CommonCubit() : super(CommonInitial());
+  GetUserModel? getUserModel;
 
   Future<void> logOut() async {
     await clearData();
@@ -24,6 +25,8 @@ class CommonCubit extends Cubit<CommonState> {
     final requestBody = {
       "status": status,
       "user_id": signInModel.data?.user?.id,
+      "isAutomatic": false.toString(),
+      "is_status": true.toString(),
     };
     final header = {
       'Authorization': "Bearer ${signInModel.data!.authToken}",
@@ -35,6 +38,27 @@ class CommonCubit extends Cubit<CommonState> {
         headers: header);
     if (statusCode200Check(response)) {
       getUserByIDCall();
+      emit(CommonInitial());
+    }
+  }
+  Future<void> updateCustomStatusCall({required String status,required String emojiUrl}) async {
+    final requestBody = {
+      "custom_status": status,
+      "user_id": signInModel.data?.user?.id,
+      "is_custom_status": "false",
+      "custom_status_emoji": emojiUrl,
+    };
+    final header = {
+      'Authorization': "Bearer ${signInModel.data!.authToken}",
+    };
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.updateStatus,
+        method: Method.POST,
+        reqBody: requestBody,
+        headers: header);
+    if (statusCode200Check(response)) {
+      // getUserByIDCall();
+      emit(CommonInitial());
     }
   }
 
@@ -48,6 +72,7 @@ class CommonCubit extends Cubit<CommonState> {
         headers: header);
     if (statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
+      emit(CommonInitial());
     }
   }
 }
