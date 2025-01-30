@@ -4,7 +4,7 @@ import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
-import 'package:file_picker/file_picker.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';

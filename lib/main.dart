@@ -10,9 +10,9 @@ import 'package:e_connect/utils/theme/theme_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:provider/provider.dart';
 
 import 'cubit/sign_in/sign_in_model.dart';
-import 'model/get_user_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 late SignInModel signInModel;

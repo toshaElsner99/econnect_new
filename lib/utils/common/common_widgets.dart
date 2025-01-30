@@ -17,7 +17,6 @@ import '../app_string_constants.dart';
 import 'common_function.dart';
 import 'enums.dart';
 
-startLoading() {
 
 
 var commonCubit = CommonCubit();
@@ -25,12 +24,10 @@ var commonCubit = CommonCubit();
 startLoading(){
   navigatorKey.currentState!.context.read<LoadingCubit>().startLoading();
 }
-
-stopLoading() {
+stopLoading(){
   navigatorKey.currentState!.context.read<LoadingCubit>().stopLoading();
 }
 
-ToastFuture commonShowToast(String msg, [Color? bgColor]) {
 void commonProfilePreview(BuildContext context) {
   showModalBottomSheet(
     context: context,
@@ -268,14 +265,9 @@ ToastFuture commonShowToast(String msg,[Color? bgColor]) {
     Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-          color: bgColor ?? Colors.white,
-          borderRadius: BorderRadius.circular(5)),
-      margin: const EdgeInsets.only(bottom: 25, left: 20, right: 20),
-      child: commonText(
-          text: msg,
-          color: bgColor == null ? Colors.black : Colors.white,
-          fontSize: 16,
-          textAlign: TextAlign.center,
+          color: bgColor ?? Colors.white, borderRadius: BorderRadius.circular(5)),
+      margin: const EdgeInsets.only(bottom: 25,left: 20,right: 20),
+      child: commonText(text: msg,color: bgColor == null ? Colors.black : Colors.white,fontSize: 16,textAlign: TextAlign.center,
           fontWeight: FontWeight.w600),
     ),
     position: const ToastPosition(align: Alignment.bottomCenter),
@@ -289,24 +281,339 @@ updateSystemUiChrome() {
       statusBarIconBrightness: Brightness.dark));
 }
 
-  void showLogoutDialog(BuildContext context,) {
-  showGeneralDialog(
-  context: context,
-  barrierDismissible: false,
-  barrierColor: Colors.black.withOpacity(0.5),
-  transitionDuration: const Duration(milliseconds: 300),
-  pageBuilder: (context, animation, secondaryAnimation) {
-  return commonLogoutDialog();
-  },
-  transitionBuilder: (context, animation, secondaryAnimation, child) {
-  return FadeTransition(
-  opacity: animation,
-  child: child,
-  );
-  },
-  );
+Widget getCommonStatusIcons({String status = "", double size = 25 , bool assetIcon = true}){
+  print("getIconStatus>>> $status");
+  if(status ==  AppString.online.toLowerCase()) {
+    return assetIcon ? Image.asset(AppImage.onlineIcon,height: size,width: size,) : Icon(Icons.check_circle,size: size,color: AppColor.greenColor,);
+  } else if(status == AppString.away.toLowerCase()){
+    return assetIcon ? Image.asset(AppImage.awayIcon,height: size,width: size,) : Icon(Icons.access_time_filled_outlined,size: size,color: AppColor.orangeColor,);
+  }else if(status == AppString.busy.toLowerCase()){
+    return assetIcon ? Image.asset(AppImage.dndIcon,color: Colors.blue,height: size,width: size,) : Icon(Icons.remove_circle,size: size,color: AppColor.blueColor,);
+  }else if(status == AppString.dnd.toLowerCase()){
+    return assetIcon ? Image.asset(AppImage.dndIcon,height: size,width: size,) : Icon(Icons.do_not_disturb_on,size: size,color: AppColor.redColor,);
+  }else {
+    return assetIcon ? Image.asset(AppImage.offlineIcon,height: size,width: size,) : Icon(Icons.circle_outlined,color: AppColor.borderColor,size: size,);
   }
+}
 
+Widget profileIconWithStatus({
+  required String userID,
+  required String status,
+  bool isMyProfile = true,
+  String? otherUserProfile,
+}){
+  // String imageUrl = isMyProfile
+  String imageUrl = signInModel.data?.user?.id == userID
+      ? ApiString.profileBaseUrl + signInModel.data!.user!.avatarUrl!
+      : ApiString.profileBaseUrl + (otherUserProfile ?? '');
+  return Stack(
+    alignment: Alignment.bottomRight,
+    children: [
+      CircleAvatar(
+        radius: 15,
+        backgroundColor: Colors.grey[200],
+        child: ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
+              padding: const EdgeInsets.all(3),
+              child: CircularProgressIndicator(value: downloadProgress.progress),
+            ),
+            errorWidget: (context, url, error) => Icon(Icons.error),
+          ),
+        ),
+      ),
+      Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height:10,
+            width: 10,
+            decoration: BoxDecoration(
+              color: status.contains("offline") ? Colors.transparent : Colors.white,
+              shape: BoxShape.circle,
+            ),),
+          getCommonStatusIcons(status: status,size: 14,assetIcon: false),
+
+        ],
+      )
+    ],
+  );
+}
+
+
+
+Widget showLogOutDialog() {
+  return WillPopScope(
+    onWillPop: () async => false,
+    child: Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B1E23),
+          // color: AppColor.commonAppColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Warning Icon
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColor.redColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.logout_rounded,
+                color: AppColor.redColor,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            commonText(
+              text: AppString.logoutTitle,
+              color: Colors.white,
+              fontSize: 20,
+              textAlign: TextAlign.start,
+              height: 1.3,
+              fontWeight: FontWeight.w800,
+            ),
+            const SizedBox(height: 12),
+
+            // Message
+            commonText(
+              text: AppString.logoutMessage,
+              color: Colors.grey,
+              fontSize: 16,
+              textAlign: TextAlign.center,
+              fontWeight: FontWeight.w400,
+            ),
+            const SizedBox(height: 24),
+
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => navigatorKey.currentState?.pop(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(color: AppColor.borderColor),
+                      ),
+                    ),
+                    child: commonText(
+                      text: AppString.cancel,
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Logout Button
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      commonCubit.logOut();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.commonAppColor,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: commonText(
+                      text: AppString.logout,
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+// void commonLogoutDialog(BuildContext context,) {
+//   showDialog(
+//     context: context,
+//     barrierDismissible: false,
+//     builder: (context) => showLogOutDialog(),
+//   );
+// }
+Widget commonLogoutDialog() {
+  return WillPopScope(
+    onWillPop: () async => false,
+    child: Dialog(
+      insetPadding: EdgeInsets.symmetric(horizontal: 15),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 300),
+        tween: Tween(begin: 0.0, end: 1.0),
+        builder: (context, value, child) {
+          return Transform.scale(
+            scale: value,
+            child: child,
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20,horizontal: 15),
+          decoration: BoxDecoration(
+            color: AppColor.commonAppColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Warning Icon with animation
+              TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 400),
+                tween: Tween(begin: 0.0, end: 1.0),
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: value,
+                    child: child,
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.logout_rounded,
+                    color: AppColor.redColor,
+                    size: 32,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Title
+              commonText(
+                text: AppString.logoutTitle,
+                color: Colors.white,
+                textAlign: TextAlign.center,
+                fontSize: 22,
+                height: 1.25,
+                isHelonikFamily: false,
+                fontWeight: FontWeight.bold,
+              ),
+              const SizedBox(height: 16),
+
+              // // Message
+              // commonText(
+              //   text: AppString.logoutMessage,
+              //   color: AppColor.borderColor,
+              //   fontSize: 16,
+              //   textAlign: TextAlign.center,
+              //   fontWeight: FontWeight.w400,
+              //   height: 1.4,
+              // ),
+              const SizedBox(height: 24),
+
+              // Buttons
+              Row(
+                children: [
+                  // Cancel Button
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => navigatorKey.currentState?.pop(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: AppColor.borderColor.withOpacity(0.3)),
+                        ),
+                      ),
+                      child: commonText(
+                        text: AppString.cancel,
+                        color: AppColor.borderColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+
+                  // Logout Button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => commonCubit.logOut(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.redColor,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: commonText(
+                        text: AppString.logout,
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+void showLogoutDialog(BuildContext context,) {
+  showGeneralDialog(
+    context: context,
+    barrierDismissible: false,
+    barrierColor: Colors.black.withOpacity(0.5),
+    transitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (context, animation, secondaryAnimation) {
+      return commonLogoutDialog();
+    },
+    transitionBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: animation,
+        child: child,
+      );
+    },
+  );
+}
 Widget commonText({
   required String text,
   Color? color,
@@ -339,13 +646,12 @@ Widget commonText({
         decoration: decoration,
         fontSize: fontSize,
         fontWeight: fontWeight,
-        fontFamily: isHelonikFamily == true
-            ? AppFonts.helonikETDFontFamily
-            : AppFonts.interFamily,
+        fontFamily: isHelonikFamily == true ? AppFonts.helonikETDFontFamily : AppFonts.interFamily,
       ),
     ),
   );
 }
+
 
 Widget commonTextFormField({
   required TextEditingController controller,
@@ -392,7 +698,7 @@ Widget commonTextFormField({
       labelText: labelText,
       hintText: hintText,
       errorMaxLines: errorMaxLines,
-      prefixIcon: prefixIcon,
+      prefixIcon:  prefixIcon,
       suffixIcon: suffixIcon,
       suffix: suffixWidget,
       prefix: prefixWidget,
@@ -433,6 +739,7 @@ Widget commonTextFormField({
     ),
   );
 }
+
 
 Widget commonImageHolder({
   double radius = 25,
@@ -480,8 +787,7 @@ Widget commonElevatedButton({
       ),
       elevation: WidgetStateProperty.all(0),
       fixedSize: WidgetStateProperty.all(const Size(double.maxFinite, 46)),
-      backgroundColor:
-          WidgetStateProperty.all(backgroundColor ?? AppColor.commonAppColor),
+      backgroundColor: WidgetStateProperty.all(backgroundColor ?? AppColor.commonAppColor),
     ),
     child: Text(
       buttonText,
@@ -535,11 +841,11 @@ Widget commonElevatedButton({
 
 Widget commonButtonForHeaderFavoriteInfoCallMute(
     {required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    required BuildContext context,
-    required int totalButtons,
-    bool isSelected = false}) {
+      required String label,
+      required VoidCallback onTap,
+      required BuildContext context,
+      required int totalButtons,
+      bool isSelected = false}) {
   double buttonWidth = MediaQuery.of(context).size.width / (totalButtons + 1);
   return InkWell(
     onTap: onTap,
@@ -614,32 +920,32 @@ void showChatSettingsBottomSheet(BuildContext context) {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   commonButtonForHeaderFavoriteInfoCallMute(
-                    icon: Icons.star,
-                    label: 'Favorited',
-                    onTap: () {},
-                    context: context,
-                    totalButtons: 4
+                      icon: Icons.star,
+                      label: 'Favorited',
+                      onTap: () {},
+                      context: context,
+                      totalButtons: 4
                   ),
                   commonButtonForHeaderFavoriteInfoCallMute(
-                    icon: Icons.notifications_off,
-                    label: 'Mute',
-                    onTap: () {},
-                    context: context,
-                    totalButtons: 4
+                      icon: Icons.notifications_off,
+                      label: 'Mute',
+                      onTap: () {},
+                      context: context,
+                      totalButtons: 4
                   ),
                   commonButtonForHeaderFavoriteInfoCallMute(
-                    icon: Icons.edit,
-                    label: 'Set Header',
-                    onTap: () {},
-                    context: context,
-                    totalButtons: 4
+                      icon: Icons.edit,
+                      label: 'Set Header',
+                      onTap: () {},
+                      context: context,
+                      totalButtons: 4
                   ),
                   commonButtonForHeaderFavoriteInfoCallMute(
-                    icon: Icons.call,
-                    label: 'Start Call',
-                    onTap: () {},
-                    context: context,
-                    totalButtons: 4
+                      icon: Icons.call,
+                      label: 'Start Call',
+                      onTap: () {},
+                      context: context,
+                      totalButtons: 4
                   ),
                 ],
               ),
@@ -655,8 +961,8 @@ void showChatSettingsBottomSheet(BuildContext context) {
               ),
               child: ListTile(
                 leading: const Icon(Icons.info_outline, color: Colors.white),
-                title: const Text('View info', 
-                  style: TextStyle(color: Colors.white)),
+                title: const Text('View info',
+                    style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
                   // Add your view info logic here
@@ -665,8 +971,8 @@ void showChatSettingsBottomSheet(BuildContext context) {
             ),
             ListTile(
               leading: Icon(Icons.close, color: AppColor.redColor),
-              title: Text('Close direct message', 
-                style: TextStyle(color: AppColor.redColor)),
+              title: Text('Close direct message',
+                  style: TextStyle(color: AppColor.redColor)),
               onTap: () {
                 Navigator.pop(context);
                 // Add your close chat logic here
