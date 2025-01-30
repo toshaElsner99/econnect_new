@@ -18,5 +18,6 @@ class AppImage{
   static const eCLogo = "$path/ec_logo.png";
   static const globalIcon = "$path/globe.png";
   static const lockIcon = "$path/lock.png";
+  static const persons = "$path/persons.png";
 
 }

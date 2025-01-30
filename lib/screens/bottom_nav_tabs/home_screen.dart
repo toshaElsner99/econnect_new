@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
+import 'package:e_connect/screens/browse_and_search_channel/browse_and_search_channel.dart';
 import 'package:e_connect/screens/create_channel_screen/create_channel_screen.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../main.dart';
 import '../../utils/common/common_function.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,23 +24,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final channelListCubit = ChannelListCubit();
   List<OptionItem> options = [
     OptionItem(
-      icon: Icons.public, // Represents a globe
+      icon: Icons.public,
       title: "Browse Channels",
-      onTap: () {
-        // Handle Browse Channels tap
-      },
+      onTap: () => pushScreenWithTransition(BrowseAndSearchChannel()),
     ),
     OptionItem(
-      icon: Icons.add, // Represents adding a new channel
+      icon: Icons.add,
       title: "Create New Channel",
       onTap: () => pushScreenWithTransition(CreateChannelScreen()),
     ),
     OptionItem(
-      icon: Icons.message, // Represents opening a direct message
+      icon: Icons.message,
       title: "Open a Direct Message",
-      onTap: () {
-        // Handle Open a Direct Message tap
-      },
+      onTap: () => null,
     ),
   ];
   final Map<String, bool> _isExpanded = {
@@ -317,6 +315,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 fontWeight: FontWeight.w500,
               ),
               Visibility(
+                  visible: userId == signInModel.data?.user?.id,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 5.0),
+                    child: commonText(text: "(you)",color: Colors.white),
+                  )),
+              Visibility(
                   visible: customStatusEmoji != "",
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8.0),
@@ -325,7 +329,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               Visibility(
                   visible: unSeenMsgCount != 0,
                   child: Container(
-                    padding: EdgeInsets.symmetric(vertical: 3,horizontal: 5),
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                      borderRadius: BorderRadius.circular(5)
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 3,horizontal: 7),
                     margin: EdgeInsets.only(left: 5),
                     child: commonText(text: "$unSeenMsgCount"),
                   ))

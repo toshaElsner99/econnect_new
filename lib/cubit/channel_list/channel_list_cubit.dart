@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:e_connect/model/browse_and_search_channel_model.dart';
 import 'package:e_connect/model/channel_list_model.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
@@ -18,6 +19,7 @@ class ChannelListCubit extends Cubit<ChannelListState> {
   FavoriteListModel? favoriteListModel;
   ChannelListModel? channelListModel;
   DirectMessageListModel? directMessageListModel;
+  BrowseAndSearchChannelModel? browseAndSearchChannelModel;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _purposeController = TextEditingController();
@@ -84,4 +86,24 @@ class ChannelListCubit extends Cubit<ChannelListState> {
     }
   }
 
+  Future<void> browseAndSearchChannel({
+    required String search,
+  }) async {
+    final header = {
+      'Authorization': "Bearer ${signInModel.data!.authToken}",
+    };
+    final requestBody = {
+      "userId": signInModel.data?.user?.id,
+      "searchTerm": search.isEmpty ? "" : search,
+    };
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.browseChannel,
+        method: Method.POST,
+        headers: header,
+        reqBody: requestBody);
+    if (statusCode200Check(response)) {
+      browseAndSearchChannelModel = BrowseAndSearchChannelModel.fromJson(response);
+      emit(ChannelListInitial());
+    }
+  }
 }
