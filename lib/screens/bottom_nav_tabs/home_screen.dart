@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../main.dart';
+import '../../model/channel_list_model.dart';
 import '../../model/direct_message_list_model.dart';
 import '../../utils/common/common_function.dart';
 import '../chat/single_chat_message_screen.dart';
@@ -106,9 +107,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               index: 0,
                               muteConversation: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(favorite?.sId ?? "") ?? false,
                               imageUrl: favorite?.thumbnailAvatarUrl ?? "",
-                        username: favorite?.username ?? "",
-                        status: favorite?.status ?? "",
-                        userId: favorite?.sId ?? "",
+                              username: favorite?.username ?? "",
+                              status: favorite?.status ?? "",
+                              userId: favorite?.sId ?? "",
                               customStatusEmoji: favorite?.customStatusEmoji ?? "",
                               unSeenMsgCount: favorite?.unseenMessagesCount ?? 0,
                               children: [
@@ -116,7 +117,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               ]
                           );
                         }
-                        // Then show favorite channels
                         else {
                           final channelIndex = index - userCount;
                           final favoriteChannels = channelListCubit.favoriteListModel?.data?.favouriteChannels ?? [];
@@ -124,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             final favoriteChannel = favoriteChannels[channelIndex] ;
                             return _buildFavoriteChannelRow(favoriteChannel,
                                 [
-                                  _buildPopupMenuForChannel(favouriteChannels: favoriteChannels[channelIndex])
+                                  _buildPopupMenuForFavChannel(favouriteChannels: favoriteChannels[channelIndex])
                                 ]
                             );
                           }
@@ -134,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                     _buildExpansionSection(
                     title: "CHANNEL",
-                      index: 1,
+                    index: 1,
                     itemCount: channelListCubit.channelListModel?.data?.length ?? 0,
                     itemBuilder: (context, index) {
                       final channel = channelListCubit.channelListModel!.data![index];
@@ -180,26 +180,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: PopupMenuButton<String>(
         padding: EdgeInsets.zero,
         constraints: BoxConstraints(minWidth: 150),
-        icon: Icon(Icons.more_vert, size: 24),
+        icon: Icon(Icons.more_vert, size: 24,color: Colors.white,),
         onSelected: (value) {
           print("Selected: $value");
           if (value == "unread") {
             print("unREADMESSAGE>>>>> ${favorite!.unseenMessagesCount}");
-            channelListCubit.readUnreadMessages(
-                oppositeUserId: favorite.sId ?? "",
-                isCalledForFav: true,
-                isCallForReadMessage:
-                    favorite.unseenMessagesCount! > 0 ? true : false);
+            channelListCubit.readUnreadMessages(oppositeUserId: favorite.sId ?? "", isCalledForFav: true, isCallForReadMessage: favorite.unseenMessagesCount! > 0 ? true : false);
           } else if (value == "favorite") {
-            channelListCubit.removeFromFavorite(
-                favouriteUserId: favorite?.sId ?? "");
+            channelListCubit.removeFromFavorite(favouriteUserId: favorite?.sId ?? "");
           } else if (value == "mute") {
-            channelListCubit.muteUser(
-                userIdToMute: favorite?.sId ?? "",
-                isForMute: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(favorite?.sId) ?? false);
+            channelListCubit.muteUser(userIdToMute: favorite?.sId ?? "", isForMute: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(favorite?.sId) ?? false);
           } else if (value == "leave") {
-            channelListCubit.closeConversation(
-                conversationUserId: favorite?.sId ?? "", isCalledForFav: true);
+            channelListCubit.closeConversation(conversationUserId: favorite?.sId ?? "", isCalledForFav: true);
           }
         },
         itemBuilder: (BuildContext context) => [
@@ -234,9 +226,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             child: Row(
               children: [
                 Icon(
-                    commonCubit.getUserModel?.data?.user!.muteUsers!
-                                .contains(favorite.sId) ??
-                            false != true
+                    commonCubit.getUserModel?.data?.user!.muteUsers!.contains(favorite.sId) ?? false != true
                         ? Icons.notifications_off_outlined
                         : Icons.notifications_none,
                     size: 20),
@@ -275,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: PopupMenuButton<String>(
         padding: EdgeInsets.zero,
         constraints: BoxConstraints(minWidth: 150),
-        icon: Icon(Icons.more_vert, size: 24),
+        icon: Icon(Icons.more_vert, size: 24,color: Colors.white,),
         onSelected: (value) {
           print("Selected: $value");
           if (value == "unread") {
@@ -360,25 +350,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  SizedBox _buildPopupMenuForChannel({FavouriteChannels? favouriteChannels}) {
+  SizedBox _buildPopupMenuForFavChannel({FavouriteChannels? favouriteChannels}) {
     return SizedBox(
                             height: 20,
                             width: 30,
                             child: PopupMenuButton<String>(
                               padding: EdgeInsets.zero,
                               constraints: BoxConstraints(minWidth: 150),
-                              icon: Icon(Icons.more_vert, size: 24),
+                              icon: Icon(Icons.more_vert, size: 24,color: Colors.white,),
                               onSelected: (value) {
                                 print("Selected: $value");
                                 if( value == "unread"){
                                   print("unREADMESSAGE>>>>> ${favouriteChannels!.unseenMessagesCount}");
-                                  channelListCubit.readUnreadMessages(oppositeUserId: favouriteChannels.sId ?? "", isCalledForFav: true,isCallForReadMessage: favouriteChannels.unseenMessagesCount! > 0 ? true : false);
+                                  channelListCubit.readUnReadChannelMessage(oppositeUserId: favouriteChannels.sId ?? "",  isCallForReadMessage: favouriteChannels.unseenMessagesCount! > 0 ? true : false);
                                 }else if(value == "favorite"){
-                                  channelListCubit.removeFromFavorite(favouriteUserId: favouriteChannels?.sId ?? "");
+                                  channelListCubit.removeChannelFromFavorite(favoriteChannelID: favouriteChannels?.sId ?? "");
                                 }else if(value == "mute"){
                                   channelListCubit.muteUser(userIdToMute: favouriteChannels?.sId ?? "",isForMute: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(favouriteChannels?.sId) ?? false);
                                 }else if(value == "leave"){
-                                  channelListCubit.closeConversation(conversationUserId: favouriteChannels?.sId ?? "", isCalledForFav: true);
+                                  leaveChannelDialog(favouriteChannels?.sId ?? "");
                                 }
                               },
                               itemBuilder: (BuildContext context) => [
@@ -423,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                       Icon(Icons.exit_to_app, size: 20, color: Colors.red),
                                       SizedBox(width: 10),
                                       Text(
-                                        "Close Conversation",
+                                        "Leave Channel",
                                         style: TextStyle(color: Colors.red),
                                       ),
                                     ],
@@ -432,6 +422,149 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               ],
                             ),
                           );
+  }
+  SizedBox _buildPopupMenuForChannel({ChannelList? channelListModel}) {
+    return SizedBox(
+                            height: 20,
+                            width: 30,
+                            child: PopupMenuButton<String>(
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints(minWidth: 150),
+                              icon: Icon(Icons.more_vert, size: 24,color: Colors.white,),
+                              onSelected: (value) {
+                                print("Selected: $value");
+                                if( value == "unread"){
+                                  print("unREADMESSAGE>>>>> ${channelListModel!.unreadCount}");
+                                  channelListCubit.readUnReadChannelMessage(oppositeUserId: channelListModel.sId ?? "",  isCallForReadMessage: channelListModel.unreadCount! > 0 ? true : false);
+                                }else if(value == "favorite"){
+                                  channelListCubit.addChannelToFavorite(channelId: channelListModel?.sId ?? "");
+                                }else if(value == "mute"){
+                                  channelListCubit.muteUser(userIdToMute: channelListModel?.sId ?? "",isForMute: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(channelListModel?.sId) ?? false);
+                                }else if(value == "leave"){
+                                  leaveChannelDialog(channelListModel?.sId ?? "");
+                                }
+                              },
+                              itemBuilder: (BuildContext context) => [
+                                PopupMenuItem(
+                                  height: 35,
+                                  value: "unread",
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.mark_chat_unread_outlined, size: 20),
+                                      SizedBox(width: 10),
+                                      commonText(text: channelListModel!.unreadCount ! > 0 ? "Mark as read" : "Mark as unread"),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  height: 35,
+                                  value: "favorite",
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.star_border, size: 20),
+                                      SizedBox(width: 10),
+                                      commonText(text:"Favorite"),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  height: 35,
+                                  value: "mute",
+                                  child: Row(
+                                    children: [
+                                      Icon(commonCubit.getUserModel?.data?.user!.muteUsers!.contains(channelListModel.sId) ?? false != true ? Icons.notifications_off_outlined : Icons.notifications_none, size: 20),
+                                      SizedBox(width: 10),
+                                      commonText(text: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(channelListModel.sId)  != true ? "Mute Conversation" : "Unmute Conversation"),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  height: 35,
+                                  value: "leave",
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.exit_to_app, size: 20, color: Colors.red),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        "Leave Channel",
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+  }
+
+  Future<dynamic> leaveChannelDialog(String? channelId) {
+    return showDialog(context: context, builder: (context) {
+                                  return AlertDialog(
+                                    contentPadding: EdgeInsets.zero,
+                                    insetPadding: EdgeInsets.zero,
+                                    content: Container(
+                                      color: Colors.white,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            color: AppColor.commonAppColor,
+                                            alignment: Alignment.centerLeft,
+                                            padding: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                commonText(text: "Confirm Leave Channel",color: Colors.white),
+                                                GestureDetector(
+                                                    onTap: () => pop(),
+                                                    child: Icon(Icons.close,color: Colors.white,)),
+                                              ],
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 20.0,horizontal: 20),
+                                            child: commonText(text: "Are you sure you want to Leave this Channel?"),
+                                          ),
+                                          Divider(),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 8.0,horizontal: 20),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.end,
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: () => pop(),
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(5),
+                                                        color: Colors.grey.withOpacity(0.1)
+                                                    ),
+                                                    padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+                                                    child: commonText(text: "Cancel"),
+                                                  ),
+                                                ),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    pop();
+                                                    channelListCubit.leaveChannel(channelId: channelId ?? "");
+                                                  },
+                                                  child: Container(
+                                                    margin: EdgeInsets.only(left: 10),
+                                                    decoration: BoxDecoration(
+                                                      borderRadius: BorderRadius.circular(5),
+                                                      color: AppColor.redColor,
+                                                    ),
+                                                    padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+                                                    child: commonText(text: "Leave",color: Colors.white),
+                                                  ),
+                                                ),
+                                              ],),
+                                          )
+                                        ],
+
+                                      ),
+                                    ),
+                                  );
+                                },);
   }
 
 
@@ -447,36 +580,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           color: AppColor.borderColor.withOpacity(0.2),
         ),
       ),
-      // child: TextFormField(
-      //   style: const TextStyle(
-      //     color: Colors.white,
-      //     fontSize: 14,
-      //   ),
-      //   decoration: InputDecoration(
-      //     isDense: true,
-      //     contentPadding: const EdgeInsets.symmetric(
-      //       horizontal: 16,
-      //       vertical: 12,
-      //     ),
-      //     hintText: 'Find Channels...',
-      //     hintStyle: TextStyle(
-      //       color: Colors.white.withOpacity(0.5),
-      //       fontSize: 14,
-      //     ),
-      //     border: InputBorder.none,
-      //     prefixIcon: Icon(
-      //       CupertinoIcons.search,
-      //       color: Colors.white.withOpacity(0.5),
-      //       size: 18,
-      //     ),
-      //     prefixIconConstraints: const BoxConstraints(
-      //       minWidth: 40,
-      //       minHeight: 40,
-      //     ),
-      //   ),
-      //   cursorColor: Colors.white,
-      //   textInputAction: TextInputAction.search,
-      // ),
       child: commonTextFormField(controller: TextEditingController(), hintText: "Find Channel",readOnly: true,onTap: () => pushScreenWithTransition(FindChannelScreen()), ),
     );
   }
@@ -600,9 +703,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Container(
      margin: const EdgeInsets.symmetric(vertical: 6),
      child: InkWell(
-       onTap: () {
-         // Handle user row tap
-       },
+       onTap: () => pushScreen(screen: SingleChatMessageScreen(userName: username, oppositeUserId: userId)),
        borderRadius: BorderRadius.circular(8),
        child: Padding(
          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -660,70 +761,70 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     //   print("hiiiii>>> $userId");
     // return
     // },);
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: InkWell(
-        onTap: () {
-          // Handle user row tap
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => SingleChatMessageScreen(
-                      userName: username,
-                      oppositeUserId: userId,
-                    )),
-          );
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            children: [
-              profileIconWithStatus(
-                userID: userId,
-                otherUserProfile: imageUrl,
-                status: status,
-              ),
-              const SizedBox(width: 12),
-              commonText(
-                text: username,
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-              Visibility(
-                  visible: userId == signInModel.data?.user?.id,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 5.0),
-                    child: commonText(text: "(you)", color: Colors.white),
-                  )),
-              Visibility(
-                  visible: customStatusEmoji != "",
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: CachedNetworkImage(
-                      imageUrl: customStatusEmoji!,
-                      height: 20,
-                      width: 20,
-                    ),
-                  )),
-              Visibility(
-                  visible: unSeenMsgCount != 0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(5)),
-                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 7),
-                    margin: EdgeInsets.only(left: 5),
-                    child: commonText(text: "$unSeenMsgCount"),
-                  ))
-            ],
-          ),
-        ),
-      ),
-    );
+    //   margin: const EdgeInsets.symmetric(vertical: 6),
+    //   child: InkWell(
+    //     onTap: () {
+    //       // Handle user row tap
+    //       Navigator.push(
+    //         context,
+    //         MaterialPageRoute(
+    //             builder: (context) => SingleChatMessageScreen(
+    //                   userName: username,
+    //                   oppositeUserId: userId,
+    //                 )),
+    //       );
+    //     },
+    //     borderRadius: BorderRadius.circular(8),
+    //     child: Padding(
+    //       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+    //       child: Row(
+    //         children: [
+    //           profileIconWithStatus(
+    //             userID: userId,
+    //             otherUserProfile: imageUrl,
+    //             status: status,
+    //           ),
+    //           const SizedBox(width: 12),
+    //           commonText(
+    //             text: username,
+    //             color: Colors.white.withOpacity(0.9),
+    //             fontSize: 14,
+    //             fontWeight: FontWeight.w500,
+    //           ),
+    //           Visibility(
+    //               visible: userId == signInModel.data?.user?.id,
+    //               child: Padding(
+    //                 padding: const EdgeInsets.only(left: 5.0),
+    //                 child: commonText(text: "(you)", color: Colors.white),
+    //               )),
+    //           Visibility(
+    //               visible: customStatusEmoji != "",
+    //               child: Padding(
+    //                 padding: const EdgeInsets.only(left: 8.0),
+    //                 child: CachedNetworkImage(
+    //                   imageUrl: customStatusEmoji!,
+    //                   height: 20,
+    //                   width: 20,
+    //                 ),
+    //               )),
+    //           Visibility(
+    //               visible: unSeenMsgCount != 0,
+    //               child: Container(
+    //                 decoration: BoxDecoration(
+    //                     color: Colors.white,
+    //                     borderRadius: BorderRadius.circular(5)),
+    //                 padding: EdgeInsets.symmetric(vertical: 3, horizontal: 7),
+    //                 margin: EdgeInsets.only(left: 5),
+    //                 child: commonText(text: "$unSeenMsgCount"),
+    //               ))
+    //         ],
+    //       ),
+    //     ),
+    //   ),
+    // );
   }
 
-  Widget _buildChannelRow(channel) {
+  Widget _buildChannelRow(ChannelList channel) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       child: InkWell(
@@ -735,11 +836,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
         children: [
-          commonChannelIcon(isPrivate: channel?.isPrivate == true ? true : false),
+          commonChannelIcon(isPrivate: channel.isPrivate == true ? true : false),
               const SizedBox(width: 12),
               Expanded(
             child: commonText(
-              text: channel?.name ?? "",
+              text: channel.name ?? "",
                   color: Colors.white.withOpacity(0.9),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -747,7 +848,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               overflow: TextOverflow.ellipsis,
             ),
           ),
-              commonPopUpMenuForChannel()
+          Visibility(
+              visible: channel.unreadCount != 0,
+              child: Container(
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(5)
+                ),
+                padding: EdgeInsets.symmetric(vertical: 3,horizontal: 7),
+                margin: EdgeInsets.only(left: 5),
+                child: commonText(text: "${channel.unreadCount}"),
+              )),
+          _buildPopupMenuForChannel(channelListModel: channel,),
             ],
           ),
         ),
@@ -831,6 +943,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildFavoriteChannelRow(FavouriteChannels channel,List<Widget> children) {
     final isPrivate = channel.isPrivate;
     final name = channel.name;
+    final unSeenCount = channel.unseenMessagesCount;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -853,6 +966,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
+              Visibility(
+                  visible: unSeenCount != 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5)
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 3,horizontal: 7),
+                    margin: EdgeInsets.only(left: 5),
+                    child: commonText(text: "$unSeenCount"),
+                  )),
               Spacer(),
               ...children,
             ],

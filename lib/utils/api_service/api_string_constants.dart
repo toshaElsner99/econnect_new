@@ -21,6 +21,7 @@ class ApiString{
   static const createChannel = "channels/add";
   static const browseChannel = "user/search-user-channel";
   static const removeFromFavorite = "favouriteLists/removeFromFavourite";
+  static const removeFromChannelFromFavorite = "favouriteLists/channel/remove/";
   static const muteUser = "user/mute-user";
   static const unMuteUser = "user/unmute-user";
   static const closeConversation = "chatList/close-conversation";
@@ -30,8 +31,12 @@ class ApiString{
   static const leaveChannel = "channels/leaveChannel/";
   static const userSuggestions = "user/user-suggestions";
   static const searchUser = "user/search-user";
-
   // Chat
+
+
   static const getMessages = "messages/get-message";
+  static const readChannelMessage = "messages/channel/channel-message-seen/";
+  static const unReadChannelMessage = "channels/message-unread/";
+  static const addChannelTOFavorite = "favouriteLists/channel/add/";
 
 }

@@ -2,65 +2,57 @@ class ChannelListModel {
   int? statusCode;
   int? status;
   String? message;
-  List<Data>? data;
-  List<dynamic>? metadata;
+  List<ChannelList>? data;
+  List<dynamic>? metadata; // Changed from List<Null>? to List<dynamic>?
 
-  ChannelListModel({
-    this.statusCode,
-    this.status,
-    this.message,
-    this.data,
-    this.metadata,
-  });
+  ChannelListModel({this.statusCode, this.status, this.message, this.data, this.metadata});
 
   ChannelListModel.fromJson(Map<String, dynamic> json) {
     statusCode = json['statusCode'];
     status = json['status'];
     message = json['message'];
     if (json['data'] != null) {
-      data = json['data'].map<Data>((v) => Data.fromJson(v)).toList();
+      data = <ChannelList>[];
+      json['data'].forEach((v) {
+        data!.add(ChannelList.fromJson(v));
+      });
     }
-    if (json['metadata'] != null) {
-      metadata = List<dynamic>.from(json['metadata']);
-    }
+    metadata = json['metadata'] ?? []; // Assign empty list if null
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {};
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['statusCode'] = statusCode;
     data['status'] = status;
     data['message'] = message;
     if (this.data != null) {
       data['data'] = this.data!.map((v) => v.toJson()).toList();
     }
-    if (metadata != null) {
-      data['metadata'] = metadata;
-    }
+    data['metadata'] = metadata;
     return data;
   }
 }
 
-class Data {
+class ChannelList {
   String? sId;
   String? name;
-  String? ownerId;
   String? description;
   bool? isPrivate;
   bool? isDeleted;
   bool? isDefault;
   String? updatedBy;
-  String? deletedBy;
-  List<dynamic>? headerHistory;
+  String? deletedBy; // Changed from Null? to String?
+  List<dynamic>? headerHistory; // Changed from List<Null>? to List<dynamic>?
   String? createdAt;
   String? updatedAt;
   int? iV;
   int? unreadCount;
   Lastmessage? lastmessage;
+  String? ownerId;
 
-  Data({
+  ChannelList({
     this.sId,
     this.name,
-    this.ownerId,
     this.description,
     this.isPrivate,
     this.isDeleted,
@@ -73,44 +65,38 @@ class Data {
     this.iV,
     this.unreadCount,
     this.lastmessage,
+    this.ownerId,
   });
 
-  Data.fromJson(Map<String, dynamic> json) {
+  ChannelList.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     name = json['name'];
-    ownerId = json['ownerId'];
     description = json['description'];
     isPrivate = json['isPrivate'];
     isDeleted = json['isDeleted'];
     isDefault = json['isDefault'];
     updatedBy = json['updatedBy'];
-    deletedBy = json['deletedBy'];
-    if (json['header_history'] != null) {
-      headerHistory = List<dynamic>.from(json['header_history']);
-    }
+    deletedBy = json['deletedBy']; // No need to parse as Null
+    headerHistory = json['header_history'] ?? []; // Assign empty list if null
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
     unreadCount = json['unreadCount'];
-    lastmessage = json['lastmessage'] != null
-        ? Lastmessage.fromJson(json['lastmessage'])
-        : null;
+    lastmessage = json['lastmessage'] != null ? Lastmessage.fromJson(json['lastmessage']) : null;
+    ownerId = json['ownerId'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {};
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['_id'] = sId;
     data['name'] = name;
-    data['ownerId'] = ownerId;
     data['description'] = description;
     data['isPrivate'] = isPrivate;
     data['isDeleted'] = isDeleted;
     data['isDefault'] = isDefault;
     data['updatedBy'] = updatedBy;
-    data['deletedBy'] = deletedBy;
-    if (headerHistory != null) {
-      data['header_history'] = headerHistory;
-    }
+    data['deletedBy'] = deletedBy; // No need to convert null
+    data['header_history'] = headerHistory;
     data['createdAt'] = createdAt;
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;
@@ -118,6 +104,7 @@ class Data {
     if (lastmessage != null) {
       data['lastmessage'] = lastmessage!.toJson();
     }
+    data['ownerId'] = ownerId;
     return data;
   }
 }
@@ -132,6 +119,8 @@ class Lastmessage {
   }
 
   Map<String, dynamic> toJson() {
-    return {'createdAt': createdAt};
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['createdAt'] = createdAt;
+    return data;
   }
 }

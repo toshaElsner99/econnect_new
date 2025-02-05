@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../main.dart';
 import '../../utils/common/common_widgets.dart';
 
 class BrowseAndSearchChannel extends StatefulWidget {
@@ -42,7 +43,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
           onPressed: () => Navigator.pop(context),
         ),
         title: commonText(
-          text: 'New Channel',
+          text: 'Browse Channel',
           color: Colors.white,
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -95,11 +96,66 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                 ),
               ),
               Divider(color: AppColor.borderColor),
+              // Expanded(
+              //   child: ListView.builder(
+              //     itemCount: channelListCubit.browseAndSearchChannelModel?.data?.channels?.length ?? 0,
+              //     itemBuilder: (context, index) {
+              //       final channelListing = channelListCubit.browseAndSearchChannelModel?.data?.channels?[index];
+              //       return Container(
+              //         decoration: BoxDecoration(
+              //           border: Border(bottom: BorderSide(color: AppColor.borderColor)),
+              //         ),
+              //         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              //         child: Row(
+              //           crossAxisAlignment: CrossAxisAlignment.start,
+              //           children: [
+              //             commonChannelIcon(isPrivate: channelListing!.isPrivate == true ?  true : false,isShowPersons: true,color: AppColor.commonAppColor),
+              //             const SizedBox(width: 10),
+              //             Expanded(
+              //               child: Column(
+              //                 mainAxisSize: MainAxisSize.min,
+              //                 crossAxisAlignment: CrossAxisAlignment.start,
+              //                 children: [
+              //                   commonText(text: "${channelListing.name}", height: 1.2),
+              //                   const SizedBox(height: 10),
+              //                   Row(
+              //                     children: [
+              //                       Image.asset(AppImage.person, height: 16, width: 16, color: AppColor.borderColor),
+              //                       commonText(
+              //                         text: channelListing.members!.length.toString(),
+              //                         color: AppColor.borderColor,
+              //                       ),
+              //                     ],
+              //                   ),
+              //                 ],
+              //               ),
+              //             ),
+              //             Container(
+              //               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              //               decoration: BoxDecoration(
+              //                 borderRadius: BorderRadius.circular(5),
+              //                 border: Border.all(width: 1, color: AppColor.commonAppColor),
+              //               ),
+              //               child: commonText(text: "View", color: AppColor.commonAppColor),
+              //             ),
+              //           ],
+              //         ),
+              //       );
+              //     },
+              //   ),
+              // ),
               Expanded(
                 child: ListView.builder(
-                  itemCount: channelListCubit.browseAndSearchChannelModel?.data?.channels?.length ?? 0,
+                  itemCount: channelListCubit.browseAndSearchChannelModel?.data?.channels
+                      ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel.data?.user?.id) ?? false))
+                      .length ?? 0,
                   itemBuilder: (context, index) {
-                    final channelListing = channelListCubit.browseAndSearchChannelModel?.data?.channels?[index];
+                    final filteredChannels = channelListCubit.browseAndSearchChannelModel?.data?.channels
+                        ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel.data?.user?.id) ?? false))
+                        .toList();
+
+                    final channelListing = filteredChannels?[index];
+
                     return Container(
                       decoration: BoxDecoration(
                         border: Border(bottom: BorderSide(color: AppColor.borderColor)),
@@ -108,7 +164,11 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          commonChannelIcon(isPrivate: channelListing!.isPrivate == true ?  true : false,isShowPersons: true,color: AppColor.commonAppColor),
+                          commonChannelIcon(
+                            isPrivate: channelListing!.isPrivate == true ? true : false,
+                            isShowPersons: true,
+                            color: AppColor.commonAppColor,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
@@ -142,7 +202,9 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                     );
                   },
                 ),
-              ),
+              )
+
+
             ],
           );
         },

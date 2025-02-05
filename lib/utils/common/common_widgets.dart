@@ -2,10 +2,7 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/main.dart';
-import 'package:e_connect/screens/sign_in_screen/sign_in_Screen.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
-import 'package:e_connect/utils/app_preference_constants.dart';
-import 'package:e_connect/utils/common/prefrance_function.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,7 +14,6 @@ import '../app_color_constants.dart';
 import '../app_fonts_constants.dart';
 import '../app_string_constants.dart';
 import 'common_function.dart';
-import 'enums.dart';
 
 
 
@@ -615,6 +611,7 @@ void showLogoutDialog(BuildContext context,) {
     },
   );
 }
+
 Widget commonText({
   required String text,
   Color? color,
@@ -750,6 +747,15 @@ Widget commonPopUpMenuForChannel() {
       icon: Icon(Icons.more_vert, size: 24),
       onSelected: (value) {
         print("Selected: $value");
+        if(value == "unread"){
+
+        }else if(value == "favorite"){
+
+        }else if(value == "mute"){
+
+        }else {
+
+        }
       },
       itemBuilder: (BuildContext context) => [
         PopupMenuItem(
@@ -803,6 +809,36 @@ Widget commonPopUpMenuForChannel() {
     ),
   );
 }
+
+// Widget leaveChannelDialog({Function? onTap}) {
+//   //  AlertDialog(
+//   //   title: const Text(
+//   //     "Confirm Leave Channel",
+//   //     style: TextStyle(fontWeight: FontWeight.bold),
+//   //   ),
+//   //   content: const Text("Are you sure you want to Leave this Channel?"),
+//   //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+//   //   actions: [
+  //     TextButton(
+  //       onPressed: () => pop(),
+  //       style: TextButton.styleFrom(
+  //         foregroundColor: Colors.black,
+  //         backgroundColor: Colors.grey[300],
+  //       ),
+  //       child:  commonText(text: "Cancel"),
+  //     ),
+  //     TextButton(
+  //       onPressed: () => onTap?.call(),
+  //       style: TextButton.styleFrom(
+  //         foregroundColor: Colors.white,
+  //         backgroundColor: Colors.red,
+  //       ),
+  //       child:  commonText(text: "Leave"),
+  //     ),
+//   //   ],
+//   // );
+//   return ;
+// }
 
 Widget commonTextFormField({
   required TextEditingController controller,

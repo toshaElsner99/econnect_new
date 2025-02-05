@@ -24,8 +24,8 @@ class SingleChatMessageScreen extends StatefulWidget {
   final String userName;
   final String oppositeUserId;
 
-  SingleChatMessageScreen(
-      {required this.userName, required this.oppositeUserId});
+  const SingleChatMessageScreen(
+      {super.key, required this.userName, required this.oppositeUserId});
 
   @override
   State<SingleChatMessageScreen> createState() =>
@@ -53,7 +53,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
 
   void _fetchAndCacheUserDetails() async {
-    await commonCubit.getUserByIDCall(userId: widget.oppositeUserId);
+    await commonCubit.getUserByIDCall2(userId: widget.oppositeUserId);
     userDetails = commonCubit.getUserModel!;
     setState(() {});
   }
@@ -555,7 +555,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     bool showUserDetails = true,
   }) {
     if (!userCache.containsKey(userId)) {
-      commonCubit.getUserByIDCall(userId: userId);
+      commonCubit.getUserByIDCall2(userId: userId);
     }
 
     return BlocBuilder<CommonCubit, CommonState>(

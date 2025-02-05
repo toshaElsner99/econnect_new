@@ -41,6 +41,7 @@ class CommonCubit extends Cubit<CommonState> {
   }
 
   Future<void> updateStatusCall({required String status}) async {
+    emit(CommonInitial());
     final requestBody = {
       "status": status,
       "user_id": signInModel.data?.user?.id,
@@ -61,6 +62,7 @@ class CommonCubit extends Cubit<CommonState> {
     }
   }
   Future<void> updateCustomStatusCall({required String status,required String emojiUrl,}) async {
+    emit(CommonInitial());
     final requestBody = {
       "custom_status": status,
       "user_id": signInModel.data?.user?.id,
@@ -84,6 +86,7 @@ class CommonCubit extends Cubit<CommonState> {
 
 
   Future<void> getUserByIDCall() async {
+    emit(CommonInitial());
     final favoriteListModel = FavoriteListModel();
     final header = {
       'Authorization': "Bearer ${signInModel.data!.authToken}",
@@ -106,6 +109,20 @@ class CommonCubit extends Cubit<CommonState> {
       print("MUTEDS>> ${getUserModel?.data?.user?.muteUsers}");
       print("MUTEDS>> ${favoriteListModel.data?.mutedUsers}");
       emit(CommonInitial());
+    }
+  }
+  Future<GetUserModel?> getUserByIDCall2({String? userId}) async {
+    final header = {
+      'Authorization': "Bearer ${signInModel.data!.authToken}",
+    };
+    final response = await ApiService.instance.request(
+        endPoint: "${ApiString.getUserById}/${userId ?? signInModel.data?.user?.id}",
+        method: Method.GET,
+        headers: header);
+    if (statusCode200Check(response)) {
+      getUserModel = GetUserModel.fromJson(response);
+      emit(CommonInitial());
+      return getUserModel;
     }
   }
 }

@@ -36,14 +36,14 @@ class ApiService {
     _logRequest('$uri', method, reqBody, headers);
 
     try {
-      startLoading();
+      // startLoading();
       response = await _makeRequest(method, uri, reqBody, headers);
       _logResponse(response);
 
       final responseData = json.decode(response.body);
-      _handleToastMessage(responseData);
+      // _handleToastMessage(responseData);
 
-      if (response.statusCode == 200 || response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403) {
+      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403) {
         return json.decode(response.body);
       } else if (response.statusCode == 500) {
         throw Exception("Server Error");
@@ -108,8 +108,8 @@ class ApiService {
 
   void _handleToastMessage(dynamic responseData) {
     if (responseData is Map<String, dynamic> && responseData.containsKey('message')) {
-      final String message = responseData['message'];
-      final bool isSuccess = (responseData['statusCode'] == 200 || responseData['status'] == 1);
+      final String message = responseData['message'].toString();
+      final bool isSuccess = (responseData['statusCode'] == 200 || responseData['statusCode'] == 201 || responseData['status'] == 1);
       commonShowToast(message, isSuccess ? Colors.green : Colors.red);
     }
   }
