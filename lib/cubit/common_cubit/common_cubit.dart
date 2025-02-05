@@ -1,4 +1,4 @@
-import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
+import 'package:bloc/bloc.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/model/get_user_model.dart';

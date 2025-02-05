@@ -16,6 +16,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../main.dart';
 import '../../model/direct_message_list_model.dart';
 import '../../utils/common/common_function.dart';
+import '../chat/single_chat_message_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -50,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   };
 
   @override
-  void initState()  {
+  void initState() {
     super.initState();
     commonCubit.getUserByIDCall();
     channelListCubit.getFavoriteList();
@@ -506,7 +507,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-
   Widget _buildExpansionSection({
     required String title,
     required int itemCount,
@@ -660,6 +660,67 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     //   print("hiiiii>>> $userId");
     // return
     // },);
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: InkWell(
+        onTap: () {
+          // Handle user row tap
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => SingleChatMessageScreen(
+                      userName: username,
+                      oppositeUserId: userId,
+                    )),
+          );
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            children: [
+              profileIconWithStatus(
+                userID: userId,
+                otherUserProfile: imageUrl,
+                status: status,
+              ),
+              const SizedBox(width: 12),
+              commonText(
+                text: username,
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              Visibility(
+                  visible: userId == signInModel.data?.user?.id,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 5.0),
+                    child: commonText(text: "(you)", color: Colors.white),
+                  )),
+              Visibility(
+                  visible: customStatusEmoji != "",
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: CachedNetworkImage(
+                      imageUrl: customStatusEmoji!,
+                      height: 20,
+                      width: 20,
+                    ),
+                  )),
+              Visibility(
+                  visible: unSeenMsgCount != 0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5)),
+                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 7),
+                    margin: EdgeInsets.only(left: 5),
+                    child: commonText(text: "$unSeenMsgCount"),
+                  ))
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildChannelRow(channel) {
@@ -815,6 +876,7 @@ class OptionItem {
     required this.onTap,
   });
 }
+
 
 
 

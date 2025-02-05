@@ -1,30 +1,62 @@
 import 'dart:io';
 
+import 'package:e_connect/cubit/chat/chat_cubit.dart';
+import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
+import 'package:e_connect/model/get_user_model.dart';
+import 'package:e_connect/model/message_model.dart';
+import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 
 import '../../widgets/chat_profile_header.dart';
 import '../../screens/chat/media_preview_screen.dart';
 
-class SingleChatScreen extends StatefulWidget {
-  const SingleChatScreen({super.key});
+class SingleChatMessageScreen extends StatefulWidget {
+  final String userName;
+  final String oppositeUserId;
+
+  SingleChatMessageScreen(
+      {required this.userName, required this.oppositeUserId});
 
   @override
-  State<SingleChatScreen> createState() => _SingleChatScreenState();
+  State<SingleChatMessageScreen> createState() =>
+      _SingleChatMessageScreenState();
 }
 
-class _SingleChatScreenState extends State<SingleChatScreen> {
+class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final quill.QuillController _controller = quill.QuillController.basic();
   final FocusNode _focusNode = FocusNode();
   String? lastSentMessage;
   List<dynamic>? _lastSentDelta;
   bool _showToolbar = false;
+  late ChatCubit chatCubit;
+  late CommonCubit commonCubit;
+  final Map<String, GetUserModel> userCache = {};
+  GetUserModel? userDetails;
+
+  @override
+  void initState() {
+    super.initState();
+    chatCubit = context.read<ChatCubit>();
+    commonCubit = context.read<CommonCubit>();
+    chatCubit.getMessagesList(widget.oppositeUserId);
+    _fetchAndCacheUserDetails();
+  }
+
+  void _fetchAndCacheUserDetails() async {
+    await commonCubit.getUserByIDCall(userId: widget.oppositeUserId);
+    userDetails = commonCubit.getUserModel!;
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,12 +71,16 @@ class _SingleChatScreenState extends State<SingleChatScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            commonText(
-              text: 'Tosha Shah',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColor.whiteColor,
-            ),
+            userDetails != null
+                ? commonText(
+                    text: userDetails!.data!.user!.fullName ??
+                        userDetails!.data!.user!.username ??
+                        'Unknown',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.whiteColor,
+                  )
+                : SizedBox(),
             commonText(
               text: 'View info >',
               fontSize: 12,
@@ -67,14 +103,20 @@ class _SingleChatScreenState extends State<SingleChatScreen> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  const ChatProfileHeader(),
-
+                  userDetails != null
+                      ? ChatProfileHeader(
+                          userName: userDetails!.data!.user!.fullName ??
+                              userDetails!.data!.user!.username ??
+                              'Unknown',
+                          userImageUrl: ApiString.profileBaseUrl +
+                              (userDetails!.data!.user!.avatarUrl ?? ''),
+                        )
+                      : SizedBox(),
                   Divider(
                     color: Colors.grey.shade800,
                     height: 1,
                   ),
-
-                  messages() // Minimum height for empty state
+                  dateHeaders()
                 ],
               ),
             ),
@@ -97,86 +139,10 @@ class _SingleChatScreenState extends State<SingleChatScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    // _focusNode.addListener(() {
-    //   if (!_focusNode.hasFocus) {
-    //     setState(() {
-    //       _showToolbar = false;
-    //     });
-    //   }
-    // });
-  }
-
-  @override
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
-  }
-
-  Widget _buildFormattedText(String text, List<dynamic> deltaOps) {
-    return quill.QuillEditor(
-      controller: quill.QuillController(
-        document: quill.Document.fromJson(deltaOps),
-        selection: const TextSelection.collapsed(offset: 0),
-      ),
-      scrollController: ScrollController(),
-      configurations: quill.QuillEditorConfigurations(
-        checkBoxReadOnly: true,
-        autoFocus: false,
-        showCursor: false,
-        padding: EdgeInsets.zero,
-        scrollable: false,
-        customStyles: const quill.DefaultStyles(
-          paragraph: quill.DefaultTextBlockStyle(
-            TextStyle(
-              color: AppColor.whiteColor,
-              fontSize: 16,
-            ),
-            quill.HorizontalSpacing.zero,
-            quill.VerticalSpacing.zero,
-            quill.VerticalSpacing.zero,
-            BoxDecoration(color: Colors.transparent),
-          ),
-          quote: quill.DefaultTextBlockStyle(
-            TextStyle(
-              color: AppColor.whiteColor,
-              fontSize: 16,
-            ),
-            quill.HorizontalSpacing(16, 0),
-            quill.VerticalSpacing(8, 0),
-            quill.VerticalSpacing(8, 0),
-            BoxDecoration(
-              border: Border(
-                left: BorderSide(
-                  color: AppColor.whiteColor,
-                  width: 4,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-      focusNode: FocusNode(),
-    );
-  }
-
-  Widget messages() {
-    // Message display area
-    if (lastSentMessage != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Center(
-          child: _buildFormattedText(
-            lastSentMessage!,
-            _lastSentDelta ?? [],
-          ),
-        ),
-      );
-    } else {
-      return const SizedBox(height: 200);
-    }
   }
 
   Widget inputTextFieldWithEditor() {
@@ -322,6 +288,7 @@ class _SingleChatScreenState extends State<SingleChatScreen> {
       ),
     );
   }
+
   // File selected to send
   Widget selectedFilesWidget() {
     return Consumer<FileServiceProvider>(
@@ -414,7 +381,8 @@ class _SingleChatScreenState extends State<SingleChatScreen> {
               ),
               const SizedBox(height: 20),
               ListTile(
-                leading: const Icon(Icons.camera_alt, color: AppColor.whiteColor),
+                leading:
+                    const Icon(Icons.camera_alt, color: AppColor.whiteColor),
                 title: commonText(
                   text: 'Capture Photo',
                   color: AppColor.whiteColor,
@@ -453,13 +421,11 @@ class _SingleChatScreenState extends State<SingleChatScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: const Icon(Icons.alternate_email,
-                color: AppColor.whiteColor),
+            icon: const Icon(Icons.alternate_email, color: AppColor.whiteColor),
             onPressed: () {},
           ),
           IconButton(
-            icon:
-            const Icon(Icons.attach_file, color: AppColor.whiteColor),
+            icon: const Icon(Icons.attach_file, color: AppColor.whiteColor),
             onPressed: () {
               FileServiceProvider.instance.pickFiles();
             },
@@ -477,14 +443,12 @@ class _SingleChatScreenState extends State<SingleChatScreen> {
             },
           ),
           GestureDetector(
-            onTap: (){
-              final plainText =
-              _controller.document.toPlainText().trim();
+            onTap: () {
+              final plainText = _controller.document.toPlainText().trim();
               if (plainText.isNotEmpty) {
                 setState(() {
                   lastSentMessage = plainText;
-                  _lastSentDelta =
-                      _controller.document.toDelta().toJson();
+                  _lastSentDelta = _controller.document.toDelta().toJson();
                 });
                 _clearInputAndDismissKeyboard();
               }
@@ -492,17 +456,172 @@ class _SingleChatScreenState extends State<SingleChatScreen> {
             child: Container(
                 decoration: BoxDecoration(
                     color: AppColor.lightBlueColor,
-                    borderRadius: BorderRadius.circular(10)
-                ),
+                    borderRadius: BorderRadius.circular(10)),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5),
-                  child: Icon(Icons.send,
-                      color: AppColor.whiteColor),
-                )
-            ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5),
+                  child: Icon(Icons.send, color: AppColor.whiteColor),
+                )),
           ),
         ],
       ),
+    );
+  }
+
+  Widget dateHeaders() {
+    return BlocBuilder<ChatCubit, ChatState>(
+      builder: (context, state) {
+        if (state is ChatLoading) {
+          return Center(child: CircularProgressIndicator());
+        } else if (state is ChatSuccess) {
+          List<MessageGroups> sortedGroups = state.messagesGroups
+            ..sort((a, b) => a.sId!.compareTo(b.sId!));
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: sortedGroups.length,
+            itemBuilder: (context, index) {
+              final group = sortedGroups[index];
+              List<Messages> sortedMessages = (group.messages ?? [])
+                ..sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
+              String? previousSenderId;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColor.appBarColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: commonText(
+                        text: formatDateTime(DateTime.parse(group.sId!)),
+                        fontSize: 12,
+                        color: AppColor.whiteColor,
+                      ),
+                    ),
+                  ),
+                  ...sortedMessages.map((Messages message) {
+                    bool showUserDetails = previousSenderId != message.senderId;
+                    previousSenderId = message.senderId;
+                    return chatBubble(
+                      userId: message.senderId!,
+                      message: message.content!,
+                      time: DateTime.parse(message.createdAt!).toString(),
+                      showUserDetails: showUserDetails,
+                    );
+                  }).toList(),
+                ],
+              );
+            },
+          );
+        } else if (state is ChatFailure) {
+          return Center(child: Text("Error : ${state.errorText}"));
+        } else {
+          return SizedBox();
+        }
+      },
+    );
+  }
+
+  String formatDateTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(Duration(days: 1));
+    final aWeekAgo = today.subtract(Duration(days: 7));
+
+    if (dateTime.isAfter(today)) {
+      return 'Today';
+    } else if (dateTime.isAfter(yesterday)) {
+      return 'Yesterday';
+    } else if (dateTime.isAfter(aWeekAgo)) {
+      return DateFormat('EEEE').format(dateTime); // Day of the week
+    } else {
+      return DateFormat('MM-dd-yyyy').format(dateTime); // MM-dd-yyyy format
+    }
+  }
+
+  String formatTime(DateTime dateTime) {
+    return DateFormat('hh:mm a').format(dateTime); // hh:mm AM/PM format
+  }
+
+  Widget chatBubble({
+    required String userId,
+    required String message,
+    required String time,
+    bool showUserDetails = true,
+  }) {
+    if (!userCache.containsKey(userId)) {
+      commonCubit.getUserByIDCall(userId: userId);
+    }
+
+    return BlocBuilder<CommonCubit, CommonState>(
+      builder: (context, state) {
+        if (state is CommonInitial &&
+            commonCubit.getUserModel!.data!.user!.sId! == userId) {
+          userCache[userId] = commonCubit.getUserModel!;
+        }
+
+        final user = userCache[userId];
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 8.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              if (showUserDetails) ...{
+                SizedBox(
+                  width: 40,
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundImage: NetworkImage(
+                      ApiString.profileBaseUrl +
+                          (user?.data!.user!.avatarUrl ?? ''),
+                    ),
+                  ),
+                ),
+              } else ...{
+                SizedBox(width: 50)
+              },
+              if (showUserDetails) SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (showUserDetails)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.data!.user!.fullName ??
+                                user?.data!.user!.username ??
+                                'Unknown',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(width: 5),
+                          Text(
+                            formatTime(DateTime.parse(time)),
+                            style: TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    HtmlWidget(
+                      message,
+                      textStyle: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

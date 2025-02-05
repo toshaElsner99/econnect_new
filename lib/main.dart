@@ -1,4 +1,5 @@
 import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
+import 'package:e_connect/cubit/chat/chat_cubit.dart';
 import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/screens/splash_screen/splash_screen.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
@@ -40,6 +41,7 @@ void main() async {
         BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()..loadThemeMode(),),
         ChangeNotifierProvider<FileServiceProvider>(create: (_) => FileServiceProvider()),
         BlocProvider<ChannelListCubit>(create: (_) => ChannelListCubit()),
+        BlocProvider<ChatCubit>(create: (_) => ChatCubit()),
       ],
       child: OKToast(
         child: BlocConsumer<ThemeCubit, ThemeState>(
