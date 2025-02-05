@@ -1,10 +1,11 @@
-import 'package:bloc/bloc.dart';
+import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/main.dart';
+import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:meta/meta.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../screens/sign_in_screen/sign_in_Screen.dart';
 import '../../utils/common/common_function.dart';
@@ -15,6 +16,24 @@ part 'common_state.dart';
 class CommonCubit extends Cubit<CommonState> {
   CommonCubit() : super(CommonInitial());
   GetUserModel? getUserModel;
+  final setCustomTextController = TextEditingController();
+  int? selectedIndexOfStatus;
+  String customStatusUrl = "";
+
+  void updateIndexForCustomStatus(int index,String title){
+    selectedIndexOfStatus = index;
+    setCustomTextController.text = title;
+    emit(CommonInitial());
+    print("selectedIndexOfStatus>>>>> $selectedIndexOfStatus");
+  }
+
+ clearUpdates(){
+   selectedIndexOfStatus = null;
+   setCustomTextController.clear();
+   emit(CommonInitial());
+ }
+
+
 
   Future<void> logOut() async {
     await clearData();
@@ -41,11 +60,11 @@ class CommonCubit extends Cubit<CommonState> {
       emit(CommonInitial());
     }
   }
-  Future<void> updateCustomStatusCall({required String status,required String emojiUrl}) async {
+  Future<void> updateCustomStatusCall({required String status,required String emojiUrl,}) async {
     final requestBody = {
       "custom_status": status,
       "user_id": signInModel.data?.user?.id,
-      "is_custom_status": "false",
+      "is_custom_status": "true",
       "custom_status_emoji": emojiUrl,
     };
     final header = {
@@ -57,12 +76,15 @@ class CommonCubit extends Cubit<CommonState> {
         reqBody: requestBody,
         headers: header);
     if (statusCode200Check(response)) {
-      // getUserByIDCall();
+      getUserByIDCall();
+      clearUpdates();
       emit(CommonInitial());
     }
   }
 
+
   Future<void> getUserByIDCall() async {
+    final favoriteListModel = FavoriteListModel();
     final header = {
       'Authorization': "Bearer ${signInModel.data!.authToken}",
     };
@@ -72,6 +94,17 @@ class CommonCubit extends Cubit<CommonState> {
         headers: header);
     if (statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
+      commonCubit.setCustomTextController.text = getUserModel?.data?.user?.customStatus;
+      commonCubit.customStatusUrl = getUserModel?.data?.user?.customStatusEmoji;
+      print(">>>>>>>>>|||${getUserModel?.data?.user!.muteUsers!}");
+      print("STATUS>>>>>>>>>|||${getUserModel?.data?.user!.status!}");
+      // favoriteListModel.data?.mutedUsers?.add(getUserModel?.data?.user?.muteUsers);
+      if (getUserModel?.data?.user?.muteUsers != null) {
+        favoriteListModel.data?.mutedUsers ??= [];
+        favoriteListModel.data?.mutedUsers?.add(getUserModel!.data!.user!.muteUsers!);
+      }
+      print("MUTEDS>> ${getUserModel?.data?.user?.muteUsers}");
+      print("MUTEDS>> ${favoriteListModel.data?.mutedUsers}");
       emit(CommonInitial());
     }
   }

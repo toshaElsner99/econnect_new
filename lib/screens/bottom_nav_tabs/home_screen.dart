@@ -1,7 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
+import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/screens/browse_and_search_channel/browse_and_search_channel.dart';
 import 'package:e_connect/screens/create_channel_screen/create_channel_screen.dart';
+import 'package:e_connect/screens/find_channel_screen/find_channel_screen.dart';
+import 'package:e_connect/screens/open_direct_message/open_direct_message.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
@@ -11,6 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../main.dart';
+import '../../model/direct_message_list_model.dart';
 import '../../utils/common/common_function.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -36,7 +40,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     OptionItem(
       icon: Icons.message,
       title: "Open a Direct Message",
-      onTap: () => null,
+      onTap: () => pushScreenWithTransition(OpenDirectMessage()),
     ),
   ];
   final Map<String, bool> _isExpanded = {
@@ -46,8 +50,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   };
 
   @override
-  void initState() {
+  void initState()  {
     super.initState();
+    commonCubit.getUserByIDCall();
     channelListCubit.getFavoriteList();
     channelListCubit.getChannelList();
     channelListCubit.getDirectMessageList();
@@ -55,9 +60,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
+    return BlocBuilder(
+      bloc: commonCubit,
+      builder: (context, state) {
     return Scaffold(
       backgroundColor: AppColor.commonAppColor,
-      body: BlocBuilder<ChannelListCubit, ChannelListState>(
+        floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
+        appBar: AppBar(
+          bottom: PreferredSize(preferredSize: Size(double.infinity, MediaQuery.of(context).size.height *0.1), child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildHeader(),
+                    _buildAddButton()
+                  ],
+                ),
+                _buildSearchField(),
+              ],),
+          )),
+        ),
+        body: BlocBuilder(
         bloc: channelListCubit,
         builder: (context, state) {
           return Padding(
@@ -66,50 +92,73 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
-                  _buildHeader(),
-                  _buildSearchField(),
-                  const SizedBox(height: 16),
-                  _buildExpansionSection(
+                    _buildExpansionSection(
                     title: "FAVORITES",
-                    index: 0,
-                    itemCount: channelListCubit.favoriteListModel?.data?.chatList?.length ?? 0,
+                      index: 0,
+                      itemCount: _getTotalFavoritesCount(),
                     itemBuilder: (context, index) {
+                        final userCount = channelListCubit.favoriteListModel?.data?.chatList?.length ?? 0;
+
+                        if (index < userCount) {
                       final favorite = channelListCubit.favoriteListModel?.data?.chatList?[index];
                       return _buildUserRow(
-                        imageUrl: favorite?.avatarUrl ?? "",
+                              index: 0,
+                              muteConversation: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(favorite?.sId ?? "") ?? false,
+                              imageUrl: favorite?.thumbnailAvatarUrl ?? "",
                         username: favorite?.username ?? "",
                         status: favorite?.status ?? "",
                         userId: favorite?.sId ?? "",
-                        customStatusEmoji: favorite?.customStatusEmoji ?? "",
-                        unSeenMsgCount: favorite?.unseenMessagesCount ?? 0,
-                      );
-                    },
-                  ),
-                  _buildExpansionSection(
+                              customStatusEmoji: favorite?.customStatusEmoji ?? "",
+                              unSeenMsgCount: favorite?.unseenMessagesCount ?? 0,
+                              children: [
+                                _buildPopupMenuForFavorite(favorite: channelListCubit.favoriteListModel?.data?.chatList?[index]),
+                              ]
+                          );
+                        }
+                        // Then show favorite channels
+                        else {
+                          final channelIndex = index - userCount;
+                          final favoriteChannels = channelListCubit.favoriteListModel?.data?.favouriteChannels ?? [];
+                          if (channelIndex < favoriteChannels.length) {
+                            final favoriteChannel = favoriteChannels[channelIndex] ;
+                            return _buildFavoriteChannelRow(favoriteChannel,
+                                [
+                                  _buildPopupMenuForChannel(favouriteChannels: favoriteChannels[channelIndex])
+                                ]
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        }
+                      },
+                    ),
+                    _buildExpansionSection(
                     title: "CHANNEL",
-                    index: 1,
-                    trailing: _buildAddButton(),
+                      index: 1,
                     itemCount: channelListCubit.channelListModel?.data?.length ?? 0,
                     itemBuilder: (context, index) {
                       final channel = channelListCubit.channelListModel!.data![index];
                       return _buildChannelRow(channel);
                     },
                   ),
-                  _buildExpansionSection(
-                    index: 2,
+                    _buildExpansionSection(
+                      index: 2,
                     title: "DIRECT MESSAGE",
                     itemCount: channelListCubit.directMessageListModel?.data?.chatList?.length ?? 0,
-                    trailing: _buildAddButton(),
                     itemBuilder: (context, index) {
                       final directMessage = channelListCubit.directMessageListModel!.data!.chatList?[index];
                       return _buildUserRow(
-                        imageUrl: directMessage?.avatarUrl ?? "",
+                            muteConversation: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(directMessage?.sId ?? "") ?? false,
+                            index: 2,
+                            imageUrl: directMessage?.thumbnailAvatarUrl ?? "",
                         username: directMessage?.username ?? "",
                         status: directMessage?.status ?? "",
                         userId: directMessage?.sId ?? "",
-                        customStatusEmoji: directMessage?.customStatusEmoji ?? "",
-                        unSeenMsgCount: directMessage?.unseenMessagesCount ?? 0
+                            customStatusEmoji: directMessage?.customStatusEmoji ?? "",
+                            unSeenMsgCount: directMessage?.unseenMessagesCount ?? 0,
+                            children: [
+                              _buildPopupMenuForDirectMessage(chatLisDirectMessage: channelListCubit.directMessageListModel?.data?.chatList?[index]),
+                            ]
+
                       );
                     },
                   ),
@@ -119,7 +168,269 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           );
         },
       ),
+      );
+    },);
+  }
+
+  SizedBox _buildPopupMenuForFavorite({ChatList? favorite}) {
+    return SizedBox(
+      height: 20,
+      width: 30,
+      child: PopupMenuButton<String>(
+        padding: EdgeInsets.zero,
+        constraints: BoxConstraints(minWidth: 150),
+        icon: Icon(Icons.more_vert, size: 24),
+        onSelected: (value) {
+          print("Selected: $value");
+          if (value == "unread") {
+            print("unREADMESSAGE>>>>> ${favorite!.unseenMessagesCount}");
+            channelListCubit.readUnreadMessages(
+                oppositeUserId: favorite.sId ?? "",
+                isCalledForFav: true,
+                isCallForReadMessage:
+                    favorite.unseenMessagesCount! > 0 ? true : false);
+          } else if (value == "favorite") {
+            channelListCubit.removeFromFavorite(
+                favouriteUserId: favorite?.sId ?? "");
+          } else if (value == "mute") {
+            channelListCubit.muteUser(
+                userIdToMute: favorite?.sId ?? "",
+                isForMute: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(favorite?.sId) ?? false);
+          } else if (value == "leave") {
+            channelListCubit.closeConversation(
+                conversationUserId: favorite?.sId ?? "", isCalledForFav: true);
+          }
+        },
+        itemBuilder: (BuildContext context) => [
+          PopupMenuItem(
+            height: 35,
+            value: "unread",
+            child: Row(
+              children: [
+                Icon(Icons.mark_chat_unread_outlined, size: 20),
+                SizedBox(width: 10),
+                commonText(
+                    text: favorite!.unseenMessagesCount! > 0
+                        ? "Mark as read"
+                        : "Mark as unread"),
+              ],
+            ),
+          ),
+          PopupMenuItem(
+            height: 35,
+            value: "favorite",
+            child: Row(
+              children: [
+                Icon(Icons.star, size: 20),
+                SizedBox(width: 10),
+                commonText(text: "Unfavorite"),
+              ],
+            ),
+          ),
+          PopupMenuItem(
+            height: 35,
+            value: "mute",
+            child: Row(
+              children: [
+                Icon(
+                    commonCubit.getUserModel?.data?.user!.muteUsers!
+                                .contains(favorite.sId) ??
+                            false != true
+                        ? Icons.notifications_off_outlined
+                        : Icons.notifications_none,
+                    size: 20),
+                SizedBox(width: 10),
+                commonText(
+                    text: commonCubit.getUserModel?.data?.user!.muteUsers!
+                                .contains(favorite.sId) !=
+                            true
+                        ? "Mute Conversation"
+                        : "Unmute Conversation"),
+              ],
+            ),
+          ),
+          PopupMenuItem(
+            height: 35,
+            value: "leave",
+            child: Row(
+              children: [
+                Icon(Icons.exit_to_app, size: 20, color: Colors.red),
+                SizedBox(width: 10),
+                Text(
+                  "Close Conversation",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
+  }
+  SizedBox _buildPopupMenuForDirectMessage({ChatListDirectMessage? chatLisDirectMessage}) {
+    return SizedBox(
+      height: 20,
+      width: 30,
+      child: PopupMenuButton<String>(
+        padding: EdgeInsets.zero,
+        constraints: BoxConstraints(minWidth: 150),
+        icon: Icon(Icons.more_vert, size: 24),
+        onSelected: (value) {
+          print("Selected: $value");
+          if (value == "unread") {
+            print("unREADMESSAGE>>>>> ${chatLisDirectMessage!.unseenMessagesCount}");
+            channelListCubit.readUnreadMessages(
+                oppositeUserId: chatLisDirectMessage.sId ?? "",
+                isCalledForFav: true,
+                isCallForReadMessage:
+                chatLisDirectMessage.unseenMessagesCount! > 0 ? true : false);
+          } else if (value == "favorite") {
+            // channelListCubit.removeFromFavorite(favouriteUserId: chatLisDirectMessage?.sId ?? "");
+            channelListCubit.addUserToFavorite(favouriteUserId: chatLisDirectMessage?.sId ?? "");
+          } else if (value == "mute") {
+            channelListCubit.muteUser(
+                userIdToMute: chatLisDirectMessage?.sId ?? "",
+                isForMute: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(chatLisDirectMessage?.sId) ?? false);
+          } else if (value == "leave") {
+            channelListCubit.closeConversation(
+                conversationUserId: chatLisDirectMessage?.sId ?? "", isCalledForFav: false);
+          }
+        },
+        itemBuilder: (BuildContext context) => [
+          PopupMenuItem(
+            height: 35,
+            value: "unread",
+            child: Row(
+              children: [
+                Icon(Icons.mark_chat_unread_outlined, size: 20),
+                SizedBox(width: 10),
+                commonText(
+                    text: chatLisDirectMessage!.unseenMessagesCount! > 0
+                        ? "Mark as read"
+                        : "Mark as unread"),
+              ],
+            ),
+          ),
+          PopupMenuItem(
+            height: 35,
+            value: "favorite",
+            child: Row(
+              children: [
+                Icon(Icons.star_border, size: 20),
+                SizedBox(width: 10),
+                commonText(text: "Favorite"),
+              ],
+            ),
+          ),
+          PopupMenuItem(
+            height: 35,
+            value: "mute",
+            child: Row(
+              children: [
+                Icon(
+                    commonCubit.getUserModel?.data?.user!.muteUsers!.contains(chatLisDirectMessage.sId) ?? false != true
+                        ? Icons.notifications_off_outlined
+                        : Icons.notifications_none,
+                    size: 20),
+                SizedBox(width: 10),
+                commonText(
+                    text: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(chatLisDirectMessage.sId) != true
+                        ? "Mute Conversation"
+                        : "Unmute Conversation"),
+              ],
+            ),
+          ),
+          PopupMenuItem(
+            height: 35,
+            value: "leave",
+            child: Row(
+              children: [
+                Icon(Icons.exit_to_app, size: 20, color: Colors.red),
+                SizedBox(width: 10),
+                Text(
+                  "Close Conversation",
+                  style: TextStyle(color: Colors.red),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  SizedBox _buildPopupMenuForChannel({FavouriteChannels? favouriteChannels}) {
+    return SizedBox(
+                            height: 20,
+                            width: 30,
+                            child: PopupMenuButton<String>(
+                              padding: EdgeInsets.zero,
+                              constraints: BoxConstraints(minWidth: 150),
+                              icon: Icon(Icons.more_vert, size: 24),
+                              onSelected: (value) {
+                                print("Selected: $value");
+                                if( value == "unread"){
+                                  print("unREADMESSAGE>>>>> ${favouriteChannels!.unseenMessagesCount}");
+                                  channelListCubit.readUnreadMessages(oppositeUserId: favouriteChannels.sId ?? "", isCalledForFav: true,isCallForReadMessage: favouriteChannels.unseenMessagesCount! > 0 ? true : false);
+                                }else if(value == "favorite"){
+                                  channelListCubit.removeFromFavorite(favouriteUserId: favouriteChannels?.sId ?? "");
+                                }else if(value == "mute"){
+                                  channelListCubit.muteUser(userIdToMute: favouriteChannels?.sId ?? "",isForMute: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(favouriteChannels?.sId) ?? false);
+                                }else if(value == "leave"){
+                                  channelListCubit.closeConversation(conversationUserId: favouriteChannels?.sId ?? "", isCalledForFav: true);
+                                }
+                              },
+                              itemBuilder: (BuildContext context) => [
+                                PopupMenuItem(
+                                  height: 35,
+                                  value: "unread",
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.mark_chat_unread_outlined, size: 20),
+                                      SizedBox(width: 10),
+                                      commonText(text: favouriteChannels!.unseenMessagesCount! > 0 ? "Mark as read" : "Mark as unread"),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  height: 35,
+                                  value: "favorite",
+                                  child: Row(
+                                    children: [
+                                      Icon( Icons.star, size: 20),
+                                      SizedBox(width: 10),
+                                      commonText(text:"Unfavorite"),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  height: 35,
+                                  value: "mute",
+                                  child: Row(
+                                    children: [
+                                      Icon(commonCubit.getUserModel?.data?.user!.muteUsers!.contains(favouriteChannels.sId) ?? false != true ? Icons.notifications_off_outlined : Icons.notifications_none, size: 20),
+                                      SizedBox(width: 10),
+                                      commonText(text: commonCubit.getUserModel?.data?.user!.muteUsers!.contains(favouriteChannels.sId)  != true ? "Mute Conversation" : "Unmute Conversation"),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  height: 35,
+                                  value: "leave",
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.exit_to_app, size: 20, color: Colors.red),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        "Close Conversation",
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
   }
 
 
@@ -135,36 +446,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           color: AppColor.borderColor.withOpacity(0.2),
         ),
       ),
-      child: TextFormField(
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-        ),
-        decoration: InputDecoration(
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
-          hintText: 'Find Channels...',
-          hintStyle: TextStyle(
-            color: Colors.white.withOpacity(0.5),
-            fontSize: 14,
-          ),
-          border: InputBorder.none,
-          prefixIcon: Icon(
-            CupertinoIcons.search,
-            color: Colors.white.withOpacity(0.5),
-            size: 18,
-          ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 40,
-            minHeight: 40,
-          ),
-        ),
-        cursorColor: Colors.white,
-        textInputAction: TextInputAction.search,
-      ),
+      // child: TextFormField(
+      //   style: const TextStyle(
+      //     color: Colors.white,
+      //     fontSize: 14,
+      //   ),
+      //   decoration: InputDecoration(
+      //     isDense: true,
+      //     contentPadding: const EdgeInsets.symmetric(
+      //       horizontal: 16,
+      //       vertical: 12,
+      //     ),
+      //     hintText: 'Find Channels...',
+      //     hintStyle: TextStyle(
+      //       color: Colors.white.withOpacity(0.5),
+      //       fontSize: 14,
+      //     ),
+      //     border: InputBorder.none,
+      //     prefixIcon: Icon(
+      //       CupertinoIcons.search,
+      //       color: Colors.white.withOpacity(0.5),
+      //       size: 18,
+      //     ),
+      //     prefixIconConstraints: const BoxConstraints(
+      //       minWidth: 40,
+      //       minHeight: 40,
+      //     ),
+      //   ),
+      //   cursorColor: Colors.white,
+      //   textInputAction: TextInputAction.search,
+      // ),
+      child: commonTextFormField(controller: TextEditingController(), hintText: "Find Channel",readOnly: true,onTap: () => pushScreenWithTransition(FindChannelScreen()), ),
     );
   }
 
@@ -180,19 +492,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
           Image.asset(AppImage.eCLogo, width: 30, height: 30),
-          commonText(
-            text: AppString.connect,
-            color: Colors.white,
+        commonText(
+          text: AppString.connect,
+          color: Colors.white,
             fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ],
+          fontWeight: FontWeight.w700,
+        ),
+      ],
       ),
     );
   }
+
 
   Widget _buildExpansionSection({
     required String title,
@@ -210,6 +523,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
+      dense: true,
+          maintainState: true,
           initiallyExpanded: _isExpanded[title] ?? false,
           onExpansionChanged: (expanded) {
             setState(() => _isExpanded[title] = expanded);
@@ -237,29 +552,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           trailing: trailing,
           children: [
             Column(
-              children: [
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 200),
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxHeight: (_isExpanded[title] ?? false) ? MediaQuery.of(context).size.height * 0.4 : 0,
-                    ),
-                    child: ListView.builder(
-                      itemCount: itemCount,
-                      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-                      shrinkWrap: true,
-                      physics: const BouncingScrollPhysics(),
-                      itemBuilder: itemBuilder,
-                    ),
-                  ),
-                ),
-              ],
+              children: List.generate(itemCount, (index) => itemBuilder(context, index)),
             ),
           ],
         ),
       ),
     );
   }
+
 
   Widget _buildAddButton() {
     return Container(
@@ -284,64 +584,82 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildUserRow({
+    required int index,
     required String imageUrl,
     required String username,
     required String status,
     required String userId,
+    required bool muteConversation,
     String? customStatusEmoji = "",
     int? unSeenMsgCount = 0,
+    List<Widget>? children,
   }) {
+    print("hiiiii>>> ${commonCubit.getUserModel?.data?.user!.muteUsers!.contains(userId)}");
+      print("hiiiii>>> ${commonCubit.getUserModel?.data?.user!.muteUsers!}");
+      print("hiiiii>>> $userId");
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: InkWell(
-        onTap: () {
-          // Handle user row tap
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            children: [
-              profileIconWithStatus(
-                userID: userId,
-                otherUserProfile: imageUrl,
-                status: status,
-              ),
-              const SizedBox(width: 12),
-              commonText(
-                text: username,
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-              Visibility(
-                  visible: userId == signInModel.data?.user?.id,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 5.0),
-                    child: commonText(text: "(you)",color: Colors.white),
-                  )),
-              Visibility(
-                  visible: customStatusEmoji != "",
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: CachedNetworkImage(imageUrl: customStatusEmoji!,height: 20,width: 20,),
-                  )),
-              Visibility(
-                  visible: unSeenMsgCount != 0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                      borderRadius: BorderRadius.circular(5)
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 3,horizontal: 7),
-                    margin: EdgeInsets.only(left: 5),
-                    child: commonText(text: "$unSeenMsgCount"),
-                  ))
-            ],
+     margin: const EdgeInsets.symmetric(vertical: 6),
+     child: InkWell(
+       onTap: () {
+         // Handle user row tap
+       },
+       borderRadius: BorderRadius.circular(8),
+       child: Padding(
+         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Row(
+        children: [
+          profileIconWithStatus(
+            userID: userId,
+            otherUserProfile: imageUrl,
+            status: status,
           ),
-        ),
-      ),
-    );
+             const SizedBox(width: 12),
+             commonText(
+               text: username,
+               color: Colors.white.withOpacity(0.9),
+               fontSize: 14,
+               fontWeight: FontWeight.w500,
+             ),
+             Visibility(
+                 visible: userId == signInModel.data?.user?.id,
+                 child: Padding(
+                   padding: const EdgeInsets.only(left: 5.0),
+                   child: commonText(text: "(you)",color: Colors.white),
+                 )),
+             Visibility(
+                 visible: customStatusEmoji != "",
+                 child: Padding(
+                   padding: const EdgeInsets.only(left: 8.0),
+                   child: CachedNetworkImage(imageUrl: customStatusEmoji!,height: 20,width: 20,),
+                 )),
+             Visibility(
+                 visible: unSeenMsgCount != 0,
+                 child: Container(
+                   decoration: BoxDecoration(
+                       color: Colors.white,
+                       borderRadius: BorderRadius.circular(5)
+                   ),
+                   padding: EdgeInsets.symmetric(vertical: 3,horizontal: 7),
+                   margin: EdgeInsets.only(left: 5),
+                   child: commonText(text: "$unSeenMsgCount"),
+                 )),
+             Spacer(),
+             Visibility(
+                 visible: muteConversation,
+                 child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: Colors.white,)),
+             ...?children,
+           ],
+         ),
+       ),
+     ),
+   );
+    // return BlocBuilder<CommonCubit,CommonState>(builder: (context, state) {
+    //   // final commonCubit = context.read<CommonCubit>();
+    //   print("hiiiii>>> ${commonCubit.getUserModel?.data?.user!.muteUsers!.contains(userId)}");
+    //   print("hiiiii>>> ${commonCubit.getUserModel?.data?.user!.muteUsers!}");
+    //   print("hiiiii>>> $userId");
+    // return
+    // },);
   }
 
   Widget _buildChannelRow(channel) {
@@ -354,25 +672,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: Row(
-            children: [
-              Image.asset(
-                channel?.isPrivate == true ? AppImage.lockIcon : AppImage.globalIcon,
-                width: 16,
-                height: 16,
-                color: Colors.white.withOpacity(0.8),
-              ),
+      child: Row(
+        children: [
+          commonChannelIcon(isPrivate: channel?.isPrivate == true ? true : false),
               const SizedBox(width: 12),
               Expanded(
-                child: commonText(
-                  text: channel?.name ?? "",
+            child: commonText(
+              text: channel?.name ?? "",
                   color: Colors.white.withOpacity(0.9),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+              commonPopUpMenuForChannel()
             ],
           ),
         ),
@@ -444,6 +758,50 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
     );
   }
+
+  // Add helper method to get total count
+  int _getTotalFavoritesCount() {
+    final userCount = channelListCubit.favoriteListModel?.data?.chatList?.length ?? 0;
+    final channelCount = channelListCubit.favoriteListModel?.data?.favouriteChannels?.length ?? 0;
+    return userCount + channelCount;
+  }
+
+  // Add new method for favorite channels
+  Widget _buildFavoriteChannelRow(FavouriteChannels channel,List<Widget> children) {
+    final isPrivate = channel.isPrivate;
+    final name = channel.name;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      child: InkWell(
+        onTap: () {
+          // Handle channel tap
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Row(
+            children: [
+              commonChannelIcon(isPrivate: isPrivate!),
+              const SizedBox(width: 12),
+              commonText(
+                text: name!,
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Spacer(),
+              ...children,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+
 }
 
 class OptionItem {
@@ -457,3 +815,6 @@ class OptionItem {
     required this.onTap,
   });
 }
+
+
+

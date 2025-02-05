@@ -6,7 +6,9 @@ import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../cubit/common_cubit/common_cubit.dart';
 import '../../cubit/splash_screen/splash_screen_cubit.dart';
+import '../../main.dart';
 import '../../utils/app_color_constants.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -23,8 +25,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
+
   @override
   void initState() {
+    commonCubit = context.read<CommonCubit>();
     super.initState();
     _setupAnimations();
     _startAnimations();

@@ -1,4 +1,4 @@
-import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
+
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
@@ -6,13 +6,11 @@ import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:e_connect/utils/theme/theme_cubit.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../utils/app_preference_constants.dart';
 import '../../widgets/set_Custom_status_bottom_sheet.dart';
-import '../../widgets/status_bottom_sheet.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -22,61 +20,51 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  final commonCubit = CommonCubit();
 
-  void _showStatusBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatusBottomSheet(),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColor.commonAppColor,
-      // body: BlocBuilder<ThemeCubit, ThemeState>(
-      //   builder: (context, state) {
-      //     final themeCubit = context.read<ThemeCubit>();
-      //     return ;
-      //   },
-      // ),
-      body: BlocConsumer<ThemeCubit, ThemeState>(builder: (context, state) {
-        final themeCubit = context.read<ThemeCubit>();
-        return CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: _buildProfileHeader(),
-            ),
-
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  _buildSection(
-                    children: [
-                      _buildStatusTile(),
-                      _buildCustomStatusTile(),
-                    ],
-                  ),
-                  _buildSection(
-                    children: [
-                      _buildProfileTile(),
-                      _buildThemeModeTile(themeCubit),
-                    ],
-                  ),
-                  _buildSection(
-                    children: [
-                      _buildLogoutTile(),
-                    ],
-                  ),
-                ],
+    return BlocBuilder(
+      bloc: commonCubit,
+      builder: (context, state) {
+      return Scaffold(
+        backgroundColor: AppColor.commonAppColor,
+        body: BlocBuilder<ThemeCubit, ThemeState>(builder: (context, state) {
+          final themeCubit = context.read<ThemeCubit>();
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: _buildProfileHeader(),
               ),
-            ),
-          ],
-        );
-      }, listener: (context, state) {},),
-    );
+
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    _buildSection(
+                      children: [
+                        _buildStatusTile(),
+                        _buildCustomStatusTile(),
+                      ],
+                    ),
+                    _buildSection(
+                      children: [
+                        _buildProfileTile(),
+                        _buildThemeModeTile(themeCubit),
+                      ],
+                    ),
+                    _buildSection(
+                      children: [
+                        _buildLogoutTile(),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },),
+      );
+    },);
   }
 
   Widget _buildProfileHeader() {
@@ -118,7 +106,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Widget _buildSection({required List<Widget> children}) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: AppColor.borderColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
@@ -133,42 +121,39 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   Widget _buildStatusTile() {
-    return BlocBuilder<CommonCubit,CommonState>(
-      bloc: commonCubit,
-      builder: (context, state) {
-      return _buildTile(
-        onTap: () => _showStatusBottomSheet(context),
-        leading: getCommonStatusIcons(
-          status: "${commonCubit.getUserModel?.data?.user?.status}",
-          assetIcon: false,
-        ),
-        title: capitalizeFirstLetter("${commonCubit.getUserModel?.data?.user?.status}"),
-      );
-    },);
+    print("STATUSS >>> ${commonCubit.getUserModel?.data?.user!.status!}");
+    return _buildTile(
+      onTap: () => _showStatusBottomSheet(context),
+      leading: getCommonStatusIcons(
+        status: "${commonCubit.getUserModel?.data?.user!.status!}",
+        assetIcon: false,
+      ),
+      title: capitalizeFirstLetter("${commonCubit.getUserModel?.data?.user!.status!}"),
+    );
   }
 
-  // Widget _buildStatusTile() {
-  //   return _buildTile(
-  //     onTap: () => _showStatusBottomSheet(context),
-  //     leading: getCommonStatusIcons(
-  //       status: "${getUserModel?.data?.user?.status}",
-  //       assetIcon: false,
-  //     ),
-  //     title: capitalizeFirstLetter("${getUserModel?.data?.user?.status}"),
-  //   );
-  // }
 
   Widget _buildCustomStatusTile() {
     return GestureDetector(
       onTap: () => showCustomStatusSheet(context),
       child: _buildTile(
-        leading: Image.asset(
-          AppImage.setStatusIcon,
-          width: 24,
-          height: 24,
-          color: Colors.white.withOpacity(0.8),
-        ),
-        title: AppString.setACustomStatus,
+          leading: commonCubit.customStatusUrl.isNotEmpty ? Image.network(commonCubit.customStatusUrl,width: 24,height: 24,) : Image.asset(
+            AppImage.setStatusIcon,
+            width: 24,
+            height: 24,
+            color: Colors.white.withOpacity(0.8),
+          ),
+          title: commonCubit.customStatusUrl.isNotEmpty ? commonCubit.setCustomTextController.text : AppString.setACustomStatus,
+          trailing: commonCubit.customStatusUrl.isNotEmpty ? GestureDetector(
+            onTap: () => commonCubit.updateCustomStatusCall(status: "", emojiUrl: ""),
+            child: Container(
+                margin: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.close,size: 22,color: Colors.red,)),
+          ) : SizedBox.shrink()
       ),
     );
   }
@@ -177,11 +162,7 @@ class _SettingScreenState extends State<SettingScreen> {
     return GestureDetector(
       onTap: () => commonProfilePreview(context),
       child: _buildTile(
-        leading: Icon(
-          CupertinoIcons.person,
-          color: Colors.white.withOpacity(0.8),
-          size: 24,
-        ),
+        leading: Image.asset(AppImage.person,width: 22,height: 22,color:  Colors.white.withOpacity(0.8),),
         title: AppString.profile,
       ),
     );
@@ -231,8 +212,7 @@ class _SettingScreenState extends State<SettingScreen> {
     required String title,
     Widget? trailing,
     Color? textColor,
-  }) {
-    return InkWell(
+  }) {return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -252,6 +232,113 @@ class _SettingScreenState extends State<SettingScreen> {
               ),
             ),
             if (trailing != null) trailing,
+          ],
+        ),
+      ),
+    );}
+
+  void _showStatusBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF1B1E23),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Bottom sheet indicator
+            Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[600],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+
+            // Status text
+            Padding(
+              padding: EdgeInsets.only(left: 16, bottom: 16),
+              child: commonText(
+                text: AppString.status,
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            // Status options
+            _buildStatusOption(
+              context,
+              icon: Icons.check_circle,
+              color: Colors.green,
+              text: AppString.online,
+              index: 0,
+            ),
+            _buildStatusOption(
+              context,
+              icon: Icons.access_time_filled_outlined,
+              color: Colors.orange,
+              text: AppString.away,
+              index: 1,
+            ),
+            _buildStatusOption(
+              context,
+              icon: Icons.remove_circle,
+              color: Colors.blue,
+              text: AppString.busy,
+              index: 2,
+            ),
+            _buildStatusOption(
+              context,
+              icon: Icons.remove_circle,
+              color: Colors.red,
+              text: AppString.dnd,
+              index: 3,
+            ),
+            _buildStatusOption(
+              context,
+              icon: Icons.circle_outlined,
+              color: AppColor.borderColor,
+              text: AppString.offline,
+              index: 4,
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _buildStatusOption(
+      BuildContext context, {
+        required IconData icon,
+        required Color color,
+        required String text,
+        required int index,
+      }) {
+    return InkWell(
+      onTap: () {
+        pop();
+        commonCubit.updateStatusCall(status: index == 0 ? AppString.online.toLowerCase() : index == 1 ? AppString.away.toLowerCase() : index == 2 ? AppString.busy.toLowerCase() : index == 3 ? AppString.dnd.toLowerCase() : AppString.offline.toLowerCase());
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(width: 16),
+            commonText(
+              text: text,
+              color: Colors.white,
+              fontSize: 16,
+            ),
           ],
         ),
       ),

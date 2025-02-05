@@ -57,7 +57,7 @@ class User {
   String? email;
   String? elsnerEmail;
   String? position;
-  String? status; // Status will default to "Offline"
+  String? status;
   bool? isActive;
   List<dynamic>? loginActivity;
   dynamic customStatus;

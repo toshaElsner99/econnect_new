@@ -83,12 +83,14 @@ class ApiService {
     }
     switch (method) {
       case Method.POST:
-        FocusScope.of(navigatorKey.currentState!.context).unfocus();
+        // FocusScope.of(navigatorKey.currentState!.context).unfocus();
         return await http.post(uri, body: reqBody, headers: headers);
       case Method.DELETE:
         return await http.delete(uri, body: jsonEncode(reqBody), headers: headers);
       case Method.PATCH:
         return await http.patch(uri, body: jsonEncode(reqBody), headers: headers);
+      case Method.PUT:
+        return await http.put(uri, body: jsonEncode(reqBody), headers: headers);
       default:
         return await http.get(uri, headers: headers);
     }

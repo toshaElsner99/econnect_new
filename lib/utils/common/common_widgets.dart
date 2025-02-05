@@ -1,3 +1,5 @@
+
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/screens/sign_in_screen/sign_in_Screen.dart';
@@ -19,7 +21,6 @@ import 'enums.dart';
 
 
 
-var commonCubit = CommonCubit();
 
 startLoading(){
   navigatorKey.currentState!.context.read<LoadingCubit>().startLoading();
@@ -241,11 +242,11 @@ class ProfilePreviewSheet extends StatelessWidget {
                 },
                 icon: Icon(
                   Icons.camera_alt_outlined,
-                  color: AppColor.commonAppColor,
+                  color: AppColor.white,
                   size: 20,
                 ),
                 label: commonText(
-                  text: 'Change Picture',
+                  text: '',
                   color: AppColor.commonAppColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -281,7 +282,7 @@ updateSystemUiChrome() {
       statusBarIconBrightness: Brightness.dark));
 }
 
-Widget getCommonStatusIcons({String status = "", double size = 25 , bool assetIcon = true}){
+Widget getCommonStatusIcons({required String status, double size = 25 , bool assetIcon = true}){
   print("getIconStatus>>> $status");
   if(status ==  AppString.online.toLowerCase()) {
     return assetIcon ? Image.asset(AppImage.onlineIcon,height: size,width: size,) : Icon(Icons.check_circle,size: size,color: AppColor.greenColor,);
@@ -426,7 +427,7 @@ Widget showLogOutDialog() {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      commonCubit.logOut();
+                      navigatorKey.currentState!.context.read<CommonCubit>().logOut();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColor.commonAppColor,
@@ -570,7 +571,7 @@ Widget commonLogoutDialog() {
                   // Logout Button
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => commonCubit.logOut(),
+                      onPressed: () =>  navigatorKey.currentState!.context.read<CommonCubit>().logOut(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.redColor,
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -652,6 +653,156 @@ Widget commonText({
   );
 }
 
+Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false, Color? color}){
+  return Container(
+    width: 32,
+    height: 32,
+    decoration: BoxDecoration(
+      color: AppColor.borderColor.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Center(
+      child: Image.asset(
+        isPrivate == true ? AppImage.lockIcon : isShowPersons == true ? AppImage.persons : AppImage.globalIcon,
+        width: 16,
+        height: 16,
+        color: color ?? Colors.white.withOpacity(0.8),
+      ),
+    ),
+  );
+}
+
+Widget commonPopUpMenuForUser({required int index,required bool muteConversation, Function? removeFromFavorite}) {
+  print("index>>> $index");
+  print("muteConversation>>> $muteConversation");
+  return SizedBox(
+    height: 20,
+    width: 20,
+    child: PopupMenuButton<String>(
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(minWidth: 150),
+      icon: Icon(Icons.more_vert, size: 24),
+      onSelected: (value) {
+        print("Selected: $value");
+        if(index == 0 && value == "favorite"){
+          removeFromFavorite?.call();
+        }
+      },
+      itemBuilder: (BuildContext context) => [
+        PopupMenuItem(
+          height: 35,
+          value: "unread",
+          child: Row(
+            children: [
+              Icon(Icons.mark_chat_unread_outlined, size: 20),
+              SizedBox(width: 10),
+              commonText(text: "Mark as unread"),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          height: 35,
+          value: "favorite",
+          child: Row(
+            children: [
+              Icon(index == 0 ? Icons.star : Icons.star_border_purple500_outlined, size: 20),
+              SizedBox(width: 10),
+              commonText(text: index == 0 ? "Unfavorite" : "Favorite"),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          height: 35,
+          value: "mute",
+          child: Row(
+            children: [
+              Icon(muteConversation == true ? Icons.notifications_off_outlined : Icons.notifications_none, size: 20),
+              SizedBox(width: 10),
+              commonText(text: "Mute Conversation"),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          height: 35,
+          value: "leave",
+          child: Row(
+            children: [
+              Icon(Icons.exit_to_app, size: 20, color: Colors.red),
+              SizedBox(width: 10),
+              Text(
+                "Close Conversation",
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+Widget commonPopUpMenuForChannel() {
+  return SizedBox(
+    height: 20,
+    width: 20,
+    child: PopupMenuButton<String>(
+      padding: EdgeInsets.zero,
+      constraints: BoxConstraints(minWidth: 150),
+      icon: Icon(Icons.more_vert, size: 24),
+      onSelected: (value) {
+        print("Selected: $value");
+      },
+      itemBuilder: (BuildContext context) => [
+        PopupMenuItem(
+          height: 35,
+          value: "unread",
+          child: Row(
+            children: [
+              Icon(Icons.mark_chat_unread, size: 20),
+              SizedBox(width: 10),
+              Text("Mark as unread"),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          height: 35,
+          value: "favorite",
+          child: Row(
+            children: [
+              Icon(Icons.star_border, size: 20),
+              SizedBox(width: 10),
+              Text("Favorite"),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          height: 35,
+          value: "mute",
+          child: Row(
+            children: [
+              Icon(Icons.notifications_off, size: 20),
+              SizedBox(width: 10),
+              Text("Mute Channel"),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          height: 35,
+          value: "leave",
+          child: Row(
+            children: [
+              Icon(Icons.exit_to_app, size: 20, color: Colors.red),
+              SizedBox(width: 10),
+              Text(
+                "Leave Channel",
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
 Widget commonTextFormField({
   required TextEditingController controller,
@@ -671,9 +822,11 @@ Widget commonTextFormField({
   FocusNode? focusNode,
   String? Function(String?)? validator,
   int? errorMaxLines,
+  void Function()? onTap
 }) {
   return TextFormField(
     controller: controller,
+    onTap: () => onTap?.call(),
     keyboardType: keyboardType,
     obscureText: obscureText,
     autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -683,15 +836,6 @@ Widget commonTextFormField({
     textInputAction: textInputAction,
     initialValue: initialValue,
     inputFormatters: inputFormatters,
-    //   inputFormatters:  isInputFormatForEmail == true? [
-    //   // FilteringTextInputFormatter.allow(RegExp(r'[ a-zA-Z]')),
-    //     NoLeadingSpacesFormatter()
-    //     // LengthLimitingTextInputFormatter(20),
-    //     ] : inputFormatters /*[
-    //     FilteringTextInputFormatter.allow(RegExp(r'[ a-zA-Z]')),
-    //     NoLeadingSpacesFormatter(),
-    //     LengthLimitingTextInputFormatter(15),
-    // ]*/,
     style: const TextStyle(
         color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14),
     decoration: InputDecoration(
@@ -702,7 +846,7 @@ Widget commonTextFormField({
       suffixIcon: suffixIcon,
       suffix: suffixWidget,
       prefix: prefixWidget,
-      fillColor: Colors.white,
+      fillColor: Colors.transparent,
       filled: true,
       border: const OutlineInputBorder(
         borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),

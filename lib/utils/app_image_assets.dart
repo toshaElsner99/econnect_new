@@ -25,5 +25,16 @@ class AppImage{
   static const globalIcon = "$path/globe.png";
   static const lockIcon = "$path/lock.png";
   static const persons = "$path/persons.png";
+  static const person = "$path/person.png";
+  static const muteNotification = "$path/mute_notification.png";
+
+
+  /// networkUrls
+  ///
+  static const inMeetingUrl = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f4c5.png";
+  static const outForLunchUrl = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f354.png";
+  static const outSickUrl = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f927.png";
+  static const workingFromHomeUrl = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f3e1.png";
+  static const onVacationUrl = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f334.png";
 
 }

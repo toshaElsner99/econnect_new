@@ -1,0 +1,223 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_connect/utils/api_service/api_string_constants.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../cubit/channel_list/channel_list_cubit.dart';
+import '../../utils/app_color_constants.dart';
+import '../../utils/app_image_assets.dart';
+import '../../utils/common/common_widgets.dart';
+
+class FindChannelScreen extends StatefulWidget {
+  const FindChannelScreen({super.key});
+
+  @override
+  State<FindChannelScreen> createState() => _FindChannelScreenState();
+}
+
+class _FindChannelScreenState extends State<FindChannelScreen> {
+  final _searchController = TextEditingController();
+  final channelListCubit = ChannelListCubit();
+
+  @override
+  void initState() {
+    super.initState();
+    channelListCubit.browseAndSearchChannel(search: _searchController.text);
+
+    _searchController.addListener(() {
+      if (_searchController.text.isNotEmpty && _searchController.text.length > 3) {
+        channelListCubit.browseAndSearchChannel(search: _searchController.text);
+      }  else if(_searchController.text.isEmpty){
+        channelListCubit.browseAndSearchChannel(search: "");
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.close, color: Colors.black87),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: commonText(
+            text: 'Find Channel',
+            color: Colors.black87,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        body: BlocConsumer(
+          bloc: channelListCubit,
+          builder: (context, state) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Search Field
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: commonTextFormField(
+                    controller: _searchController,
+                    hintText: 'Search users or channels',
+                    prefixIcon: const Icon(CupertinoIcons.search),
+                  ),
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Users Section
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: commonText(
+                            text: 'Users',
+                            color: Colors.black87,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (channelListCubit.browseAndSearchChannelModel?.data?.users?.isEmpty ?? true)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                            child: Center(
+                              child: commonText(
+                                text: 'No users found',
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: channelListCubit.browseAndSearchChannelModel?.data?.users?.length ?? 0,
+                            itemBuilder: (context, index) {
+                              final user = channelListCubit.browseAndSearchChannelModel?.data?.users?[index];
+                              return _buildUserTile(user);
+                            },
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // Channels Section
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: commonText(
+                            text: 'Channels',
+                            color: Colors.black87,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (channelListCubit.browseAndSearchChannelModel?.data?.channels?.isEmpty ?? true)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                            child: Center(
+                              child: commonText(
+                                text: 'No channels found',
+                                color: Colors.grey[600],
+                                fontSize: 14,
+                              ),
+                            ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: channelListCubit.browseAndSearchChannelModel?.data?.channels?.length ?? 0,
+                            itemBuilder: (context, index) {
+                              final channel = channelListCubit.browseAndSearchChannelModel?.data?.channels?[index];
+                              return _buildChannelTile(channel);
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+          listener: (context, state) {},
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserTile(dynamic user) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundImage: CachedNetworkImageProvider(
+          ApiString.profileBaseUrl + (user?.avatarUrl ?? ""),
+        ),
+      ),
+      title: commonText(
+        text: user?.username ?? "",
+        color: Colors.black87,
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    );
+  }
+
+  Widget _buildChannelTile(dynamic channel) {
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Center(
+          child: Image.asset(
+            channel?.isPrivate == true ? AppImage.lockIcon : AppImage.globalIcon,
+            width: 20,
+            height: 20,
+            color: Colors.grey[700],
+          ),
+        ),
+      ),
+      title: commonText(
+        text: channel?.name ?? "",
+        color: Colors.black87,
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+      subtitle: Row(
+        children: [
+          Image.asset(
+            AppImage.person,
+            height: 12,
+            width: 12,
+            color: Colors.grey[600],
+          ),
+          const SizedBox(width: 4),
+          commonText(
+            text: "${channel?.members?.length ?? 0}",
+            color: Colors.grey[600],
+            fontSize: 12,
+          ),
+        ],
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(() {});
+    _searchController.dispose();
+    super.dispose();
+  }
+}

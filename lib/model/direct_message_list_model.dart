@@ -18,7 +18,7 @@ class DirectMessageListModel {
     status = json['status'];
     message = json['message'];
     data = json['data'] != null ? Data.fromJson(json['data']) : null;
-    metadata = json['metadata'] != null ? List<dynamic>.from(json['metadata']) : null;
+    metadata = json['metadata'] ?? [];
   }
 
   Map<String, dynamic> toJson() {
@@ -34,15 +34,13 @@ class DirectMessageListModel {
 
 class Data {
   String? userId;
-  List<ChatList>? chatList;
+  List<ChatListDirectMessage>? chatList;
 
   Data({this.userId, this.chatList});
 
   Data.fromJson(Map<String, dynamic> json) {
     userId = json['userId'];
-    chatList = json['chatList'] != null
-        ? (json['chatList'] as List).map((v) => ChatList.fromJson(v)).toList()
-        : null;
+    chatList = (json['chatList'] as List?)?.map((v) => ChatListDirectMessage.fromJson(v)).toList();
   }
 
   Map<String, dynamic> toJson() {
@@ -53,7 +51,7 @@ class Data {
   }
 }
 
-class ChatList {
+class ChatListDirectMessage {
   String? sId;
   String? username;
   String? email;
@@ -62,26 +60,25 @@ class ChatList {
   List<dynamic>? loginActivity;
   String? customStatus;
   String? customStatusEmoji;
-  List<dynamic>? muteUsers;
+  List<String>? muteUsers;
   List<String>? muteChannels;
   String? createdAt;
   String? updatedAt;
   int? iV;
   LastActiveChat? lastActiveChat;
-  String? chatList;
   String? avatarUrl;
   String? thumbnailAvatarUrl;
-  String? fullName;
+  bool? isLeft;
+  String? chatList;
+  String? favouriteList;
   bool? isAutomatic;
   String? lastActiveTime;
-  String? favouriteList;
-  bool? isLeft;
   String? elsnerEmail;
   int? unseenMessagesCount;
   String? latestMessage;
   String? latestMessageCreatedAt;
 
-  ChatList({
+  ChatListDirectMessage({
     this.sId,
     this.username,
     this.email,
@@ -96,43 +93,41 @@ class ChatList {
     this.updatedAt,
     this.iV,
     this.lastActiveChat,
-    this.chatList,
     this.avatarUrl,
     this.thumbnailAvatarUrl,
-    this.fullName,
+    this.isLeft,
+    this.chatList,
+    this.favouriteList,
     this.isAutomatic,
     this.lastActiveTime,
-    this.favouriteList,
-    this.isLeft,
     this.elsnerEmail,
     this.unseenMessagesCount,
     this.latestMessage,
     this.latestMessageCreatedAt,
   });
 
-  ChatList.fromJson(Map<String, dynamic> json) {
+  ChatListDirectMessage.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     username = json['username'];
     email = json['email'];
     status = json['status'];
     isActive = json['isActive'];
-    loginActivity = json['loginActivity'] != null ? List<dynamic>.from(json['loginActivity']) : null;
+    loginActivity = json['loginActivity'] ?? [];
     customStatus = json['custom_status'];
     customStatusEmoji = json['custom_status_emoji'];
-    muteUsers = json['mute_users'] != null ? List<dynamic>.from(json['mute_users']) : null;
-    muteChannels = json['mute_channels'] != null ? List<String>.from(json['mute_channels']) : null;
+    muteUsers = (json['mute_users'] as List?)?.cast<String>();
+    muteChannels = (json['mute_channels'] as List?)?.cast<String>();
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
     lastActiveChat = json['lastActiveChat'] != null ? LastActiveChat.fromJson(json['lastActiveChat']) : null;
-    chatList = json['chatList'];
     avatarUrl = json['avatarUrl'];
     thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
-    fullName = json['fullName'];
+    isLeft = json['isLeft'];
+    chatList = json['chatList'];
+    favouriteList = json['favouriteList'];
     isAutomatic = json['isAutomatic'];
     lastActiveTime = json['last_active_time'];
-    favouriteList = json['favouriteList'];
-    isLeft = json['isLeft'];
     elsnerEmail = json['elsner_email'];
     unseenMessagesCount = json['unseenMessagesCount'];
     latestMessage = json['latestMessage'];
@@ -155,14 +150,13 @@ class ChatList {
       'updatedAt': updatedAt,
       '__v': iV,
       'lastActiveChat': lastActiveChat?.toJson(),
-      'chatList': chatList,
       'avatarUrl': avatarUrl,
       'thumbnail_avatarUrl': thumbnailAvatarUrl,
-      'fullName': fullName,
+      'isLeft': isLeft,
+      'chatList': chatList,
+      'favouriteList': favouriteList,
       'isAutomatic': isAutomatic,
       'last_active_time': lastActiveTime,
-      'favouriteList': favouriteList,
-      'isLeft': isLeft,
       'elsner_email': elsnerEmail,
       'unseenMessagesCount': unseenMessagesCount,
       'latestMessage': latestMessage,

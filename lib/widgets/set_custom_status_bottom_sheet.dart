@@ -1,8 +1,11 @@
+import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/main.dart';
+import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../utils/app_color_constants.dart';
 import '../utils/common/common_widgets.dart';
@@ -75,7 +78,7 @@ class CustomStatusSheet extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              // Handle done action
+              commonCubit.updateCustomStatusCall(status: commonCubit.setCustomTextController.text,emojiUrl: getEmojiAndText());
               Navigator.pop(context);
             },
             child: commonText(
@@ -90,39 +93,58 @@ class CustomStatusSheet extends StatelessWidget {
     );
   }
 
+  getEmojiAndText({bool image = true}){
+    if(commonCubit.selectedIndexOfStatus == 0){
+      return image ? AppImage.inMeetingUrl : AppString.inMeeting;
+    }else if(commonCubit.selectedIndexOfStatus == 1){
+      return image ? AppImage.outForLunchUrl : AppString.outForLunch;
+    }else if(commonCubit.selectedIndexOfStatus == 2){
+      return image ? AppImage.outSickUrl : AppString.outSick;
+    }else if(commonCubit.selectedIndexOfStatus == 3){
+      return image ? AppImage.workingFromHomeUrl : AppString.workingFromHome;
+    }else if(commonCubit.selectedIndexOfStatus == 4){
+      return image ? AppImage.onVacationUrl : AppString.onVacation;
+    }else if(commonCubit.customStatusUrl.isNotEmpty){
+      return commonCubit.customStatusUrl;
+    }
+  }
+
   Widget _buildCustomStatusInput() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          GestureDetector(
-          onTap: () => showEmojiSheet(),
-            child: Icon(
-              Icons.sentiment_satisfied_alt,
-              color: Colors.white.withOpacity(0.8),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: TextField(
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-              decoration: InputDecoration(
-                hintText: 'Set a custom status',
-                hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 16,
-                ),
-                border: InputBorder.none,
+    return BlocBuilder(
+      bloc: commonCubit,
+      builder: (context, state) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => showEmojiSheet(),
+              child: (commonCubit.customStatusUrl.isNotEmpty || commonCubit.selectedIndexOfStatus != null) ? Image.network(getEmojiAndText(),height: 24,width: 24,) : Icon(
+                Icons.sentiment_satisfied_alt,
+                color: Colors.white.withOpacity(0.8),
+                size: 24,
               ),
             ),
-          ),
-        ],
-      ),
-    );
+            const SizedBox(width: 16),
+            Expanded(
+              child: commonTextFormField(
+                controller: commonCubit.setCustomTextController, hintText: 'Set a custom status',
+                suffixIcon: (commonCubit.customStatusUrl.isNotEmpty) ? GestureDetector(
+                  onTap: () => commonCubit.selectedIndexOfStatus != null ? commonCubit.clearUpdates() : commonCubit.updateCustomStatusCall(status: "", emojiUrl: ""),
+                  child: Container(
+                    margin: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.close,size: 22,color: Colors.red,)),
+                ) : SizedBox.shrink()
+              ),
+            ),
+          ],
+        ),
+      );
+    },);
   }
 
   Widget _buildSuggestionsSection() {
@@ -138,49 +160,52 @@ class CustomStatusSheet extends StatelessWidget {
             color: Colors.white.withOpacity(0.5),
           ),
         ),
+
         _buildSuggestionItem(
-          icon: Icons.calendar_today,
+          icon: AppImage.inMeetingUrl,
           title: AppString.inMeeting,
+          index: 0,
         ),
         _buildSuggestionItem(
-          icon: Icons.lunch_dining,
+          icon: AppImage.outForLunchUrl,
           title: AppString.outForLunch,
+          index: 1,
         ),
         _buildSuggestionItem(
-          icon: Icons.sick,
+          icon: AppImage.outSickUrl,
           title: AppString.outSick,
+          index: 2,
         ),
         _buildSuggestionItem(
-          icon: Icons.home_work,
+          icon: AppImage.workingFromHomeUrl,
           title: AppString.workingFromHome,
+          index: 3,
         ),
         _buildSuggestionItem(
-          icon: Icons.beach_access,
+          icon: AppImage.onVacationUrl,
           title: AppString.onVacation,
+          index: 4
         ),
       ],
     );
   }
 
   Widget _buildSuggestionItem({
-    required IconData icon,
+    required String icon,
     required String title,
+    required int index,
   }) {
     return InkWell(
       onTap: () {
         print("SUGESTIONS>>>> $title");
-        pop();
-        commonCubit.updateCustomStatusCall(status: title,emojiUrl: "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f60e.png");
+        commonCubit.updateIndexForCustomStatus(index,title);
+        // pop();
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: Colors.white.withOpacity(0.8),
-              size: 24,
-            ),
+            Image.network(icon,height: 24,width: 24,),
             const SizedBox(width: 16),
             Expanded(
               child: Column(

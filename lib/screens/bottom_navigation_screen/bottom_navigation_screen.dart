@@ -1,13 +1,11 @@
-import 'package:e_connect/screens/bottom_nav_tabs/home_screen.dart';
-import 'package:e_connect/screens/bottom_nav_tabs/profile_screen.dart';
-import 'package:e_connect/screens/bottom_nav_tabs/setting_screen.dart';
-import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubit/common_cubit/common_cubit.dart';
 import '../../cubit/sign_in/sign_in_model.dart';
 import '../../main.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+
+import 'bottom_navigation_screen_cubit.dart';
 
 class BottomNavigationScreen extends StatefulWidget {
   const BottomNavigationScreen({super.key});
@@ -17,14 +15,10 @@ class BottomNavigationScreen extends StatefulWidget {
 }
 
 class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
-  int _currentIndex = 0;
   var commonCubit = CommonCubit();
+  var bottomNavigationScreenCubit = BottomNavigationScreenCubit();
 
-  final List<Widget> _screens = [
-    HomeScreen(),
-    SearchMessage(),
-    SettingScreen()
-  ];
+
 
   @override
   void initState() {
@@ -35,48 +29,34 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
   load() async {
     await commonCubit.getUserByIDCall();
     signInModel = (await SignInModel.loadFromPrefs())!;
-    print("signIn>>>>> ${signInModel.data?.user?.fullName}");
-    print("signIn>>>>> ${signInModel.data?.user?.avatarUrl}");
-  }
-  connect() {
-    ApiString.socket = IO.io(ApiString.baseUrl, <String, dynamic>{
-      "transports": ["websocket"],
-      "autoConnect": false,
-    });
-
-    ApiString.socket?.connect();
-    ApiString.socket?.onConnect((data) {
-      print('Socket-ID:------->${ApiString.socket?.id}');
-      print('connectivity :---->${ApiString.socket?.connected}');
-    });
   }
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: "Search",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: "Settings",
-          ),
-        ],
-      ),
-    );
+    return BlocBuilder(
+      bloc: bottomNavigationScreenCubit,
+      builder: (context, state) {
+      return Scaffold(
+        body: bottomNavigationScreenCubit.screens[bottomNavigationScreenCubit.currentIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: bottomNavigationScreenCubit.currentIndex,
+          onTap: (index) => bottomNavigationScreenCubit.updateCurrentIndex(index),
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: "Home",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.search),
+              label: "Search",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: "Settings",
+            ),
+          ],
+        ),
+      );
+    },);
   }
 }

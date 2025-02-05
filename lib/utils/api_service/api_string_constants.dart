@@ -20,5 +20,14 @@ class ApiString{
   static const directMessageChatList = "chatList/get";
   static const createChannel = "channels/add";
   static const browseChannel = "user/search-user-channel";
-
+  static const removeFromFavorite = "favouriteLists/removeFromFavourite";
+  static const muteUser = "user/mute-user";
+  static const unMuteUser = "user/unmute-user";
+  static const closeConversation = "chatList/close-conversation";
+  static const messageUnread = "messages/message-unread/";
+  static const messageSeen = "messages/message-seen/";
+  static const addTOFavorite = "favouriteLists/add";
+  static const leaveChannel = "channels/leaveChannel/";
+  static const userSuggestions = "user/user-suggestions";
+  static const searchUser = "user/search-user";
 }
