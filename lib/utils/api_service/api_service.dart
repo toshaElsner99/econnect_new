@@ -58,7 +58,7 @@ class ApiService {
       throw Exception("Bad Response Format!");
     } catch (e) {
       commonShowToast("Something Went Wrong $e", Colors.red);
-      throw Exception("Something Went Wrong $e");
+      throw Exception("Something Went Wrong ${e.toString()}");
     } finally {
       stopLoading();
     }

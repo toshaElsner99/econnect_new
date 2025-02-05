@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'chat_header_buttons.dart';
 
 class ChatProfileHeader extends StatelessWidget {
-  const ChatProfileHeader({super.key});
+  final String userName;
+  final String userImageUrl;
+
+  ChatProfileHeader({required this.userName, required this.userImageUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -19,23 +22,9 @@ class ChatProfileHeader extends StatelessWidget {
               Stack(
                 alignment: Alignment.bottomRight,
                 children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColor.darkRedColor,
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'T',
-                        style: TextStyle(
-                          color: AppColor.whiteColor,
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: NetworkImage(userImageUrl),
                   ),
                   Container(
                     padding: const EdgeInsets.all(2),
@@ -61,7 +50,7 @@ class ChatProfileHeader extends StatelessWidget {
               const SizedBox(height: 12),
               // Name
               commonText(
-                  text: 'Tosha Shah',
+                  text: userName,
                   color: AppColor.whiteColor,
                   fontSize: 24,
                   fontWeight: FontWeight.bold),

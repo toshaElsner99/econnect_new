@@ -2,7 +2,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class ApiString{
 
-  static const String baseUrl = 'https://e-connect.elsner.com/v1/'; /// THIS STAGE URL
+  static const String baseUrl = 'https://e-connect.elsner.com/v1/'; /// THIS LIVE URL
   // static const String baseUrl= 'https://dev-econnect.elsnerdev.co/v1/'; /// THIS DEVELOPMENT URL
   static const String profileBaseUrl = 'https://e-connect.elsner.com/public/'; /// Profile Image
 
@@ -20,5 +20,8 @@ class ApiString{
   static const directMessageChatList = "chatList/get";
   static const createChannel = "channels/add";
   static const browseChannel = "user/search-user-channel";
+
+  // Chat
+  static const getMessages = "messages/get-message";
 
 }

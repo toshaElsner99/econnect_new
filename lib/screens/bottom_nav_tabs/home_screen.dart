@@ -12,6 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../main.dart';
 import '../../utils/common/common_function.dart';
+import '../chat/single_chat_message_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,7 +21,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final channelListCubit = ChannelListCubit();
   List<OptionItem> options = [
     OptionItem(
@@ -73,9 +75,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   _buildExpansionSection(
                     title: "FAVORITES",
                     index: 0,
-                    itemCount: channelListCubit.favoriteListModel?.data?.chatList?.length ?? 0,
+                    itemCount: channelListCubit
+                            .favoriteListModel?.data?.chatList?.length ??
+                        0,
                     itemBuilder: (context, index) {
-                      final favorite = channelListCubit.favoriteListModel?.data?.chatList?[index];
+                      final favorite = channelListCubit
+                          .favoriteListModel?.data?.chatList?[index];
                       return _buildUserRow(
                         imageUrl: favorite?.avatarUrl ?? "",
                         username: favorite?.username ?? "",
@@ -90,27 +95,33 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     title: "CHANNEL",
                     index: 1,
                     trailing: _buildAddButton(),
-                    itemCount: channelListCubit.channelListModel?.data?.length ?? 0,
+                    itemCount:
+                        channelListCubit.channelListModel?.data?.length ?? 0,
                     itemBuilder: (context, index) {
-                      final channel = channelListCubit.channelListModel!.data![index];
+                      final channel =
+                          channelListCubit.channelListModel!.data![index];
                       return _buildChannelRow(channel);
                     },
                   ),
                   _buildExpansionSection(
                     index: 2,
                     title: "DIRECT MESSAGE",
-                    itemCount: channelListCubit.directMessageListModel?.data?.chatList?.length ?? 0,
+                    itemCount: channelListCubit
+                            .directMessageListModel?.data?.chatList?.length ??
+                        0,
                     trailing: _buildAddButton(),
                     itemBuilder: (context, index) {
-                      final directMessage = channelListCubit.directMessageListModel!.data!.chatList?[index];
+                      final directMessage = channelListCubit
+                          .directMessageListModel!.data!.chatList?[index];
                       return _buildUserRow(
-                        imageUrl: directMessage?.avatarUrl ?? "",
-                        username: directMessage?.username ?? "",
-                        status: directMessage?.status ?? "",
-                        userId: directMessage?.sId ?? "",
-                        customStatusEmoji: directMessage?.customStatusEmoji ?? "",
-                        unSeenMsgCount: directMessage?.unseenMessagesCount ?? 0
-                      );
+                          imageUrl: directMessage?.avatarUrl ?? "",
+                          username: directMessage?.username ?? "",
+                          status: directMessage?.status ?? "",
+                          userId: directMessage?.sId ?? "",
+                          customStatusEmoji:
+                              directMessage?.customStatusEmoji ?? "",
+                          unSeenMsgCount:
+                              directMessage?.unseenMessagesCount ?? 0);
                     },
                   ),
                 ],
@@ -121,8 +132,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
     );
   }
-
-
 
   // Add this widget after _buildHeader
   Widget _buildSearchField() {
@@ -242,11 +251,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   duration: const Duration(milliseconds: 200),
                   child: Container(
                     constraints: BoxConstraints(
-                      maxHeight: (_isExpanded[title] ?? false) ? MediaQuery.of(context).size.height * 0.4 : 0,
+                      maxHeight: (_isExpanded[title] ?? false)
+                          ? MediaQuery.of(context).size.height * 0.4
+                          : 0,
                     ),
                     child: ListView.builder(
                       itemCount: itemCount,
-                      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                      padding:
+                          const EdgeInsets.only(left: 16, right: 16, bottom: 8),
                       shrinkWrap: true,
                       physics: const BouncingScrollPhysics(),
                       itemBuilder: itemBuilder,
@@ -296,6 +308,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: InkWell(
         onTap: () {
           // Handle user row tap
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => SingleChatMessageScreen(
+                      userName: username,
+                      oppositeUserId: userId,
+                    )),
+          );
         },
         borderRadius: BorderRadius.circular(8),
         child: Padding(
@@ -318,22 +338,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   visible: userId == signInModel.data?.user?.id,
                   child: Padding(
                     padding: const EdgeInsets.only(left: 5.0),
-                    child: commonText(text: "(you)",color: Colors.white),
+                    child: commonText(text: "(you)", color: Colors.white),
                   )),
               Visibility(
                   visible: customStatusEmoji != "",
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8.0),
-                    child: CachedNetworkImage(imageUrl: customStatusEmoji!,height: 20,width: 20,),
+                    child: CachedNetworkImage(
+                      imageUrl: customStatusEmoji!,
+                      height: 20,
+                      width: 20,
+                    ),
                   )),
               Visibility(
                   visible: unSeenMsgCount != 0,
                   child: Container(
                     decoration: BoxDecoration(
                         color: Colors.white,
-                      borderRadius: BorderRadius.circular(5)
-                    ),
-                    padding: EdgeInsets.symmetric(vertical: 3,horizontal: 7),
+                        borderRadius: BorderRadius.circular(5)),
+                    padding: EdgeInsets.symmetric(vertical: 3, horizontal: 7),
                     margin: EdgeInsets.only(left: 5),
                     child: commonText(text: "$unSeenMsgCount"),
                   ))
@@ -357,7 +380,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: Row(
             children: [
               Image.asset(
-                channel?.isPrivate == true ? AppImage.lockIcon : AppImage.globalIcon,
+                channel?.isPrivate == true
+                    ? AppImage.lockIcon
+                    : AppImage.globalIcon,
                 width: 16,
                 height: 16,
                 color: Colors.white.withOpacity(0.8),

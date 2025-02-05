@@ -62,17 +62,18 @@ class CommonCubit extends Cubit<CommonState> {
     }
   }
 
-  Future<void> getUserByIDCall() async {
+  Future<GetUserModel?> getUserByIDCall({String? userId}) async {
     final header = {
       'Authorization': "Bearer ${signInModel.data!.authToken}",
     };
     final response = await ApiService.instance.request(
-        endPoint: "${ApiString.getUserById}/${signInModel.data?.user?.id}",
+        endPoint: "${ApiString.getUserById}/${userId ?? signInModel.data?.user?.id}",
         method: Method.GET,
         headers: header);
     if (statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
       emit(CommonInitial());
+      return getUserModel;
     }
   }
 }
