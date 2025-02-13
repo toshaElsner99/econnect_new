@@ -4,7 +4,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
@@ -314,6 +316,35 @@ Widget getCommonStatusIcons({required String status, double size = 25 , bool ass
     return assetIcon ? Image.asset(AppImage.offlineIcon,height: size,width: size,) : Icon(Icons.circle_outlined,color: AppColor.borderColor,size: size,);
   }
 }
+
+Widget commonPopUpForMsg({double size = 20}) {
+  return Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: Colors.grey),
+      color: CupertinoColors.darkBackgroundGray, // Adjust based on theme
+    ),
+    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.reply, size: size, color: Colors.white),
+        SizedBox(width: 8),
+        Icon(Icons.forward_sharp, size: size, color: Colors.white),
+        SizedBox(width: 8),
+        Icon(Icons.push_pin, size: size, color: Colors.white),
+        SizedBox(width: 8),
+        Icon(Icons.copy, size: size, color: Colors.white),
+        SizedBox(width: 8),
+        Icon(Icons.edit, size: size, color: Colors.white),
+        SizedBox(width: 8),
+        Icon(Icons.delete, size: size, color: Colors.redAccent),
+      ],
+    ),
+  );
+}
+
+
 // Widget profileIconWithStatus({
 //   required String userID,
 //   required String status,

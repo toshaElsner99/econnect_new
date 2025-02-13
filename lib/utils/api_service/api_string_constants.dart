@@ -41,5 +41,6 @@ class ApiString{
   static const muteChannel = "user/mute-channel";
   static const addUserToChatList = "chatList/add";
   static const sendMessage = "messages/send-message";
+  static const deleteMessage = "messages/delete/";
 
 }

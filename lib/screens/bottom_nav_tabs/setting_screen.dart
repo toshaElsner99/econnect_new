@@ -8,6 +8,7 @@ import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:e_connect/utils/theme/theme_cubit.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
@@ -56,6 +57,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       _buildLogoutTile(),
                     ],
                   ),
+                  closeScreen()
                 ],
               ),
             ),
@@ -63,6 +65,21 @@ class _SettingScreenState extends State<SettingScreen> {
         ),
       );
     },);
+  }
+
+  Container closeScreen() {
+    return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColor.borderColor.withOpacity(0.15),
+                    // borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColor.redColor.withOpacity(0.4),
+                    ),
+                  ),
+                  child: IconButton(onPressed: () => pop(), icon: Icon(Icons.close,color: Colors.white,)),
+                );
   }
 
   Widget _buildProfileHeader() {

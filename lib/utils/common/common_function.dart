@@ -11,6 +11,28 @@ import 'package:http/http.dart' as http;
 import 'package:insta_image_viewer/insta_image_viewer.dart';
 
 import '../../main.dart';
+
+String getLastOnlineStatus(String status, String? timestamp) {
+  if (status.toLowerCase() == "offline" && timestamp != null) {
+    DateTime lastOnline = DateTime.parse(timestamp).toLocal();
+    DateTime now = DateTime.now();
+    Duration difference = now.difference(lastOnline);
+
+    if (difference.inSeconds < 60) {
+      return "Last online ${difference.inSeconds} sec ago";
+    } else if (difference.inMinutes < 60) {
+      return "Last online ${difference.inMinutes} min ago";
+    } else if (difference.inHours < 24) {
+      return "Last online ${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago";
+    } else if (difference.inDays == 1) {
+      return "Last online yesterday";
+    } else {
+      return "Offline";
+    }
+  }
+  return capitalizeFirstLetter(status);
+}
+
 Future<String> fetchFileSize(String url) async {
   try {
     final response = await http.head(Uri.parse(url));

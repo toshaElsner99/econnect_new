@@ -1,3 +1,4 @@
+import 'package:e_connect/cubit/chat/chat_cubit.dart';
 import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:flutter/cupertino.dart';
@@ -90,12 +91,25 @@ class SocketIoProvider extends ChangeNotifier{
       print('Reconnected after $attempt attempts');
     });
 
-    print("connected>>>> ${socket.connected}");
+    socket.onAny((event, data) {
+      print("connected>>>> ${socket.connected}");
+      print("Received event: $event >>> $data");
+    });
   }
 
   joinRoomEvent(){
     socket.emit(joinRoom,{{'userId': signInModel.data?.user?.id}});
     socket.on(joinRoom, (data) => pragma("joinRoomEvent>>>> $data"),);
+  }
+
+  userTypingEvent({required String oppositeUserId, required bool isReplyMsg,required int isTyping}){
+    print("CALLLED_userTypingEvent>>>>>>> ");
+    socket.emit(userTyping,{"senderId": signInModel.data?.user?.id ?? "","receiverId": oppositeUserId,"inputValue":isTyping,"isReply":isReplyMsg});
+  }
+
+  sendMessages({required Map<String, dynamic> response}) {
+    print("emit>>>>> Send Message");
+    socket.emit(sendMessage, response);
   }
 
   void listenForNotifications() {
@@ -107,4 +121,17 @@ class SocketIoProvider extends ChangeNotifier{
       Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getDirectMessageList();
     });
   }
+
+  void listSingleChatScreen({required String oppositeUserId}) {
+    if (!socket.connected) {
+      print("⚠️ Socket is not connected. Attempting to reconnect...");
+      socket.connect();
+    }
+
+    socket.on(notification, (data) {
+      print("listSingleChatScreen >>> $data");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId, true);
+    });
+  }
+
 }

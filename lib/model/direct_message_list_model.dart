@@ -70,7 +70,7 @@ class ChatListDirectMessage {
   String? thumbnailAvatarUrl;
   bool? isLeft;
   String? chatList;
-  String? favouriteList;
+  // String? favouriteList;
   bool? isAutomatic;
   String? lastActiveTime;
   String? elsnerEmail;
@@ -97,7 +97,7 @@ class ChatListDirectMessage {
     this.thumbnailAvatarUrl,
     this.isLeft,
     this.chatList,
-    this.favouriteList,
+    // this.favouriteList,
     this.isAutomatic,
     this.lastActiveTime,
     this.elsnerEmail,
@@ -125,7 +125,7 @@ class ChatListDirectMessage {
     thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
     isLeft = json['isLeft'];
     chatList = json['chatList'];
-    favouriteList = json['favouriteList'];
+    // favouriteList = json['favouriteList'];
     isAutomatic = json['isAutomatic'];
     lastActiveTime = json['last_active_time'];
     elsnerEmail = json['elsner_email'];
@@ -154,7 +154,7 @@ class ChatListDirectMessage {
       'thumbnail_avatarUrl': thumbnailAvatarUrl,
       'isLeft': isLeft,
       'chatList': chatList,
-      'favouriteList': favouriteList,
+      // 'favouriteList': favouriteList,
       'isAutomatic': isAutomatic,
       'last_active_time': lastActiveTime,
       'elsner_email': elsnerEmail,

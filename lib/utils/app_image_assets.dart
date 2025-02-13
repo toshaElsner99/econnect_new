@@ -30,6 +30,8 @@ class AppImage{
   static const pinMessageIcon = "$path/vertical-pin.png";
   static const downloadIcon = "$path/download.png";
   static const unMuteNotification = "$path/ringing.png";
+  static const pinIcon = "$path/push-pin.png";
+  static const fileIcon = "$path/file.png";
 
 
   /// networkUrls
