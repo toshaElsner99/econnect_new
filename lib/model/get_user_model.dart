@@ -63,6 +63,7 @@ class User {
   dynamic customStatus;
   dynamic customStatusEmoji;
   List<dynamic>? muteUsers;
+  List<dynamic>? favoriteList;
   bool? isLeft;
   List<dynamic>? customStatusHistory;
   String? createdAt;
@@ -90,6 +91,7 @@ class User {
     this.customStatus,
     this.customStatusEmoji,
     this.muteUsers,
+    this.favoriteList,
     this.isLeft,
     this.customStatusHistory,
     this.createdAt,
@@ -122,6 +124,12 @@ class User {
     }
     customStatus = json['custom_status'];
     customStatusEmoji = json['custom_status_emoji'];
+    if (json['mute_users'] != null) {
+      muteUsers = <dynamic>[];
+      json['mute_users'].forEach((v) {
+        muteUsers!.add(v);
+      });
+    }
     if (json['mute_users'] != null) {
       muteUsers = <dynamic>[];
       json['mute_users'].forEach((v) {

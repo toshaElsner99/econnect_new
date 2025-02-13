@@ -51,7 +51,7 @@ class ChatProfileHeader extends StatelessWidget {
               // Name
               commonText(
                   text: userName,
-                  color: AppColor.whiteColor,
+                  // color: AppColor.whiteColor,
                   fontSize: 24,
                   fontWeight: FontWeight.bold),
               const SizedBox(height: 8),
@@ -60,7 +60,7 @@ class ChatProfileHeader extends StatelessWidget {
                   text:
                       'This is the start of your conversation\nwith Tosha Shah. Messages and files\nshared here are not shown to anyone\nelse.',
                   textAlign: TextAlign.center,
-                  color:AppColor.whiteColor,
+                  // color:AppColor.whiteColor,
                   fontWeight: FontWeight.normal,
                   fontSize: 15,
                   height: 1.5),
@@ -68,7 +68,7 @@ class ChatProfileHeader extends StatelessWidget {
           ),
         ),
         // Add the header buttons here
-        ChatHeaderButtons(),
+        // ChatHeaderButtons(),
       ],
     );
   }

@@ -1,4 +1,4 @@
-import 'package:socket_io_client/socket_io_client.dart' as IO;
+
 
 class ApiString{
 
@@ -6,8 +6,8 @@ class ApiString{
   // static const String baseUrl= 'https://dev-econnect.elsnerdev.co/v1/'; /// THIS DEVELOPMENT URL
   static const String profileBaseUrl = 'https://e-connect.elsner.com/public/'; /// Profile Image
 
-  static const socketBaseUrl = 'wss://dev-econnect-socket.elsnerdev.co/socket.io';
-  static IO.Socket? socket;
+
+
 
 
 
@@ -33,10 +33,13 @@ class ApiString{
   static const searchUser = "user/search-user";
   // Chat
 
-
   static const getMessages = "messages/get-message";
   static const readChannelMessage = "messages/channel/channel-message-seen/";
   static const unReadChannelMessage = "channels/message-unread/";
   static const addChannelTOFavorite = "favouriteLists/channel/add/";
+  static const unMuteChannel = "user/unmute-channel";
+  static const muteChannel = "user/mute-channel";
+  static const addUserToChatList = "chatList/add";
+  static const sendMessage = "messages/send-message";
 
 }

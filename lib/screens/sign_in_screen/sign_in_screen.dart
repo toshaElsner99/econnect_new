@@ -1,11 +1,13 @@
 import 'package:e_connect/cubit/sign_in/sign_in_cubit.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../utils/app_color_constants.dart';
 
@@ -17,7 +19,7 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderStateMixin {
-  final signInCubit = SignInCubit();
+  // final signInCubit = SignInCubit();
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -59,34 +61,31 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.commonAppColor,
+      backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
       resizeToAvoidBottomInset: true,
-      body: BlocBuilder(
-        bloc: signInCubit,
-        builder: (context, state) {
-          return SafeArea(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 40),
-                        _buildHeader(),
-                        const SizedBox(height: 40),
-                        _buildLoginCard(),
-                      ],
-                    ),
+      body: Consumer<SignInProvider>(builder: (context, signInProvider, child) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 40),
+                      _buildHeader(),
+                      const SizedBox(height: 40),
+                      _buildLoginCard(signInProvider),
+                    ],
                   ),
                 ),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },),
     );
   }
 
@@ -123,7 +122,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildLoginCard() {
+  Widget _buildLoginCard(SignInProvider signInProvider) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -138,7 +137,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         ],
       ),
       child: Form(
-        key: signInCubit.formKey,
+        key: signInProvider.formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -150,20 +149,22 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
             ),
             const SizedBox(height: 24),
             _buildTextField(
-              controller: signInCubit.emailController,
+              signInProvider: signInProvider,
+              controller: signInProvider.emailController,
               hintText: AppString.loginId,
               prefixIcon: const Icon(CupertinoIcons.person),
               isEmail: true,
             ),
             const SizedBox(height: 16),
             _buildTextField(
-              controller: signInCubit.passwordController,
+              signInProvider: signInProvider,
+              controller: signInProvider.passwordController,
               hintText: AppString.password,
               prefixIcon: const Icon(Icons.lock_open),
               isPassword: true,
             ),
             const SizedBox(height: 24),
-            _buildSignInButton(),
+            _buildSignInButton(signInProvider),
             // const SizedBox(height: 16),
             // _buildHRMSButton(),
             const SizedBox(height: 24),
@@ -175,6 +176,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   }
 
   Widget _buildTextField({
+    required SignInProvider signInProvider,
     required TextEditingController controller,
     required String hintText,
     required Icon prefixIcon,
@@ -191,12 +193,12 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         hintText: hintText,
         prefixIcon: prefixIcon,
         isInputFormatForEmail: isEmail,
-        obscureText: isPassword ? signInCubit.isVisible : false,
+        obscureText: isPassword ? signInProvider.isVisible : false,
         suffixIcon: isPassword
             ? InkWell(
-          onTap: () => signInCubit.toggleEyeVisibility(),
+          onTap: () => signInProvider.toggleEyeVisibility(),
           child: Icon(
-            signInCubit.isVisible
+            signInProvider.isVisible
                 ? CupertinoIcons.eye_slash
                 : CupertinoIcons.eye,
             color: Colors.blue,
@@ -210,55 +212,10 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildSignInButton() {
-    return ElevatedButton(
-      onPressed: () => signInCubit.signINCALL(),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColor.commonAppColor,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 0,
-      ),
-      child: commonText(
-        text: AppString.signIN,
-        color: Colors.white,
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-      ),
-    );
+  Widget _buildSignInButton(SignInProvider signInProvider) {
+    return commonElevatedButton(onPressed: () => signInProvider.signINCALL(), buttonText: AppString.signIN);
   }
 
-  Widget _buildHRMSButton() {
-    return OutlinedButton(
-      onPressed: () {},
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        side: BorderSide(color: AppColor.commonAppColor),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            CupertinoIcons.building_2_fill,
-            color: AppColor.commonAppColor,
-            size: 20,
-          ),
-          const SizedBox(width: 8),
-          commonText(
-            text: AppString.signINWithHRMS,
-            color: AppColor.commonAppColor,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildFooter() {
     return Row(

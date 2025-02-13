@@ -400,7 +400,7 @@ class ChatList {
     thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
     isLeft = json['isLeft'];
     elsnerEmail = json['elsner_email'];
-    unseenMessagesCount = json['unseenMessagesCount'];
+    unseenMessagesCount = json['unseenMessagesCount'] ?? 0;
     position = json['position'];
   }
 
@@ -437,7 +437,7 @@ class ChatList {
     data['thumbnail_avatarUrl'] = this.thumbnailAvatarUrl;
     data['isLeft'] = this.isLeft;
     data['elsner_email'] = this.elsnerEmail;
-    data['unseenMessagesCount'] = this.unseenMessagesCount;
+    data['unseenMessagesCount'] = this.unseenMessagesCount ?? 0;
     data['position'] = this.position;
     return data;
   }

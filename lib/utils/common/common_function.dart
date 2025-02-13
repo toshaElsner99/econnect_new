@@ -1,11 +1,121 @@
 
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_connect/utils/api_service/api_string_constants.dart';
+import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'package:insta_image_viewer/insta_image_viewer.dart';
 
 import '../../main.dart';
+Future<String> fetchFileSize(String url) async {
+  try {
+    final response = await http.head(Uri.parse(url));
+    if (response.statusCode == 200) {
+      String? contentLength = response.headers['content-length'];
+      if (contentLength != null) {
+        int sizeInBytes = int.parse(contentLength);
+        return formatFileSize(sizeInBytes); // Convert to KB, MB, etc.
+      }
+    }
+  } catch (e) {
+    print("Error fetching file size: $e");
+  }
+  return ""; // Return empty if size is unknown
+}
+
+String formatFileSize(int bytes) {
+  const suffixes = ["B", "KB", "MB", "GB", "TB"];
+  int i = 0;
+  double size = bytes.toDouble();
+
+  while (size >= 1024 && i < suffixes.length - 1) {
+    size /= 1024;
+    i++;
+  }
+
+  return "${size.toStringAsFixed(2)} ${suffixes[i]}";
+}
+
+Widget getFileIconInChat({required String fileType, String? pngUrl}) {
+  String? iconPath;
+
+  switch (fileType) {
+    case 'mp3':
+    case 'wav':
+    case 'aac':
+      iconPath = AppImage.audioFile;
+      break;
+    case 'mp4':
+    case 'avi':
+    case 'mov':
+    case 'mkv':
+      iconPath = AppImage.videoFile;
+      break;
+    case 'xls':
+    case 'xlsx':
+      iconPath = AppImage.excelFile;
+      break;
+    case 'pdf':
+      iconPath = AppImage.pdfFile;
+      break;
+    case 'txt':
+      iconPath = AppImage.textFile;
+      break;
+    case 'png':
+      iconPath = pngUrl;
+      break;
+    default:
+      iconPath = AppImage.commonFile;
+  }
+
+  if (iconPath != null && !iconPath.contains(ApiString.profileBaseUrl)) {
+    return Image.asset(iconPath, width: 40, height: 40, fit: BoxFit.contain);
+  } else if (pngUrl != null && pngUrl.isNotEmpty) {
+    return InstaImageViewer(
+      imageUrl: pngUrl,
+      backgroundIsTransparent: true,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 2),
+        color: AppColor.lightGreyColor.withOpacity(0.6),
+        child: CachedNetworkImage(imageUrl: pngUrl, width: 30, height: 40, fit: BoxFit.contain,
+          errorWidget: (context, url, error) {
+            return Image.asset(AppImage.commonFile, width: 40, height: 40,fit: BoxFit.contain,);
+          },
+        ),
+      ),
+    );
+  } else {
+    return Image.asset(AppImage.commonFile, width: 40, height: 40);
+  }
+}
+
+
+String formatFileName(String fileName) {
+  String extension = getFileExtension(fileName);
+  String nameWithoutExt = fileName.replaceAll(".$extension", "");
+
+  if (nameWithoutExt.length > 15) {
+    return "${nameWithoutExt.substring(0, 15)}.....$extension";
+  }
+  return "$nameWithoutExt.$extension";
+}
+
+String getFileName(String path) {
+  return path.split('/').last;
+}
+
+String getFileExtension(String path) {
+  return path.split('.').last.toLowerCase();
+}
+
+String getFileType(String path) {
+  return path.split('.').last.toUpperCase();
+}
+
 
 class NoLeadingSpacesFormatter extends TextInputFormatter {
   @override
@@ -42,7 +152,7 @@ class NoLeadingSpacesFormatter extends TextInputFormatter {
   }
 }
 void pushScreenWithTransition( Widget screen) {
-  Navigator.of(navigatorKey!.currentState!.context).push(
+  Navigator.of(navigatorKey.currentState!.context).push(
     PageRouteBuilder(
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) => screen,
@@ -202,6 +312,6 @@ Widget getFileIcon(String? extension, String? filePath) {
 
   return Padding(
     padding: const EdgeInsets.all(8.0),
-    child: Image.asset(iconPath, fit: BoxFit.contain),
+    child: Image.asset(iconPath, fit: BoxFit.contain,width: 30,height: 20,),
   );
 }

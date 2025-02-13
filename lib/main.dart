@@ -1,8 +1,14 @@
 import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/cubit/chat/chat_cubit.dart';
 import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
+import 'package:e_connect/cubit/sign_in/sign_in_cubit.dart';
+import 'package:e_connect/cubit/splash_screen/splash_screen_cubit.dart';
+import 'package:e_connect/providers/download_provider.dart';
+import 'package:e_connect/screens/bottom_navigation_screen/bottom_navigation_screen_cubit.dart';
 import 'package:e_connect/screens/splash_screen/splash_screen.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
+import 'package:e_connect/socket_io/socket_io.dart';
+import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:e_connect/utils/loading_widget/loading_widget.dart';
@@ -10,7 +16,7 @@ import 'package:e_connect/utils/network_connectivity/network_connectivity.dart';
 import 'package:e_connect/utils/theme/theme_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 
@@ -18,52 +24,66 @@ import 'cubit/sign_in/sign_in_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 late SignInModel signInModel;
-late CommonCubit commonCubit;
-// GetUserModel? getUserModel;
 
-
-
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // SocketIoProvider();
   NetworkStatusService();
-  updateSystemUiChrome();
-  await SystemChrome.setPreferredOrientations([
+  SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
-  ]);
-  runApp(
-    MultiBlocProvider(
+  ]).then((value) => runApp(const MyApp()),);
+}
+
+
+void updateSystemUiChrome(BuildContext context) {
+  final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    systemNavigationBarColor: themeProvider.themeData.appBarTheme.backgroundColor,
+    statusBarIconBrightness: Brightness.dark,
+  ));
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
       providers: [
-        BlocProvider<ThemeCubit>(create: (_) => ThemeCubit(),),
-        // BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()..loadThemeMode(),),
-        BlocProvider<LoadingCubit>(create: (_) => LoadingCubit()),
-        BlocProvider<CommonCubit>(create: (_) => CommonCubit()),
-        BlocProvider<ThemeCubit>(create: (context) => ThemeCubit()..loadThemeMode(),),
-        ChangeNotifierProvider<FileServiceProvider>(create: (_) => FileServiceProvider()),
-        BlocProvider<ChannelListCubit>(create: (_) => ChannelListCubit()),
-        BlocProvider<ChatCubit>(create: (_) => ChatCubit()),
+        ChangeNotifierProvider(create: (_) => SocketIoProvider()),
+        ChangeNotifierProvider(create: (_) => LoadingProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => SplashProvider()),
+        ChangeNotifierProvider(create: (_) => NetworkStatusService(),),
+        ChangeNotifierProvider(create: (_) => SignInProvider()),
+        ChangeNotifierProvider(create: (_) => BottomNavigationProvider()),
+        ChangeNotifierProvider(create: (_) => ChannelListProvider()),
+        ChangeNotifierProvider(create: (_) => CommonProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => FileServiceProvider()),
+        ChangeNotifierProvider(create: (_) => DownloadFileProvider()),
       ],
       child: OKToast(
-        child: BlocConsumer<ThemeCubit, ThemeState>(
-          listener: (context, state) {
-          },
-          builder: (context, state) {
-            final themeCubit = context.read<ThemeCubit>();
-            return MaterialApp(
-              title: 'eConnect',
-              debugShowCheckedModeBanner: false,
-              navigatorKey: navigatorKey,
-              theme: themeCubit.themeData,
-              home: const SplashScreen(),
-              builder: (context, child) {
-                return Loading(child: child!);
-              },
-            );
-          },
-        ),
+        child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
+          updateSystemUiChrome(context);
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: themeProvider.themeData,
+            navigatorKey: navigatorKey,
+            home: const SplashScreen(),
+            builder: (context, child) {
+              return Loading(child: child!);
+            },
+          );
+        },),
       ),
-    ),
-  );
+    );
+  }
 }
+
+
 
 

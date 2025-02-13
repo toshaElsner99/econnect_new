@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:e_connect/main.dart';
+import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 
+import '../../cubit/sign_in/sign_in_model.dart';
 import '../common/common_widgets.dart';
 import '../logger/logger.dart';
 import '../network_connectivity/network_connectivity.dart';
@@ -19,13 +21,22 @@ class ApiService {
 
   final _networkStatusService = NetworkStatusService();
 
+
+
   Future<dynamic> request({
     required String endPoint,
     required Method method,
     var reqBody,
     Map<String, dynamic>? queryParams,
-    Map<String, String>? headers,
   }) async {
+    if (signInModel.data?.authToken != null) {
+      SignInModel? loadedModel = await SignInModel.loadFromPrefs();
+      if (loadedModel != null) {
+        signInModel = loadedModel;
+      }
+    }
+    final header = {
+      'Authorization': "Bearer ${signInModel.data?.authToken}",};
     if (!_networkStatusService.connectionValue) {
       commonShowToast("No Internet Connection");
       return;
@@ -33,15 +44,29 @@ class ApiService {
 
     Uri uri = Uri.parse(ApiString.baseUrl + endPoint).replace(queryParameters: queryParams);
     http.Response? response;
-    _logRequest('$uri', method, reqBody, headers);
+    Map<String, String> requestHeaders = {};
+    if (!endPoint.contains(AppString.signIN)) {
+      requestHeaders.addAll(header);
+    }
+
+    _logRequest('$uri', method, reqBody, requestHeaders);
 
     try {
       // startLoading();
-      response = await _makeRequest(method, uri, reqBody, headers);
+      if(endPoint == ApiString.closeConversation || endPoint == ApiString.sendMessage){
+        print("IN close");
+        requestHeaders.clear();
+        requestHeaders.addAll({
+          'Content-Type': 'application/json',
+          'Authorization': "Bearer ${signInModel.data!.authToken}"
+        });
+        reqBody = jsonEncode(reqBody);
+      }
+      response = await _makeRequest(method, uri, reqBody, requestHeaders);
       _logResponse(response);
 
       final responseData = json.decode(response.body);
-      // _handleToastMessage(responseData);
+      _handleToastMessage(responseData);
 
       if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403) {
         return json.decode(response.body);

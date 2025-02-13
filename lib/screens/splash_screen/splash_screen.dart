@@ -1,10 +1,14 @@
+import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubit/common_cubit/common_cubit.dart';
+import '../../cubit/sign_in/sign_in_model.dart';
 import '../../cubit/splash_screen/splash_screen_cubit.dart';
 import '../../main.dart';
 import '../../utils/app_color_constants.dart';
@@ -17,7 +21,8 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  final splashCubit = SplashScreenCubit();
+  final splashProvider = Provider.of<SplashProvider>(navigatorKey.currentState!.context,listen: false);
+  final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -26,11 +31,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   @override
   void initState() {
-    commonCubit = context.read<CommonCubit>();
     super.initState();
     _setupAnimations();
     _startAnimations();
-    splashCubit.whereToGO();
+    Provider.of<SplashProvider>(navigatorKey.currentState!.context,listen: false).whereToGO();
   }
 
   void _setupAnimations() {
@@ -83,7 +87,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.commonAppColor,
+      // backgroundColor: AppColor.commonAppColor,
       body: Stack(
         fit: StackFit.expand,
         alignment: Alignment.center,
@@ -94,9 +98,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  AppColor.commonAppColor,
-                  AppColor.commonAppColor.withOpacity(0.8),
+                colors: AppPreferenceConstants.themeModeBoolValueGet ? [
+                  AppColor.darkAppBarColor,
+                  AppColor.darkAppBarColor.withOpacity(0.8),
+                ]: [
+                  AppColor.appBarColor,
+                  AppColor.appBarColor.withOpacity(0.8),
                 ],
               ),
             ),
@@ -139,6 +146,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     commonText(
                       text: AppString.eConnect,
                       fontWeight: FontWeight.w600,
+                      color: Colors.white,
                       fontSize: 28,
                       letterSpacing: 1.2,
                     ),

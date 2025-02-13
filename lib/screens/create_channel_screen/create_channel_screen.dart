@@ -1,9 +1,11 @@
 import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class CreateChannelScreen extends StatefulWidget {
   const CreateChannelScreen({super.key});
@@ -16,7 +18,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _purposeController = TextEditingController();
-  final channelListCubit = ChannelListCubit();
+  // final channelListCubit = ChannelListCubit();
 
   bool isPrivate = true;
 
@@ -33,27 +35,23 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
     bool isAdmin = signInModel.data?.user?.roleName == "Admin";
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        // backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
+          icon: const Icon(Icons.close, color: Colors.white,),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'New Channel',
-          style: TextStyle(
-            color: Colors.black,
+        title:  commonText(
+          text : 'New Channel',
             fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
         ),
         actions: [
           TextButton(
             onPressed: () {
               if(_nameController.text.trim().isNotEmpty){
-                channelListCubit.createNewChannelCall(
+                context.read<ChannelListProvider>().createNewChannelCall(
                   channelName: _nameController.text.trim(),
                   isPrivateChannel: "$isPrivate",
                   description: _descriptionController.text.trim(),
@@ -62,13 +60,10 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                 commonShowToast("Add channel name to proceed");
               }
             },
-            child: const Text(
-              'CREATE',
-              style: TextStyle(
-                color: Colors.blue,
+            child:  commonText(
+              text : 'CREATE',
+                color: Colors.white,
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
             ),
           ),
         ],
@@ -115,7 +110,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.black54 : Colors.grey[50],
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.grey[200]!),
       ),
@@ -130,18 +125,14 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                 size: 24,
               ),
               const SizedBox(width: 16),
-              const Text(
-                'Make Private',
-                style: TextStyle(
+              commonText(
+                text : 'Make Private',
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
               ),
               const Spacer(),
               Switch.adaptive(
-                activeColor: AppColor.commonAppColor,
-                activeTrackColor: AppColor.commonAppColor,
+                // activeColor: AppColor.commonAppColor,
+                // activeTrackColor: AppColor.commonAppColor,
                 value: isPrivate,
                 onChanged: isAdmin
                     ? (value) => setState(() => isPrivate = value)
@@ -181,7 +172,6 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
@@ -195,7 +185,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
               fontSize: 15,
             ),
             filled: true,
-            fillColor: Colors.grey[50],
+            fillColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.borderColor.withOpacity(0.1) : Colors.grey[50],
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.grey[200]!),

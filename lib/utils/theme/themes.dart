@@ -2,15 +2,23 @@ import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:flutter/material.dart';
 
 ThemeData lightMode = ThemeData(
-    brightness: Brightness.light,
+  useMaterial3: true,
+    // brightness: Brightness.light,
     scaffoldBackgroundColor: Colors.white,
+    // scaffoldBackgroundColor: AppColor.appBarColor,
     primaryColor: AppColor.commonAppColor,
     hintColor: Colors.black,
     dialogBackgroundColor: Colors.white,
     dialogTheme: const DialogTheme(surfaceTintColor: Colors.white),
+    switchTheme: SwitchThemeData(
+      trackOutlineColor: MaterialStateProperty.all(AppColor.blackColor),
+      thumbColor: MaterialStateProperty.all(AppColor.appBarColor),
+      trackColor: MaterialStateProperty.all(AppColor.white),
+    ),
     appBarTheme: const AppBarTheme(
         surfaceTintColor: Colors.transparent,
-        backgroundColor: Colors.transparent,
+        // backgroundColor: Colors.transparent,
+        backgroundColor: AppColor.appBarColor,
         iconTheme: IconThemeData(color: Colors.white),
         titleTextStyle: TextStyle(color: Colors.white, fontSize: 20)),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -33,15 +41,21 @@ ThemeData lightMode = ThemeData(
         style: ButtonStyle(iconColor: MaterialStatePropertyAll(Colors.black))));
 
 ThemeData darkMode = ThemeData(
+    useMaterial3: true,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: Colors.black,
+    scaffoldBackgroundColor: AppColor.darkAppBarColor,
     primaryColor: AppColor.commonAppColor,
     hintColor: Colors.white,
     dialogBackgroundColor: const Color(0xFF212121),
+    // bottomSheetTheme: ,
     dialogTheme: const DialogTheme(surfaceTintColor: Colors.black),
+    switchTheme: SwitchThemeData(
+      trackColor: MaterialStateProperty.all(AppColor.white),
+    ),
     appBarTheme: const AppBarTheme(
         surfaceTintColor: Colors.transparent,
-        backgroundColor: Colors.transparent,
+        // backgroundColor: Colors.transparent,
+        backgroundColor: AppColor.darkAppBarColor,
         iconTheme: IconThemeData(color: Colors.white),
         titleTextStyle: TextStyle(color: Colors.white, fontSize: 20)),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(

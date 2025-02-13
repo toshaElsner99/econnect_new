@@ -1,13 +1,15 @@
 
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:provider/provider.dart';
 import '../../cubit/common_cubit/common_cubit.dart';
 import '../api_service/api_string_constants.dart';
 import '../app_color_constants.dart';
@@ -19,10 +21,11 @@ import 'common_function.dart';
 
 
 startLoading(){
-  navigatorKey.currentState!.context.read<LoadingCubit>().startLoading();
+  // navigatorKey.currentState!.context.read<LoadingCubit>().startLoading();
+  navigatorKey.currentState!.context.read<LoadingProvider>().startLoading();
 }
 stopLoading(){
-  navigatorKey.currentState!.context.read<LoadingCubit>().stopLoading();
+  navigatorKey.currentState!.context.read<LoadingProvider>().stopLoading();
 }
 
 void commonProfilePreview(BuildContext context) {
@@ -51,37 +54,29 @@ class ProfilePreviewSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Header with close button
-          _buildHeader(context),
-
-          // Profile Settings Section
           _buildProfileSettings(),
 
-          // Profile Details Form
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionTitle('Profile Settings'),
-                  const SizedBox(height: 24),
-
-                  // Full Name Field
                   _buildProfileField(
                     title: 'Full Name',
                     value: signInModel.data?.user?.fullName ?? '',
                     readOnly: true,
                   ),
-                  const SizedBox(height: 24),
 
-                  // Username Field
-                  _buildProfileField(
-                    title: 'Username',
-                    value: signInModel.data?.user?.username ?? '',
-                    readOnly: true,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24.0),
+                    child: _buildProfileField(
+                      title: 'Username',
+                      value: signInModel.data?.user?.username ?? '',
+                      readOnly: true,
+                    ),
                   ),
-                  const SizedBox(height: 24),
+
 
                   // Profile Picture Section
                   _buildProfilePictureSection(),
@@ -94,39 +89,33 @@ class ProfilePreviewSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 8, 16),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppColor.borderColor.withOpacity(0.1),
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          commonText(
-            text: 'Profile',
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              Icons.close,
-              size: 28,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildHeader(BuildContext context) {
+  //   return Container(
+  //     padding: const EdgeInsets.fromLTRB(24, 16, 8, 16),
+  //     decoration: BoxDecoration(
+  //       border: Border(
+  //         bottom: BorderSide(
+  //           color: AppColor.borderColor.withOpacity(0.1),
+  //         ),
+  //       ),
+  //     ),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //       children: [
+  //         commonText(
+  //           text: 'Profile',
+  //           fontSize: 24,
+  //           fontWeight: FontWeight.bold,
+  //         ),
+  //
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildProfileSettings() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColor.borderColor.withOpacity(0.1),
         border: Border(
@@ -139,26 +128,30 @@ class ProfilePreviewSheet extends StatelessWidget {
         children: [
           Icon(
             Icons.settings,
+            color: AppColor.appBarColor,
             size: 24,
           ),
           const SizedBox(width: 16),
           commonText(
             text: 'Profile Settings',
             fontSize: 18,
+            color: Colors.black,
             fontWeight: FontWeight.w600,
+          ),
+          Spacer(),
+          IconButton(
+            onPressed: () => pop(),
+            icon: Icon(
+              color: AppColor.appBarColor,
+              Icons.close,
+              size: 28,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return commonText(
-      text: title,
-      fontSize: 28,
-      fontWeight: FontWeight.bold,
-    );
-  }
 
   Widget _buildProfileField({
     required String title,
@@ -171,6 +164,7 @@ class ProfilePreviewSheet extends StatelessWidget {
         commonText(
           text: title,
           fontSize: 16,
+          color: Colors.black,
           fontWeight: FontWeight.w600,
         ),
         const SizedBox(height: 8),
@@ -188,12 +182,13 @@ class ProfilePreviewSheet extends StatelessWidget {
               Expanded(
                 child: commonText(
                   text: value,
+                  color: Colors.black,
                   fontSize: 16,
                 ),
               ),
-              if (readOnly)
                 Icon(
                   Icons.lock_outline,
+                  color: AppColor.commonAppColor,
                   size: 18,
                 ),
             ],
@@ -209,6 +204,7 @@ class ProfilePreviewSheet extends StatelessWidget {
       children: [
         commonText(
           text: 'Profile Picture',
+          color: Colors.black,
           fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
@@ -231,23 +227,6 @@ class ProfilePreviewSheet extends StatelessWidget {
                   child: commonImageHolder(radius: 60),
                 ),
               ),
-              const SizedBox(height: 16),
-              TextButton.icon(
-                onPressed: () {
-                  // Handle profile picture update
-                },
-                icon: Icon(
-                  Icons.camera_alt_outlined,
-                  color: AppColor.white,
-                  size: 20,
-                ),
-                label: commonText(
-                  text: '',
-                  color: AppColor.commonAppColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
             ],
           ),
         ),
@@ -256,6 +235,49 @@ class ProfilePreviewSheet extends StatelessWidget {
   }
 }
 
+Widget previewImageDialog(BuildContext context, String imageUrl) {
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1B1E23),
+            // color: AppColor.commonAppColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
+          ),
+          child: Column(
+            children: [
+              Center(
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.contain,
+                  placeholder: (context, url) => CircularProgressIndicator(),
+                  errorWidget: (context, url, error) => Icon(Icons.error),
+                ),
+              ),
+              Positioned(
+                top: 40,
+                right: 20,
+                child: IconButton(
+                  icon: Icon(Icons.close, color: Colors.white),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+}
 ToastFuture commonShowToast(String msg,[Color? bgColor]) {
   return showToastWidget(
     duration: const Duration(seconds: 5),
@@ -292,14 +314,83 @@ Widget getCommonStatusIcons({required String status, double size = 25 , bool ass
     return assetIcon ? Image.asset(AppImage.offlineIcon,height: size,width: size,) : Icon(Icons.circle_outlined,color: AppColor.borderColor,size: size,);
   }
 }
+// Widget profileIconWithStatus({
+//   required String userID,
+//   required String status,
+//   bool isMyProfile = true,
+//   String? otherUserProfile,
+// }) {
+//   // Get the avatar URL based on whether it's my profile or another user's
+//   String? avatarUrl = (signInModel.data?.user?.id == userID)
+//       ? signInModel.data?.user?.avatarUrl
+//       : otherUserProfile;
+//
+//   // Construct full image URL if the avatar URL is valid
+//   String imageUrl = (avatarUrl != null && avatarUrl.isNotEmpty)
+//       ? ApiString.profileBaseUrl + avatarUrl
+//       : '';
+//
+//   return Stack(
+//     alignment: Alignment.bottomRight,
+//     children: [
+//       CircleAvatar(
+//         radius: 15,
+//         backgroundColor: Colors.grey[200],
+//         child: ClipOval(
+//           child: /*imageUrl.isNotEmpty
+//               ? */CachedNetworkImage(
+//             imageUrl: imageUrl,
+//             fit: BoxFit.cover,
+//             width: 30, // Ensuring proper circular shape
+//             height: 30,
+//             progressIndicatorBuilder: (context, url, downloadProgress) =>
+//                 Padding(
+//                   padding: const EdgeInsets.all(3),
+//                   child: CircularProgressIndicator(value: downloadProgress.progress),
+//                 ),
+//             errorWidget: (context, url, error) => Image.asset(
+//               AppImage.person,
+//               fit: BoxFit.cover,
+//               width: 30, // Ensuring the fallback asset image is also circular
+//               height: 30,
+//             ),
+//           )/*
+//               : Image.asset(
+//             AppImage.person,
+//             fit: BoxFit.cover,
+//             width: 30,
+//             height: 30,
+//           ),*/
+//         ),
+//       ),
+//       Stack(
+//         alignment: Alignment.center,
+//         children: [
+//           Container(
+//             height: 10,
+//             width: 10,
+//             decoration: BoxDecoration(
+//               color: status.contains("offline") ? Colors.transparent : Colors.white,
+//               shape: BoxShape.circle,
+//             ),
+//           ),
+//           getCommonStatusIcons(status: status, size: 14, assetIcon: false),
+//         ],
+//       ),
+//     ],
+//   );
+// }
+
+
 
 Widget profileIconWithStatus({
   required String userID,
   required String status,
-  bool isMyProfile = true,
   String? otherUserProfile,
 }){
-  // String imageUrl = isMyProfile
+  print("userId>>>> $userID");
+  print("status>>>> $status");
+  print("otherUserProfile>>>> $otherUserProfile");
   String imageUrl = signInModel.data?.user?.id == userID
       ? ApiString.profileBaseUrl + signInModel.data!.user!.avatarUrl!
       : ApiString.profileBaseUrl + (otherUserProfile ?? '');
@@ -311,6 +402,8 @@ Widget profileIconWithStatus({
         backgroundColor: Colors.grey[200],
         child: ClipOval(
           child: CachedNetworkImage(
+            width: 30,
+            height: 30,
             imageUrl: imageUrl,
             fit: BoxFit.cover,
             progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
@@ -332,7 +425,6 @@ Widget profileIconWithStatus({
               shape: BoxShape.circle,
             ),),
           getCommonStatusIcons(status: status,size: 14,assetIcon: false),
-
         ],
       )
     ],
@@ -423,7 +515,8 @@ Widget showLogOutDialog() {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      navigatorKey.currentState!.context.read<CommonCubit>().logOut();
+                      Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false).logOut();
+                      // navigatorKey.currentState!.context.read<CommonCubit>().logOut();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColor.commonAppColor,
@@ -567,7 +660,7 @@ Widget commonLogoutDialog() {
                   // Logout Button
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () =>  navigatorKey.currentState!.context.read<CommonCubit>().logOut(),
+                      onPressed: () =>  navigatorKey.currentState!.context.read<CommonProvider>().logOut(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.redColor,
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -663,7 +756,7 @@ Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false,
         isPrivate == true ? AppImage.lockIcon : isShowPersons == true ? AppImage.persons : AppImage.globalIcon,
         width: 16,
         height: 16,
-        color: color ?? Colors.white.withOpacity(0.8),
+        color: color ?? Colors.white,
       ),
     ),
   );
@@ -810,35 +903,6 @@ Widget commonPopUpMenuForChannel() {
   );
 }
 
-// Widget leaveChannelDialog({Function? onTap}) {
-//   //  AlertDialog(
-//   //   title: const Text(
-//   //     "Confirm Leave Channel",
-//   //     style: TextStyle(fontWeight: FontWeight.bold),
-//   //   ),
-//   //   content: const Text("Are you sure you want to Leave this Channel?"),
-//   //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-//   //   actions: [
-  //     TextButton(
-  //       onPressed: () => pop(),
-  //       style: TextButton.styleFrom(
-  //         foregroundColor: Colors.black,
-  //         backgroundColor: Colors.grey[300],
-  //       ),
-  //       child:  commonText(text: "Cancel"),
-  //     ),
-  //     TextButton(
-  //       onPressed: () => onTap?.call(),
-  //       style: TextButton.styleFrom(
-  //         foregroundColor: Colors.white,
-  //         backgroundColor: Colors.red,
-  //       ),
-  //       child:  commonText(text: "Leave"),
-  //     ),
-//   //   ],
-//   // );
-//   return ;
-// }
 
 Widget commonTextFormField({
   required TextEditingController controller,
@@ -882,7 +946,7 @@ Widget commonTextFormField({
       suffixIcon: suffixIcon,
       suffix: suffixWidget,
       prefix: prefixWidget,
-      fillColor: Colors.transparent,
+      fillColor: AppColor.white,
       filled: true,
       border: const OutlineInputBorder(
         borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
@@ -920,31 +984,64 @@ Widget commonTextFormField({
   );
 }
 
-
 Widget commonImageHolder({
   double radius = 25,
   bool isMyProfile = true,
   String? otherUserProfile,
 }) {
-  String imageUrl = isMyProfile
-      ? ApiString.profileBaseUrl + signInModel.data!.user!.avatarUrl!
-      : ApiString.profileBaseUrl + (otherUserProfile ?? '');
+  // Get the avatar URL based on whether it's my profile or another user's
+  String? avatarUrl = isMyProfile ? signInModel.data?.user?.avatarUrl : otherUserProfile;
+
+  // Construct full image URL if the avatar URL is valid
+  String imageUrl = (avatarUrl != null && avatarUrl.isNotEmpty)
+      ? ApiString.profileBaseUrl + avatarUrl
+      : '';
 
   return CircleAvatar(
     radius: radius,
     backgroundColor: Colors.grey[200],
     child: ClipOval(
-      child: CachedNetworkImage(
+      child: imageUrl.isNotEmpty
+          ? CachedNetworkImage(
         imageUrl: imageUrl,
         fit: BoxFit.cover,
-        progressIndicatorBuilder: (context, url, downloadProgress) => Center(
-          child: CircularProgressIndicator(value: downloadProgress.progress),
-        ),
-        errorWidget: (context, url, error) => Icon(Icons.error),
-      ),
+        progressIndicatorBuilder: (context, url, downloadProgress) =>
+            Center(
+              child: CircularProgressIndicator(value: downloadProgress.progress),
+            ),
+        errorWidget: (context, url, error) =>
+            Image.asset(AppImage.person, fit: BoxFit.cover),
+      )
+          : Image.asset(AppImage.person, fit: BoxFit.cover),
     ),
   );
 }
+
+
+// Widget commonImageHolder({
+//   double radius = 25,
+//   bool isMyProfile = true,
+//   String? otherUserProfile,
+// }) {
+//   String imageUrl = isMyProfile
+//       ? ApiString.profileBaseUrl + signInModel.data!.user!.avatarUrl!
+//       : ApiString.profileBaseUrl + (otherUserProfile ?? '');
+//
+//   return CircleAvatar(
+//     radius: radius,
+//     backgroundColor: Colors.grey[200],
+//     child: ClipOval(
+//       child: (signInModel.data!.user!.avatarUrl!.isNotEmpty || signInModel.data?.user?.avatarUrl != "" || otherUserProfile!.isNotEmpty || otherUserProfile != "") ?  CachedNetworkImage(
+//         imageUrl: imageUrl,
+//         fit: BoxFit.cover,
+//         progressIndicatorBuilder: (context, url, downloadProgress) => Center(
+//           child: CircularProgressIndicator(value: downloadProgress.progress),
+//         ),
+//         errorWidget: (context, url, error) => Icon(Icons.error),
+//       ) : Image.asset(AppImage.person),
+//     ),
+//   );
+// }
 
 Widget commonElevatedButton({
   required VoidCallback onPressed,
@@ -1020,7 +1117,7 @@ Widget commonElevatedButton({
 // }
 
 Widget commonButtonForHeaderFavoriteInfoCallMute(
-    {required IconData icon,
+    {required String icon,
       required String label,
       required VoidCallback onTap,
       required BuildContext context,
@@ -1034,14 +1131,15 @@ Widget commonButtonForHeaderFavoriteInfoCallMute(
       height: 60,
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-          color: isSelected ? AppColor.appBarColor : AppColor.boxBgColor),
+          color: isSelected ? AppColor.redColor : AppColor.boxBgColor
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          Image.asset(
             icon,
             color: isSelected ? AppColor.blueCommonColor : AppColor.whiteColor,
-            size: 20,
+            height: 20,width: 20,
           ),
           const SizedBox(height: 4),
           commonText(
@@ -1055,113 +1153,109 @@ Widget commonButtonForHeaderFavoriteInfoCallMute(
   );
 }
 
-void showChatSettingsBottomSheet(BuildContext context) {
+void showChatSettingsBottomSheet({required String userId}) {
   showModalBottomSheet(
-    context: context,
+    context: navigatorKey.currentState!.context,
     backgroundColor: Colors.transparent,
     builder: (context) {
-      return Container(
-        decoration: BoxDecoration(
-          color: AppColor.dialogBgColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColor.blackColor.withOpacity(0.3),
-              blurRadius: 10,
-              spreadRadius: 5,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Sheet handle indicator
-            Container(
-              margin: const EdgeInsets.only(top: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColor.whiteColor,
-                borderRadius: BorderRadius.circular(2),
+      return Consumer<ChannelListProvider>(builder: (context, channelListProvider, child) {
+        final isMutedUser = signInModel.data?.user!.muteUsers!.contains(userId) ?? false;
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColor.dialogBgColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColor.blackColor.withOpacity(0.3),
+                blurRadius: 10,
+                spreadRadius: 5,
+                offset: const Offset(0, -2),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey[800]!,
-                    width: 1,
-                  ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Sheet handle indicator
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColor.whiteColor,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  commonButtonForHeaderFavoriteInfoCallMute(
-                      icon: Icons.star,
-                      label: 'Favorited',
-                      onTap: () {},
-                      context: context,
-                      totalButtons: 4
-                  ),
-                  commonButtonForHeaderFavoriteInfoCallMute(
-                      icon: Icons.notifications_off,
-                      label: 'Mute',
-                      onTap: () {},
-                      context: context,
-                      totalButtons: 4
-                  ),
-                  commonButtonForHeaderFavoriteInfoCallMute(
-                      icon: Icons.edit,
-                      label: 'Set Header',
-                      onTap: () {},
-                      context: context,
-                      totalButtons: 4
-                  ),
-                  commonButtonForHeaderFavoriteInfoCallMute(
-                      icon: Icons.call,
-                      label: 'Start Call',
-                      onTap: () {},
-                      context: context,
-                      totalButtons: 4
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Colors.grey[800]!,
-                    width: 1,
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.grey[800]!,
+                      width: 1,
+                    ),
                   ),
                 ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    // commonButtonForHeaderFavoriteInfoCallMute(
+                    //     icon: Icons.star,
+                    //     label: 'Favorited',
+                    //     onTap: () {},
+                    //     context: context,
+                    //     totalButtons: 4
+                    // ),
+                    commonButtonForHeaderFavoriteInfoCallMute(
+                        icon: isMutedUser ? AppImage.unMuteNotification : AppImage.muteNotification,
+                        label: isMutedUser ? 'Mute' : 'Muted',
+                        onTap: () => Provider.of<ChannelListProvider>(context,listen: false).muteUser(userIdToMute: userId, isForMute: isMutedUser != false ? false : true,needToCallGetUser: true),
+                        context: context,
+                        totalButtons: 4
+                    ),
+                    // commonButtonForHeaderFavoriteInfoCallMute(
+                    //     icon: Icons.call,
+                    //     label: 'Start Call',
+                    //     onTap: () {},
+                    //     context: context,
+                    //     totalButtons: 4
+                    // ),
+                  ],
+                ),
               ),
-              child: ListTile(
-                leading: const Icon(Icons.info_outline, color: Colors.white),
-                title: const Text('View info',
-                    style: TextStyle(color: Colors.white)),
+              // Container(
+              //   decoration: BoxDecoration(
+              //     border: Border(
+              //       bottom: BorderSide(
+              //         color: Colors.grey[800]!,
+              //         width: 1,
+              //       ),
+              //     ),
+              //   ),
+              //   child: ListTile(
+              //     leading: const Icon(Icons.info_outline, color: Colors.white),
+              //     title: const Text('View info',
+              //         style: TextStyle(color: Colors.white)),
+              //     onTap: () {
+              //       Navigator.pop(context);
+              //       // Add your view info logic here
+              //     },
+              //   ),
+              // ),
+              ListTile(
+                leading: Icon(Icons.close, color: AppColor.redColor),
+                title: Text('Close direct message',
+                    style: TextStyle(color: AppColor.redColor)),
                 onTap: () {
                   Navigator.pop(context);
-                  // Add your view info logic here
+                  // Add your close chat logic here
                 },
               ),
-            ),
-            ListTile(
-              leading: Icon(Icons.close, color: AppColor.redColor),
-              title: Text('Close direct message',
-                  style: TextStyle(color: AppColor.redColor)),
-              onTap: () {
-                Navigator.pop(context);
-                // Add your close chat logic here
-              },
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      );
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },);
     },
   );
 }

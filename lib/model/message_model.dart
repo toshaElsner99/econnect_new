@@ -136,6 +136,7 @@ class Messages {
   int? replyCount;
   // List<RepliesSenderInfo>? repliesSenderInfo;
   bool? isMedia;
+  bool? isPinned;
 
   Messages(
       {this.sId,
@@ -160,7 +161,9 @@ class Messages {
         this.replies,
         this.replyCount,
         // this.repliesSenderInfo,
-        this.isMedia});
+        this.isMedia,
+        this.isPinned,
+      });
 
   Messages.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
@@ -211,6 +214,7 @@ class Messages {
       });
     }
     isMedia = json['isMedia'];
+    isPinned = json['isPinned'];
   }
 
   Map<String, dynamic> toJson() {
@@ -249,6 +253,7 @@ class Messages {
     //       this.repliesSenderInfo!.map((v) => v.toJson()).toList();
     // }
     data['isMedia'] = this.isMedia;
+    data['isPinned'] = this.isPinned;
     return data;
   }
 }

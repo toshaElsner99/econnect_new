@@ -27,6 +27,9 @@ class AppImage{
   static const persons = "$path/persons.png";
   static const person = "$path/person.png";
   static const muteNotification = "$path/mute_notification.png";
+  static const pinMessageIcon = "$path/vertical-pin.png";
+  static const downloadIcon = "$path/download.png";
+  static const unMuteNotification = "$path/ringing.png";
 
 
   /// networkUrls

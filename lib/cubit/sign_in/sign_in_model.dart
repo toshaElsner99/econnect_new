@@ -1,141 +1,21 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class User {
-  String? id;
-  String? fullName;
-  String? username;
-  String? email;
-  String? elsnerEmail;
-  String? position;
-  String? password;
-  String? status;
-  bool? isActive;
-  List<dynamic>? loginActivity; // Changed from List<Null> to List<dynamic>
-  String? customStatus;
-  List<dynamic>? muteUsers; // Changed from List<Null> to List<dynamic>
-  List<dynamic>? muteChannels; // Changed from List<Null> to List<dynamic>
-  bool? isLeft;
-  List<dynamic>? customStatusHistory; // Changed from List<Null> to List<dynamic>
-  String? createdAt;
-  String? updatedAt;
-  LastActiveChat? lastActiveChat;
-  String? avatarUrl;
-  String? thumbnailAvatarUrl;
-  bool? isAutomatic;
-  String? lastActiveTime;
-  String? roleId;
-  String? roleName;
-
-  User({
-    this.id,
-    this.fullName,
-    this.username,
-    this.email,
-    this.elsnerEmail,
-    this.position,
-    this.password,
-    this.status,
-    this.isActive,
-    this.loginActivity,
-    this.customStatus,
-    this.muteUsers,
-    this.muteChannels,
-    this.isLeft,
-    this.customStatusHistory,
-    this.createdAt,
-    this.updatedAt,
-    this.lastActiveChat,
-    this.avatarUrl,
-    this.thumbnailAvatarUrl,
-    this.isAutomatic,
-    this.lastActiveTime,
-    this.roleId,
-    this.roleName,
-  });
-
-  User.fromJson(Map<String, dynamic> json) {
-    id = json['_id'];
-    fullName = json['fullName'];
-    username = json['username'];
-    email = json['email'];
-    elsnerEmail = json['elsner_email'];
-    position = json['position'];
-    password = json['password'];
-    status = json['status'];
-    isActive = json['isActive'];
-    loginActivity = json['loginActivity'] ?? []; // Default to empty list
-    customStatus = json['custom_status'];
-    muteUsers = json['mute_users'] ?? []; // Default to empty list
-    muteChannels = json['mute_channels'] ?? []; // Default to empty list
-    isLeft = json['isLeft'];
-    customStatusHistory = json['custom_status_history'] ?? []; // Default to empty list
-    createdAt = json['createdAt'];
-    updatedAt = json['updatedAt'];
-    lastActiveChat = json['lastActiveChat'] != null
-        ? LastActiveChat.fromJson(json['lastActiveChat'])
-        : null;
-    avatarUrl = json['avatarUrl'];
-    thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
-    isAutomatic = json['isAutomatic'];
-    lastActiveTime = json['last_active_time'];
-    roleId = json['role_id'];
-    roleName = json['role_name'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {};
-    data['_id'] = id;
-    data['fullName'] = fullName;
-    data['username'] = username;
-    data['email'] = email;
-    data['elsner_email'] = elsnerEmail;
-    data['position'] = position;
-    data['password'] = password;
-    data['status'] = status;
-    data['isActive'] = isActive;
-    data['loginActivity'] = loginActivity; // No need to map, already a list
-    data['custom_status'] = customStatus;
-    data['mute_users'] = muteUsers; // No need to map, already a list
-    data['mute_channels'] = muteChannels; // No need to map, already a list
-    data['isLeft'] = isLeft;
-    data['custom_status_history'] = customStatusHistory; // No need to map, already a list
-    data['createdAt'] = createdAt;
-    data['updatedAt'] = updatedAt;
-    if (lastActiveChat != null) {
-      data['lastActiveChat'] = lastActiveChat!.toJson();
-    }
-    data['avatarUrl'] = avatarUrl;
-    data['thumbnail_avatarUrl'] = thumbnailAvatarUrl;
-    data['isAutomatic'] = isAutomatic;
-    data['last_active_time'] = lastActiveTime;
-    data['role_id'] = roleId;
-    data['role_name'] = roleName;
-    return data;
-  }
-}
-
 class SignInModel {
   int? statusCode;
   int? status;
   String? message;
   Data? data;
-  List<dynamic>? metadata; // Changed from List<Null> to List<dynamic>
+  List<dynamic>? metadata; // Changed from List<Null>? to List<dynamic>?
 
-  SignInModel({
-    this.statusCode,
-    this.status,
-    this.message,
-    this.data,
-    this.metadata,
-  });
+  SignInModel({this.statusCode, this.status, this.message, this.data, this.metadata});
 
   SignInModel.fromJson(Map<String, dynamic> json) {
     statusCode = json['statusCode'];
     status = json['status'];
     message = json['message'];
     data = json['data'] != null ? Data.fromJson(json['data']) : null;
-    metadata = json['metadata'] ?? []; // Default to empty list
+    metadata = json['metadata'] ?? []; // Default to an empty list if null
   }
 
   Map<String, dynamic> toJson() {
@@ -146,7 +26,7 @@ class SignInModel {
     if (this.data != null) {
       data['data'] = this.data!.toJson();
     }
-    data['metadata'] = metadata; // No need to map, already a list
+    data['metadata'] = metadata;
     return data;
   }
 
@@ -190,6 +70,161 @@ class Data {
       data['user'] = user!.toJson();
     }
     data['auth_token'] = authToken;
+    return data;
+  }
+}
+
+class User {
+  String? id;
+  String? fullName;
+  String? username;
+  String? email;
+  String? status;
+  bool? isActive;
+  List<dynamic>? loginActivity; // Fixed issue here
+  String? customStatus;
+  List<String>? muteUsers;
+  List<String>? muteChannels;
+  bool? isLeft;
+  List<CustomStatusHistory>? customStatusHistory;
+  String? createdAt;
+  String? updatedAt;
+  LastActiveChat? lastActiveChat;
+  String? avatarUrl;
+  String? thumbnailAvatarUrl;
+  String? chatList;
+  bool? isAutomatic;
+  String? lastActiveTime;
+  String? elsnerEmail;
+  String? password;
+  String? roleId;
+  String? roleName;
+
+  User({
+    this.id,
+    this.fullName,
+    this.username,
+    this.email,
+    this.status,
+    this.isActive,
+    this.loginActivity,
+    this.customStatus,
+    this.muteUsers,
+    this.muteChannels,
+    this.isLeft,
+    this.customStatusHistory,
+    this.createdAt,
+    this.updatedAt,
+    this.lastActiveChat,
+    this.avatarUrl,
+    this.thumbnailAvatarUrl,
+    this.chatList,
+    this.isAutomatic,
+    this.lastActiveTime,
+    this.elsnerEmail,
+    this.password,
+    this.roleId,
+    this.roleName
+  });
+
+  User.fromJson(Map<String, dynamic> json) {
+    id = json['_id'];
+    fullName = json['fullName'];
+    username = json['username'];
+    email = json['email'];
+    status = json['status'];
+    isActive = json['isActive'];
+    loginActivity = json['loginActivity'] ?? []; // Fixed issue here
+    customStatus = json['custom_status'];
+    muteUsers = json['mute_users']?.cast<String>();
+    muteChannels = json['mute_channels']?.cast<String>();
+    isLeft = json['isLeft'];
+    if (json['custom_status_history'] != null) {
+      customStatusHistory = (json['custom_status_history'] as List)
+          .map((v) => CustomStatusHistory.fromJson(v))
+          .toList();
+    }
+    createdAt = json['createdAt'];
+    updatedAt = json['updatedAt'];
+    lastActiveChat = json['lastActiveChat'] != null
+        ? LastActiveChat.fromJson(json['lastActiveChat'])
+        : null;
+    avatarUrl = json['avatarUrl'];
+    thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
+    chatList = json['chatList'];
+    isAutomatic = json['isAutomatic'];
+    lastActiveTime = json['last_active_time'];
+    elsnerEmail = json['elsner_email'];
+    password = json['password'];
+    roleId = json['role_id'];
+    roleName = json['role_name'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+    data['_id'] = id;
+    data['fullName'] = fullName;
+    data['username'] = username;
+    data['email'] = email;
+    data['status'] = status;
+    data['isActive'] = isActive;
+    data['loginActivity'] = loginActivity; // Fixed issue here
+    data['custom_status'] = customStatus;
+    data['mute_users'] = muteUsers;
+    data['mute_channels'] = muteChannels;
+    data['isLeft'] = isLeft;
+    if (customStatusHistory != null) {
+      data['custom_status_history'] =
+          customStatusHistory!.map((v) => v.toJson()).toList();
+    }
+    data['createdAt'] = createdAt;
+    data['updatedAt'] = updatedAt;
+    if (lastActiveChat != null) {
+      data['lastActiveChat'] = lastActiveChat!.toJson();
+    }
+    data['avatarUrl'] = avatarUrl;
+    data['thumbnail_avatarUrl'] = thumbnailAvatarUrl;
+    data['chatList'] = chatList;
+    data['isAutomatic'] = isAutomatic;
+    data['last_active_time'] = lastActiveTime;
+    data['elsner_email'] = elsnerEmail;
+    data['password'] = password;
+    data['role_id'] = roleId;
+    data['role_name'] = roleName;
+    return data;
+  }
+}
+
+class CustomStatusHistory {
+  String? customStatus;
+  String? customStatusEmoji;
+  String? updatedBy;
+  String? updatedAt;
+  String? sId;
+
+  CustomStatusHistory({
+    this.customStatus,
+    this.customStatusEmoji,
+    this.updatedBy,
+    this.updatedAt,
+    this.sId,
+  });
+
+  CustomStatusHistory.fromJson(Map<String, dynamic> json) {
+    customStatus = json['custom_status'];
+    customStatusEmoji = json['custom_status_emoji'];
+    updatedBy = json['updatedBy'];
+    updatedAt = json['updatedAt'];
+    sId = json['_id'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+    data['custom_status'] = customStatus;
+    data['custom_status_emoji'] = customStatusEmoji;
+    data['updatedBy'] = updatedBy;
+    data['updatedAt'] = updatedAt;
+    data['_id'] = sId;
     return data;
   }
 }

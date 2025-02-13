@@ -1,9 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_connect/main.dart';
 import 'package:e_connect/model/search_user_model.dart';
+import 'package:e_connect/screens/chat/single_chat_message_screen.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
+import 'package:e_connect/utils/common/common_function.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubit/channel_list/channel_list_cubit.dart';
 import '../../utils/common/common_widgets.dart';
@@ -17,19 +21,20 @@ class OpenDirectMessage extends StatefulWidget {
 
 class _OpenDirectMessageState extends State<OpenDirectMessage> {
   final _searchController = TextEditingController();
-  final channelListCubit = ChannelListCubit();
+  // final channelListCubit = ChannelListCubit();
+  final channelListProvider1 = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
 
   @override
   void initState() {
     super.initState();
-    channelListCubit.getUserSuggestionsListing();
+    channelListProvider1.getUserSuggestionsListing();
 
     _searchController.addListener(() {
-      if (_searchController.text.isNotEmpty && _searchController.text.length > 2) {
-        channelListCubit.searchUserByName(search: _searchController.text);
+      if (_searchController.text.isNotEmpty && _searchController.text.length > 1) {
+        channelListProvider1.searchUserByName(search: _searchController.text);
       } else if (_searchController.text.isEmpty) {
-        // channelListCubit.searchUserByName(search: "");
-        channelListCubit.searchUserModel = SearchUserModel();
+        channelListProvider1.searchUserModel = SearchUserModel();
+        channelListProvider1.searchUserByName(search: "");
       }
     });
   }
@@ -38,25 +43,19 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
-      child: BlocBuilder<ChannelListCubit, ChannelListState>(
-        bloc: channelListCubit,
-        builder: (context, state) {
+      child: Consumer<ChannelListProvider>(builder: (context, channelListProvider, child) {
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            backgroundColor: Colors.white,
+            // backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.close, color: Colors.black87),
+              icon: const Icon(Icons.close, color: Colors.white),
               onPressed: () => Navigator.pop(context),
             ),
-            title: const Text(
-              'Direct Messages',
-              style: TextStyle(
-                color: Colors.black87,
+            title: commonText(
+              text: 'Direct Messages',
                 fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
             ),
           ),
           body: Column(
@@ -73,27 +72,29 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
               _searchController.text.isEmpty ?
 
               Visibility(
-                visible: channelListCubit.getUserSuggestions != null,
+                visible: channelListProvider.getUserSuggestions != null,
                 child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
-                alignment: Alignment.centerLeft,
-                child: commonText(text: "${channelListCubit.getUserSuggestions?.data?.suggestions?.length} of ${channelListCubit.getUserSuggestions?.data?.totalUsers} members")),
+                    margin: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
+                    alignment: Alignment.centerLeft,
+                    child: commonText(text: "${channelListProvider.getUserSuggestions?.data?.suggestions?.length ?? 0} of ${channelListProvider.getUserSuggestions?.data?.totalUsers ?? 0} members")),
               ) :
               Visibility(
-                visible: channelListCubit.searchUserModel != null,
+                visible: channelListProvider.searchUserModel != null,
                 child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
-                alignment: Alignment.centerLeft,
-                child: commonText(text: "${channelListCubit.searchUserModel?.data?.totalSearchResults} of ${channelListCubit.searchUserModel?.data?.totalUsers} members")),
+                    margin: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
+                    alignment: Alignment.centerLeft,
+                    child: commonText(text: "${channelListProvider.searchUserModel?.data?.totalSearchResults} of ${channelListProvider.searchUserModel?.data?.totalUsers} members")),
               ),
 
 
               if(_searchController.text.isNotEmpty)...{
                 Expanded(
-                  child: BlocBuilder<ChannelListCubit, ChannelListState>(
-                    bloc: channelListCubit,
-                    builder: (context, state) {
-                      final users =  channelListCubit.searchUserModel?.data?.users;
+                  // child: BlocBuilder<ChannelListCubit, ChannelListState>(
+                  //   bloc: channelListCubit,
+                  //   builder: (context, state) {
+                child: Consumer<ChannelListProvider>(builder: (context, channelListProvider, child) {
+
+                      final users =  channelListProvider.searchUserModel?.data?.users;
 
                       if (users == null || users.isEmpty) {
                         return Center(
@@ -140,10 +141,10 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
                                 ),
                               ],
                             ),
-
                             onTap: () {
-                              // Handle user selection
-                            },
+                              print("tapped>>>> ${user.username} ${user.sId} ");
+                              pushReplacement(screen: SingleChatMessageScreen(userName: user.username ?? "", oppositeUserId: user.sId ?? "",needToCallAddMessage: true,)
+                              );},
                           );
                         },
                       );
@@ -152,10 +153,12 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
                 ),
               }else...{
                 Expanded(
-                  child: BlocBuilder<ChannelListCubit, ChannelListState>(
-                    bloc: channelListCubit,
-                    builder: (context, state) {
-                      final users =  channelListCubit.getUserSuggestions?.data?.suggestions;
+                child:  Consumer<ChannelListProvider>(builder: (context, channelListProvider, child) {
+
+                  // child: BlocBuilder<ChannelListCubit, ChannelListState>(
+                  //   bloc: channelListCubit,
+                  //   builder: (context, state) {
+                      final users =  channelListProvider.getUserSuggestions?.data?.suggestions;
 
                       if (users == null || users.isEmpty) {
                         return Center(
@@ -204,8 +207,9 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
                             ),
 
                             onTap: () {
-                              // Handle user selection
-                            },
+                              print("tapped>>>> ${user.username} ${user.userId} ");
+                              pushReplacement(screen: SingleChatMessageScreen(userName: user.username ?? "", oppositeUserId: user.userId ?? "",needToCallAddMessage: true)
+                              );},
                           );
                         },
                       );

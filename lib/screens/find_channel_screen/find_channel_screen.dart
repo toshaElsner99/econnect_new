@@ -1,8 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_connect/main.dart';
+import 'package:e_connect/screens/chat/single_chat_message_screen.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
+import 'package:e_connect/utils/common/common_function.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubit/channel_list/channel_list_cubit.dart';
 import '../../utils/app_color_constants.dart';
@@ -18,18 +22,17 @@ class FindChannelScreen extends StatefulWidget {
 
 class _FindChannelScreenState extends State<FindChannelScreen> {
   final _searchController = TextEditingController();
-  final channelListCubit = ChannelListCubit();
-
+  // final channelListCubit = ChannelListCubit();
   @override
   void initState() {
     super.initState();
-    channelListCubit.browseAndSearchChannel(search: _searchController.text);
+    context.read<ChannelListProvider>().browseAndSearchChannel(search: _searchController.text);
 
     _searchController.addListener(() {
       if (_searchController.text.isNotEmpty && _searchController.text.length > 3) {
-        channelListCubit.browseAndSearchChannel(search: _searchController.text);
+        context.read<ChannelListProvider>().browseAndSearchChannel(search: _searchController.text);
       }  else if(_searchController.text.isEmpty){
-        channelListCubit.browseAndSearchChannel(search: "");
+        context.read<ChannelListProvider>().browseAndSearchChannel(search: "");
       }
     });
   }
@@ -41,120 +44,128 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          // backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.close, color: Colors.black87),
+            icon: const Icon(Icons.close,color: Colors.white,),
             onPressed: () => Navigator.pop(context),
           ),
           title: commonText(
             text: 'Find Channel',
-            color: Colors.black87,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),
-        body: BlocConsumer(
-          bloc: channelListCubit,
-          builder: (context, state) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Search Field
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: commonTextFormField(
-                    controller: _searchController,
-                    hintText: 'Search users or channels',
-                    prefixIcon: const Icon(CupertinoIcons.search),
+        body: Consumer<ChannelListProvider>(builder: (context, channelListProvider, child) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Search Field
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: commonTextFormField(
+                  controller: _searchController,
+                  hintText: 'Search users or channels',
+                  prefixIcon: const Icon(CupertinoIcons.search),
+                ),
+              ),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Users Section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          children: [
+                            Image.asset(AppImage.persons,height: 20,width: 20,),
+                            SizedBox(width: 5,),
+                            commonText(
+                              text: 'Users',
+                              color: Colors.black87,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (channelListProvider.browseAndSearchChannelModel?.data?.users?.isEmpty ?? true)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                          child: Center(
+                            child: commonText(
+                              text: 'No users found',
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: channelListProvider.browseAndSearchChannelModel?.data?.users?.length ?? 0,
+                          itemBuilder: (context, index) {
+                            final user = channelListProvider.browseAndSearchChannelModel?.data?.users?[index];
+                            return _buildUserTile(user);
+                          },
+                        ),
+
+                      const SizedBox(height: 16),
+
+                      // Channels Section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          children: [
+                            Image.asset(AppImage.globalIcon,width: 20,height: 20,color: Colors.black,),
+                            SizedBox(width: 5,),
+                            commonText(
+                              text: 'Channels',
+                              color: Colors.black87,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (channelListProvider.browseAndSearchChannelModel?.data?.channels?.isEmpty ?? true)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                          child: Center(
+                            child: commonText(
+                              text: 'No channels found',
+                              color: Colors.grey[600],
+                              fontSize: 14,
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: channelListProvider.browseAndSearchChannelModel?.data?.channels?.length ?? 0,
+                          itemBuilder: (context, index) {
+                            final channel = channelListProvider.browseAndSearchChannelModel?.data?.channels?[index];
+                            return _buildChannelTile(channel);
+                          },
+                        ),
+                    ],
                   ),
                 ),
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Users Section
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: commonText(
-                            text: 'Users',
-                            color: Colors.black87,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (channelListCubit.browseAndSearchChannelModel?.data?.users?.isEmpty ?? true)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                            child: Center(
-                              child: commonText(
-                                text: 'No users found',
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                              ),
-                            ),
-                          )
-                        else
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: channelListCubit.browseAndSearchChannelModel?.data?.users?.length ?? 0,
-                            itemBuilder: (context, index) {
-                              final user = channelListCubit.browseAndSearchChannelModel?.data?.users?[index];
-                              return _buildUserTile(user);
-                            },
-                          ),
-
-                        const SizedBox(height: 16),
-
-                        // Channels Section
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          child: commonText(
-                            text: 'Channels',
-                            color: Colors.black87,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (channelListCubit.browseAndSearchChannelModel?.data?.channels?.isEmpty ?? true)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                            child: Center(
-                              child: commonText(
-                                text: 'No channels found',
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                              ),
-                            ),
-                          )
-                        else
-                          ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: channelListCubit.browseAndSearchChannelModel?.data?.channels?.length ?? 0,
-                            itemBuilder: (context, index) {
-                              final channel = channelListCubit.browseAndSearchChannelModel?.data?.channels?[index];
-                              return _buildChannelTile(channel);
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-          listener: (context, state) {},
-        ),
+              ),
+            ],
+          );
+        },),
       ),
     );
   }
 
   Widget _buildUserTile(dynamic user) {
     return ListTile(
+      onTap: () => pushReplacement(screen: SingleChatMessageScreen(userName: user?.username ?? "", oppositeUserId: user?.userId ?? "",needToCallAddMessage: true,)),
       leading: CircleAvatar(
         backgroundImage: CachedNetworkImageProvider(
           ApiString.profileBaseUrl + (user?.avatarUrl ?? ""),

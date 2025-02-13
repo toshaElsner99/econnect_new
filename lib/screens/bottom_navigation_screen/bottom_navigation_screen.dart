@@ -1,6 +1,7 @@
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../cubit/common_cubit/common_cubit.dart';
 import '../../cubit/sign_in/sign_in_model.dart';
@@ -16,8 +17,8 @@ class BottomNavigationScreen extends StatefulWidget {
 }
 
 class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
-  var commonCubit = CommonCubit();
-  var bottomNavigationScreenCubit = BottomNavigationScreenCubit();
+  final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
+  final bottomNavigationProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
 
 
 
@@ -28,19 +29,17 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
   }
 
   load() async {
-    await commonCubit.getUserByIDCall();
+    await commonProvider.getUserByIDCall();
     signInModel = (await SignInModel.loadFromPrefs())!;
   }
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder(
-      bloc: bottomNavigationScreenCubit,
-      builder: (context, state) {
+    return Consumer<BottomNavigationProvider>(builder: (context, bottomNavigationProvider, child) {
       return Scaffold(
-        body: bottomNavigationScreenCubit.screens[bottomNavigationScreenCubit.currentIndex],
+        body: bottomNavigationProvider.screens[bottomNavigationProvider.currentIndex],
         bottomNavigationBar: BottomNavigationBar(
-          currentIndex: bottomNavigationScreenCubit.currentIndex,
-          onTap: (index) => bottomNavigationScreenCubit.updateCurrentIndex(index),
+          currentIndex: bottomNavigationProvider.currentIndex,
+          onTap: (index) => bottomNavigationProvider.updateCurrentIndex(index),
           type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(

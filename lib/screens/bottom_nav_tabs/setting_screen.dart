@@ -1,4 +1,6 @@
 
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
@@ -7,7 +9,8 @@ import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:e_connect/utils/theme/theme_cubit.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../utils/app_preference_constants.dart';
 import '../../widgets/set_Custom_status_bottom_sheet.dart';
@@ -24,45 +27,40 @@ class _SettingScreenState extends State<SettingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder(
-      bloc: commonCubit,
-      builder: (context, state) {
+    return Consumer2<CommonProvider,ThemeProvider>(builder: (context, commonProvider,themeProvider, child) {
       return Scaffold(
-        backgroundColor: AppColor.commonAppColor,
-        body: BlocBuilder<ThemeCubit, ThemeState>(builder: (context, state) {
-          final themeCubit = context.read<ThemeCubit>();
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: _buildProfileHeader(),
-              ),
+        backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+        body: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: _buildProfileHeader(),
+            ),
 
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    _buildSection(
-                      children: [
-                        _buildStatusTile(),
-                        _buildCustomStatusTile(),
-                      ],
-                    ),
-                    _buildSection(
-                      children: [
-                        _buildProfileTile(),
-                        _buildThemeModeTile(themeCubit),
-                      ],
-                    ),
-                    _buildSection(
-                      children: [
-                        _buildLogoutTile(),
-                      ],
-                    ),
-                  ],
-                ),
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  _buildSection(
+                    children: [
+                      _buildStatusTile(commonProvider),
+                      _buildCustomStatusTile(commonProvider),
+                    ],
+                  ),
+                  _buildSection(
+                    children: [
+                      _buildProfileTile(),
+                      _buildThemeModeTile(themeProvider),
+                    ],
+                  ),
+                  _buildSection(
+                    children: [
+                      _buildLogoutTile(),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          );
-        },),
+            ),
+          ],
+        ),
       );
     },);
   }
@@ -72,7 +70,7 @@ class _SettingScreenState extends State<SettingScreen> {
       height: MediaQuery.of(context).size.height * 0.3,
       padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
       decoration: BoxDecoration(
-        color: AppColor.commonAppColor,
+        // color: AppColor.commonAppColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -87,7 +85,7 @@ class _SettingScreenState extends State<SettingScreen> {
           commonImageHolder(radius: 50),
           const SizedBox(height: 16),
           commonText(
-            text: "${signInModel.data?.user?.fullName}",
+            text: signInModel.data?.user?.fullName ?? signInModel.data?.user?.username ?? "",
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -120,32 +118,32 @@ class _SettingScreenState extends State<SettingScreen> {
     );
   }
 
-  Widget _buildStatusTile() {
-    print("STATUSS >>> ${commonCubit.getUserModel?.data?.user!.status!}");
+  Widget _buildStatusTile(CommonProvider commonProvider) {
+    print("STATUSS >>> ${commonProvider.getUserModel?.data?.user!.status!}");
     return _buildTile(
       onTap: () => _showStatusBottomSheet(context),
       leading: getCommonStatusIcons(
-        status: "${commonCubit.getUserModel?.data?.user!.status!}",
+        status: "${commonProvider.getUserModel?.data?.user!.status!}",
         assetIcon: false,
       ),
-      title: capitalizeFirstLetter("${commonCubit.getUserModel?.data?.user!.status!}"),
+      title: capitalizeFirstLetter("${commonProvider.getUserModel?.data?.user!.status!}"),
     );
   }
 
 
-  Widget _buildCustomStatusTile() {
+  Widget _buildCustomStatusTile(CommonProvider commonProvider) {
     return GestureDetector(
       onTap: () => showCustomStatusSheet(context),
       child: _buildTile(
-          leading: commonCubit.customStatusUrl.isNotEmpty ? Image.network(commonCubit.customStatusUrl,width: 24,height: 24,) : Image.asset(
+          leading: commonProvider.customStatusUrl.isNotEmpty ? CachedNetworkImage(imageUrl: commonProvider.customStatusUrl,width: 24,height: 24,) : Image.asset(
             AppImage.setStatusIcon,
             width: 24,
             height: 24,
             color: Colors.white.withOpacity(0.8),
           ),
-          title: commonCubit.customStatusUrl.isNotEmpty ? commonCubit.setCustomTextController.text : AppString.setACustomStatus,
-          trailing: commonCubit.customStatusUrl.isNotEmpty ? GestureDetector(
-            onTap: () => commonCubit.updateCustomStatusCall(status: "", emojiUrl: ""),
+          title: commonProvider.customStatusUrl.isNotEmpty ? commonProvider.customStatusTitle : AppString.setACustomStatus,
+          trailing: commonProvider.customStatusUrl.isNotEmpty ? GestureDetector(
+            onTap: () => commonProvider.updateCustomStatusCall(status: "", emojiUrl: ""),
             child: Container(
                 margin: EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -168,7 +166,7 @@ class _SettingScreenState extends State<SettingScreen> {
     );
   }
 
-  Widget _buildThemeModeTile(ThemeCubit themeCubit) {
+  Widget _buildThemeModeTile(ThemeProvider themeProvider) {
     return _buildTile(
       leading: Image.asset(
         AppPreferenceConstants.themeModeBoolValueGet
@@ -186,7 +184,7 @@ class _SettingScreenState extends State<SettingScreen> {
         child: Switch(
           activeColor: AppColor.commonAppColor,
           value: AppPreferenceConstants.themeModeBoolValueGet,
-          onChanged: (value) => themeCubit.toggleTheme(),
+          onChanged: (value) => themeProvider.toggleTheme(),
         ),
       ),
     );
@@ -242,82 +240,91 @@ class _SettingScreenState extends State<SettingScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF1B1E23),
+        decoration: BoxDecoration(
+          // color: Color(0xFF1B1E23),
+          color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Bottom sheet indicator
-            Center(
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[600],
-                  borderRadius: BorderRadius.circular(2),
+        child: Consumer<CommonProvider>(builder: (context, commonProvider, child) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Bottom sheet indicator
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[600],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
 
-            // Status text
-            Padding(
-              padding: EdgeInsets.only(left: 16, bottom: 16),
-              child: commonText(
-                text: AppString.status,
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+              // Status text
+              Padding(
+                padding: EdgeInsets.only(left: 16, bottom: 16),
+                child: commonText(
+                  text: AppString.status,
+                  color: Colors.black,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
 
-            // Status options
-            _buildStatusOption(
-              context,
-              icon: Icons.check_circle,
-              color: Colors.green,
-              text: AppString.online,
-              index: 0,
-            ),
-            _buildStatusOption(
-              context,
-              icon: Icons.access_time_filled_outlined,
-              color: Colors.orange,
-              text: AppString.away,
-              index: 1,
-            ),
-            _buildStatusOption(
-              context,
-              icon: Icons.remove_circle,
-              color: Colors.blue,
-              text: AppString.busy,
-              index: 2,
-            ),
-            _buildStatusOption(
-              context,
-              icon: Icons.remove_circle,
-              color: Colors.red,
-              text: AppString.dnd,
-              index: 3,
-            ),
-            _buildStatusOption(
-              context,
-              icon: Icons.circle_outlined,
-              color: AppColor.borderColor,
-              text: AppString.offline,
-              index: 4,
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
+              // Status options
+              _buildStatusOption(
+                commonProvider: commonProvider,
+                context,
+                icon: Icons.check_circle,
+                color: Colors.green,
+                text: AppString.online,
+                index: 0,
+              ),
+              _buildStatusOption(
+                commonProvider: commonProvider,
+                context,
+                icon: Icons.access_time_filled_outlined,
+                color: Colors.orange,
+                text: AppString.away,
+                index: 1,
+              ),
+              _buildStatusOption(
+                commonProvider: commonProvider,
+                context,
+                icon: Icons.remove_circle,
+                color: Colors.blue,
+                text: AppString.busy,
+                index: 2,
+              ),
+              _buildStatusOption(
+                commonProvider: commonProvider,
+                context,
+                icon: Icons.remove_circle,
+                color: Colors.red,
+                text: AppString.dnd,
+                index: 3,
+              ),
+              _buildStatusOption(
+                commonProvider: commonProvider,
+                context,
+                icon: Icons.circle_outlined,
+                color: AppColor.borderColor,
+                text: AppString.offline,
+                index: 4,
+              ),
+              const SizedBox(height: 16),
+            ],
+          );
+        },),
       ),
     );
   }
   Widget _buildStatusOption(
       BuildContext context, {
+        required CommonProvider commonProvider,
         required IconData icon,
         required Color color,
         required String text,
@@ -326,7 +333,7 @@ class _SettingScreenState extends State<SettingScreen> {
     return InkWell(
       onTap: () {
         pop();
-        commonCubit.updateStatusCall(status: index == 0 ? AppString.online.toLowerCase() : index == 1 ? AppString.away.toLowerCase() : index == 2 ? AppString.busy.toLowerCase() : index == 3 ? AppString.dnd.toLowerCase() : AppString.offline.toLowerCase());
+        commonProvider.updateStatusCall(status: index == 0 ? AppString.online.toLowerCase() : index == 1 ? AppString.away.toLowerCase() : index == 2 ? AppString.busy.toLowerCase() : index == 3 ? AppString.dnd.toLowerCase() : AppString.offline.toLowerCase());
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -336,7 +343,7 @@ class _SettingScreenState extends State<SettingScreen> {
             const SizedBox(width: 16),
             commonText(
               text: text,
-              color: Colors.white,
+              color: Colors.black,
               fontSize: 16,
             ),
           ],

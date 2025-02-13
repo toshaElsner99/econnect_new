@@ -1,0 +1,110 @@
+import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
+import 'package:e_connect/main.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+
+import '../cubit/channel_list/channel_list_cubit.dart';
+class SocketIoProvider extends ChangeNotifier{
+
+
+  static const socketBaseUrl = 'wss://e-connect-socket.elsner.com';
+  late IO.Socket socket;
+
+  String connection = "connection";
+  String disconnect = "disconnect";
+  String joinRoom = "joinRoom";
+  String userActivity = "userActivity";
+  String notification = "notification";
+  String notificationForPinMessages = "pin_notification";
+  String notificationForPinMessagesChannel= "pin_notification_channel";
+  String userTypingGet= "user_typing";
+  String notificationForMessageReacting= "msg_reaction";
+  String notificationForMessageReactionChannel= "msg_reaction_channel";
+  String replyNotification= "reply_notification";
+  String getNotification= "get_notification";
+  String getUnreadNotification= "get_unread_notification";
+  String readNotification= "read_notification";
+  String sendMessage = "send_message";
+  String callInitial = "call_initiated";
+  String callReceived = "call_received";
+  String pinMessage = "message_pinned";
+  String userTyping = "user_typing";
+  String messageReaction = "message_reaction";
+  String messagePinnedToChannel= "message_pinned_channel";
+  String messageReactionToChannel= "message_reaction_channel";
+  // String replyNotification = "reply_notification";
+  String deleteMessages = "delete_message_chat";
+  String deleteMessagesChannel = "delete_message_chat_channel";
+  String deleteMessage = "deleted_message_chat";
+  String deleteMessageChannel = "deleted_message_channel";
+  String addMember = "addMember";
+  String channelHeaderMessage = "channelHeader";
+  String channelHeaderChannel = "channelHeaderChannel";
+  String channelHeaderMessageN= "channelHeaderUpdate";
+  String channelHeaderChannelN= "channelHeaderUpdateChannel";
+  String userUpdate= "userUpdate";
+  String userUpdated= "userUpdated";
+  String removeMember= "remove_member";
+  String removedMember= "removed_member";
+  String leaveMember= "leaveMember";
+  String renameChannel= "rename_channel";
+  String renameChannelNotification= "rename_channel_notification";
+  String channelMemberUpdate= "channel_member_update";
+  String channelMemberUpdateNotification= "channel_member_update_notification";
+  String sendReplyMessage = "send_reply_message";
+
+
+  void connectSocket() {
+    socket = IO.io(
+      socketBaseUrl,
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .setQuery({'userId': signInModel.data?.user?.id})
+          .enableAutoConnect()
+          .build(),
+    );
+
+    socket.connect();
+    print("Attempting to connect...");
+
+    socket.onConnect((_) {
+      print('Connected to socket server >>> ${socket.connected}, ${socket.id}');
+      joinRoomEvent();
+      listenForNotifications();
+    });
+
+    socket.onError((data) {
+      print('Socket Error: $data');
+    });
+
+    socket.onDisconnect((data) {
+      print('Disconnected from socket server $data');
+    });
+
+    socket.onConnectError((data) {
+      print('Connection Error: $data');
+    });
+
+    socket.onReconnect((attempt) {
+      print('Reconnected after $attempt attempts');
+    });
+
+    print("connected>>>> ${socket.connected}");
+  }
+
+  joinRoomEvent(){
+    socket.emit(joinRoom,{{'userId': signInModel.data?.user?.id}});
+    socket.on(joinRoom, (data) => pragma("joinRoomEvent>>>> $data"),);
+  }
+
+  void listenForNotifications() {
+    socket.on(notification, (data) {
+      print("Received Notification >>> $data");
+      Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false).getUserByIDCall();
+      Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getFavoriteList();
+      Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getChannelList();
+      Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getDirectMessageList();
+    });
+  }
+}

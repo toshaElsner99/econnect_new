@@ -10,33 +10,26 @@ class ChatHeaderButtons extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: AppColor.blackColor,
+        color: AppColor.borderColor.withOpacity(0.1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          commonButtonForHeaderFavoriteInfoCallMute(
-            icon: Icons.edit,
-            label: 'Set Header',
-            onTap: () {},
-            context: context,
-            totalButtons: 3
-          ),
-          commonButtonForHeaderFavoriteInfoCallMute(
-            icon: Icons.star,
-            label: 'Favorited',
-            isSelected: true,
-            onTap: () {},
-              context: context,
-              totalButtons: 3
-          ),
-          commonButtonForHeaderFavoriteInfoCallMute(
-            icon: Icons.info_outline,
-            label: 'Info',
-            onTap: () {},
-              context: context,
-              totalButtons: 3
-          ),
+          // commonButtonForHeaderFavoriteInfoCallMute(
+          //   icon: Icons.star,
+          //   label: 'Favorite',
+          //   isSelected: true,
+          //   onTap: () {},
+          //     context: context,
+          //     totalButtons: 3
+          // ),
+          // commonButtonForHeaderFavoriteInfoCallMute(
+          //   icon: Icons.info_outline,
+          //   label: 'Info',
+          //   onTap: () {},
+          //     context: context,
+          //     totalButtons: 3
+          // ),
         ],
       ),
     );
