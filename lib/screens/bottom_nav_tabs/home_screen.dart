@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_connect/chat_screen.dart';
 import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
@@ -198,8 +199,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                 color: Colors.white.withOpacity(0.8),
                                 size: 16,
                               ),
-                              onPressed: () =>
-                                  pushScreenWithTransition(SettingScreen())),
+                              onPressed: () => pushScreenWithTransition(SettingScreen())),
                         );
   }
 
@@ -751,6 +751,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
      margin: const EdgeInsets.symmetric(vertical: 6),
      child: InkWell(
        onTap: () => pushScreen(screen: SingleChatMessageScreen(userName: username, oppositeUserId: userId,calledForFavorite: true,)),
+       // onTap: () => pushScreen(screen: ChatScreen(userName: username, oppositeUserId: userId,calledForFavorite: true,)),
        borderRadius: BorderRadius.circular(8),
        child: Padding(
          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

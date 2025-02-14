@@ -14,6 +14,7 @@ part 'common_state.dart';
 
 class CommonProvider extends ChangeNotifier {
   GetUserModel? getUserModel;
+  GetUserModelSecondUser? getUserModelSecondUser;
   final setCustomTextController = TextEditingController();
   int? selectedIndexOfStatus;
   String customStatusUrl = "";
@@ -84,19 +85,33 @@ class CommonProvider extends ChangeNotifier {
   }
 
 
-  Future<void> getUserByIDCall() async {
-    final response = await ApiService.instance.request(
-        endPoint: "${ApiString.getUserById}/${signInModel.data?.user?.id}",
-        method: Method.GET,);
+  Future<void> getUserByIDCall(/*{String? userId}*/) async {
+    final response = await ApiService.instance.request(endPoint: "${ApiString.getUserById}//${/*userId ?? */signInModel.data?.user?.id ?? ""}", method: Method.GET,);
     if (statusCode200Check(response)) {
       updateStatusCall(status: "online");
       getUserModel = GetUserModel.fromJson(response);
+      // getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
       setCustomTextController.text = getUserModel?.data?.user?.customStatus;
       customStatusTitle = getUserModel?.data?.user?.customStatus;
       customStatusUrl = getUserModel?.data?.user?.customStatusEmoji;
     }
     notifyListeners();
   }
+
+  Future<void> getUserByIDCallForSecondUser({String? userId}) async {
+    print("Called>>>>getUserByIDCallForSecondUser>>>");
+    if(userId != (getUserModelSecondUser?.data?.user?.sId ?? "")){
+      getUserModelSecondUser = null;
+      notifyListeners();
+    }
+    final response = await ApiService.instance.request(
+      endPoint: "${ApiString.getUserById}/$userId", method: Method.GET,);
+    if (statusCode200Check(response)) {
+      getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
+      notifyListeners();
+    }
+  }
+
   Future<GetUserModel?> getUserByIDCall2({String? userId}) async {
     final response = await ApiService.instance.request(
         endPoint: "${ApiString.getUserById}/${userId ?? signInModel.data?.user?.id}",

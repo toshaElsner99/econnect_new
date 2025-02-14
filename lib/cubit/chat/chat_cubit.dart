@@ -1,17 +1,18 @@
 import 'dart:io';
 
+import 'package:e_connect/chat_model.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 import '../../main.dart';
+import '../../model/get_user_model.dart';
 import '../../model/message_model.dart';
 import '../../utils/api_service/api_service.dart';
 import '../../utils/api_service/api_string_constants.dart';
 import '../../utils/common/common_function.dart';
 
-part 'chat_state.dart';
 
 
 class ChatProvider extends  ChangeNotifier {
@@ -20,7 +21,10 @@ class ChatProvider extends  ChangeNotifier {
   String? lastOpenedUserId;
   String oppUserIdForTyping = "";
   int msgLength = 0;
+  final Map<String, dynamic> userCache = {};
 
+  // ChatModel? chatModel;
+  // MessageModel? messageModel;
   getTypingUpdate(){
     try {
       socketProvider.socket.onAny((event, data) {
@@ -51,11 +55,9 @@ class ChatProvider extends  ChangeNotifier {
 
 
   Future<void> getMessagesList(String oppositeUserId,[bool? check]) async {
-    if(check == true){
-      print("claaeddd");
-    }
     if (lastOpenedUserId != oppositeUserId) {
       messageGroups.clear();
+      userCache.clear();
     }
     final response = await ApiService.instance.request(
         endPoint: ApiString.getMessages,
@@ -73,6 +75,35 @@ class ChatProvider extends  ChangeNotifier {
     }
     notifyListeners();
   }
+
+  Future<void> getMessagesList2(String oppositeUserId,[bool? check]) async {
+    print("getMessagesList2>>>>>");
+    // if(check == true){
+    //   print("claaeddd");
+    // }
+    if (lastOpenedUserId != oppositeUserId) {
+      // messageModel = null;
+      messageGroups.clear();
+      notifyListeners();
+    }
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.getMessages,
+        method: Method.POST,
+        reqBody: {
+          "userId": signInModel.data!.user!.id,
+          "oppositeUserId": oppositeUserId,
+          "pageNo": "1"
+        });
+    if (statusCode200Check(response)) {
+      // messageModel = MessageModel.fromJson(response);
+      messageGroups = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
+      // print("Messages == ${messageGroups.length}");
+      // print("First group == ${messageGroups[0].sId}");
+      lastOpenedUserId = oppositeUserId;
+      notifyListeners();
+    }
+  }
+
 
   Future<void> sendMessage({required dynamic content , required String receiverId, required String senderId, List<PlatformFile>? selectedFiles,})async{
     final requestBody = {

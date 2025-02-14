@@ -32,6 +32,15 @@ class AppImage{
   static const unMuteNotification = "$path/ringing.png";
   static const pinIcon = "$path/push-pin.png";
   static const fileIcon = "$path/file.png";
+  static const forwardIcon = "$path/forward.png";
+  static const pinTiltIcon = "$path/pin_tilt.png";
+  static const copyIcon = "$path/copy.png";
+  static const editIcon = "$path/edit.png";
+  static const deleteIcon = "$path/delete.png";
+
+
+
+
 
 
   /// networkUrls

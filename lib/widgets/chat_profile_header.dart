@@ -58,7 +58,7 @@ class ChatProfileHeader extends StatelessWidget {
               // Description
               commonText(
                   text:
-                      'This is the start of your conversation\nwith Tosha Shah. Messages and files\nshared here are not shown to anyone\nelse.',
+                      'This is the start of your conversation\nwith $userName. Messages and files\nshared here are not shown to anyone\nelse.',
                   textAlign: TextAlign.center,
                   // color:AppColor.whiteColor,
                   fontWeight: FontWeight.normal,

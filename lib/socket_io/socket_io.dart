@@ -122,12 +122,11 @@ class SocketIoProvider extends ChangeNotifier{
     });
   }
 
-  void listSingleChatScreen({required String oppositeUserId}) {
+  void listenSingleChatScreen({required String oppositeUserId}) {
     if (!socket.connected) {
       print("⚠️ Socket is not connected. Attempting to reconnect...");
       socket.connect();
     }
-
     socket.on(notification, (data) {
       print("listSingleChatScreen >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId, true);
