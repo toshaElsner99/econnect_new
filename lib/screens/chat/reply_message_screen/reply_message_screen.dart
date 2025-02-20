@@ -9,20 +9,30 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../cubit/channel_list/channel_list_cubit.dart';
 import '../../../cubit/common_cubit/common_cubit.dart';
+import '../../../main.dart';
 import '../../../model/message_model.dart';
 import '../../../providers/download_provider.dart';
+import '../../../providers/file_service_provider.dart';
+import '../../../socket_io/socket_io.dart';
 import '../../../utils/api_service/api_string_constants.dart';
 import '../../../utils/app_color_constants.dart';
 import '../../../utils/app_image_assets.dart';
 import '../../../utils/app_preference_constants.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
+
+import '../media_preview_screen.dart';
+
 
 class ReplyMessageScreen extends StatefulWidget {
   final String userName;
   final String messageId;
+  final String receiverId;
+  final String currentMSGID;
 
   const ReplyMessageScreen(
-      {super.key, required this.userName, required this.messageId});
+      {super.key, required this.userName, required this.messageId, required this.receiverId,required this.currentMSGID});
 
   @override
   State<ReplyMessageScreen> createState() => _ReplyMessageScreenState();
@@ -30,6 +40,15 @@ class ReplyMessageScreen extends StatefulWidget {
 
 class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   final scrollController = ScrollController();
+  bool _showToolbar = false;
+  final quill.QuillController _controller = quill.QuillController.basic();
+  final FocusNode _focusNode = FocusNode();
+  final chatProvider = Provider.of<ChatProvider>(navigatorKey.currentState!.context,listen: false);
+  final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
+  final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
+  final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
+  final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
+
   @override
   void initState() {
     super.initState();
@@ -66,6 +85,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
               ],
             ),
           ),
+          inputTextFieldWithEditor(),
         ],
       ),
     );
@@ -114,7 +134,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                 itemBuilder: (context, index) {
                   GroupMessages? message = messageList?.groupMessages?[index];
                   bool showUserDetails = previousSenderId != message!.senderId!.sId;
-                  previousSenderId = message!.senderId!.sId;
+                  previousSenderId = message.senderId!.sId;
                   return chatBubble(
                     index: index, // Pass index here
                     messageList: message,
@@ -143,7 +163,6 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     required String time,
     bool showUserDetails = true,
   })  {
-
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
       final pinnedMsg = messageList.isPinned ?? false;
       return Container(
@@ -248,6 +267,338 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     },
     );
   }
+
+  Widget inputTextFieldWithEditor() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey.shade800,
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          if (_showToolbar)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: quill.QuillToolbar.simple(
+                configurations: quill.QuillSimpleToolbarConfigurations(
+                    controller: _controller,
+                    sharedConfigurations: const quill.QuillSharedConfigurations(
+                      locale: Locale('en'),
+                    ),
+                    showDividers: false,
+                    showFontFamily: false,
+                    showFontSize: false,
+                    showBoldButton: true,
+                    showItalicButton: true,
+                    showUnderLineButton: false,
+                    showStrikeThrough: true,
+                    showInlineCode: true,
+                    showColorButton: false,
+                    showBackgroundColorButton: false,
+                    showClearFormat: false,
+                    showAlignmentButtons: false,
+                    showLeftAlignment: false,
+                    showCenterAlignment: false,
+                    showRightAlignment: false,
+                    showJustifyAlignment: false,
+                    showHeaderStyle: true,
+                    showListNumbers: true,
+                    showListBullets: true,
+                    showListCheck: false,
+                    showCodeBlock: true,
+                    showQuote: true,
+                    showIndent: false,
+                    showLink: true,
+                    showUndo: false,
+                    showRedo: false,
+                    showSearchButton: false,
+                    showClipboardCut: false,
+                    showClipboardCopy: false,
+                    showClipboardPaste: false,
+                    multiRowsDisplay: false,
+                    showSubscript: false,
+                    showSuperscript: false),
+              ),
+            ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.edit,
+                    color: _showToolbar ? Colors.blue : AppColor.whiteColor,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _showToolbar = !_showToolbar;
+                    });
+                  },
+                ),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade900,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: quill.QuillEditor(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        scrollController: ScrollController(),
+                        configurations: quill.QuillEditorConfigurations(
+                          scrollable: true,
+                          autoFocus: false,
+                          checkBoxReadOnly: false,
+                          placeholder: 'Write to ${widget.userName}',
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          maxHeight: 100,
+                          minHeight: 40,
+                          customStyles: const quill.DefaultStyles(
+                            paragraph: quill.DefaultTextBlockStyle(
+                                TextStyle(
+                                  color: AppColor.whiteColor,
+                                  fontSize: 16,
+                                ),
+                                quill.HorizontalSpacing.zero,
+                                quill.VerticalSpacing.zero,
+                                quill.VerticalSpacing.zero,
+                                BoxDecoration(color: Colors.transparent)),
+                            placeHolder: quill.DefaultTextBlockStyle(
+                                TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                ),
+                                quill.HorizontalSpacing.zero,
+                                quill.VerticalSpacing.zero,
+                                quill.VerticalSpacing.zero,
+                                BoxDecoration(color: Colors.transparent)),
+                            quote: quill.DefaultTextBlockStyle(
+                              TextStyle(
+                                color: AppColor.whiteColor,
+                                fontSize: 16,
+                              ),
+                              quill.HorizontalSpacing(16, 0),
+                              quill.VerticalSpacing(8, 0),
+                              quill.VerticalSpacing(8, 0),
+                              BoxDecoration(
+                                border: Border(
+                                  left: BorderSide(
+                                    color: AppColor.whiteColor,
+                                    width: 4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          selectedFilesWidget(),
+          fileSelectionAndSendButtonRow()
+        ],
+      ),
+    );
+  }
+  Widget selectedFilesWidget() {
+    return Consumer<FileServiceProvider>(
+      builder: (context, provider, _) {
+        return Visibility(
+          visible: provider.selectedFiles.isNotEmpty,
+          child: SizedBox(
+            height: 80,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: provider.selectedFiles.length,
+              itemBuilder: (context, index) {
+                print("FILES>>>> ${provider.selectedFiles[index].path}");
+                return Stack(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MediaPreviewScreen(
+                              files: provider.selectedFiles,
+                              initialIndex: index,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          color: AppColor.commonAppColor,
+                          child: getFileIcon(
+                            provider.selectedFiles[index].extension!,
+                            provider.selectedFiles[index].path,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: GestureDetector(
+                        onTap: () {
+                          provider.removeFile(index);
+                        },
+                        child: CircleAvatar(
+                          radius: 12,
+                          backgroundColor: AppColor.blackColor,
+                          child: CircleAvatar(
+                            radius: 10,
+                            backgroundColor: AppColor.borderColor,
+                            child: Icon(
+                              Icons.close,
+                              color: AppColor.blackColor,
+                              size: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+  Widget fileSelectionAndSendButtonRow() {
+    return Container(
+      padding: const EdgeInsets.only(
+        left: 8,
+        right: 8,
+        bottom: 8,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.alternate_email, color: AppColor.whiteColor),
+            onPressed: () {},
+          ),
+          IconButton(
+            icon: const Icon(Icons.attach_file, color: AppColor.whiteColor),
+            onPressed: () {
+              FileServiceProvider.instance.pickFiles();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.image, color: AppColor.whiteColor),
+            onPressed: () {
+              FileServiceProvider.instance.pickImages();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.camera_alt, color: AppColor.whiteColor),
+            onPressed: () {
+              showCameraOptionsBottomSheet(context);
+            },
+          ),
+          GestureDetector(
+            onTap: () async {
+              final plainText = _controller.document.toPlainText().trim();
+              if(fileServiceProvider.selectedFiles.isNotEmpty){
+                final filesOfList = await chatProvider.uploadFiles();
+                chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,files: filesOfList,replyId: widget.currentMSGID);
+                _clearInputAndDismissKeyboard();
+              }else{
+                chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,replyId: widget.currentMSGID).then((value) => setState(() {
+                  // currentUserMessageId = "";
+                }),);
+                _clearInputAndDismissKeyboard();
+              }
+            },
+            child: Container(
+                decoration: BoxDecoration(
+                    color: AppColor.lightBlueColor,
+                    borderRadius: BorderRadius.circular(10)),
+                child: Padding(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5),
+                  child: Icon(Icons.send, color: AppColor.whiteColor),
+                )),
+          ),
+        ],
+      ),
+    );
+  }
+  void showCameraOptionsBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColor.appBarColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              commonText(
+                text: 'Camera Options',
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColor.whiteColor,
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading:
+                const Icon(Icons.camera_alt, color: AppColor.whiteColor),
+                title: commonText(
+                  text: 'Capture Photo',
+                  color: AppColor.whiteColor,
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  FileServiceProvider.instance.captureMedia(isVideo: false);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.videocam, color: AppColor.whiteColor),
+                title: commonText(
+                  text: 'Record Video',
+                  color: AppColor.whiteColor,
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  FileServiceProvider.instance.captureMedia(isVideo: true);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  void _clearInputAndDismissKeyboard() {
+    _focusNode.unfocus();
+    _controller.clear();
+    setState(() {
+      _showToolbar = false;
+    });
+    FocusScope.of(context).unfocus();
+  }
+
   String formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -263,7 +614,6 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   }
 
   String formatTime(DateTime dateTime) {
-    return DateFormat('hh:mm a').format(dateTime); // hh:mm AM/PM format
+    return DateFormat('hh:mm a').format(dateTime);
   }
-
 }

@@ -145,6 +145,7 @@ import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 
 import '../../main.dart';
+import '../../model/files_listening_in_chat_model.dart';
 import '../../model/get_reply_message_model.dart';
 import '../../model/message_model.dart';
 import '../../providers/file_service_provider.dart';
@@ -166,6 +167,7 @@ class ChatProvider extends  ChangeNotifier {
   int currentPage = 1;
   int totalPages = 0;
   GetReplyMessageModel? getReplyMessageModel;
+  FilesListingInChatModel? filesListingInChatModel;
   clearForFirstTimeMessages(bool needToCLear) {
     if (needToCLear) {
       messageGroups.clear();
@@ -234,8 +236,8 @@ class ChatProvider extends  ChangeNotifier {
     final response = await ApiService.instance.request(endPoint: ApiString.getRepliesMsg, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
       getReplyMessageModel = GetReplyMessageModel.fromJson(response);
+      notifyListeners();
     }
-    notifyListeners();
   }
   Future<void> seenReplayMessage({required String msgId}) async {
     final requestBody = {
@@ -370,26 +372,45 @@ class ChatProvider extends  ChangeNotifier {
 
 
 
-  Future<void> sendMessage({required dynamic content , required String receiverId, required String senderId, List<String>? files,bool? isEditMessage = false, String? editMsgID})async{
+  Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID})async{
+
     final requestBody = {
       "content": content,
       "receiverId": receiverId,
-      "senderId": senderId
+      "senderId": signInModel.data?.user!.id
     };
     if(editMsgID != null && editMsgID.isNotEmpty){
       requestBody["isEdit"] = true;
       requestBody["editMessageId"] = editMsgID;
+    }else if(replyId != null){
+      requestBody['replyTo'] = replyId;
+      requestBody['isReply'] = true;
     }else{
       if (files != null && files.isNotEmpty) {
         requestBody["files"] = files;
       }
     }
-
+    // if (editMsgID != null && editMsgID.isNotEmpty) {
+    //   requestBody["isEdit"] = true;
+    //   requestBody["editMessageId"] = editMsgID;
+    // }
+    //
+    // if (replyId != null) {
+    //   requestBody['replyTo'] = replyId;
+    //   requestBody['isReply'] = true;
+    // }
+    //
+    // if (files != null && files.isNotEmpty) {
+    //   requestBody["files"] = files;
+    // }
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
       socketProvider.sendMessagesSC(response:response['data']);
-      socketProvider.sendMessagesSC(response:response['data']);
-      getMessagesList(oppositeUserId: receiverId);
+      if(replyId != null){
+       getReplyMessageList(msgId: editMsgID!);
+      }else {
+        getMessagesList(oppositeUserId: receiverId);
+      }
     }
   }
 
@@ -406,5 +427,13 @@ class ChatProvider extends  ChangeNotifier {
       getMessagesList(oppositeUserId: receiverId);
       socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
     }
+  }
+  Future<void> getFileListingInChat({required String oppositeUserId})async{
+    final requestBody = {"oppositeUserId": oppositeUserId};
+    final response = await ApiService.instance.request(endPoint: ApiString.getFileListingInChat, method: Method.POST,reqBody: requestBody);
+    if(statusCode200Check(response)){
+      filesListingInChatModel = FilesListingInChatModel.fromJson(response);
+    }
+    notifyListeners();
   }
 }

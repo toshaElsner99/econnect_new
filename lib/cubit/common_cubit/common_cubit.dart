@@ -108,6 +108,7 @@ class CommonProvider extends ChangeNotifier {
       endPoint: "${ApiString.getUserById}/$userId", method: Method.GET,);
     if (statusCode200Check(response)) {
       getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
+      print("getUserByIDCallForSecondUser>>>${getUserModelSecondUser?.data?.user?.pinnedMessageCount}");
       notifyListeners();
     }
   }
@@ -118,6 +119,7 @@ class CommonProvider extends ChangeNotifier {
         method: Method.GET,);
     if (statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
+      print("getUserByIDCall2>>>${getUserModel?.data?.user?.pinnedMessageCount}");
       // emit(CommonInitial());
       return getUserModel;
     }

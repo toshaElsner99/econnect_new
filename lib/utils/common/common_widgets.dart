@@ -925,6 +925,115 @@ Widget showLogOutDialog() {
   );
 }
 
+Widget showLogOutDialog2() {
+  return WillPopScope(
+    onWillPop: () async => false,
+    child: Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B1E23),
+          // color: AppColor.commonAppColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Warning Icon
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColor.redColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.logout_rounded,
+                color: AppColor.redColor,
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            commonText(
+              text: AppString.logoutTitle,
+              color: Colors.white,
+              fontSize: 20,
+              textAlign: TextAlign.start,
+              height: 1.3,
+              fontWeight: FontWeight.w800,
+            ),
+            const SizedBox(height: 12),
+
+            // Message
+            commonText(
+              text: AppString.logoutMessage,
+              color: Colors.grey,
+              fontSize: 16,
+              textAlign: TextAlign.center,
+              fontWeight: FontWeight.w400,
+            ),
+            const SizedBox(height: 24),
+
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => navigatorKey.currentState?.pop(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        side: BorderSide(color: AppColor.borderColor),
+                      ),
+                    ),
+                    child: commonText(
+                      text: AppString.cancel,
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Logout Button
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false).logOut();
+                      // navigatorKey.currentState!.context.read<CommonCubit>().logOut();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.commonAppColor,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: commonText(
+                      text: AppString.logout,
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 // void commonLogoutDialog(BuildContext context,) {
 //   showDialog(
 //     context: context,

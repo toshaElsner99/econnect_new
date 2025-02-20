@@ -7,6 +7,9 @@ import 'package:e_connect/main.dart';
 import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/model/message_model.dart';
 import 'package:e_connect/providers/download_provider.dart';
+import 'package:e_connect/screens/chat/files_listing_screen/files_listing_screen.dart';
+// import 'package:e_connect/screens/chat/forward_message_dialog.dart';
+import 'package:e_connect/screens/chat/pinned_posts_screen/pinned_posts_screen.dart';
 import 'package:e_connect/screens/chat/reply_message_screen/reply_message_screen.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
@@ -44,75 +47,8 @@ class SingleChatMessageScreen extends StatefulWidget {
   State<SingleChatMessageScreen> createState() => _SingleChatMessageScreenState();
 }
 
+
 class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
-  /// Displays the pop-up menu at the fixed tap location using Overlay
-  /// Displays the pop-up menu at the fixed tap location using Overlay
-  void _showPopup({required BuildContext context, Function? delete, Function? pinnedMSG, bool? pinned = false}) {
-    _removePopup();
-    _overlayEntry = OverlayEntry(
-      builder: (context) {
-        return Stack(
-          children: [
-            // Tap outside to close the popup and reset selection
-            GestureDetector(
-              onTap: () {
-                _removePopup();
-                setState(() {
-                  _selectedIndex = null; // Reset selection when closing
-                });
-              },
-              child: Container(
-                color: Colors.transparent,
-              ),
-            ),
-            // Popup Positioned above the clicked icon
-            Positioned(
-              left: _tapPosition.dx - 240, // Adjust X for proper horizontal positioning
-              top: _tapPosition.dy - 40, // Adjust Y to always open above
-              child: Material(
-                color: Colors.transparent,
-                child: commonPopUpForMsg(
-                    pinMessage: (){
-                      _selectedIndex = null;
-                      _removePopup();
-                      pinnedMSG?.call();
-                    },
-                    delete: (){
-                  _selectedIndex = null;
-                  _removePopup();
-                  delete?.call();
-                }),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    Overlay.of(context).insert(_overlayEntry!);
-  }
-
-  /// Removes the overlay
-  void _removePopup() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
-  OverlayEntry? _overlayEntry;
-  Offset _tapPosition = Offset.zero;
-  int? _selectedIndex;
-  /// Captures the exact tap position from the tapped widget
-  void _storePosition(TapDownDetails details, BuildContext itemContext, int index) {
-    final RenderBox renderBox = itemContext.findRenderObject() as RenderBox;
-    final Offset globalPosition = renderBox.localToGlobal(details.localPosition);
-
-    setState(() {
-      _tapPosition = globalPosition;
-      _selectedIndex = index; // Mark this item as selected
-    });
-  }
-
-  ///
-
   final quill.QuillController _controller = quill.QuillController.basic();
   final chatProvider = Provider.of<ChatProvider>(navigatorKey.currentState!.context,listen: false);
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
@@ -126,6 +62,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final Map<String, dynamic> userCache = {};
   GetUserModel? userDetails;
   String currentUserMessageId = "";
+  int? _selectedIndex;
 
   @override
   void initState() {
@@ -137,20 +74,27 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       _controller.addListener(() {
         socketProvider.userTypingEvent(oppositeUserId: widget.oppositeUserId, isReplyMsg: false, isTyping: _controller.document.toPlainText().trim().length > 1 ? 1 : 0);
       },);
-    final isNeedToCall =  socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId);
-      if(isNeedToCall == true){
-        print("isNeedToCall >>>> $isNeedToCall");
-        _fetchAndCacheUserDetails();
-      }
+      /// THis Is Socket Listening Event ///
+      socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId);
+      /// THis is Doing for update pin message and get Message List ///
+      socketProvider.socketListenPinMessage(oppositeUserId: widget.oppositeUserId,callFun: (){
+        chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,needClearFirstTime: true);
+        fetchOppositeUserDetails();
+      });
       if(widget.needToCallAddMessage == true){
         channelListProvider.addUserToChatList(selectedUserId: widget.oppositeUserId);
       }
+      chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
+      channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
+      chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,needClearFirstTime: true);
+      _fetchAndCacheUserDetails();
     },);
-    channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
-    chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,needClearFirstTime: true);
-    _fetchAndCacheUserDetails();
   }
 
+  void fetchOppositeUserDetails()async{
+    await commonProvider.getUserByIDCall2(userId: widget.oppositeUserId);
+    userDetails = commonProvider.getUserModel!;
+  }
   void _fetchAndCacheUserDetails() async {
     await commonProvider.getUserByIDCall2(userId: widget.oppositeUserId);
     await commonProvider.getUserByIDCallForSecondUser(userId: signInModel.data!.user!.id);
@@ -274,13 +218,22 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 const SizedBox(width: 5),
                 Image.asset(AppImage.pinIcon, height: 15, width: 18, color: Colors.white),
                 const SizedBox(width: 3),
-                commonText(
-                  text: "${userDetails?.data?.user!.pinnedMessageCount ?? 0}",
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                ),
-                const SizedBox(width: 6),
-                Image.asset(AppImage.fileIcon, height: 15, width: 15, color: Colors.white),
+                GestureDetector(
+                  onTap: () => PinnedPostsScreen(userName: widget.userName, oppositeUserId: widget.oppositeUserId),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      commonText(
+                        text: "${userDetails?.data?.user!.pinnedMessageCount ?? 0}",
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                          onTap: () => pushScreen(screen: FilesListingScreen(userName: widget.userName,oppositeUserId: widget.oppositeUserId,)),
+                          child: Image.asset(AppImage.fileIcon, height: 15, width: 15, color: Colors.white)),
+                  ],),
+                )
               ],
             ),
           ),
@@ -617,10 +570,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               final plainText = _controller.document.toPlainText().trim();
               if(fileServiceProvider.selectedFiles.isNotEmpty){
                final filesOfList = await chatProvider.uploadFiles();
-               chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, senderId: signInModel.data!.user?.id ?? "",files: filesOfList);
+               chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, files: filesOfList);
                _clearInputAndDismissKeyboard();
               }else{
-                chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, senderId: signInModel.data!.user?.id ?? "",editMsgID: currentUserMessageId).then((value) => setState(() {
+                chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
                   currentUserMessageId = "";
                 }),);
                 _clearInputAndDismissKeyboard();
@@ -643,8 +596,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
   Widget dateHeaders() {
     return Consumer<ChatProvider>(builder: (context, value, child) {
-      List<MessageGroups> sortedGroups = value.messageGroups
-        ..sort((a, b) => b.sId!.compareTo(a.sId!));
+      List<MessageGroups> sortedGroups = value.messageGroups..sort((a, b) => b.sId!.compareTo(a.sId!));
       return value.messageGroups.isEmpty ? SizedBox.shrink() : ListView.builder(
         shrinkWrap: true,
         reverse: true,
@@ -832,14 +784,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 imageUrl: commonProvider.customStatusUrl,
                               ),
                             } else if (userDetails?.data!.user!.customStatusEmoji != "" && userDetails?.data!.user!.customStatusEmoji != null) ...{
-                              CachedNetworkImage(
+                            Padding(
+                            padding: const EdgeInsets.only(left: 5.0),
+                            child: CachedNetworkImage(
                                 width: 20,
                                 height: 20,
                                 imageUrl: userDetails?.data!.user!.customStatusEmoji,
-                              ),
+                              ),),
                             },
                             Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
+                              padding: const EdgeInsets.only(left: 5.0),
                               child: commonText(
                                   height: 1.2,
                                   text: formatTime(time), color: Colors.grey, fontSize: 12
@@ -962,7 +916,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       ),
                       Visibility(visible: messageList.replies?.isNotEmpty ?? false,
                           child: GestureDetector(
-                            onTap: ()=> pushScreenWithTransition(ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString())),
+                            onTap: ()=> pushScreenWithTransition(ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,currentMSGID: messageId,)),
                             child: Container(
                               margin: EdgeInsets.symmetric(vertical: 4),
                               child: Row(
@@ -988,14 +942,19 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   opened: index == _selectedIndex ? true : false,
                   createdAt: messageList.createdAt!,
                   currentUserId: userId,
-                  onForward: () => Null,
-                  onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString())),
+                  onForward: () => null,
+                  onReply: () {
+                  setState(() {
+                    currentUserMessageId = messageId;
+                  });
+                  pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,currentMSGID: currentUserMessageId,));
+                  },
                   onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
                   onCopy: () => copyToClipboard(context, message),
                   onEdit: () => setState(() {
+                    int position = _controller.document.length - 1;
                     currentUserMessageId = messageId;
                     print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
-                    int position = _controller.document.length - 1;
                     _controller.document.insert(position, message.toString());
                     _controller.updateSelection(
                       TextSelection.collapsed(offset: _controller.document.length),

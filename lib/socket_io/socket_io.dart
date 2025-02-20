@@ -133,44 +133,26 @@ class SocketIoProvider extends ChangeNotifier{
     });
   }
 
-  // void listenSingleChatScreen({required String oppositeUserId,}) {
-  //   if (!socket.connected) {
-  //     print("⚠️ Socket is not connected. Attempting to reconnect...");
-  //     socket.connect();
-  //   }
-  //   socket.on((deleteMessageForListen), (data) {
-  //     print("deleteMessageForListen >>> $data");
-  //     Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
-  //   });
-  //   socket.on(notification, (data) {
-  //     print("listSingleChatScreen >>> $data");
-  //     Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
-  //   });
-  //   socket.on(notificationForPinMessages, (data) {
-  //     print("listSingleChatScreen >>> $data");
-  //     Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
-  //   });
-  //
-  // }
-  bool listenSingleChatScreen({required String oppositeUserId}) {
+  void listenSingleChatScreen({required String oppositeUserId,}) {
     if (!socket.connected) {
       print("⚠️ Socket is not connected. Attempting to reconnect...");
       socket.connect();
     }
-
-    List<String> events = [deleteMessageForListen, notification, notificationForPinMessages];
-
-    for (var event in events) {
-      socket.on(event, (data) {
-        print("$event >>> $data");
-        Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId, storeLatest: true);
-      });
-    }
-    if(events[2] == notificationForPinMessages){
-      return true;
-    }else {
-      return false;
-    }
+    socket.on((deleteMessageForListen), (data) {
+      print("deleteMessageForListen >>> $data");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
+    });
+    socket.on(notification, (data) {
+      print("listSingleChatScreen >>> $data");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
+    });
+  }
+  void socketListenPinMessage({required Function callFun , required String oppositeUserId}){
+    socket.on(notificationForPinMessages, (data) {
+      print("listSingleChatScreen >>> $data");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
+      callFun.call();
+    });
   }
 
 }
