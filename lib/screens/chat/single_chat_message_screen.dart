@@ -7,6 +7,7 @@ import 'package:e_connect/main.dart';
 import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/model/message_model.dart';
 import 'package:e_connect/providers/download_provider.dart';
+import 'package:e_connect/screens/chat/reply_message_screen/reply_message_screen.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
@@ -16,16 +17,15 @@ import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_quill/quill_delta.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
+
 import 'package:provider/provider.dart';
 
 import '../../screens/chat/media_preview_screen.dart';
-import '../../widgets/chat_profile_header.dart';
 
 
 /// ///
@@ -38,18 +38,16 @@ class SingleChatMessageScreen extends StatefulWidget {
   final bool? needToCallAddMessage;
   // final bool callForReadMsg;
 
-  const SingleChatMessageScreen(
-      {super.key, required this.userName, required this.oppositeUserId, this.calledForFavorite, this.needToCallAddMessage});
+  const SingleChatMessageScreen({super.key, required this.userName, required this.oppositeUserId, this.calledForFavorite, this.needToCallAddMessage});
 
   @override
-  State<SingleChatMessageScreen> createState() =>
-      _SingleChatMessageScreenState();
+  State<SingleChatMessageScreen> createState() => _SingleChatMessageScreenState();
 }
 
 class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   /// Displays the pop-up menu at the fixed tap location using Overlay
   /// Displays the pop-up menu at the fixed tap location using Overlay
-  void _showPopup({required BuildContext context, Function? delete}) {
+  void _showPopup({required BuildContext context, Function? delete, Function? pinnedMSG, bool? pinned = false}) {
     _removePopup();
     _overlayEntry = OverlayEntry(
       builder: (context) {
@@ -73,7 +71,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               top: _tapPosition.dy - 40, // Adjust Y to always open above
               child: Material(
                 color: Colors.transparent,
-                child: commonPopUpForMsg(delete: (){
+                child: commonPopUpForMsg(
+                    pinMessage: (){
+                      _selectedIndex = null;
+                      _removePopup();
+                      pinnedMSG?.call();
+                    },
+                    delete: (){
                   _selectedIndex = null;
                   _removePopup();
                   delete?.call();
@@ -109,7 +113,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
   ///
 
-  final ScrollController _scrollController = ScrollController();
   final quill.QuillController _controller = quill.QuillController.basic();
   final chatProvider = Provider.of<ChatProvider>(navigatorKey.currentState!.context,listen: false);
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
@@ -122,20 +125,29 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   bool _showToolbar = false;
   final Map<String, dynamic> userCache = {};
   GetUserModel? userDetails;
+  String currentUserMessageId = "";
+
   @override
   void initState() {
     super.initState();
-    commonProvider.updateStatusCall(status: "online");
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => chatProvider.getTypingUpdate(),);
-    _controller.addListener(() {
-      socketProvider.userTypingEvent(oppositeUserId: widget.oppositeUserId, isReplyMsg: false, isTyping: _controller.document.toPlainText().trim().length > 1 ? 1 : 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ChatProvider>(context,listen: false).pagination(oppositeUserId: widget.oppositeUserId);
+      commonProvider.updateStatusCall(status: "online");
+      chatProvider.getTypingUpdate();
+      _controller.addListener(() {
+        socketProvider.userTypingEvent(oppositeUserId: widget.oppositeUserId, isReplyMsg: false, isTyping: _controller.document.toPlainText().trim().length > 1 ? 1 : 0);
+      },);
+    final isNeedToCall =  socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId);
+      if(isNeedToCall == true){
+        print("isNeedToCall >>>> $isNeedToCall");
+        _fetchAndCacheUserDetails();
+      }
+      if(widget.needToCallAddMessage == true){
+        channelListProvider.addUserToChatList(selectedUserId: widget.oppositeUserId);
+      }
     },);
-    socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId);
-    if(widget.needToCallAddMessage == true){
-      channelListProvider.addUserToChatList(selectedUserId: widget.oppositeUserId);
-    }
     channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
-    chatProvider.getMessagesList(widget.oppositeUserId);
+    chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,needClearFirstTime: true);
     _fetchAndCacheUserDetails();
   }
 
@@ -154,68 +166,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   Widget build(BuildContext context) {
     return Consumer2<CommonProvider,ChatProvider>(builder: (context, commonProvider,chatProvider, child) {
       return Scaffold(
-        // appBar: AppBar(
-        //   toolbarHeight: 60,
-        //   leadingWidth: 35,
-        //   leading: Padding(
-        //     padding: const EdgeInsets.only(left: 15.0),
-        //     child: IconButton(icon: Icon(CupertinoIcons.back,color: Colors.white,),color: Colors.white, onPressed: () => pop(),),
-        //   ),
-        //   titleSpacing: 20,
-        //   title:  userDetails != null ? Column(
-        //     crossAxisAlignment: CrossAxisAlignment.start,
-        //     children: [
-        //       Row(
-        //         children: [
-        //           commonText(
-        //               text: userDetails!.data!.user!.fullName ?? userDetails!.data!.user!.username ?? 'Unknown',
-        //               fontSize: 16,
-        //               fontWeight: FontWeight.w600,
-        //               color: Colors.white,
-        //               maxLines: 1
-        //           ),
-        //           Visibility(
-        //             visible: userDetails?.data?.user?.isFavourite ?? false,
-        //             child: Icon(Icons.star_rate_rounded),),
-        //         ],
-        //       ) ,
-        //       Padding(
-        //         padding: const EdgeInsets.only(top: 8.0),
-        //         child: Row(
-        //           children: [
-        //             getCommonStatusIcons(
-        //               size: 15,
-        //               status: "${userDetails?.data?.user!.status!}",
-        //               assetIcon: false,
-        //             ),
-        //             Padding(
-        //               padding: const EdgeInsets.only(left: 5.0,right: 5.0),
-        //               child: (userDetails?.data!.user!.sId  == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1) ? commonText(text: "Typing",height: 1 ,fontWeight: FontWeight.w400,fontSize: 15,maxLines: 1) : commonText(text: getLastOnlineStatus("${userDetails?.data?.user!.status!}", "${userDetails?.data?.user!.lastActiveTime}"),height: 1 ,fontWeight: FontWeight.w400,fontSize: 15,maxLines: 1),
-        //             ),
-        //             Visibility(
-        //               visible: userDetails?.data?.user?.customStatusEmoji != null && userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
-        //               child: Padding(
-        //                 padding: const EdgeInsets.only(right: 8.0),
-        //                 child: CachedNetworkImage(imageUrl: userDetails?.data?.user?.customStatusEmoji ?? "", height: 20, width: 20,),
-        //               ),),
-        //             Image.asset(AppImage.pinIcon,height: 15,width: 18,color: Colors.white,),
-        //             commonText(text: "${userDetails?.data?.user?.pinnedMessageCount}",fontSize: 16,fontWeight: FontWeight.w400),
-        //             SizedBox(width: 6),
-        //             Image.asset(AppImage.fileIcon,height: 15,width: 15,color: Colors.white,)
-        //           ],),
-        //       )
-        //     ],
-        //   ) : SizedBox.shrink(),
-        //   actions: [
-        //     IconButton(
-        //       icon: const Icon(Icons.more_vert, color: AppColor.whiteColor),
-        //       onPressed: () {
-        //         // isMutedUser: signInModel.data?.user!.muteUsers!.contains(widget.oppositeUserId) ?? false != true,
-        //         showChatSettingsBottomSheet(userId: widget.oppositeUserId);
-        //       },
-        //     ),
-        //   ],
-        // ),
         appBar: buildAppBar(commonProvider, chatProvider),
         body: Column(
           children: [
@@ -234,7 +184,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             ),
             Expanded(
               child: ListView(
-                controller: _scrollController,
+                controller: chatProvider.scrollController,
                 reverse: true,
                 children: [
                   dateHeaders(),
@@ -253,26 +203,35 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       leadingWidth: 35,
       leading: Padding(
         padding: const EdgeInsets.only(left: 15.0),
-        child: IconButton(icon: Icon(CupertinoIcons.back,color: Colors.white,),color: Colors.white, onPressed: () => pop(),),
+        child: IconButton(icon: Icon(CupertinoIcons.back,color: Colors.white,),color: Colors.white, onPressed: () {
+          pop();
+          channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
+        },),
       ),
       titleSpacing: 20,
       title:  Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              commonText(
+              Flexible(
+                fit: FlexFit.loose,
+                child: commonText(
                   text: widget.userName,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
-                  maxLines: 1
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis, // Prevent overflow
+                ),
               ),
               Visibility(
                 visible: userDetails?.data?.user?.isFavourite ?? false,
-                child: Icon(Icons.star_rate_rounded),),
+                child: Icon(Icons.star_rate_rounded, color: Colors.yellow, size: 18),
+              ),
             ],
-          ) ,
+          ),
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: Row(
@@ -282,22 +241,49 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   status: userDetails?.data?.user?.status ?? "offline",
                   assetIcon: false,
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 5.0,right: 5.0),
-                  child: (userDetails?.data!.user!.sId  == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1) ? commonText(text: "Typing...",height: 1 ,fontWeight: FontWeight.w400,fontSize: 15,maxLines: 1) : commonText(text: getLastOnlineStatus(userDetails?.data?.user?.status ?? ".....", userDetails?.data?.user!.lastActiveTime),height: 1 ,fontWeight: FontWeight.w400,fontSize: 15,maxLines: 1),
+                const SizedBox(width: 5),
+                Flexible(
+                  child: commonText(
+                    text: (userDetails?.data!.user!.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1)
+                        ? "Typing..."
+                        : getLastOnlineStatus(
+                      userDetails?.data?.user?.status ?? ".....",
+                      userDetails?.data?.user!.lastActiveTime,
+                    ),
+                    height: 1,
+                    fontWeight: FontWeight.w400,
+                    fontSize: 15,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
+                const SizedBox(width: 5),
                 Visibility(
-                  visible: userDetails?.data?.user!.customStatusEmoji != null && userDetails?.data?.user!.customStatusEmoji!.isNotEmpty,
+                  visible: userDetails?.data?.user?.customStatusEmoji != null &&
+                      userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
                   child: Padding(
                     padding: const EdgeInsets.only(right: 8.0),
-                    child: CachedNetworkImage(imageUrl: userDetails?.data?.user!.customStatusEmoji ?? "", height: 20, width: 20,),
-                  ),),
-                Image.asset(AppImage.pinIcon,height: 15,width: 18,color: Colors.white,),
-                commonText(text: "${userDetails?.data?.user!.pinnedMessageCount ?? 0}",fontSize: 16,fontWeight: FontWeight.w400),
-                SizedBox(width: 6),
-                Image.asset(AppImage.fileIcon,height: 15,width: 15,color: Colors.white,)
-              ],),
-          )
+                    child: CachedNetworkImage(
+                      imageUrl: userDetails?.data?.user!.customStatusEmoji ?? "",
+                      height: 20,
+                      width: 20,
+                      errorWidget: (context, url, error) => Icon(Icons.error, size: 20), // Handle image errors
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Image.asset(AppImage.pinIcon, height: 15, width: 18, color: Colors.white),
+                const SizedBox(width: 3),
+                commonText(
+                  text: "${userDetails?.data?.user!.pinnedMessageCount ?? 0}",
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                ),
+                const SizedBox(width: 6),
+                Image.asset(AppImage.fileIcon, height: 15, width: 15, color: Colors.white),
+              ],
+            ),
+          ),
         ],
       ),
       actions: [
@@ -318,7 +304,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     setState(() {
       _showToolbar = false;
     });
-    // FocusScope.of(context).unfocus();
+    FocusScope.of(context).unfocus();
   }
 
   @override
@@ -414,7 +400,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           scrollable: true,
                           autoFocus: false,
                           checkBoxReadOnly: false,
-                          placeholder: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? ""}',
+                          placeholder: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
@@ -484,6 +470,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               scrollDirection: Axis.horizontal,
               itemCount: provider.selectedFiles.length,
               itemBuilder: (context, index) {
+                print("FILES>>>> ${provider.selectedFiles[index].path}");
                 return Stack(
                   children: [
                     GestureDetector(
@@ -626,14 +613,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             },
           ),
           GestureDetector(
-            onTap: () {
+            onTap: () async {
               final plainText = _controller.document.toPlainText().trim();
-              if (plainText.isNotEmpty) {
-                setState(() {
-                  lastSentMessage = plainText;
-                  _lastSentDelta = _controller.document.toDelta().toJson();
-                });
-                chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, senderId: signInModel.data!.user?.id ?? "",selectedFiles: fileServiceProvider.selectedFiles);
+              if(fileServiceProvider.selectedFiles.isNotEmpty){
+               final filesOfList = await chatProvider.uploadFiles();
+               chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, senderId: signInModel.data!.user?.id ?? "",files: filesOfList);
+               _clearInputAndDismissKeyboard();
+              }else{
+                chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, senderId: signInModel.data!.user?.id ?? "",editMsgID: currentUserMessageId).then((value) => setState(() {
+                  currentUserMessageId = "";
+                }),);
                 _clearInputAndDismissKeyboard();
               }
             },
@@ -714,24 +703,24 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 },
               )
 
-         // ...sortedMessages.asMap().entries.map((entry) {
-         //  int index = entry.key; // Get index
-         //  Messages message = entry.value; // Get message data
-         //
-         //  bool showUserDetails = previousSenderId != message.senderId;
-         //  previousSenderId = message.senderId;
-         //
-         //  return chatBubble(
-         //  index: index, // Pass index here
-         //  messageList: message,
-         //  userId: message.senderId!,
-         //  message: message.content!,
-         //  time: DateTime.parse(message.createdAt!).toString(),
-         //  showUserDetails: showUserDetails,
-         //  );
-         //  }).toList()
+              // ...sortedMessages.asMap().entries.map((entry) {
+              //  int index = entry.key; // Get index
+              //  Messages message = entry.value; // Get message data
+              //
+              //  bool showUserDetails = previousSenderId != message.senderId;
+              //  previousSenderId = message.senderId;
+              //
+              //  return chatBubble(
+              //  index: index, // Pass index here
+              //  messageList: message,
+              //  userId: message.senderId!,
+              //  message: message.content!,
+              //  time: DateTime.parse(message.createdAt!).toString(),
+              //  showUserDetails: showUserDetails,
+              //  );
+              //  }).toList()
 
-          // ...sortedMessages.map((Messages message) {
+              // ...sortedMessages.map((Messages message) {
               //   bool showUserDetails = previousSenderId != message.senderId;
               //   previousSenderId = message.senderId;
               //   return chatBubble(
@@ -764,8 +753,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }
   }
 
-  String formatTime(DateTime dateTime) {
-    return DateFormat('hh:mm a').format(dateTime); // hh:mm AM/PM format
+  String formatTime(String utcTime) {
+    DateTime dateTime = DateTime.parse(utcTime).toLocal(); // Convert to local time
+    return DateFormat('hh:mm a').format(dateTime); // Format in 12-hour AM/PM format
   }
 
   Widget chatBubble({
@@ -778,7 +768,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     bool showUserDetails = true,
   })  {
     if (!userCache.containsKey(userId))  {
-       commonProvider.getUserByIDCall2(userId: userId);
+      commonProvider.getUserByIDCall2(userId: userId);
     }
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
       if (!userCache.containsKey(userId) && commonProvider.getUserModel!.data!.user!.sId! == userId) {
@@ -786,12 +776,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         userCache[userId] = commonProvider.getUserModel!;
       }
       final user = userCache[userId];
-      final pinnedMsg = messageList.isPinned ?? false;
+      bool pinnedMsg = messageList.isPinned ?? false;
       return Container(
+        margin: EdgeInsets.only(top: 1),
         color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
         padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 8.0),
         child: Column(
           children: [
+            Visibility(
+                visible: (messageList.isSeen == false && userId != signInModel.data?.user?.id),
+                child: newMessageDivider()),
             Visibility(
                 visible: pinnedMsg,
                 child: Padding(
@@ -812,7 +806,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "${user?.data!.user!.status}",otherUserProfile: user?.data!.user!.avatarUrl ?? '',),
+                    child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "${user?.data!.user!.status}",otherUserProfile: user?.data!.user!.avatarUrl ?? '',radius: 17),
                   )
                 } else ...{
                   SizedBox(width: 45)
@@ -830,8 +824,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 height: 1.2,
                                 text:
                                 user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', fontWeight: FontWeight.bold),
-                            SizedBox(width: 2.5),
                             if (signInModel.data?.user!.id == user?.data!.user!.sId && commonProvider.customStatusUrl.isNotEmpty) ...{
+                              SizedBox(width: 8,),
                               CachedNetworkImage(
                                 width: 20,
                                 height: 20,
@@ -844,17 +838,91 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 imageUrl: userDetails?.data!.user!.customStatusEmoji,
                               ),
                             },
-                            SizedBox(width: 2.5),
-                            commonText(
-                                height: 1.2,
-                                text: formatTime(DateTime.parse(time)), color: Colors.grey, fontSize: 12
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: commonText(
+                                  height: 1.2,
+                                  text: formatTime(time), color: Colors.grey, fontSize: 12
+                              ),
                             ),
                           ],
                         ),
+                      SizedBox(height: 5),
                       HtmlWidget(
                         message,
                         enableCaching: true,
                         textStyle: TextStyle( fontSize: 16),
+                      ),
+                      Visibility(
+                          visible: messageList.isForwarded ?? false,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 16,horizontal: 20),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColor.borderColor,width: 0.6),
+                              borderRadius: BorderRadius.circular(12),
+                              color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.forwardColor : Colors.white,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                              commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                child: Row(children: [
+                                  profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "", status: messageList.senderOfForward?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        commonText(text: "${messageList.senderOfForward?.username}"),
+                                        SizedBox(height: 3),
+                                        commonText(text: formatDateString("${messageList.senderOfForward?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                      ],
+                                    ),
+                                  ),
+                                ],),
+                              ),
+                              commonText(text: "${messageList.forwardInfo?.content}"),
+                                Visibility(
+                                  visible: messageList.forwardInfo?.files.length != 0 ? true : false,
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: messageList.forwardInfo?.files.length ?? 0,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemBuilder: (context, index) {
+                                      final filesUrl = messageList.forwardInfo?.files[index];
+                                      String originalFileName = getFileName(messageList.forwardInfo!.files[index]);
+                                      String formattedFileName = formatFileName(originalFileName);
+                                      String fileType = getFileExtension(originalFileName);
+                                      return Container(
+                                        margin: EdgeInsets.only(top: 5,right: 10),
+                                        padding: EdgeInsets.symmetric(horizontal: 20,vertical: 15),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: AppColor.lightGreyColor),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                            SizedBox(width: 20,),
+                                            Flexible(
+                                                flex: 10,
+                                                fit: FlexFit.loose,
+                                                child: commonText(text: formattedFileName,maxLines: 1)),
+                                            Spacer(),
+                                            GestureDetector(
+                                                onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
+                                                child: Image.asset(AppImage.downloadIcon,fit: BoxFit.contain,height: 20,width: 20,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black))
+                                          ],
+                                        ),
+                                      );
+                                    },),
+                                ),
+
+                            ],),
+
+                          )
                       ),
                       Visibility(
                         visible: messageList.isMedia == true,
@@ -891,22 +959,67 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               ),
                             );
                           },),
-                      )
+                      ),
+                      Visibility(visible: messageList.replies?.isNotEmpty ?? false,
+                          child: GestureDetector(
+                            onTap: ()=> pushScreenWithTransition(ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString())),
+                            child: Container(
+                              margin: EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                children: [
+                                  profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",needToShowIcon:false,radius: 10),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 10.0,right: 4.0),
+                                    child: Transform.flip(
+                                        flipX: true,
+                                        child: Image.asset(AppImage.forwardIcon,height: 15,width: 15,color: AppColor.borderColor)),
+                                  ),
+                                  commonText(text: "${messageList.replyCount} reply", fontSize: 12,color: AppColor.borderColor),
+                                ],
+                              ),
+                            ),
+                          ))
                     ],
                   ),
                 ),
-                Builder(
-                  builder: (itemContext) => GestureDetector(
-                    onTapDown: (details) => _storePosition(details, itemContext,index), // Capture tap position correctly
-                    onTap: () => _showPopup(context: context,delete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)), // Show the pop-up menu
-                    // onTap: () => print("messageId>>>> ${messageId}"),
-                    child: Container(
-                        width: 20,
-                        height: 23,
-                        margin: EdgeInsets.only(right: 16),
-                        child: Icon(Icons.more_vert, color: index == _selectedIndex ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black : Colors.grey, size: 30)),
-                  ),
-                ),
+                popMenu2(context,
+                  onOpened: () =>  setState(() => _selectedIndex = index),
+                  onClosed: () =>  setState(() => _selectedIndex = null),
+                  opened: index == _selectedIndex ? true : false,
+                  createdAt: messageList.createdAt!,
+                  currentUserId: userId,
+                  onForward: () => Null,
+                  onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString())),
+                  onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
+                  onCopy: () => copyToClipboard(context, message),
+                  onEdit: () => setState(() {
+                    currentUserMessageId = messageId;
+                    print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
+                    int position = _controller.document.length - 1;
+                    _controller.document.insert(position, message.toString());
+                    _controller.updateSelection(
+                      TextSelection.collapsed(offset: _controller.document.length),
+                      quill.ChangeSource.local,
+                    );
+                  }),
+                  onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)),
+                // GestureDetector(
+                //     onTap: () => popMenu(context),
+                //     child: Icon(Icons.more_vert,color: index == _selectedIndex ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black : Colors.grey,size: 30,))
+                // Builder(
+                //   builder: (itemContext) => GestureDetector(
+                //     onTapDown: (details) => _storePosition(details, itemContext,index), // Capture tap position correctly
+                //     onTap: () => _showPopup(context: context,
+                //         pinnedMSG: ()=> chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
+                //         delete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)), // Show the pop-up menu
+                //     // onTap: () => print("messageId>>>> ${messageId}"),
+                //     child: Container(
+                //         width: 20,
+                //         height: 23,
+                //         margin: EdgeInsets.only(right: 16),
+                //         child: Icon(Icons.more_vert, color: index == _selectedIndex ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black : Colors.grey, size: 30)),
+                //   ),
+                // ),
               ],
             ),
           ],
@@ -914,6 +1027,64 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       );
     },
     );
+  }
+
+  Row newMessageDivider() {
+    return Row(children: [
+                Expanded(child: Divider(color: Colors.orange,)),
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: commonText(
+                    text: "New Messages",
+                    fontSize: 12,
+                    color: Colors.white,
+                  ),
+                ),
+                Expanded(child: Divider(color: Colors.orange,)),
+              ],);
+  }
+  String quillDeltaToHtml(var delta) {
+    final html = StringBuffer();
+
+    delta.toList().forEach((op) {
+      if (op.isInsert) {
+        if (op.data is String) {
+          // Check for text formatting and wrap with appropriate HTML tags
+          String text = op.data;
+          if (op.attributes != null) {
+            if (op.attributes.containsKey('bold') && op.attributes['bold'] == true) {
+              text = '<b>$text</b>';
+            }
+            if (op.attributes.containsKey('italic') && op.attributes['italic'] == true) {
+              text = '<i>$text</i>';
+            }
+            if (op.attributes.containsKey('underline') && op.attributes['underline'] == true) {
+              text = '<u>$text</u>';
+            }
+            if (op.attributes.containsKey('color')) {
+              text = '<span style="color:${op.attributes['color']}">$text</span>';
+            }
+            if (op.attributes.containsKey('link')) {
+              text = '<a href="${op.attributes['link']}">$text</a>';
+            }
+          }
+          html.write(text);
+        }
+      }
+    });
+
+    return html.toString();
+  }
+  String convertToHtml() {
+    final delta = _controller.document.toDelta(); // Get Delta from Quill Controller
+    final htmlString = quillDeltaToHtml(delta); // Convert Delta to HTML
+    return htmlString;
   }
 }
 // Widget _buildFormattedText(String text, List<dynamic> deltaOps) {
@@ -945,7 +1116,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 //     focusNode: FocusNode(),
 //   );
 // }
-//
+
 // class MyQuillEditor extends StatelessWidget {
 //   final quill.QuillController _controller = quill.QuillController.basic();
 //
@@ -957,38 +1128,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 //   }
 //
 //   // Convert Quill Delta to HTML string
-//   String quillDeltaToHtml(quill.Delta delta) {
-//     final html = StringBuffer();
 //
-//     delta.toList().forEach((op) {
-//       if (op.isInsert) {
-//         if (op.data is String) {
-//           // Check for text formatting and wrap with appropriate HTML tags
-//           String text = op.data;
-//           if (op.attributes != null) {
-//             if (op.attributes.containsKey('bold') && op.attributes['bold'] == true) {
-//               text = '<b>$text</b>';
-//             }
-//             if (op.attributes.containsKey('italic') && op.attributes['italic'] == true) {
-//               text = '<i>$text</i>';
-//             }
-//             if (op.attributes.containsKey('underline') && op.attributes['underline'] == true) {
-//               text = '<u>$text</u>';
-//             }
-//             if (op.attributes.containsKey('color')) {
-//               text = '<span style="color:${op.attributes['color']}">$text</span>';
-//             }
-//             if (op.attributes.containsKey('link')) {
-//               text = '<a href="${op.attributes['link']}">$text</a>';
-//             }
-//           }
-//           html.write(text);
-//         }
-//       }
-//     });
-//
-//     return html.toString();
-//   }
 //
 //   @override
 //   Widget build(BuildContext context) {

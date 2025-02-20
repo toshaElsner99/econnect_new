@@ -23,6 +23,7 @@ class AppColor {
   static const lightGreyColor = Color(0xFFD6D6D6);
   static const pinnedColorDark = Color(0xFF092222);
   static const pinnedColorLight = Color(0xFFfdf4dc);
+  static const forwardColor = Color(0xFF272822);
 
 
 }

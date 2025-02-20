@@ -42,5 +42,11 @@ class ApiString{
   static const addUserToChatList = "chatList/add";
   static const sendMessage = "messages/send-message";
   static const deleteMessage = "messages/delete/";
+  static const replayMsgSeen = "messages/reply-message-seen";
+  static const getRepliesMsg = "messages/get-replies";
+  static const uploadFileForMessageMedia = "files/upload?file_for=message_media";
+  static String pinMessage(String messageId, bool pinned) => "messages/message-pin/$messageId/$pinned";
+  // static const getRepliesMsg = "messages/get-replies";
+
 
 }

@@ -1,11 +1,15 @@
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import '../../cubit/common_cubit/common_cubit.dart';
@@ -184,11 +188,11 @@ class ProfilePreviewSheet extends StatelessWidget {
                   fontSize: 16,
                 ),
               ),
-                Icon(
-                  Icons.lock_outline,
-                  color: AppColor.commonAppColor,
-                  size: 18,
-                ),
+              Icon(
+                Icons.lock_outline,
+                color: AppColor.commonAppColor,
+                size: 18,
+              ),
             ],
           ),
         ),
@@ -234,47 +238,47 @@ class ProfilePreviewSheet extends StatelessWidget {
 }
 
 Widget previewImageDialog(BuildContext context, String imageUrl) {
-    return WillPopScope(
-      onWillPop: () async => false,
-      child: Dialog(
-        shape: RoundedRectangleBorder(
+  return WillPopScope(
+    onWillPop: () async => false,
+    child: Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B1E23),
+          // color: AppColor.commonAppColor,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
         ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1B1E23),
-            // color: AppColor.commonAppColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
-          ),
-          child: Column(
-            children: [
-              Center(
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  fit: BoxFit.contain,
-                  placeholder: (context, url) => CircularProgressIndicator(),
-                  errorWidget: (context, url, error) => Icon(Icons.error),
-                ),
+        child: Column(
+          children: [
+            Center(
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.contain,
+                placeholder: (context, url) => CircularProgressIndicator(),
+                errorWidget: (context, url, error) => Icon(Icons.error),
               ),
-              Positioned(
-                top: 40,
-                right: 20,
-                child: IconButton(
-                  icon: Icon(Icons.close, color: Colors.white),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: Icon(Icons.close, color: Colors.white),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
+    ),
+  );
 }
 ToastFuture commonShowToast(String msg,[Color? bgColor]) {
   return showToastWidget(
@@ -312,8 +316,332 @@ Widget getCommonStatusIcons({required String status, double size = 25 , bool ass
     return assetIcon ? Image.asset(AppImage.offlineIcon,height: size,width: size,) : Icon(Icons.circle_outlined,color: AppColor.borderColor,size: size,);
   }
 }
+// void showPopupMenu(BuildContext context) {
+//   showModalBottomSheet(
+//     context: context,
+//     backgroundColor: Colors.black87,
+//     shape: RoundedRectangleBorder(
+//       borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+//     ),
+//     builder: (context) => Padding(
+//       padding: const EdgeInsets.symmetric(vertical: 10),
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         children: [
+//           _menuItem(context, Icons.forward, "Forward", () {
+//             print("Forward tapped");
+//             Navigator.pop(context);
+//           }),
+//           _menuItem(context, Icons.push_pin, "Pin to Channel", () {
+//             print("Pinned to channel");
+//             Navigator.pop(context);
+//           }),
+//           _menuItem(context, Icons.copy, "Copy Text", () {
+//             print("Text copied");
+//             Navigator.pop(context);
+//           }),
+//           _menuItem(context, Icons.edit, "Edit", () {
+//             print("Edit selected");
+//             Navigator.pop(context);
+//           }),
+//           Divider(color: Colors.grey[700]),
+//           _menuItem(context, Icons.delete, "Delete", () {
+//             print("Delete tapped");
+//             Navigator.pop(context);
+//           }, color: Colors.red),
+//         ],
+//       ),
+//     ),
+//   );
+// }
+/*Widget popupMenu(
+    {
+      required BuildContext context,
+      required VoidCallback onForward,
+      required VoidCallback onPin,
+      required VoidCallback onCopy,
+      required VoidCallback onEdit,
+      required VoidCallback? onDelete}) {
+  final RenderBox renderBox = context.findRenderObject() as RenderBox;
+  final double screenHeight = MediaQuery.of(context).size.height;
+  final double buttonPositionY = renderBox.localToGlobal(Offset.zero).dy;
+  const double menuHeight = 220; // Approximate height of the pop-up menu
 
-Widget commonPopUpForMsg({double size = 20,Function? delete }) {
+  // If there's enough space below, open downwards; otherwise, open upwards
+  final bool openAbove = (buttonPositionY + menuHeight) > screenHeight;
+  final List<Map<String, dynamic>> menuItems = [
+    {"icon": Icons.forward, "text": "Forward", "action": onForward},
+    {"icon": Icons.push_pin, "text": "Pin to Channel", "action": onPin},
+    {"icon": Icons.copy, "text": "Copy Text", "action": onCopy},
+    {"icon": Icons.edit, "text": "Edit", "action": onEdit},
+    {"icon": Icons.delete, "text": "Delete", "color": Colors.red, "action": onDelete},
+  ];
+  return DropdownButtonHideUnderline(
+    child: DropdownButton2(
+      customButton: Icon(Icons.more_vert, color: Colors.black, size: 30),
+      items: menuItems.map((item) => DropdownMenuItem<String>(
+        value: item["text"],
+        child: GestureDetector(
+          onTap: () {
+            item["action"]();
+          },
+          child: Row(
+            children: [
+              Icon(item["icon"], color: item["color"] ?? Colors.white),
+              const SizedBox(width: 10),
+              Text(item["text"], style: TextStyle(color: item["color"] ?? Colors.white)),
+            ],
+          ),
+        ),
+      )).toList(),
+      dropdownStyleData: DropdownStyleData(
+        width: 180,
+        decoration: BoxDecoration(
+          color: Colors.black,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        offset: openAbove ? const Offset(0, -menuHeight) : const Offset(0, 10),
+        padding: const EdgeInsets.symmetric(vertical: 5),
+      ),
+      onChanged: (_) {},
+    ),
+  );
+}*/
+Future showPopupMenu(BuildContext context, GlobalKey iconKey, bool isMyMessage) {
+  final RenderBox renderBox = iconKey.currentContext!.findRenderObject() as RenderBox;
+  final Offset offset = renderBox.localToGlobal(Offset.zero);
+  final double left = offset.dx;
+  final double top = offset.dy + renderBox.size.height;
+
+  // Calculate if the menu should open upwards
+  final double screenHeight = MediaQuery.of(context).size.height;
+  final bool openUpwards = top + 250 > screenHeight; // Adjust height if needed
+
+return  showMenu<int>(
+    context: context,
+    position: RelativeRect.fromLTRB(left, openUpwards ? top - 250 : top, left + 40, 0),
+    color: AppColor.darkAppBarColor,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    items: [
+      _menuItem(0, Icons.forward, "Forward"),
+      _menuItem(1, Icons.reply, "Reply"),
+      _menuItem(2, Icons.push_pin, "Pin to Channel"),
+      _menuItem(3, Icons.copy, "Copy Text"),
+      _menuItem(4, Icons.edit, "Edit"),
+      if (isMyMessage) ...[
+        PopupMenuDivider(),
+        _menuItem(5, Icons.delete, "Delete", color: Colors.red),
+      ]
+    ],
+  ).then((value) {
+    if (value != null) {
+      switch (value) {
+        case 0:
+          print("Forward tapped");
+          break;
+        case 1:
+          print("Reply tapped");
+          break;
+        case 2:
+          print("Pinned to channel");
+          break;
+        case 3:
+          print("Text copied");
+          break;
+        case 4:
+          print("Edit selected");
+          break;
+        case 5:
+          print("Delete tapped");
+          break;
+      }
+    }
+  });
+}
+
+Widget popMenu2(
+    BuildContext context, {
+      required bool opened,
+      required VoidCallback onOpened,
+      required VoidCallback onClosed,
+      required VoidCallback onForward,
+      required VoidCallback onReply,
+      required VoidCallback onPin,
+      required VoidCallback onCopy,
+      required VoidCallback onEdit,
+      required VoidCallback onDelete,
+      required String createdAt,  // Pass createdAt timestamp
+      required String currentUserId, // Current user's ID
+    }) {
+  final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+  final double screenHeight = MediaQuery.of(context).size.height;
+  final double buttonPositionY = overlay.localToGlobal(Offset.zero).dy;
+  const double menuHeight = 220;
+
+  final bool openAbove = (buttonPositionY + menuHeight) > screenHeight;
+
+  DateTime createdTime = DateTime.parse(createdAt).toLocal();
+  DateTime now = DateTime.now();
+  final isEditable = now.difference(createdTime).inHours < 24;
+  print("createdAt>> $createdTime $isEditable");
+  final isCurrentUser = currentUserId == signInModel.data?.user?.id; // Check if message belongs to the user
+
+  return Container(
+    // color: Colors.red,
+    alignment: Alignment.topCenter,
+    height: 22,
+    width: 20,
+    child: PopupMenuButton<int>(
+      padding: EdgeInsets.zero, // Remove padding
+      iconSize: 25, // Reduce icon size
+      constraints: const BoxConstraints(minWidth: 120), // Limit menu width
+      color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+      position: openAbove ? PopupMenuPosition.over : PopupMenuPosition.under,
+      offset: const Offset(-15, 0),
+      onOpened: ()=> onOpened(),
+      onCanceled: ()=> onClosed(),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: AppPreferenceConstants.themeModeBoolValueGet
+            ? const BorderSide(color: Colors.white38, width: 0.5)
+            : BorderSide.none,
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 0:
+            onForward.call();
+            break;
+          case 1:
+            onReply.call();
+            break;
+          case 2:
+            onPin.call();
+            break;
+          case 3:
+            onCopy.call();
+            break;
+          case 4:
+            onEdit.call();
+            break;
+          case 5:
+            onDelete.call();
+            break;
+        }
+      },
+      itemBuilder: (context) {
+        List<PopupMenuEntry<int>> menuItems = [
+          _menuItem(0, Icons.forward, "Forward"),
+          _menuItem(1, Icons.reply, "Reply"),
+          _menuItem(2, Icons.push_pin, "Pin to Channel"),
+          _menuItem(3, Icons.copy, "Copy Text"),
+        ];
+
+        // Show Edit option only if message is under 24 hours old
+        if (isCurrentUser && isEditable) {
+          menuItems.add(_menuItem(4, Icons.edit, "Edit"));
+        }
+
+        // Show Delete option only if the message belongs to the current user
+        if (isCurrentUser) {
+          menuItems.add(const PopupMenuDivider());
+          menuItems.add(_menuItem(5, Icons.delete, "Delete", color: Colors.red));
+        }
+
+        return menuItems;
+      },
+      icon: Icon(Icons.more_vert, color: !opened ? AppColor.borderColor : AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
+    ),
+  );
+}
+
+Widget popMenu(
+    BuildContext context, {
+      required VoidCallback onForward,
+      required VoidCallback onReply,
+      required VoidCallback onPin,
+      required VoidCallback onCopy,
+      required VoidCallback onEdit,
+      required VoidCallback onDelete,
+    }) {
+  final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+  final double screenHeight = MediaQuery.of(context).size.height;
+  final double buttonPositionY = overlay.localToGlobal(Offset.zero).dy;
+  const double menuHeight = 220; // Approximate height of the pop-up menu
+
+  // If there's enough space below, open downwards; otherwise, open upwards
+  final bool openAbove = (buttonPositionY + menuHeight) > screenHeight;
+
+  return PopupMenuButton<int>(
+    color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+    position: openAbove ? PopupMenuPosition.over : PopupMenuPosition.under, // Dynamic positioning
+    offset: Offset(-20, 0),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(10),
+      side: AppPreferenceConstants.themeModeBoolValueGet
+          ? const BorderSide(color: Colors.white38, width: 0.5)
+          : BorderSide.none,
+    ),
+    onSelected: (value) {
+      switch (value) {
+        case 0:
+          onForward();
+          break;
+        case 1:
+          onReply();
+          break;
+        case 2:
+          onPin();
+          break;
+        case 3:
+          onCopy();
+          break;
+        case 4:
+          onEdit();
+          break;
+        case 5:
+          onDelete();
+          break;
+      }
+    },
+    itemBuilder: (context) => [
+      _menuItem(0, Icons.forward, "Forward"),
+      _menuItem(1, Icons.reply, "Reply"),
+      _menuItem(2, Icons.push_pin, "Pin to Channel"),
+      _menuItem(3, Icons.copy, "Copy Text"),
+      _menuItem(4, Icons.edit, "Edit"),
+      const PopupMenuDivider(),
+      _menuItem(5, Icons.delete, "Delete", color: Colors.red),
+    ],
+    icon: Icon(Icons.more_vert, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
+  );
+}
+
+// Helper function for menu items
+PopupMenuItem<int> _menuItem(int value, IconData icon, String text, {Color color = Colors.white}) {
+  return PopupMenuItem<int>(
+    value: value,
+    child: Row(
+      children: [
+        Icon(icon, color: color, size: 18),
+        const SizedBox(width: 10),
+        Text(text, style: TextStyle(color: color)),
+      ],
+    ),
+  );
+}
+
+
+
+
+// Widget _menuItem(BuildContext context, IconData icon, String text, VoidCallback onTap, {Color color = Colors.white}) {
+//   return ListTile(
+//     leading: Icon(icon, color: color),
+//     title: Text(text, style: TextStyle(color: color)),
+//     onTap: onTap,
+//   );
+// }
+
+Widget commonPopUpForMsg({double size = 20,Function? delete,Function? pinMessage }) {
   final color = AppColor.borderColor;
   return Container(
     decoration: BoxDecoration(
@@ -329,7 +657,9 @@ Widget commonPopUpForMsg({double size = 20,Function? delete }) {
         SizedBox(width: 12),
         Image.asset(AppImage.forwardIcon,height: size,width: size,color: color),
         SizedBox(width: 12),
-        Image.asset(AppImage.pinTiltIcon,height: size,width: size,color: color),
+        GestureDetector(
+            onTap: () => pinMessage?.call(),
+            child: Image.asset(AppImage.pinTiltIcon,height: size,width: size,color: color)),
         SizedBox(width: 12),
         Image.asset(AppImage.copyIcon,height: size,width: size,color: color),
         SizedBox(width: 12),
@@ -418,6 +748,8 @@ Widget profileIconWithStatus({
   required String userID,
   required String status,
   String? otherUserProfile,
+  double radius = 15.0,
+  bool? needToShowIcon = true,
 }){
   print("userId>>>> $userID");
   print("status>>>> $status");
@@ -425,41 +757,61 @@ Widget profileIconWithStatus({
   String imageUrl = signInModel.data?.user?.id == userID
       ? ApiString.profileBaseUrl + signInModel.data!.user!.avatarUrl!
       : ApiString.profileBaseUrl + (otherUserProfile ?? '');
-  return Stack(
-    alignment: Alignment.bottomRight,
-    children: [
-      CircleAvatar(
-        radius: 15,
-        backgroundColor: Colors.grey[200],
-        child: ClipOval(
-          child: CachedNetworkImage(
-            width: 30,
-            height: 30,
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
-              padding: const EdgeInsets.all(3),
-              child: CircularProgressIndicator(value: downloadProgress.progress),
+  if(needToShowIcon == true){
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: [
+        CircleAvatar(
+          radius: radius,
+          backgroundColor: Colors.grey[200],
+          child: ClipOval(
+            child: CachedNetworkImage(
+              width: 30,
+              height: 30,
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
+                padding: const EdgeInsets.all(3),
+                child: CircularProgressIndicator(value: downloadProgress.progress),
+              ),
+              errorWidget: (context, url, error) => Icon(Icons.error),
             ),
-            errorWidget: (context, url, error) => Icon(Icons.error),
           ),
         ),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              height:10,
+              width: 10,
+              decoration: BoxDecoration(
+                color: status.contains("offline") ? Colors.transparent : Colors.white,
+                shape: BoxShape.circle,
+              ),),
+            getCommonStatusIcons(status: status,size: 14,assetIcon: false),
+          ],
+        )
+      ],
+    );
+  }else{
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: Colors.grey[200],
+      child: ClipOval(
+        child: CachedNetworkImage(
+          width: 30,
+          height: 30,
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
+            padding: const EdgeInsets.all(3),
+            child: CircularProgressIndicator(value: downloadProgress.progress),
+          ),
+          errorWidget: (context, url, error) => Icon(Icons.error),
+        ),
       ),
-      Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            height:10,
-            width: 10,
-            decoration: BoxDecoration(
-              color: status.contains("offline") ? Colors.transparent : Colors.white,
-              shape: BoxShape.circle,
-            ),),
-          getCommonStatusIcons(status: status,size: 14,assetIcon: false),
-        ],
-      )
-    ],
-  );
+    );
+  }
 }
 
 
@@ -749,6 +1101,7 @@ Widget commonText({
   VoidCallback? onTap,
   FontWeight? fontWeight = FontWeight.w600,
   bool? isHelonikFamily = false,
+  FontStyle? fontStyle
 }) {
   return GestureDetector(
     onTap: onTap,
@@ -767,6 +1120,7 @@ Widget commonText({
         letterSpacing: letterSpacing,
         decoration: decoration,
         fontSize: fontSize,
+        fontStyle: fontStyle,
         fontWeight: fontWeight,
         fontFamily: isHelonikFamily == true ? AppFonts.helonikETDFontFamily : AppFonts.interFamily,
       ),

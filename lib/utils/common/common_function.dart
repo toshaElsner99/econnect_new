@@ -9,8 +9,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:insta_image_viewer/insta_image_viewer.dart';
+import 'package:intl/intl.dart';
 
 import '../../main.dart';
+String formatDateString1(String dateString) {
+  DateTime dateTime = DateTime.parse(dateString);
+  String formattedDate = DateFormat('dd-MM-yyyy hh:mm a').format(dateTime);
+  return formattedDate;
+}
+String formatDateString(String? dateString) {
+  if (dateString == null || dateString.isEmpty) {
+    return '';
+  }
+
+  try {
+    DateTime dateTime = DateTime.parse(dateString);
+    String formattedDate = DateFormat('dd-MM-yyyy hh:mm a').format(dateTime);
+    return formattedDate;
+  } catch (e) {
+    return '';
+  }
+}
+
 
 String getLastOnlineStatus(String status, String? timestamp) {
   if (status.toLowerCase() == "offline" && timestamp != null) {
@@ -115,6 +135,12 @@ Widget getFileIconInChat({required String fileType, String? pngUrl}) {
   }
 }
 
+void copyToClipboard(BuildContext context, String text) {
+  Clipboard.setData(ClipboardData(text: text));
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text("Copied"), duration: Duration(seconds: 1)),
+  );
+}
 
 String formatFileName(String fileName) {
   String extension = getFileExtension(fileName);

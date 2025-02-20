@@ -36,8 +36,8 @@ class SocketIoProvider extends ChangeNotifier{
   String messageReactionToChannel= "message_reaction_channel";
   // String replyNotification = "reply_notification";
   String deleteMessages = "delete_message_chat";
+  String deleteMessageForListen = "deleted_message_chat";
   String deleteMessagesChannel = "delete_message_chat_channel";
-  String deleteMessage = "deleted_message_chat";
   String deleteMessageChannel = "deleted_message_channel";
   String addMember = "addMember";
   String channelHeaderMessage = "channelHeader";
@@ -102,14 +102,25 @@ class SocketIoProvider extends ChangeNotifier{
     socket.on(joinRoom, (data) => pragma("joinRoomEvent>>>> $data"),);
   }
 
+  pinUnPinMessageEvent({required String senderId,required String receiverId}){
+    pragma("pinUnPinMessageEvent>>>>Called");
+    socket.emit(pinMessage,{{"senderId": senderId,"receiverId": receiverId}});
+    socket.on(pinMessage, (data) => print("pinUnPinMessageEvent>>>> $data"),);
+  }
+
   userTypingEvent({required String oppositeUserId, required bool isReplyMsg,required int isTyping}){
     print("CALLLED_userTypingEvent>>>>>>> ");
     socket.emit(userTyping,{"senderId": signInModel.data?.user?.id ?? "","receiverId": oppositeUserId,"inputValue":isTyping,"isReply":isReplyMsg});
   }
 
-  sendMessages({required Map<String, dynamic> response}) {
+  sendMessagesSC({required Map<String, dynamic> response}) {
     print("emit>>>>> Send Message");
     socket.emit(sendMessage, response);
+  }
+
+  deleteMessagesSC({required Map<String, dynamic> response}) {
+    print("emit>>>>> Send Message $response");
+    socket.emit(deleteMessages, response);
   }
 
   void listenForNotifications() {
@@ -122,15 +133,44 @@ class SocketIoProvider extends ChangeNotifier{
     });
   }
 
-  void listenSingleChatScreen({required String oppositeUserId}) {
+  // void listenSingleChatScreen({required String oppositeUserId,}) {
+  //   if (!socket.connected) {
+  //     print("⚠️ Socket is not connected. Attempting to reconnect...");
+  //     socket.connect();
+  //   }
+  //   socket.on((deleteMessageForListen), (data) {
+  //     print("deleteMessageForListen >>> $data");
+  //     Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
+  //   });
+  //   socket.on(notification, (data) {
+  //     print("listSingleChatScreen >>> $data");
+  //     Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
+  //   });
+  //   socket.on(notificationForPinMessages, (data) {
+  //     print("listSingleChatScreen >>> $data");
+  //     Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
+  //   });
+  //
+  // }
+  bool listenSingleChatScreen({required String oppositeUserId}) {
     if (!socket.connected) {
       print("⚠️ Socket is not connected. Attempting to reconnect...");
       socket.connect();
     }
-    socket.on(notification, (data) {
-      print("listSingleChatScreen >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId, true);
-    });
+
+    List<String> events = [deleteMessageForListen, notification, notificationForPinMessages];
+
+    for (var event in events) {
+      socket.on(event, (data) {
+        print("$event >>> $data");
+        Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId, storeLatest: true);
+      });
+    }
+    if(events[2] == notificationForPinMessages){
+      return true;
+    }else {
+      return false;
+    }
   }
 
 }
