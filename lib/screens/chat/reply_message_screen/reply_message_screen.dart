@@ -12,7 +12,6 @@ import 'package:provider/provider.dart';
 import '../../../cubit/channel_list/channel_list_cubit.dart';
 import '../../../cubit/common_cubit/common_cubit.dart';
 import '../../../main.dart';
-import '../../../model/message_model.dart';
 import '../../../providers/download_provider.dart';
 import '../../../providers/file_service_provider.dart';
 import '../../../socket_io/socket_io.dart';
@@ -27,12 +26,12 @@ import '../media_preview_screen.dart';
 
 class ReplyMessageScreen extends StatefulWidget {
   final String userName;
-  final String messageId;
+  String messageId = "";
   final String receiverId;
-  final String currentMSGID;
+  // final String currentMSGID;
 
-  const ReplyMessageScreen(
-      {super.key, required this.userName, required this.messageId, required this.receiverId,required this.currentMSGID});
+   ReplyMessageScreen(
+      {super.key, required this.userName, required this.messageId, required this.receiverId,/*required this.currentMSGID*/});
 
   @override
   State<ReplyMessageScreen> createState() => _ReplyMessageScreenState();
@@ -48,18 +47,39 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
-
+  String messageID = "";
   @override
   void initState() {
+    setState(() {
+      if(messageID != widget.messageId){
+        messageID = "";
+        messageID = widget.messageId;
+      }else {
+        messageID = widget.messageId;
+      }
+    });
+    print("msgIDDINIT>>>> $messageID");
+    print("msgIDD>>>> ${widget.messageId}");
     super.initState();
-    Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: widget.messageId);
-  }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+    socketProvider.listenSocketForReplyMSG(msgId: messageID);
+    Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: messageID);
+    Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: messageID);
+  });
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: () => pop(), icon: Icon(CupertinoIcons.back)),
+        leading: IconButton(onPressed: (){
+          setState(() {
+            widget.messageId = "";
+          });
+          pop();
+          Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.messageId);
+        },
+        icon: Icon(CupertinoIcons.back,color: Colors.white,)),
         bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
         titleSpacing: 0,
         title: Column(
@@ -133,16 +153,14 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                 physics: NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   GroupMessages? message = messageList?.groupMessages?[index];
-                  bool showUserDetails = previousSenderId != message!.senderId!.sId;
-                  previousSenderId = message.senderId!.sId;
+                  previousSenderId = message?.senderId!.sId;
                   return chatBubble(
                     index: index, // Pass index here
-                    messageList: message,
+                    messageList: message!,
                     messageId: messageList?.groupMessages?[index].sId ?? "",
                     userId: message.senderId?.sId ?? "",
                     message: message.content ?? "",
                     time: DateTime.parse(message.createdAt!).toString(),
-                    showUserDetails: showUserDetails,
                   );
                 },
               )
@@ -161,7 +179,6 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     required String messageId,
     required String message,
     required String time,
-    bool showUserDetails = true,
   })  {
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
       final pinnedMsg = messageList.isPinned ?? false;
@@ -186,21 +203,16 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                if (showUserDetails) ...{
                   /// Profile  Section ///
                   Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 2.5),
+                    padding: EdgeInsets.symmetric(horizontal: 12),
                     child: profileIconWithStatus(userID: "${messageList.senderId!.sId}", status: "${messageList.senderId!.status}",otherUserProfile: "${messageList.senderId!.avatarUrl}",radius: 17),
-                  )
-                } else ...{
-                  SizedBox(width: 45)
-                },
-                if (showUserDetails) SizedBox(width: 10),
+                  ),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (showUserDetails)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
@@ -211,7 +223,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             SizedBox(width: 5),
                             commonText(
                                 height: 1.2,
-                                text: formatTime(DateTime.parse(time)), color: Colors.grey, fontSize: 12
+                                text: formatTime(time), color: Colors.grey, fontSize: 12
                             ),
                           ],
                         ),
@@ -518,10 +530,10 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
               final plainText = _controller.document.toPlainText().trim();
               if(fileServiceProvider.selectedFiles.isNotEmpty){
                 final filesOfList = await chatProvider.uploadFiles();
-                chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,files: filesOfList,replyId: widget.currentMSGID);
+                chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,files: filesOfList,replyId: widget.messageId);
                 _clearInputAndDismissKeyboard();
               }else{
-                chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,replyId: widget.currentMSGID).then((value) => setState(() {
+                chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,replyId: widget.messageId).then((value) => setState(() {
                   // currentUserMessageId = "";
                 }),);
                 _clearInputAndDismissKeyboard();
@@ -613,7 +625,4 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     }
   }
 
-  String formatTime(DateTime dateTime) {
-    return DateFormat('hh:mm a').format(dateTime);
-  }
 }

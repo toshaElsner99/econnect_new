@@ -201,7 +201,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
             signInProvider.isVisible
                 ? CupertinoIcons.eye_slash
                 : CupertinoIcons.eye,
-            color: Colors.blue,
+            color: AppColor.commonAppColor,
           ),
         )
             : null,

@@ -15,6 +15,7 @@ import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
+import 'package:e_connect/utils/app_fonts_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
@@ -705,10 +706,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }
   }
 
-  String formatTime(String utcTime) {
-    DateTime dateTime = DateTime.parse(utcTime).toLocal(); // Convert to local time
-    return DateFormat('hh:mm a').format(dateTime); // Format in 12-hour AM/PM format
-  }
+
 
   Widget chatBubble({
     required int index,
@@ -729,6 +727,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       }
       final user = userCache[userId];
       bool pinnedMsg = messageList.isPinned ?? false;
+      bool isEdited = messageList.isEdited ?? false;
       return Container(
         margin: EdgeInsets.only(top: 1),
         color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
@@ -745,8 +744,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   child: Row(
                     children: [
                       Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,),
-                      SizedBox(width: 5,),
-                      commonText(text: "Pinned",color: AppColor.blueColor)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                        child: commonText(text: "Pinned",color: AppColor.blueColor),
+                      ),
                     ],
                   ),
                 )),
@@ -761,7 +762,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "${user?.data!.user!.status}",otherUserProfile: user?.data!.user!.avatarUrl ?? '',radius: 17),
                   )
                 } else ...{
-                  SizedBox(width: 45)
+                  SizedBox(width: 50)
                 },
                 if (showUserDetails) SizedBox(width: 10),
                 Expanded(
@@ -802,12 +803,60 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           ],
                         ),
                       SizedBox(height: 5),
-                      HtmlWidget(
-                        message,
-                        enableCaching: true,
-                        textStyle: TextStyle( fontSize: 16),
-                      ),
-                      Visibility(
+                        Wrap(
+                          direction: Axis.horizontal,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                children: [
+                                  WidgetSpan(
+                                    alignment: PlaceholderAlignment.baseline,
+                                    baseline: TextBaseline.alphabetic,
+                                    child: HtmlWidget(
+                                      message,
+                                      textStyle: TextStyle(height: 1.2,fontFamily: AppFonts.interFamily),
+                                      enableCaching: true,
+                                    ),
+                                  ),
+
+                                  if (isEdited)
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.baseline,
+                                      baseline: TextBaseline.alphabetic,
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 4.0),
+                                        // Space between content & label
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          // Ensures compact fit
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 13,
+                                              color: AppColor.borderColor,
+                                            ),
+                                            const SizedBox(width: 2),
+                                            commonText(
+                                              text: "Edited",
+                                              fontSize: 10,
+                                              color: AppColor.borderColor,
+                                              fontStyle: FontStyle.italic,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(
                             padding: EdgeInsets.symmetric(vertical: 16,horizontal: 20),
@@ -914,26 +963,156 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             );
                           },),
                       ),
-                      Visibility(visible: messageList.replies?.isNotEmpty ?? false,
+                      // Visibility(visible: messageList.replies?.isNotEmpty ?? false,
+                      //     child: GestureDetector(
+                      //       onTap: ()=> pushScreenWithTransition(ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,currentMSGID: messageId,)),
+                      //       child: Container(
+                      //         margin: EdgeInsets.symmetric(vertical: 4),
+                      //         child: Row(
+                      //           children: [
+                      //             // profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",needToShowIcon:false,radius: 10,otherUserProfile: "${user?.data!.user!.avatarUrl}"),
+                      //             if (messageList.repliesSenderInfo != null && messageList.repliesSenderInfo!.isNotEmpty)
+                      //             // profileIconWithStatus(userID: "${messageList.repliesSenderInfo?[0].id}", status: "",needToShowIcon:false,radius: 10,otherUserProfile: messageList.repliesSenderInfo?[0].avatarUrl),
+                      //               Row(
+                      //                 mainAxisSize: MainAxisSize.min, // Keeps Row tight around content
+                      //                 children: [
+                      //                   Stack(
+                      //                     clipBehavior: Clip.none, // Allows overlay to be outside the stack
+                      //                     children: [
+                      //                       if (messageList.repliesSenderInfo!.length > 1)
+                      //                       profileIconWithStatus(
+                      //                         userID: messageList.repliesSenderInfo![0].id,
+                      //                         status: "",
+                      //                         needToShowIcon: false,
+                      //                         radius: 15,
+                      //                         otherUserProfile: messageList.repliesSenderInfo![0].avatarUrl,
+                      //                       ),
+                      //                       if (messageList.repliesSenderInfo!.length > 1)
+                      //                       Positioned(
+                      //                         left: 22,
+                      //                         child: profileIconWithStatus(userID: messageList.repliesSenderInfo![1].id,
+                      //                           status: "",
+                      //                           needToShowIcon: false,
+                      //                           radius: 15,
+                      //                           otherUserProfile: messageList.repliesSenderInfo![1].avatarUrl,),
+                      //                       ),
+                      //
+                      //                     ],
+                      //                   ),
+                      //                   Container(
+                      //                     margin: EdgeInsets.only(left: 6),
+                      //                     height: 10,width: 10,decoration: BoxDecoration(color: Colors.red,shape: BoxShape.circle),),
+                      //                 ],
+                      //               ),
+                      //
+                      //
+                      //             Padding(
+                      //               padding: const EdgeInsets.only(left: 10.0,right: 4.0),
+                      //               child: Transform.flip(
+                      //                   flipX: true,
+                      //                   child: Image.asset(AppImage.forwardIcon,height: 15,width: 15,color: AppColor.borderColor)),
+                      //             ),
+                      //             commonText(text: "${messageList.replyCount} reply", fontSize: 12,color: AppColor.borderColor),
+                      //           ],
+                      //         ),
+                      //       ),
+                      //     ))
+                        Visibility(
+                          visible: messageList.replies?.isNotEmpty ?? false,
                           child: GestureDetector(
-                            onTap: ()=> pushScreenWithTransition(ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,currentMSGID: messageId,)),
+                            onTap: () => pushScreenWithTransition(
+                              ReplyMessageScreen(
+                                userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
+                                messageId: messageId.toString(),
+                                receiverId: widget.oppositeUserId,
+                                // currentMSGID: messageId,
+                              ),
+                            ),
                             child: Container(
-                              margin: EdgeInsets.symmetric(vertical: 4),
+                              // color: Colors.red,
+                              margin: const EdgeInsets.symmetric(vertical: 4),
                               child: Row(
                                 children: [
-                                  profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",needToShowIcon:false,radius: 10),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 10.0,right: 4.0),
-                                    child: Transform.flip(
-                                        flipX: true,
-                                        child: Image.asset(AppImage.forwardIcon,height: 15,width: 15,color: AppColor.borderColor)),
+                                  // 🖼️ Overlapping profile images
+                                  if (messageList.repliesSenderInfo != null && messageList.repliesSenderInfo!.isNotEmpty)
+                                    Container(
+                                      margin: EdgeInsets.only(right :messageList.repliesSenderInfo!.length > 1 ? 22 : 7),
+                                      // color: Colors.amber,
+                                      child: Row(
+                                        children: [
+                                          Stack(
+                                            clipBehavior: Clip.none,
+                                            children: [
+                                              profileIconWithStatus(
+                                                userID: messageList.repliesSenderInfo![0].id,
+                                                status: "",
+                                                needToShowIcon: false,
+                                                radius: 12,
+                                                otherUserProfile: messageList.repliesSenderInfo![0].avatarUrl,
+                                              ),
+                                              if (messageList.repliesSenderInfo!.length > 1)
+                                                Positioned(
+                                                  left: 16,
+                                                  child: profileIconWithStatus(
+                                                    userID: messageList.repliesSenderInfo![1].id,
+                                                    status: "",
+                                                    needToShowIcon: false,
+                                                    radius: 12,
+                                                    otherUserProfile: messageList.repliesSenderInfo![1].avatarUrl,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                  // const SizedBox(width: 10), // Spacing between images and red dot
+
+                                  // 🔴 Red dot circle
+                                  Container(
+                                    width: 10,
+                                    height: 10,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
                                   ),
-                                  commonText(text: "${messageList.replyCount} reply", fontSize: 12,color: AppColor.borderColor),
+
+                                  // 🔄 Reply icon and text
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8.0,right: 4.0),
+                                    child: Transform.flip(
+                                      flipX: true,
+                                      child: Image.asset(
+                                        AppImage.forwardIcon,
+                                        height: 15,
+                                        width: 15,
+                                        color: AppColor.borderColor,
+                                      ),
+                                    ),
+                                  ),
+
+                                  commonText(
+                                    text: "${messageList.replyCount} ${messageList.replyCount! > 1 ? 'replies' : 'reply'}",
+                                    fontSize: 12,
+                                    color: AppColor.borderColor,
+                                  ),
+
+                                  SizedBox(width: 6),
+                                  Flexible(
+                                    child: commonText(
+                                      text: "Last reply 1 hour ago",
+                                      fontSize: 10,
+                                      color: AppColor.borderColor.withOpacity(0.7),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
-                          ))
-                    ],
+                          ),
+                        )
+                      ],
                   ),
                 ),
                 popMenu2(context,
@@ -944,10 +1123,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   currentUserId: userId,
                   onForward: () => null,
                   onReply: () {
-                  setState(() {
-                    currentUserMessageId = messageId;
-                  });
-                  pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,currentMSGID: currentUserMessageId,));
+                  pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
                   },
                   onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
                   onCopy: () => copyToClipboard(context, message),

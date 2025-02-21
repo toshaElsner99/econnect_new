@@ -1,6 +1,7 @@
 import 'package:e_connect/cubit/chat/chat_cubit.dart';
 import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/main.dart';
+import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -113,9 +114,15 @@ class SocketIoProvider extends ChangeNotifier{
     socket.emit(userTyping,{"senderId": signInModel.data?.user?.id ?? "","receiverId": oppositeUserId,"inputValue":isTyping,"isReply":isReplyMsg});
   }
 
-  sendMessagesSC({required Map<String, dynamic> response}) {
+  sendMessagesSC({required Map<String, dynamic> response,bool? emitReplyMsg = false}) {
     print("emit>>>>> Send Message");
+    socket.emit(sendReplyMessage, response);
+    socket.on(sendReplyMessage, (data) {
+      print("sendReplyMessage>>>>>DD $data");
+    },);
     socket.emit(sendMessage, response);
+    // if(emitReplyMsg == true){
+    // }
   }
 
   deleteMessagesSC({required Map<String, dynamic> response}) {
@@ -147,6 +154,28 @@ class SocketIoProvider extends ChangeNotifier{
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
     });
   }
+
+  void listenSocketForReplyMSG({required String msgId}){
+    print("messageId>>> $msgId");
+    if (!socket.connected) {
+      print("⚠️ Socket is not connected. Attempting to reconnect...");
+      socket.connect();
+    }
+    socket.onAny((event, data) {
+      print("connected>>>> ${socket.connected}");
+      print("Received event 2 : $event >>> $data");
+      if(event == "reply_notification"){
+        Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getReplyMessageList(msgId: data['replyTo'],callingWithSI: true);
+      }
+    });
+    // socket.on(replyNotification, (data) {
+    //   print("replyNotificationListen >>> $data");
+    //   print("without>>>>>>");
+    //   if(data['replyTo'] == msgId){
+    //   }
+    // });
+  }
+
   void socketListenPinMessage({required Function callFun , required String oppositeUserId}){
     socket.on(notificationForPinMessages, (data) {
       print("listSingleChatScreen >>> $data");

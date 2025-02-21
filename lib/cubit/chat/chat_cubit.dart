@@ -160,6 +160,7 @@ class ChatProvider extends  ChangeNotifier {
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
   List<MessageGroups> messageGroups = [];
   String? lastOpenedUserId;
+  String? lastOpenedUserMSGId;
   String oppUserIdForTyping = "";
   int msgLength = 0;
   final Map<String, dynamic> userCache = {};
@@ -228,17 +229,29 @@ class ChatProvider extends  ChangeNotifier {
     }
   }
 
-  Future<void> getReplyMessageList({required String msgId}) async {
-    getReplyMessageModel = null;
+  Future<void> getReplyMessageList({required String msgId,bool? callingWithSI = false}) async {
+    if(callingWithSI == true){
+      print("MESSAGEID>>> $msgId");
+    }else{
+      print("messageID>>> $msgId");
+    }
+    print("getReplyMessageList>>>>");
+    if (lastOpenedUserMSGId != msgId) {
+      getReplyMessageModel = null;
+    }
     final requestBody = {
       "messageId": msgId
     };
     final response = await ApiService.instance.request(endPoint: ApiString.getRepliesMsg, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
       getReplyMessageModel = GetReplyMessageModel.fromJson(response);
+      lastOpenedUserMSGId = msgId;
       notifyListeners();
     }
   }
+
+
+  ///
   Future<void> seenReplayMessage({required String msgId}) async {
     final requestBody = {
       "messageId": msgId
@@ -373,7 +386,6 @@ class ChatProvider extends  ChangeNotifier {
 
 
   Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID})async{
-
     final requestBody = {
       "content": content,
       "receiverId": receiverId,
@@ -390,28 +402,17 @@ class ChatProvider extends  ChangeNotifier {
         requestBody["files"] = files;
       }
     }
-    // if (editMsgID != null && editMsgID.isNotEmpty) {
-    //   requestBody["isEdit"] = true;
-    //   requestBody["editMessageId"] = editMsgID;
-    // }
-    //
-    // if (replyId != null) {
-    //   requestBody['replyTo'] = replyId;
-    //   requestBody['isReply'] = true;
-    // }
-    //
-    // if (files != null && files.isNotEmpty) {
-    //   requestBody["files"] = files;
-    // }
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
-      socketProvider.sendMessagesSC(response:response['data']);
+      socketProvider.sendMessagesSC(response:response['data'],emitReplyMsg: replyId != null ? true : false);
       if(replyId != null){
-       getReplyMessageList(msgId: editMsgID!);
+        getMessagesList(oppositeUserId: receiverId);
+        getReplyMessageList(msgId: replyId);
       }else {
         getMessagesList(oppositeUserId: receiverId);
       }
     }
+    notifyListeners();
   }
 
   Future<void> deleteMessage({required String messageId,required String receiverId})async{

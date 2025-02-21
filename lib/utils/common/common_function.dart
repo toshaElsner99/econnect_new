@@ -17,6 +17,12 @@ String formatDateString1(String dateString) {
   String formattedDate = DateFormat('dd-MM-yyyy hh:mm a').format(dateTime);
   return formattedDate;
 }
+
+String formatTime(String utcTime) {
+  DateTime dateTime = DateTime.parse(utcTime).toLocal(); // Convert to local time
+  return DateFormat('hh:mm a').format(dateTime); // Format in 12-hour AM/PM format
+}
+
 String formatDateString(String? dateString) {
   if (dateString == null || dateString.isEmpty) {
     return '';

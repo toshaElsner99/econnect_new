@@ -797,17 +797,24 @@ Widget profileIconWithStatus({
     return CircleAvatar(
       radius: radius,
       backgroundColor: Colors.grey[200],
-      child: ClipOval(
-        child: CachedNetworkImage(
-          width: 30,
-          height: 30,
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
-            padding: const EdgeInsets.all(3),
-            child: CircularProgressIndicator(value: downloadProgress.progress),
+      child: Container(
+        padding: EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle
+        ),
+        child: ClipOval(
+          child: CachedNetworkImage(
+            width: 30,
+            height: 30,
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
+              padding: const EdgeInsets.all(3),
+              child: CircularProgressIndicator(value: downloadProgress.progress),
+            ),
+            errorWidget: (context, url, error) => Icon(Icons.error),
           ),
-          errorWidget: (context, url, error) => Icon(Icons.error),
         ),
       ),
     );
