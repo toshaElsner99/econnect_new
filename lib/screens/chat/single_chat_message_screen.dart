@@ -1020,14 +1020,26 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         Visibility(
                           visible: messageList.replies?.isNotEmpty ?? false,
                           child: GestureDetector(
-                            onTap: () => pushScreenWithTransition(
+                            onTap: () {
+                              print("Simple Passing = ${messageId.toString()}");
+                              pushScreenWithTransition(
                               ReplyMessageScreen(
                                 userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
                                 messageId: messageId.toString(),
                                 receiverId: widget.oppositeUserId,
                                 // currentMSGID: messageId,
                               ),
-                            ),
+                            ).then((value) {
+                              print("value>>> $value");
+                              if (messageList.replies != null && messageList.replies!.isNotEmpty) {
+                                for (var reply in messageList.replies!) {
+                                  if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
+                                      setState(() =>
+                                        reply.isSeen = true);
+                                  }
+                                }
+                              }
+                            });},
                             child: Container(
                               // color: Colors.red,
                               margin: const EdgeInsets.symmetric(vertical: 4),
@@ -1067,21 +1079,26 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                       ),
                                     ),
 
-                                  // const SizedBox(width: 10), // Spacing between images and red dot
 
                                   // 🔴 Red dot circle
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
+                                  Visibility(
+                                    replacement: SizedBox.shrink(),
+                                    visible: messageList.replies != null && messageList.replies!.isNotEmpty &&
+                                    messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false),
+                                    child: Container(
+                                      margin:EdgeInsets.only(right: 5),
+                                      width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                      height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
                                     ),
                                   ),
 
                                   // 🔄 Reply icon and text
                                   Padding(
-                                    padding: const EdgeInsets.only(left: 8.0,right: 4.0),
+                                    padding: EdgeInsets.only(left: 0.0,right: 4.0),
                                     child: Transform.flip(
                                       flipX: true,
                                       child: Image.asset(
@@ -1101,10 +1118,17 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
                                   SizedBox(width: 6),
                                   Flexible(
-                                    child: commonText(
-                                      text: "Last reply 1 hour ago",
-                                      fontSize: 10,
-                                      color: AppColor.borderColor.withOpacity(0.7),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: commonText(
+                                        text: getTimeAgo(
+                                            (messageList.replies != null && messageList.replies!.isNotEmpty)
+                                                ? messageList.replies!.last.createdAt.toString()
+                                                : DateTime.now().toString()
+                                        ),
+                                        fontSize: 10,
+                                        color: AppColor.borderColor.withOpacity(0.7),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1123,6 +1147,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   currentUserId: userId,
                   onForward: () => null,
                   onReply: () {
+                    print("onReply Passing = ${messageId.toString()}");
                   pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
                   },
                   onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),

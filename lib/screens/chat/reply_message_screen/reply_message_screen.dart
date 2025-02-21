@@ -26,7 +26,7 @@ import '../media_preview_screen.dart';
 
 class ReplyMessageScreen extends StatefulWidget {
   final String userName;
-  String messageId = "";
+  String messageId;
   final String receiverId;
   // final String currentMSGID;
 
@@ -47,37 +47,42 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
-  String messageID = "";
+  // String messageID = "";
   @override
   void initState() {
-    setState(() {
-      if(messageID != widget.messageId){
-        messageID = "";
-        messageID = widget.messageId;
-      }else {
-        messageID = widget.messageId;
-      }
-    });
-    print("msgIDDINIT>>>> $messageID");
+    // setState(() {
+      // if(messageID != widget.messageId){
+      //   messageID = "";
+      //   messageID = widget.messageId;
+      // }else {
+      //   messageID = widget.messageId;
+      // }
+    // });
+    // print("msgIDDINIT>>>> $messageID");
     print("msgIDD>>>> ${widget.messageId}");
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-    socketProvider.listenSocketForReplyMSG(msgId: messageID);
-    Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: messageID);
-    Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: messageID);
+    chatProvider.getReplyListUpdateSC(widget.messageId);
+    print("I'm In initState");
+    Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: widget.messageId,fromWhere: "SCREEN INIT");
+    Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.messageId);
   });
 }
 
+@override
+  void dispose() {
+  Provider.of<ChatProvider>(context, listen: false).disposeReplyMSG();
+  super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(onPressed: (){
-          setState(() {
-            widget.messageId = "";
-          });
-          pop();
-          Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.messageId);
+          // setState(() {
+            // widget.messageId = "";
+          // });
+          pop(popValue: true);
         },
         icon: Icon(CupertinoIcons.back,color: Colors.white,)),
         bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),

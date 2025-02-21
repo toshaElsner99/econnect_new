@@ -229,14 +229,39 @@ class ChatProvider extends  ChangeNotifier {
     }
   }
 
-  Future<void> getReplyMessageList({required String msgId,bool? callingWithSI = false}) async {
-    if(callingWithSI == true){
-      print("MESSAGEID>>> $msgId");
-    }else{
-      print("messageID>>> $msgId");
+  void disposeReplyMSG(){
+    socketProvider.socket.off("reply_notification");
+  }
+
+  void getReplyListUpdateSC(String mId) {
+    try {
+      // Remove any existing listener before adding a new one
+      socketProvider.socket.off("reply_notification");
+      socketProvider.socket.on("reply_notification", (data) {
+        print("Event: reply_notification >>> Data: $data");
+
+        print("mId = $mId");
+        print("replyTo socket = ${data['replyTo']}");
+
+        // Ensure we update only when replyTo matches the current message
+        if (mId == data['replyTo']) {
+          print("I'm In socketProvider for msgId: $mId");
+          getReplyMessageList(msgId: mId, fromWhere: "SOCKET INIT");
+        }
+      });
+    } catch (e) {
+      print("Error processing the socket event: $e");
+    } finally {
+      notifyListeners();
     }
-    print("getReplyMessageList>>>>");
+  }
+
+
+  Future<void> getReplyMessageList({required String msgId,required String fromWhere}) async {
+    print("getReplyMessageList>>>> $fromWhere");
+    print("messageId>>>> $msgId");
     if (lastOpenedUserMSGId != msgId) {
+      print("lastOpenedUserMSGId => $lastOpenedUserMSGId => msgId = $msgId");
       getReplyMessageModel = null;
     }
     final requestBody = {
@@ -246,6 +271,7 @@ class ChatProvider extends  ChangeNotifier {
     if(statusCode200Check(response)){
       getReplyMessageModel = GetReplyMessageModel.fromJson(response);
       lastOpenedUserMSGId = msgId;
+      print("lastOpenedUserMSGId store=> $lastOpenedUserMSGId");
       notifyListeners();
     }
   }
@@ -404,10 +430,11 @@ class ChatProvider extends  ChangeNotifier {
     }
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
-      socketProvider.sendMessagesSC(response:response['data'],emitReplyMsg: replyId != null ? true : false);
+      socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
       if(replyId != null){
         getMessagesList(oppositeUserId: receiverId);
-        getReplyMessageList(msgId: replyId);
+        print("I'm In sendMessage");
+        getReplyMessageList(msgId: replyId,fromWhere: "SEND_REPLY_MESSAGE");
       }else {
         getMessagesList(oppositeUserId: receiverId);
       }

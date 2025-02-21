@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -37,6 +38,25 @@ String formatDateString(String? dateString) {
   }
 }
 
+String getTimeAgo(String dateString) {
+  DateTime parsedDate = DateTime.parse(dateString);
+  final now = DateTime.now();
+  final difference = now.difference(parsedDate);
+
+  if (difference.inSeconds < 60) {
+    return "Last reply ${difference.inSeconds} sec ago";
+  } else if (difference.inMinutes < 60) {
+    return "Last reply ${difference.inMinutes} min ago";
+  } else if (difference.inHours < 24) {
+    return "Last reply ${difference.inHours} hr ago";
+  } else if (difference.inDays < 30) {
+    return "Last reply ${difference.inDays} day ago";
+  } else if (difference.inDays < 365) {
+    return "Last reply ${(difference.inDays / 30).floor()} month ago";
+  } else {
+    return "${(difference.inDays / 365).floor()} year ago";
+  }
+}
 
 String getLastOnlineStatus(String status, String? timestamp) {
   if (status.toLowerCase() == "offline" && timestamp != null) {
@@ -205,8 +225,8 @@ class NoLeadingSpacesFormatter extends TextInputFormatter {
     );
   }
 }
-void pushScreenWithTransition( Widget screen) {
-  Navigator.of(navigatorKey.currentState!.context).push(
+Future<dynamic> pushScreenWithTransition(Widget screen,) {
+ return Navigator.of(navigatorKey.currentState!.context).push(
     PageRouteBuilder(
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) => screen,
@@ -245,8 +265,8 @@ void pushAndRemoveUntil({required Widget screen}) {
   );
 }
 
-Future<void> pop() async {
-  Navigator.pop(navigatorKey.currentState!.context);
+Future<void> pop({bool? popValue}) async {
+  Navigator.pop(navigatorKey.currentState!.context,popValue);
 }
 
 bool statusCode200Check(Map<String, dynamic> response) {
