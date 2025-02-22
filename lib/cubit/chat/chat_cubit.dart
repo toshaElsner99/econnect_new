@@ -163,6 +163,7 @@ class ChatProvider extends  ChangeNotifier {
   String? lastOpenedUserMSGId;
   String oppUserIdForTyping = "";
   int msgLength = 0;
+  bool idChatListLoading = false;
   final Map<String, dynamic> userCache = {};
   final ScrollController scrollController = ScrollController();
   int currentPage = 1;
@@ -320,42 +321,42 @@ class ChatProvider extends  ChangeNotifier {
   //   }
   // }
   Future<void> getMessagesList({required String oppositeUserId, bool? needClearFirstTime, bool? storeLatest = true}) async {
-    if (lastOpenedUserId != oppositeUserId) {
-      messageGroups.clear();
-      userCache.clear();
-      totalPages = 0;
-      currentPage = 1;
-    }
-
-    if (needClearFirstTime == true) {
-      totalPages = 0;
-      currentPage = 1;
-    }
-
-    final response = await ApiService.instance.request(
-        endPoint: ApiString.getMessages,
-        method: Method.POST,
-        reqBody: {
+    try {
+      if (lastOpenedUserId != oppositeUserId) {
+            messageGroups.clear();
+            userCache.clear();
+            totalPages = 0;
+            currentPage = 1;
+            idChatListLoading = true;
+      }
+      if (needClearFirstTime == true) {
+            totalPages = 0;
+            currentPage = 1;
+      }
+      final response = await ApiService.instance.request(
+          endPoint: ApiString.getMessages,
+          method: Method.POST,
+          reqBody: {
             "userId": signInModel.data!.user!.id,
             "oppositeUserId": oppositeUserId,
             "pageNo": currentPage.toString()
-          }
-    );
+          });
 
-    if (statusCode200Check(response)) {
-      // if(storeLatest == true){
-      //   messageGroups = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-      // }else{
-      //   final newMessages = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-      //   messageGroups.addAll(newMessages);
-      // }
-      messageGroups = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-      totalPages = response['data']['totalPages']; // Update total pages
-      print("Messages == ${messageGroups.length}");
-      if (messageGroups.isNotEmpty) {
-        print("First group == ${messageGroups[0].sId}");
+      if (statusCode200Check(response)) {
+        // if(storeLatest == true){
+        //   messageGroups = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
+        // }else{
+        //   final newMessages = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
+        //   messageGroups.addAll(newMessages);
+        // }
+        messageGroups = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
+        totalPages = response['data']['totalPages'];
+        lastOpenedUserId = oppositeUserId;
       }
-      lastOpenedUserId = oppositeUserId;
+    } catch (e) {
+      print("ERROR>>>$e");
+    } finally {
+      idChatListLoading = false;
       notifyListeners();
     }
   }

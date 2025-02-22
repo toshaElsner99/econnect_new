@@ -30,6 +30,7 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:provider/provider.dart';
 
 import '../../screens/chat/media_preview_screen.dart';
+import '../../widgets/chat_profile_header.dart';
 
 
 /// ///
@@ -114,29 +115,28 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         appBar: buildAppBar(commonProvider, chatProvider),
         body: Column(
           children: [
-            // userDetails != null
-            //     ? ChatProfileHeader(
-            //   userName: userDetails!.data!.user!.fullName ??
-            //       userDetails!.data!.user!.username ??
-            //       'Unknown',
-            //   userImageUrl: ApiString.profileBaseUrl +
-            //       (userDetails!.data!.user!.avatarUrl ?? ''),
-            // )
-            //     : SizedBox(),
             Divider(
               color: Colors.grey.shade800,
               height: 1,
             ),
-            Expanded(
-              child: ListView(
-                controller: chatProvider.scrollController,
-                reverse: true,
-                children: [
-                  dateHeaders(),
-                ],
+            if(chatProvider.idChatListLoading)...{
+
+            }else...{
+              Visibility(
+                visible:  userDetails != null,
+                child: ChatProfileHeader(userName: userDetails!.data!.user!.fullName ?? userDetails!.data!.user!.username ?? 'Unknown', userImageUrl: ApiString.profileBaseUrl + (userDetails!.data!.user!.avatarUrl ?? ''),),
               ),
-            ),
-            inputTextFieldWithEditor()
+              Expanded(
+                child: ListView(
+                  controller: chatProvider.scrollController,
+                  reverse: true,
+                  children: [
+                    dateHeaders(),
+                  ],
+                ),
+              ),
+              inputTextFieldWithEditor()
+            }
           ],
         ),
       );
@@ -637,13 +637,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
-                  Messages message = sortedMessages[index]; // Get message data
-                  // bool showUserDetails = (index == 0 || sortedMessages[index - 1].senderId != message.senderId);
+                  Messages message = sortedMessages[index];
                   bool showUserDetails = previousSenderId != message.senderId;
                   previousSenderId = message.senderId;
-                  // if (commonProvider.getUserModel?.data?.user?.sId != message.senderId) {
-                  //   chatProvider.userCache[message.senderId.toString()] = commonProvider.getUserModelSecondUser!;
-                  // }
                   return chatBubble(
                     index: index, // Pass index here
                     messageList: message,
@@ -655,36 +651,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   );
                 },
               )
-
-              // ...sortedMessages.asMap().entries.map((entry) {
-              //  int index = entry.key; // Get index
-              //  Messages message = entry.value; // Get message data
-              //
-              //  bool showUserDetails = previousSenderId != message.senderId;
-              //  previousSenderId = message.senderId;
-              //
-              //  return chatBubble(
-              //  index: index, // Pass index here
-              //  messageList: message,
-              //  userId: message.senderId!,
-              //  message: message.content!,
-              //  time: DateTime.parse(message.createdAt!).toString(),
-              //  showUserDetails: showUserDetails,
-              //  );
-              //  }).toList()
-
-              // ...sortedMessages.map((Messages message) {
-              //   bool showUserDetails = previousSenderId != message.senderId;
-              //   previousSenderId = message.senderId;
-              //   return chatBubble(
-              //     index: index,
-              //     messageList: message,
-              //     userId: message.senderId!,
-              //     message: message.content!,
-              //     time: DateTime.parse(message.createdAt!).toString(),
-              //     showUserDetails: showUserDetails,
-              //   );
-              // }).toList(),
             ],
           );
         },
@@ -814,7 +780,52 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                     baseline: TextBaseline.alphabetic,
                                     child: HtmlWidget(
                                       message,
-                                      textStyle: TextStyle(height: 1.2,fontFamily: AppFonts.interFamily),
+                                      textStyle: TextStyle(
+                                        height: 1.2,
+                                        fontFamily: AppFonts.interFamily,
+                                        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                        fontSize: 16,
+                                      ),
+                                      customStylesBuilder: (element) {
+                                        // Base styles for all text
+                                        Map<String, String> styles = {
+                                          'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
+                                        };
+
+                                        // Add additional styles for special formatting
+                                        if (element.classes.contains('renderer_bold')) {
+                                          styles['font-weight'] = 'bold';
+                                        }
+                                        if (element.classes.contains('renderer_italic')) {
+                                          styles['font-style'] = 'italic';
+                                        }
+                                        if (element.classes.contains('renderer_strikethrough')) {
+                                          styles['text-decoration'] = 'line-through';
+                                        }
+                                        if (element.classes.contains('renderer_link')) {
+                                          styles['color'] = '#2196F3';
+                                        }
+                                        if (element.classes.contains('renderer_emoji')) {
+                                          styles['display'] = 'inline-block';
+                                          styles['vertical-align'] = 'middle';
+                                        }
+
+                                        return styles;
+                                      },
+                                      customWidgetBuilder: (element) {
+                                        if (element.classes.contains('renderer_emoji')) {
+                                          final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
+                                          if (imageUrl != null) {
+                                            return CachedNetworkImage(
+                                              imageUrl: imageUrl,
+                                              width: 21,
+                                              height: 21,
+                                              fit: BoxFit.contain,
+                                            );
+                                          }
+                                        }
+                                        return null;
+                                      },
                                       enableCaching: true,
                                     ),
                                   ),
@@ -963,60 +974,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             );
                           },),
                       ),
-                      // Visibility(visible: messageList.replies?.isNotEmpty ?? false,
-                      //     child: GestureDetector(
-                      //       onTap: ()=> pushScreenWithTransition(ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,currentMSGID: messageId,)),
-                      //       child: Container(
-                      //         margin: EdgeInsets.symmetric(vertical: 4),
-                      //         child: Row(
-                      //           children: [
-                      //             // profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",needToShowIcon:false,radius: 10,otherUserProfile: "${user?.data!.user!.avatarUrl}"),
-                      //             if (messageList.repliesSenderInfo != null && messageList.repliesSenderInfo!.isNotEmpty)
-                      //             // profileIconWithStatus(userID: "${messageList.repliesSenderInfo?[0].id}", status: "",needToShowIcon:false,radius: 10,otherUserProfile: messageList.repliesSenderInfo?[0].avatarUrl),
-                      //               Row(
-                      //                 mainAxisSize: MainAxisSize.min, // Keeps Row tight around content
-                      //                 children: [
-                      //                   Stack(
-                      //                     clipBehavior: Clip.none, // Allows overlay to be outside the stack
-                      //                     children: [
-                      //                       if (messageList.repliesSenderInfo!.length > 1)
-                      //                       profileIconWithStatus(
-                      //                         userID: messageList.repliesSenderInfo![0].id,
-                      //                         status: "",
-                      //                         needToShowIcon: false,
-                      //                         radius: 15,
-                      //                         otherUserProfile: messageList.repliesSenderInfo![0].avatarUrl,
-                      //                       ),
-                      //                       if (messageList.repliesSenderInfo!.length > 1)
-                      //                       Positioned(
-                      //                         left: 22,
-                      //                         child: profileIconWithStatus(userID: messageList.repliesSenderInfo![1].id,
-                      //                           status: "",
-                      //                           needToShowIcon: false,
-                      //                           radius: 15,
-                      //                           otherUserProfile: messageList.repliesSenderInfo![1].avatarUrl,),
-                      //                       ),
-                      //
-                      //                     ],
-                      //                   ),
-                      //                   Container(
-                      //                     margin: EdgeInsets.only(left: 6),
-                      //                     height: 10,width: 10,decoration: BoxDecoration(color: Colors.red,shape: BoxShape.circle),),
-                      //                 ],
-                      //               ),
-                      //
-                      //
-                      //             Padding(
-                      //               padding: const EdgeInsets.only(left: 10.0,right: 4.0),
-                      //               child: Transform.flip(
-                      //                   flipX: true,
-                      //                   child: Image.asset(AppImage.forwardIcon,height: 15,width: 15,color: AppColor.borderColor)),
-                      //             ),
-                      //             commonText(text: "${messageList.replyCount} reply", fontSize: 12,color: AppColor.borderColor),
-                      //           ],
-                      //         ),
-                      //       ),
-                      //     ))
                         Visibility(
                           visible: messageList.replies?.isNotEmpty ?? false,
                           child: GestureDetector(
@@ -1027,7 +984,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
                                 messageId: messageId.toString(),
                                 receiverId: widget.oppositeUserId,
-                                // currentMSGID: messageId,
                               ),
                             ).then((value) {
                               print("value>>> $value");
@@ -1163,23 +1119,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     );
                   }),
                   onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)),
-                // GestureDetector(
-                //     onTap: () => popMenu(context),
-                //     child: Icon(Icons.more_vert,color: index == _selectedIndex ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black : Colors.grey,size: 30,))
-                // Builder(
-                //   builder: (itemContext) => GestureDetector(
-                //     onTapDown: (details) => _storePosition(details, itemContext,index), // Capture tap position correctly
-                //     onTap: () => _showPopup(context: context,
-                //         pinnedMSG: ()=> chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
-                //         delete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)), // Show the pop-up menu
-                //     // onTap: () => print("messageId>>>> ${messageId}"),
-                //     child: Container(
-                //         width: 20,
-                //         height: 23,
-                //         margin: EdgeInsets.only(right: 16),
-                //         child: Icon(Icons.more_vert, color: index == _selectedIndex ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black : Colors.grey, size: 30)),
-                //   ),
-                // ),
               ],
             ),
           ],
@@ -1209,112 +1148,5 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 Expanded(child: Divider(color: Colors.orange,)),
               ],);
   }
-  String quillDeltaToHtml(var delta) {
-    final html = StringBuffer();
-
-    delta.toList().forEach((op) {
-      if (op.isInsert) {
-        if (op.data is String) {
-          // Check for text formatting and wrap with appropriate HTML tags
-          String text = op.data;
-          if (op.attributes != null) {
-            if (op.attributes.containsKey('bold') && op.attributes['bold'] == true) {
-              text = '<b>$text</b>';
-            }
-            if (op.attributes.containsKey('italic') && op.attributes['italic'] == true) {
-              text = '<i>$text</i>';
-            }
-            if (op.attributes.containsKey('underline') && op.attributes['underline'] == true) {
-              text = '<u>$text</u>';
-            }
-            if (op.attributes.containsKey('color')) {
-              text = '<span style="color:${op.attributes['color']}">$text</span>';
-            }
-            if (op.attributes.containsKey('link')) {
-              text = '<a href="${op.attributes['link']}">$text</a>';
-            }
-          }
-          html.write(text);
-        }
-      }
-    });
-
-    return html.toString();
-  }
-  String convertToHtml() {
-    final delta = _controller.document.toDelta(); // Get Delta from Quill Controller
-    final htmlString = quillDeltaToHtml(delta); // Convert Delta to HTML
-    return htmlString;
-  }
 }
-// Widget _buildFormattedText(String text, List<dynamic> deltaOps) {
-//   return quill.QuillEditor(
-//     controller: quill.QuillController(
-//       document: quill.Document.fromJson(deltaOps),
-//       selection: const TextSelection.collapsed(offset: 0),
-//     ),
-//     scrollController: ScrollController(),
-//     configurations: quill.QuillEditorConfigurations(
-//       // readOnly: true,
-//       autoFocus: false,
-//       showCursor: false,
-//       padding: EdgeInsets.zero,
-//       scrollable: false,
-//       customStyles: const quill.DefaultStyles(
-//         paragraph: quill.DefaultTextBlockStyle(
-//           TextStyle(
-//             color: Colors.white,
-//             fontSize: 16,
-//           ),
-//           quill.HorizontalSpacing.zero,
-//           quill.VerticalSpacing.zero,
-//           quill.VerticalSpacing.zero,
-//           BoxDecoration(color: Colors.transparent),
-//         ),
-//       ),
-//     ),
-//     focusNode: FocusNode(),
-//   );
-// }
-
-// class MyQuillEditor extends StatelessWidget {
-//   final quill.QuillController _controller = quill.QuillController.basic();
-//
-//   // Function to Convert Quill Document to HTML
-//   String convertToHtml() {
-//     final delta = _controller.document.toDelta(); // Get Delta from Quill Controller
-//     final htmlString = quillDeltaToHtml(delta); // Convert Delta to HTML
-//     return htmlString;
-//   }
-//
-//   // Convert Quill Delta to HTML string
-//
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('Quill Editor with HTML Export'),
-//       ),
-//       body: Column(
-//         children: [
-//           Expanded(
-//             child: quill.QuillEditor.basic(
-//               controller: _controller,
-//               // readOnly: false,
-//             ),
-//           ),
-//           ElevatedButton(
-//             onPressed: () {
-//               final htmlData = convertToHtml();
-//               print("HTML Data: $htmlData");
-//               // Send `htmlData` to your API
-//             },
-//             child: Text('Send HTML Data'),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
 

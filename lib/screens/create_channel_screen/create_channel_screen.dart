@@ -35,12 +35,11 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
     bool isAdmin = signInModel.data?.user?.roleName == "Admin";
 
     return Scaffold(
-      // backgroundColor: Colors.white,
       appBar: AppBar(
-        // backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white,),
+          icon: const Icon(Icons.close),
+          color: Colors.white,
           onPressed: () => Navigator.pop(context),
         ),
         title:  commonText(
@@ -121,7 +120,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
             children: [
               Icon(
                 Icons.lock_outline,
-                color: Colors.grey[800],
+                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.grey[800],
                 size: 24,
               ),
               const SizedBox(width: 16),

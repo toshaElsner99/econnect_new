@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:e_connect/chat_screen.dart';
 import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
@@ -12,7 +11,6 @@ import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
-import 'package:e_connect/utils/theme/theme_cubit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
