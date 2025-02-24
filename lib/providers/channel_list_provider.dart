@@ -12,6 +12,7 @@ import '../main.dart';
 import '../model/direct_message_list_model.dart';
 import '../model/get_users_suggestions.dart';
 import '../model/sign_in_model.dart';
+import '../screens/chat/forward_message/forward_message_screen.dart';
 import 'common_provider.dart';
 
 
@@ -81,8 +82,21 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
     }
     notifyListeners();
   }
-  /// BROWSE AND SEARCH ///
-  Future<void> browseAndSearchChannel({required String search,bool? needLoader = false}) async {
+List<CombinedItem> combinedList = [];
+void combineUserDataWithChannels() {
+  List<CombinedItem> combinedList = [];
+  // Add user data
+  browseAndSearchChannelModel?.data?.users?.forEach((user) {
+    combinedList.add(CombinedItem(isChannel: false, item: user));
+  });
+  // Add channel data
+  browseAndSearchChannelModel?.data?.channels?.forEach((channel) {
+    combinedList.add(CombinedItem(isChannel: true, item: channel));
+  });
+}
+
+/// BROWSE AND SEARCH ///
+  Future<void> browseAndSearchChannel({required String search,bool? needLoader = false,bool? combineList = false}) async {
     final requestBody = {
       "userId": signInModel.data?.user?.id,
       "searchTerm": search.isEmpty ? "" : search,
@@ -91,6 +105,9 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
       final response = await ApiService.instance.request(endPoint: ApiString.browseChannel, method: Method.POST, reqBody: requestBody,needLoader: needLoader);
       if (statusCode200Check(response)) {
         browseAndSearchChannelModel = BrowseAndSearchChannelModel.fromJson(response);
+        if(combineList == true){
+          combineUserDataWithChannels();
+        }
       }
     }catch (e){
       print("eroor>> $e");

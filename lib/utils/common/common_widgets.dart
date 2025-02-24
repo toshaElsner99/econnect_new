@@ -1021,42 +1021,148 @@ Widget showLogOutDialog() {
   );
 }
 
-Widget commonForwardMSGDialog() {
-  return WillPopScope(
-    onWillPop: () async => false,
-    child: Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1B1E23),
-          // color: AppColor.commonAppColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 15,vertical: 20),
-            margin: EdgeInsets.all(10),
-            child: Row(
+// void showForwardMessageDialog(BuildContext context) {
+//   showDialog(
+//     context: context,
+//     builder: (context) => commonForwardMSGDialog(context: context,otherUserProfile: "",userID: "",msgToForward: "",time: "",userName: ""),
+//   ).then((selectedUser) {
+//     if (selectedUser != null) {
+//       // Handle the selected user
+//       print('Selected user: $selectedUser');
+//     }
+//   });
+// }
+
+
+
+
+Future commonForwardMSGDialog({required BuildContext context,
+  required String msgToForward,
+  required String userID,
+  required String otherUserProfile,
+  required String userName,
+  required String time,
+
+}) {
+  final TextEditingController searchController = TextEditingController();
+  return showDialog(
+    context: context, builder: (context) {
+    return Dialog(
+      insetPadding: EdgeInsets.symmetric(horizontal: 10),
+      child: StatefulBuilder(
+        builder: (context, setState) {
+          return Container(
+            // padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              // borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.info),
-                commonText(text: "This message is from a private conversation"),
+                Container(
+                  color: AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.appBarColor,
+                  padding: EdgeInsets.symmetric(horizontal: 20,vertical: 5),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      commonText(text: "Forward Message",color: Colors.white),
+                      IconButton(onPressed: () => pop(), icon: Icon(Icons.close,color: Colors.white,))
+                    ],
+                  ),
+                ),
+                Container(
+                  color: Colors.blue.withOpacity(0.1),
+                  padding: EdgeInsets.all(10),
+                  margin: EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info,color: Colors.white,),
+                      SizedBox(width: 5,),
+                      Flexible(child: commonText(text: "This message is from a private conversation",color: Colors.white)),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: commonTextFormField(controller: searchController, hintText: "Search for people"),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 30.0,horizontal: 20),
+                  child: commonTextFormField(controller: TextEditingController(), hintText: "Add a comment (optional)"),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: commonText(text: "Message preview",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.white),
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 20,vertical: 15),
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(7),
+                      border: Border.all(color: AppColor.borderColor)
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 15,vertical: 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          profileIconWithStatus(userID: userID, status: "",otherUserProfile: otherUserProfile,needToShowIcon: false,),
+                          commonText(text: userName),
+                          commonText(text: time),
+                        ],
+                      ),
+                      commonHTMLText(message: msgToForward),
+                    ],
+                  ),
+                )
+
+
               ],
-            ),),
-            commonTextFormField(controller: TextEditingController(), hintText: "Search")
-          ],
-        ),
+            ),
+          );
+        },
       ),
-    ),
-  );
+    );
+  },);
 }
+// Widget commonForwardMSGDialog() {
+//   return WillPopScope(
+//     onWillPop: () async => false,
+//     child: Dialog(
+//       shape: RoundedRectangleBorder(
+//         borderRadius: BorderRadius.circular(16),
+//       ),
+//       elevation: 0,
+//       backgroundColor: Colors.transparent,
+//       child: Container(
+//         padding: const EdgeInsets.all(20),
+//         decoration: BoxDecoration(
+//           color: const Color(0xFF1B1E23),
+//           // color: AppColor.commonAppColor,
+//           borderRadius: BorderRadius.circular(16),
+//           border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
+//         ),
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             Container(
+//               padding: EdgeInsets.symmetric(horizontal: 15,vertical: 20),
+//             margin: EdgeInsets.all(10),
+//             child: Row(
+//               children: [
+//                 Icon(Icons.info),
+//                 commonText(text: "This message is from a private conversation"),
+//               ],
+//             ),),
+//             commonTextFormField(controller: TextEditingController(), hintText: "Search")
+//           ],
+//         ),
+//       ),
+//     ),
+//   );
+// }
 
 // void commonLogoutDialog(BuildContext context,) {
 //   showDialog(

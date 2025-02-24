@@ -5,20 +5,19 @@ import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/model/message_model.dart';
 import 'package:e_connect/providers/download_provider.dart';
 import 'package:e_connect/screens/chat/files_listing_screen/files_listing_screen.dart';
+import 'package:e_connect/screens/chat/forward_message/forward_message_screen.dart';
 import 'package:e_connect/screens/chat/pinned_posts_screen/pinned_posts_screen.dart';
 import 'package:e_connect/screens/chat/reply_message_screen/reply_message_screen.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
-import 'package:e_connect/utils/app_fonts_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
@@ -1057,7 +1056,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   opened: index == _selectedIndex ? true : false,
                   createdAt: messageList.createdAt!,
                   currentUserId: userId,
-                  onForward: () => commonForwardMSGDialog(),
+                  onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.avatarUrl ?? '')),
+                  // onForward: () => commonForwardMSGDialog(context: context,userName: "",time: "",msgToForward: "",userID: "",otherUserProfile: ""),
                   onReply: () {
                     print("onReply Passing = ${messageId.toString()}");
                   pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
