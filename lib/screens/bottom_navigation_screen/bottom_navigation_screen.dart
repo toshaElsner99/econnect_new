@@ -1,12 +1,10 @@
-import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../cubit/common_cubit/common_cubit.dart';
-import '../../cubit/sign_in/sign_in_model.dart';
+import '../../model/sign_in_model.dart';
 import '../../main.dart';
 
+import '../../providers/common_provider.dart';
 import 'bottom_navigation_screen_cubit.dart';
 
 class BottomNavigationScreen extends StatefulWidget {

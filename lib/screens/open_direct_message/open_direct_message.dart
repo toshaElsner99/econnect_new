@@ -7,9 +7,8 @@ import 'package:e_connect/utils/common/common_function.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../cubit/channel_list/channel_list_cubit.dart';
+import '../../providers/channel_list_provider.dart';
 import '../../utils/common/common_widgets.dart';
 
 class OpenDirectMessage extends StatefulWidget {
@@ -45,18 +44,14 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Consumer<ChannelListProvider>(builder: (context, channelListProvider, child) {
         return Scaffold(
-          backgroundColor: Colors.white,
           appBar: AppBar(
-            // backgroundColor: Colors.white,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.close, color: Colors.white),
               onPressed: () => Navigator.pop(context),
             ),
-            title: commonText(
-              text: 'Direct Messages',
-                fontSize: 20,
-            ),
+            titleSpacing: 0,
+            title: commonText(text: 'Direct Messages', fontSize: 20,),
           ),
           body: Column(
             children: [
@@ -124,14 +119,12 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
                                     children: [
                                       commonText(
                                         text: user.username ?? "",
-                                        color: Colors.black87,
                                         fontSize: 15,
                                         fontWeight: FontWeight.w800,
                                       ),
                                       SizedBox(height: 4,),
                                       commonText(
                                         text: user.email ?? "",
-                                        color: Colors.black87,
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -188,14 +181,12 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
                                     children: [
                                       commonText(
                                         text: user.username ?? "",
-                                        color: Colors.black87,
                                         fontSize: 15,
                                         fontWeight: FontWeight.w800,
                                       ),
                                       SizedBox(height: 4,),
                                       commonText(
                                         text: user.email ?? "",
-                                        color: Colors.black87,
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,
                                       ),

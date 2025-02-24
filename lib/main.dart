@@ -1,26 +1,23 @@
-import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
-import 'package:e_connect/cubit/chat/chat_cubit.dart';
-import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
-import 'package:e_connect/cubit/sign_in/sign_in_cubit.dart';
-import 'package:e_connect/cubit/splash_screen/splash_screen_cubit.dart';
+import 'package:e_connect/providers/channel_list_provider.dart';
+import 'package:e_connect/providers/chat_provider.dart';
+import 'package:e_connect/providers/common_provider.dart';
 import 'package:e_connect/providers/download_provider.dart';
+import 'package:e_connect/providers/sign_in_provider.dart';
+import 'package:e_connect/providers/splash_screen_provider.dart';
 import 'package:e_connect/screens/bottom_navigation_screen/bottom_navigation_screen_cubit.dart';
 import 'package:e_connect/screens/splash_screen/splash_screen.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
-import 'package:e_connect/utils/app_color_constants.dart';
-import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:e_connect/utils/loading_widget/loading_widget.dart';
 import 'package:e_connect/utils/network_connectivity/network_connectivity.dart';
 import 'package:e_connect/utils/theme/theme_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 
-import 'cubit/sign_in/sign_in_model.dart';
+import 'model/sign_in_model.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 late SignInModel signInModel;

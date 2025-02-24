@@ -1,6 +1,5 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
@@ -11,8 +10,8 @@ import 'package:e_connect/utils/theme/theme_cubit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../providers/common_provider.dart';
 import '../../utils/app_preference_constants.dart';
 import '../../widgets/set_Custom_status_bottom_sheet.dart';
 

@@ -1,9 +1,9 @@
-import 'package:e_connect/cubit/chat/chat_cubit.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../providers/chat_provider.dart';
 import '../../../providers/download_provider.dart';
 import '../../../utils/api_service/api_string_constants.dart';
 import '../../../utils/app_image_assets.dart';

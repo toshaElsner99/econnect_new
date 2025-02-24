@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 
-import '../../cubit/sign_in/sign_in_model.dart';
+import '../../model/sign_in_model.dart';
 import '../common/common_widgets.dart';
 import '../logger/logger.dart';
 import '../network_connectivity/network_connectivity.dart';
@@ -28,6 +28,7 @@ class ApiService {
     required Method method,
     var reqBody,
     Map<String, dynamic>? queryParams,
+    bool? needLoader = false,
   }) async {
     if (signInModel.data?.authToken != null) {
       SignInModel? loadedModel = await SignInModel.loadFromPrefs();
@@ -52,7 +53,7 @@ class ApiService {
     _logRequest('$uri', method, reqBody, requestHeaders);
 
     try {
-      // startLoading();
+      if(needLoader == true) startLoading();
       if(endPoint == ApiString.closeConversation || endPoint == ApiString.sendMessage){
         print("IN close");
         requestHeaders.clear();

@@ -1,14 +1,10 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
-import 'package:e_connect/cubit/chat/chat_cubit.dart';
-import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/model/message_model.dart';
 import 'package:e_connect/providers/download_provider.dart';
 import 'package:e_connect/screens/chat/files_listing_screen/files_listing_screen.dart';
-// import 'package:e_connect/screens/chat/forward_message_dialog.dart';
 import 'package:e_connect/screens/chat/pinned_posts_screen/pinned_posts_screen.dart';
 import 'package:e_connect/screens/chat/reply_message_screen/reply_message_screen.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
@@ -21,6 +17,7 @@ import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:intl/intl.dart';
 
@@ -29,6 +26,9 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 import 'package:provider/provider.dart';
 
+import '../../providers/channel_list_provider.dart';
+import '../../providers/chat_provider.dart';
+import '../../providers/common_provider.dart';
 import '../../screens/chat/media_preview_screen.dart';
 import '../../widgets/chat_profile_header.dart';
 
@@ -94,18 +94,17 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
 
   void fetchOppositeUserDetails()async{
-    await commonProvider.getUserByIDCall2(userId: widget.oppositeUserId);
-    userDetails = commonProvider.getUserModel!;
+    userDetails = await commonProvider.getUserByIDCall2(userId: widget.oppositeUserId);
   }
   void _fetchAndCacheUserDetails() async {
-    await commonProvider.getUserByIDCall2(userId: widget.oppositeUserId);
+    userDetails = await commonProvider.getUserByIDCall2(userId: widget.oppositeUserId);
     await commonProvider.getUserByIDCallForSecondUser(userId: signInModel.data!.user!.id);
-    userDetails = commonProvider.getUserModel!;
-    userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
+    setState(()  {
+      userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
+    });
     print("user>>>>>> ${userDetails?.data!.user!.username}");
     print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.username}");
     print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.sId}");
-    setState(() {});
   }
 
   @override
@@ -120,21 +119,28 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               height: 1,
             ),
             if(chatProvider.idChatListLoading)...{
-
-            }else...{
-              Visibility(
-                visible:  userDetails != null,
-                child: ChatProfileHeader(userName: userDetails!.data!.user!.fullName ?? userDetails!.data!.user!.username ?? 'Unknown', userImageUrl: ApiString.profileBaseUrl + (userDetails!.data!.user!.avatarUrl ?? ''),),
-              ),
               Expanded(
-                child: ListView(
-                  controller: chatProvider.scrollController,
-                  reverse: true,
-                  children: [
-                    dateHeaders(),
-                  ],
+                child: Center(
+                  child: SpinKitCircle(
+                    color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.appBarColor,
+                    size: 50.0,
+                  ),
                 ),
               ),
+            }else...{
+              if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
+              Expanded(child: Center(child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ?? 'Unknown', userImageUrl: ApiString.profileBaseUrl + (userDetails?.data?.user?.avatarUrl ?? ''),))),
+              }else...{
+                Expanded(
+                  child: ListView(
+                    controller: chatProvider.scrollController,
+                    reverse: true,
+                    children: [
+                      dateHeaders(),
+                    ],
+                  ),
+                ),
+              },
               inputTextFieldWithEditor()
             }
           ],
@@ -244,7 +250,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         IconButton(
           icon: const Icon(Icons.more_vert, color: AppColor.whiteColor),
           onPressed: () {
-            // isMutedUser: signInModel.data?.user!.muteUsers!.contains(widget.oppositeUserId) ?? false != true,
             showChatSettingsBottomSheet(userId: widget.oppositeUserId);
           },
         ),
@@ -778,56 +783,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: HtmlWidget(
-                                      message,
-                                      textStyle: TextStyle(
-                                        height: 1.2,
-                                        fontFamily: AppFonts.interFamily,
-                                        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
-                                        fontSize: 16,
-                                      ),
-                                      customStylesBuilder: (element) {
-                                        // Base styles for all text
-                                        Map<String, String> styles = {
-                                          'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
-                                        };
-
-                                        // Add additional styles for special formatting
-                                        if (element.classes.contains('renderer_bold')) {
-                                          styles['font-weight'] = 'bold';
-                                        }
-                                        if (element.classes.contains('renderer_italic')) {
-                                          styles['font-style'] = 'italic';
-                                        }
-                                        if (element.classes.contains('renderer_strikethrough')) {
-                                          styles['text-decoration'] = 'line-through';
-                                        }
-                                        if (element.classes.contains('renderer_link')) {
-                                          styles['color'] = '#2196F3';
-                                        }
-                                        if (element.classes.contains('renderer_emoji')) {
-                                          styles['display'] = 'inline-block';
-                                          styles['vertical-align'] = 'middle';
-                                        }
-
-                                        return styles;
-                                      },
-                                      customWidgetBuilder: (element) {
-                                        if (element.classes.contains('renderer_emoji')) {
-                                          final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
-                                          if (imageUrl != null) {
-                                            return CachedNetworkImage(
-                                              imageUrl: imageUrl,
-                                              width: 21,
-                                              height: 21,
-                                              fit: BoxFit.contain,
-                                            );
-                                          }
-                                        }
-                                        return null;
-                                      },
-                                      enableCaching: true,
-                                    ),
+                                    child: commonHTMLText(message: message),
                                   ),
 
                                   if (isEdited)
@@ -1101,7 +1057,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   opened: index == _selectedIndex ? true : false,
                   createdAt: messageList.createdAt!,
                   currentUserId: userId,
-                  onForward: () => null,
+                  onForward: () => commonForwardMSGDialog(),
                   onReply: () {
                     print("onReply Passing = ${messageId.toString()}");
                   pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));

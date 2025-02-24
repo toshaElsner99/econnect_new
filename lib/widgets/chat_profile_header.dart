@@ -12,64 +12,58 @@ class ChatProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Column(
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            alignment: Alignment.bottomRight,
             children: [
-              // Profile Image with Check Icon
-              Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(userImageUrl),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      color: AppColor.blackColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: AppColor.greenColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        color: AppColor.whiteColor,
-                        size: 12,
-                      ),
-                    ),
-                  ),
-                ],
+              CircleAvatar(
+                radius: 50,
+                backgroundImage: NetworkImage(userImageUrl),
               ),
-              const SizedBox(height: 12),
-              // Name
-              commonText(
-                  text: userName,
-                  // color: AppColor.whiteColor,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold),
-              const SizedBox(height: 8),
-              // Description
-              commonText(
-                  text:
-                      'This is the start of your conversation\nwith $userName. Messages and files\nshared here are not shown to anyone\nelse.',
-                  textAlign: TextAlign.center,
-                  // color:AppColor.whiteColor,
-                  fontWeight: FontWeight.normal,
-                  fontSize: 15,
-                  height: 1.5),
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: AppColor.blackColor,
+                  shape: BoxShape.circle,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: AppColor.greenColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check,
+                    color: AppColor.whiteColor,
+                    size: 12,
+                  ),
+                ),
+              ),
             ],
           ),
-        ),
-        // Add the header buttons here
-        // ChatHeaderButtons(),
-      ],
+          const SizedBox(height: 12),
+          // Name
+          commonText(
+              text: userName,
+              // color: AppColor.whiteColor,
+              fontSize: 24,
+              fontWeight: FontWeight.bold),
+          const SizedBox(height: 8),
+          // Description
+          commonText(
+              text:
+                  'This is the start of your conversation\nwith $userName. Messages and files\nshared here are not shown to anyone\nelse.',
+              textAlign: TextAlign.center,
+              // color:AppColor.whiteColor,
+              fontWeight: FontWeight.normal,
+              fontSize: 15,
+              height: 1.5),
+        ],
+      ),
     );
   }
 }

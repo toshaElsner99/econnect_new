@@ -1,7 +1,5 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dropdown_button2/dropdown_button2.dart';
-import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
@@ -9,10 +7,11 @@ import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
-import '../../cubit/common_cubit/common_cubit.dart';
+import '../../providers/channel_list_provider.dart';
+import '../../providers/common_provider.dart';
 import '../api_service/api_string_constants.dart';
 import '../app_color_constants.dart';
 import '../app_fonts_constants.dart';
@@ -280,20 +279,29 @@ Widget previewImageDialog(BuildContext context, String imageUrl) {
     ),
   );
 }
-ToastFuture commonShowToast(String msg,[Color? bgColor]) {
+
+ToastFuture commonShowToast(String msg, [Color? bgColor]) {
   return showToastWidget(
     duration: const Duration(seconds: 5),
     Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-          color: bgColor ?? Colors.white, borderRadius: BorderRadius.circular(5)),
-      margin: const EdgeInsets.only(bottom: 25,left: 20,right: 20),
-      child: commonText(text: msg,color: bgColor == null ? Colors.black : Colors.white,fontSize: 16,textAlign: TextAlign.center,
-          fontWeight: FontWeight.w600),
+        color: bgColor ?? (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      margin: const EdgeInsets.only(bottom: 25, left: 20, right: 20),
+      child: commonText(
+        text: msg,
+        color: bgColor == null ? Colors.black : Colors.white,
+        fontSize: 16,
+        textAlign: TextAlign.center,
+        fontWeight: FontWeight.w600,
+      ),
     ),
     position: const ToastPosition(align: Alignment.bottomCenter),
   );
 }
+
 
 updateSystemUiChrome() {
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -458,7 +466,6 @@ return  showMenu<int>(
     }
   });
 }
-
 Widget popMenu2(
     BuildContext context, {
       required bool opened,
@@ -550,6 +557,96 @@ Widget popMenu2(
         return menuItems;
       },
       icon: Icon(Icons.more_vert, color: !opened ? AppColor.borderColor : AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
+    ),
+  );
+}
+Widget popMenuForReply2(
+    BuildContext context, {
+      // required bool opened,
+      // required VoidCallback onOpened,
+      // required VoidCallback onClosed,
+      required VoidCallback onForward,
+      required VoidCallback onPin,
+      required VoidCallback onCopy,
+      required VoidCallback onEdit,
+      required VoidCallback onDelete,
+      required String createdAt,  // Pass createdAt timestamp
+      // required String currentUserId, // Current user's ID
+    }) {
+  final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+  final double screenHeight = MediaQuery.of(context).size.height;
+  final double buttonPositionY = overlay.localToGlobal(Offset.zero).dy;
+  const double menuHeight = 220;
+
+  final bool openAbove = (buttonPositionY + menuHeight) > screenHeight;
+
+  DateTime createdTime = DateTime.parse(createdAt).toLocal();
+  DateTime now = DateTime.now();
+  final isEditable = now.difference(createdTime).inHours < 24;
+  print("createdAt>> $createdTime $isEditable");
+  // final isCurrentUser = currentUserId == signInModel.data?.user?.id; // Check if message belongs to the user
+
+  return Container(
+    // color: Colors.red,
+    alignment: Alignment.topCenter,
+    height: 22,
+    width: 20,
+    child: PopupMenuButton<int>(
+      padding: EdgeInsets.zero, // Remove padding
+      iconSize: 25, // Reduce icon size
+      constraints: const BoxConstraints(minWidth: 120), // Limit menu width
+      color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+      position: openAbove ? PopupMenuPosition.over : PopupMenuPosition.under,
+      offset: const Offset(-15, 0),
+      // onOpened: ()=> onOpened(),
+      // onCanceled: ()=> onClosed(),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: AppPreferenceConstants.themeModeBoolValueGet
+            ? const BorderSide(color: Colors.white38, width: 0.5)
+            : BorderSide.none,
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 0:
+            onForward.call();
+            break;
+          case 1:
+            onPin.call();
+            break;
+          case 2:
+            onCopy.call();
+            break;
+          case 3:
+            onEdit.call();
+            break;
+          case 4:
+            onDelete.call();
+            break;
+        }
+      },
+      itemBuilder: (context) {
+        List<PopupMenuEntry<int>> menuItems = [
+          _menuItem(0, Icons.forward, "Forward"),
+          _menuItem(1, Icons.push_pin, "Pin to Channel"),
+          _menuItem(2, Icons.copy, "Copy Text"),
+          _menuItem(3, Icons.edit, "Edit"),
+        ];
+
+        // Show Edit option only if message is under 24 hours old
+        // if (isCurrentUser && isEditable) {
+          menuItems.add(const PopupMenuDivider());
+          menuItems.add(_menuItem(4, Icons.delete, "Delete"));
+        // }
+
+        // Show Delete option only if the message belongs to the current user
+        // if (isCurrentUser) {
+        //   menuItems.add(_menuItem(5, Icons.delete, "Delete", color: Colors.red));
+        // }
+
+        return menuItems;
+      },
+      icon: Icon(Icons.more_vert, color: Colors.black),
     ),
   );
 }
@@ -764,21 +861,24 @@ Widget profileIconWithStatus({
         CircleAvatar(
           radius: radius,
           backgroundColor: Colors.grey[200],
-          child: ClipOval(
-            child: CachedNetworkImage(
-              width: 30,
-              height: 30,
-              imageUrl: imageUrl,
-              fit: BoxFit.cover,
-              progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
-                padding: const EdgeInsets.all(3),
-                child: CircularProgressIndicator(value: downloadProgress.progress),
-              ),
-              errorWidget: (context, url, error) => Icon(Icons.error),
-            ),
-          ),
+          backgroundImage: NetworkImage(imageUrl),
+          onBackgroundImageError: (exception, stackTrace) => Icon(Icons.error),
+          // child: ClipOval(
+          //   child: CachedNetworkImage(
+          //     width: 30,
+          //     height: 30,
+          //     imageUrl: imageUrl,
+          //     fit: BoxFit.cover,
+          //     progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
+          //       padding: const EdgeInsets.all(3),
+          //       child: CircularProgressIndicator(value: downloadProgress.progress),
+          //     ),
+          //     errorWidget: (context, url, error) => Icon(Icons.error),
+          //   ),
+          // ),
         ),
         Stack(
+          clipBehavior: Clip.hardEdge,
           alignment: Alignment.center,
           children: [
             Container(
@@ -794,28 +894,37 @@ Widget profileIconWithStatus({
       ],
     );
   }else{
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: Colors.grey[200],
-      child: Container(
-        padding: EdgeInsets.all(2),
+    return Container(
+      padding: EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle
         ),
-        child: ClipOval(
-          child: CachedNetworkImage(
-            width: 30,
-            height: 30,
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
-              padding: const EdgeInsets.all(3),
-              child: CircularProgressIndicator(value: downloadProgress.progress),
-            ),
-            errorWidget: (context, url, error) => Icon(Icons.error),
-          ),
-        ),
+      child: CircleAvatar(
+        radius: radius,
+        backgroundColor: Colors.grey[200],
+        backgroundImage: NetworkImage(imageUrl),
+        onBackgroundImageError: (exception, stackTrace) => Icon(Icons.error),
+        // child: Container(
+        //   padding: EdgeInsets.all(2),
+        //   decoration: BoxDecoration(
+        //     color: Colors.white,
+        //     shape: BoxShape.circle
+        //   ),
+        //   child: ClipOval(
+        //     child: CachedNetworkImage(
+        //       width: 30,
+        //       height: 30,
+        //       imageUrl: imageUrl,
+        //       fit: BoxFit.cover,
+        //       progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
+        //         padding: const EdgeInsets.all(3),
+        //         child: CircularProgressIndicator(value: downloadProgress.progress),
+        //       ),
+        //       errorWidget: (context, url, error) => Icon(Icons.error),
+        //     ),
+        //   ),
+        // ),
       ),
     );
   }
@@ -932,7 +1041,7 @@ Widget showLogOutDialog() {
   );
 }
 
-Widget showLogOutDialog2() {
+Widget commonForwardMSGDialog() {
   return WillPopScope(
     onWillPop: () async => false,
     child: Dialog(
@@ -952,88 +1061,16 @@ Widget showLogOutDialog2() {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Warning Icon
             Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColor.redColor.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.logout_rounded,
-                color: AppColor.redColor,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title
-            commonText(
-              text: AppString.logoutTitle,
-              color: Colors.white,
-              fontSize: 20,
-              textAlign: TextAlign.start,
-              height: 1.3,
-              fontWeight: FontWeight.w800,
-            ),
-            const SizedBox(height: 12),
-
-            // Message
-            commonText(
-              text: AppString.logoutMessage,
-              color: Colors.grey,
-              fontSize: 16,
-              textAlign: TextAlign.center,
-              fontWeight: FontWeight.w400,
-            ),
-            const SizedBox(height: 24),
-
-            Row(
+              padding: EdgeInsets.symmetric(horizontal: 15,vertical: 20),
+            margin: EdgeInsets.all(10),
+            child: Row(
               children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => navigatorKey.currentState?.pop(),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: AppColor.borderColor),
-                      ),
-                    ),
-                    child: commonText(
-                      text: AppString.cancel,
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // Logout Button
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false).logOut();
-                      // navigatorKey.currentState!.context.read<CommonCubit>().logOut();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColor.commonAppColor,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: commonText(
-                      text: AppString.logout,
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+                Icon(Icons.info),
+                commonText(text: "This message is from a private conversation"),
               ],
-            ),
+            ),),
+            commonTextFormField(controller: TextEditingController(), hintText: "Search")
           ],
         ),
       ),
@@ -1244,6 +1281,65 @@ Widget commonText({
   );
 }
 
+Widget commonHTMLText({required String message}){
+  return HtmlWidget(
+    message.replaceAllMapped(
+      RegExp(r'<ul class="renderer_bulleted">.*?</ul>', dotAll: true),
+          (match) {
+        return match.group(0)!.replaceAll('<li>', '• ').replaceAll('</li>', '\n');
+      },
+    ),
+    textStyle: TextStyle(
+      height: 1.2,
+      fontFamily: AppFonts.interFamily,
+      color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+      fontSize: 16,
+    ),
+    customStylesBuilder: (element) {
+      // Base styles for all text
+      Map<String, String> styles = {
+        'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
+      };
+
+      // Add additional styles for special formatting
+      if (element.classes.contains('renderer_bold')) {
+        styles['font-weight'] = 'bold';
+      }
+      if (element.classes.contains('renderer_italic')) {
+        styles['font-style'] = 'italic';
+      }
+      if (element.classes.contains('renderer_strikethrough')) {
+        styles['text-decoration'] = 'line-through';
+      }
+      if (element.classes.contains('renderer_link')) {
+        styles['color'] = '#2196F3';
+      }
+      if (element.classes.contains('renderer_emoji')) {
+        styles['display'] = 'inline-block';
+        styles['vertical-align'] = 'middle';
+      }
+
+      return styles;
+    },
+    customWidgetBuilder: (element) {
+      if (element.classes.contains('renderer_emoji')) {
+        final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
+        if (imageUrl != null) {
+          return CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: 21,
+            height: 21,
+            fit: BoxFit.contain,
+          );
+        }
+      }
+      return null;
+    },
+    enableCaching: true,
+  );
+}
+
+
 Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false, Color? color}){
   return Container(
     width: 32,
@@ -1423,7 +1519,9 @@ Widget commonTextFormField({
   FocusNode? focusNode,
   String? Function(String?)? validator,
   int? errorMaxLines,
-  void Function()? onTap
+  void Function()? onTap,
+  Color? fillColor = Colors.white,
+  bool? filled = false,
 }) {
   return TextFormField(
     controller: controller,
@@ -1437,8 +1535,8 @@ Widget commonTextFormField({
     textInputAction: textInputAction,
     initialValue: initialValue,
     inputFormatters: inputFormatters,
-    style: const TextStyle(
-        color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14),
+    // style: const TextStyle(
+    //     color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14),
     decoration: InputDecoration(
       labelText: labelText,
       hintText: hintText,
@@ -1447,26 +1545,26 @@ Widget commonTextFormField({
       suffixIcon: suffixIcon,
       suffix: suffixWidget,
       prefix: prefixWidget,
-      fillColor: AppColor.white,
-      filled: true,
-      border: const OutlineInputBorder(
-        borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
-      ),
-      focusedBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
-      ),
-      errorBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
-      ),
-      focusedErrorBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
-      ),
-      disabledBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
-      ),
-      enabledBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
-      ),
+      fillColor: fillColor,
+      filled: filled,
+      // border: const OutlineInputBorder(
+      //   borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
+      // ),
+      // focusedBorder: const OutlineInputBorder(
+      //   borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
+      // ),
+      // errorBorder: const OutlineInputBorder(
+      //   borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
+      // ),
+      // focusedErrorBorder: const OutlineInputBorder(
+      //   borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
+      // ),
+      // disabledBorder: const OutlineInputBorder(
+      //   borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
+      // ),
+      // enabledBorder: const OutlineInputBorder(
+      //   borderSide: BorderSide(color: AppColor.lightBlueColor, width: 1),
+      // ),
       contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       // errorStyle: TextStyle() ,
       labelStyle: const TextStyle(
@@ -1659,8 +1757,9 @@ void showChatSettingsBottomSheet({required String userId}) {
     context: navigatorKey.currentState!.context,
     backgroundColor: Colors.transparent,
     builder: (context) {
-      return Consumer<ChannelListProvider>(builder: (context, channelListProvider, child) {
-        final isMutedUser = signInModel.data?.user!.muteUsers!.contains(userId) ?? false;
+      return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider,commonProvider, child) {
+        final isMutedUser = commonProvider.getUserModel?.data?.user?.muteUsers?.contains(userId) ?? false;
+        print("isMutedUserSHEET>>>>> $isMutedUser");
         return Container(
           decoration: BoxDecoration(
             color: AppColor.dialogBgColor,

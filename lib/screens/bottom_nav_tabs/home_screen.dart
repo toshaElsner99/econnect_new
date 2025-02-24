@@ -1,6 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
-import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/screens/bottom_nav_tabs/setting_screen.dart';
 import 'package:e_connect/screens/browse_and_search_channel/browse_and_search_channel.dart';
@@ -18,6 +16,8 @@ import 'package:provider/provider.dart';
 import '../../main.dart';
 import '../../model/channel_list_model.dart';
 import '../../model/direct_message_list_model.dart';
+import '../../providers/channel_list_provider.dart';
+import '../../providers/common_provider.dart';
 import '../../socket_io/socket_io.dart';
 import '../../utils/app_preference_constants.dart';
 import '../../utils/common/common_function.dart';
@@ -65,15 +65,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
-      return RefreshIndicator(
-        onRefresh: () async {
-          Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
-          Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
-          Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
-          Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
-        },
-        child: Scaffold(
+    return RefreshIndicator(
+      onRefresh: () async {
+        await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
+        await Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
+        await Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
+        await Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+      },
+      child: Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
+        return Scaffold(
           backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? null : AppColor.appBarColor,
           floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
           appBar: AppBar(
@@ -112,8 +112,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         final favorite = channelListProvider.favoriteListModel?.data?.chatList?[index];
                         return _buildUserRow(
                             index: 0,
-                            muteConversation: commonProvider.getUserModel?.data?.user!.muteUsers!.contains(favorite?.sId ?? "") ?? false,
-                            // muteConversation: signInModel.data?.user!.muteUsers!.contains(favorite?.sId ?? "") ?? false,
+                            muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite?.sId ?? "") ?? false,
                             imageUrl: favorite?.thumbnailAvatarUrl ?? "",
                             username: favorite?.username ?? "",
                             status: favorite?.status ?? "",
@@ -154,10 +153,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     title: "DIRECT MESSAGE",
                     itemCount: channelListProvider.directMessageListModel?.data?.chatList?.length ?? 0,
                     itemBuilder: (context, index) {
-                      final directMessage = channelListProvider.directMessageListModel!.data!.chatList?[index];
+                      final directMessage = channelListProvider.directMessageListModel?.data?.chatList?[index];
                       return _buildUserRow(
-                          muteConversation: commonProvider.getUserModel?.data?.user!.muteUsers!.contains(directMessage?.sId ?? "") ?? false,
-                          // muteConversation: signInModel.data?.user!.muteUsers!.contains(directMessage?.sId ?? "") ?? false,
+                          muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(directMessage?.sId ?? "") ?? false,
                           index: 2,
                           imageUrl: directMessage?.thumbnailAvatarUrl ?? "",
                           username: directMessage?.username ?? "",
@@ -176,9 +174,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ),
           ),
-        ),
-      );
-    },);
+        );
+      },),
+    );
   }
 
   Container buildOpenSetting() {
@@ -218,8 +216,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             } else if (value == "favorite") {
               channelListProvider.removeFromFavorite(favouriteUserId: favorite?.sId ?? "");
             } else if (value == "mute") {
-              channelListProvider.muteUser(userIdToMute: favorite?.sId ?? "", isForMute: commonProvider.getUserModel?.data?.user!.muteUsers!.contains(favorite?.sId) ?? false);
-              // channelListProvider.muteUser(userIdToMute: favorite?.sId ?? "", isForMute: signInModel.data?.user!.muteUsers!.contains(favorite?.sId) ?? false);
+              channelListProvider.muteUser(userIdToMute: favorite?.sId ?? "", isForMute: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite?.sId) ?? false);
             } else if (value == "leave") {
               channelListProvider.closeConversation(conversationUserId: favorite?.sId ?? "", isCalledForFav: true);
             }
@@ -256,8 +253,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               child: Row(
                 children: [
                   Icon(
-                      commonProvider.getUserModel?.data?.user!.muteUsers!.contains(favorite.sId) ?? false != true
-                      // signInModel.data?.user!.muteUsers!.contains(favorite.sId) ?? false != true
+                      commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite.sId) ?? false != true
                           ? Icons.notifications_off_outlined
                           : Icons.notifications_none,
                       size: 20),
@@ -309,11 +305,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   isCallForReadMessage:
                   chatLisDirectMessage.unseenMessagesCount! > 0 ? true : false);
             } else if (value == "favorite") {
-              // channelListCubit.removeFromFavorite(favouriteUserId: chatLisDirectMessage?.sId ?? "");
               channelListProvider.addUserToFavorite(favouriteUserId: chatLisDirectMessage?.sId ?? "");
             } else if (value == "mute") {
-              channelListProvider.muteUser(userIdToMute: chatLisDirectMessage?.sId ?? "", isForMute: commonProvider.getUserModel?.data?.user!.muteUsers!.contains(chatLisDirectMessage?.sId) ?? false);
-              // channelListProvider.muteUser(userIdToMute: chatLisDirectMessage?.sId ?? "", isForMute: signInModel.data?.user!.muteUsers!.contains(chatLisDirectMessage?.sId) ?? false);
+              channelListProvider.muteUser(userIdToMute: chatLisDirectMessage?.sId ?? "", isForMute: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(chatLisDirectMessage?.sId) ?? false);
             } else if (value == "leave") {
               channelListProvider.closeConversation(
                   conversationUserId: chatLisDirectMessage?.sId ?? "", isCalledForFav: false);
@@ -351,15 +345,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               child: Row(
                 children: [
                   Icon(
-                      commonProvider.getUserModel?.data?.user!.muteUsers!.contains(chatLisDirectMessage.sId) ?? false != true
-                      // signInModel.data?.user!.muteUsers!.contains(chatLisDirectMessage.sId) ?? false != true
+                      commonProvider.getUserModel?.data?.user?.muteUsers?.contains(chatLisDirectMessage.sId) ?? false != true
                           ? Icons.notifications_off_outlined
                           : Icons.notifications_none,
                       size: 20),
                   SizedBox(width: 10),
                   commonText(
-                      text: commonProvider.getUserModel?.data?.user!.muteUsers!.contains(chatLisDirectMessage.sId) != true
-                      // text: signInModel.data?.user!.muteUsers!.contains(chatLisDirectMessage.sId) != true
+                      text: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(chatLisDirectMessage.sId) != true
                           ? "Mute Conversation"
                           : "Unmute Conversation"),
                 ],

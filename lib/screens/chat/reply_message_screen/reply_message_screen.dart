@@ -1,5 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:e_connect/cubit/chat/chat_cubit.dart';
 import 'package:e_connect/model/get_reply_message_model.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
@@ -9,9 +7,10 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../../cubit/channel_list/channel_list_cubit.dart';
-import '../../../cubit/common_cubit/common_cubit.dart';
 import '../../../main.dart';
+import '../../../providers/channel_list_provider.dart';
+import '../../../providers/chat_provider.dart';
+import '../../../providers/common_provider.dart';
 import '../../../providers/download_provider.dart';
 import '../../../providers/file_service_provider.dart';
 import '../../../socket_io/socket_io.dart';
@@ -47,18 +46,10 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
-  // String messageID = "";
+  String currentUserMessageId = "";
+
   @override
   void initState() {
-    // setState(() {
-      // if(messageID != widget.messageId){
-      //   messageID = "";
-      //   messageID = widget.messageId;
-      // }else {
-      //   messageID = widget.messageId;
-      // }
-    // });
-    // print("msgIDDINIT>>>> $messageID");
     print("msgIDD>>>> ${widget.messageId}");
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -218,7 +209,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                        Row(
+                      Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             commonText(
@@ -232,11 +223,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             ),
                           ],
                         ),
-                      HtmlWidget(
-                        message,
-                        enableCaching: true,
-                        textStyle: TextStyle( fontSize: 16),
-                      ),
+                      commonHTMLText(message: message),
                       Visibility(
                         visible: messageList.isMedia == true,
                         child: ListView.builder(
@@ -273,9 +260,26 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             );
                           },),
                       ),
+                      // Spacer(),
                     ],
                   ),
                 ),
+                popMenuForReply2(context,
+                  onForward: () => {},
+                  onPin: () => {},
+                  onCopy: () => {},
+                  onEdit: () => setState(() {
+                    int position = _controller.document.length - 1;
+                    currentUserMessageId = messageId;
+                    print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
+                    _controller.document.insert(position, message.toString());
+                    _controller.updateSelection(
+                      TextSelection.collapsed(offset: _controller.document.length),
+                      quill.ChangeSource.local,
+                    );
+                  }),
+                  onDelete: () => {},
+                  createdAt:"${messageList.createdAt}", /*currentUserId: "${signInModel.data!.user!.id}"*/)
               ],
             ),
           ],
@@ -538,8 +542,8 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                 chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,files: filesOfList,replyId: widget.messageId);
                 _clearInputAndDismissKeyboard();
               }else{
-                chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,replyId: widget.messageId).then((value) => setState(() {
-                  // currentUserMessageId = "";
+                chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,replyId: widget.messageId,editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId).then((value) => setState(() {
+                  currentUserMessageId = "";
                 }),);
                 _clearInputAndDismissKeyboard();
               }

@@ -10,10 +10,11 @@ ThemeData lightMode = ThemeData(
     hintColor: Colors.black,
     dialogBackgroundColor: Colors.white,
     dialogTheme: const DialogTheme(surfaceTintColor: Colors.white),
+
     switchTheme: SwitchThemeData(
-      trackOutlineColor: MaterialStateProperty.all(AppColor.blackColor),
-      thumbColor: MaterialStateProperty.all(AppColor.appBarColor),
-      trackColor: MaterialStateProperty.all(AppColor.white),
+      trackOutlineColor: WidgetStatePropertyAll(AppColor.blackColor),
+      thumbColor: WidgetStatePropertyAll(AppColor.appBarColor),
+      trackColor: WidgetStatePropertyAll(AppColor.white),
     ),
     appBarTheme: const AppBarTheme(
         surfaceTintColor: Colors.transparent,
@@ -49,8 +50,11 @@ ThemeData darkMode = ThemeData(
     dialogBackgroundColor: const Color(0xFF212121),
     // bottomSheetTheme: ,
     dialogTheme: const DialogTheme(surfaceTintColor: Colors.black),
+    checkboxTheme: CheckboxThemeData(
+      checkColor: WidgetStatePropertyAll(AppColor.white)
+    ),
     switchTheme: SwitchThemeData(
-      trackColor: MaterialStateProperty.all(AppColor.white),
+      trackColor: WidgetStatePropertyAll(AppColor.white),
     ),
     appBarTheme: const AppBarTheme(
         surfaceTintColor: Colors.transparent,

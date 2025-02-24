@@ -1,12 +1,12 @@
-import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../main.dart';
+import '../../providers/channel_list_provider.dart';
 import '../../utils/common/common_widgets.dart';
 
 class BrowseAndSearchChannel extends StatefulWidget {
@@ -18,13 +18,12 @@ class BrowseAndSearchChannel extends StatefulWidget {
 
 class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
   final _searchController = TextEditingController();
-  // final channelListCubit = ChannelListCubit();
   bool hideJoined = false;
 
   @override
   void initState() {
     super.initState();
-    context.read<ChannelListProvider>().browseAndSearchChannel(search: _searchController.text);
+    context.read<ChannelListProvider>().browseAndSearchChannel(search: _searchController.text,needLoader: true);
 
     _searchController.addListener(() {
       if (_searchController.text.isNotEmpty) {
@@ -38,10 +37,9 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        // backgroundColor: AppColor.commonAppColor,
         elevation: 0,
+        titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -80,6 +78,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                         scale: 0.85,
                         child: Checkbox(
                           value: hideJoined,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           onChanged: (bool? value) {
                             setState(() {
                               hideJoined = value ?? false;
@@ -165,7 +164,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                       ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel.data?.user?.id) ?? false))
                       .toList();
 
-                  if (filteredChannels == null || filteredChannels!.isEmpty) {
+                  if (filteredChannels == null || filteredChannels.isEmpty) {
                     return Center(
                       child: commonText(
                         text: "No Channel Found",
@@ -192,7 +191,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                             commonChannelIcon(
                               isPrivate: channelListing.isPrivate == true ? true : false,
                               isShowPersons: true,
-                              color: AppColor.appBarColor,
+                              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.appBarColor,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
@@ -218,9 +217,9 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(5),
-                                border: Border.all(width: 1, color: AppColor.commonAppColor),
+                                border: Border.all(width: 1, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.commonAppColor),
                               ),
-                              child: commonText(text: "View", color: AppColor.commonAppColor),
+                              child: commonText(text: "View", color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.commonAppColor),
                             ),
                           ],
                         ),

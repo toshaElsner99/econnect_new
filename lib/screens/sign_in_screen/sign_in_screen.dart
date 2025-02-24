@@ -1,4 +1,3 @@
-import 'package:e_connect/cubit/sign_in/sign_in_cubit.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
@@ -7,8 +6,8 @@ import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../providers/sign_in_provider.dart';
 import '../../utils/app_color_constants.dart';
 
 class SignInScreen extends StatefulWidget {

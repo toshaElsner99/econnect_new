@@ -1,14 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:e_connect/main.dart';
 import 'package:e_connect/screens/chat/single_chat_message_screen.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../cubit/channel_list/channel_list_cubit.dart';
+import '../../providers/channel_list_provider.dart';
 import '../../utils/app_color_constants.dart';
 import '../../utils/app_image_assets.dart';
 import '../../utils/common/common_widgets.dart';
@@ -42,10 +41,9 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white,
         appBar: AppBar(
-          // backgroundColor: Colors.white,
           elevation: 0,
+          titleSpacing: 0,
           leading: IconButton(
             icon: const Icon(Icons.close,color: Colors.white,),
             onPressed: () => Navigator.pop(context),
@@ -80,11 +78,10 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Row(
                           children: [
-                            Image.asset(AppImage.persons,height: 20,width: 20,),
+                            Image.asset(AppImage.persons,height: 20,width: 20,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,),
                             SizedBox(width: 5,),
                             commonText(
                               text: 'Users',
-                              color: Colors.black87,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -97,7 +94,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                           child: Center(
                             child: commonText(
                               text: 'No users found',
-                              color: Colors.grey[600],
+                              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.grey[600],
                               fontSize: 14,
                             ),
                           ),
@@ -120,11 +117,10 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Row(
                           children: [
-                            Image.asset(AppImage.globalIcon,width: 20,height: 20,color: Colors.black,),
+                            Image.asset(AppImage.globalIcon,width: 20,height: 20,),
                             SizedBox(width: 5,),
                             commonText(
                               text: 'Channels',
-                              color: Colors.black87,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -137,7 +133,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                           child: Center(
                             child: commonText(
                               text: 'No channels found',
-                              color: Colors.grey[600],
+                              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.grey[600],
                               fontSize: 14,
                             ),
                           ),
@@ -173,7 +169,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
       ),
       title: commonText(
         text: user?.username ?? "",
-        color: Colors.black87,
+        // color: Colors.black87,
         fontSize: 15,
         fontWeight: FontWeight.w500,
       ),
@@ -187,7 +183,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppColor.borderColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(6),
         ),
         child: Center(
@@ -195,18 +191,19 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
             channel?.isPrivate == true ? AppImage.lockIcon : AppImage.globalIcon,
             width: 20,
             height: 20,
-            color: Colors.grey[700],
+            color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.grey[700],
           ),
         ),
       ),
       title: commonText(
         text: channel?.name ?? "",
-        color: Colors.black87,
+        // color: Colors.black87,
         fontSize: 15,
         fontWeight: FontWeight.w500,
       ),
       subtitle: Row(
         children: [
+          SizedBox(height: 10,),
           Image.asset(
             AppImage.person,
             height: 12,

@@ -1,11 +1,11 @@
-import 'package:e_connect/cubit/channel_list/channel_list_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
-import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../providers/channel_list_provider.dart';
 
 class CreateChannelScreen extends StatefulWidget {
   const CreateChannelScreen({super.key});

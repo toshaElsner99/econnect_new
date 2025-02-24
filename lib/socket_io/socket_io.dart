@@ -1,12 +1,11 @@
-import 'package:e_connect/cubit/chat/chat_cubit.dart';
-import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/main.dart';
-import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-import '../cubit/channel_list/channel_list_cubit.dart';
+import '../providers/channel_list_provider.dart';
+import '../providers/chat_provider.dart';
+import '../providers/common_provider.dart';
 class SocketIoProvider extends ChangeNotifier{
 
 

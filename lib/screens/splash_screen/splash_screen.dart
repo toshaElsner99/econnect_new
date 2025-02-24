@@ -5,12 +5,9 @@ import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../cubit/common_cubit/common_cubit.dart';
-import '../../cubit/sign_in/sign_in_model.dart';
-import '../../cubit/splash_screen/splash_screen_cubit.dart';
 import '../../main.dart';
+import '../../providers/common_provider.dart';
+import '../../providers/splash_screen_provider.dart';
 import '../../utils/app_color_constants.dart';
 
 class SplashScreen extends StatefulWidget {
