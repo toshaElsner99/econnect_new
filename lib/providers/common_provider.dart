@@ -6,11 +6,10 @@ import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:flutter/cupertino.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../screens/sign_in_screen/sign_in_Screen.dart';
-import '../../utils/common/common_function.dart';
-import '../../utils/common/prefrance_function.dart';
+import '../screens/sign_in_screen/sign_in_Screen.dart';
+import '../utils/common/common_function.dart';
+import '../utils/common/prefrance_function.dart';
 
-part 'common_state.dart';
 
 class CommonProvider extends ChangeNotifier {
   GetUserModel? getUserModel;
@@ -19,6 +18,7 @@ class CommonProvider extends ChangeNotifier {
   int? selectedIndexOfStatus;
   String customStatusUrl = "";
   String customStatusTitle = "";
+  bool isMutedUser = false;
 
   void updatesCustomStatus(){
     selectedIndexOfStatus = null;
@@ -91,11 +91,12 @@ class CommonProvider extends ChangeNotifier {
       updateStatusCall(status: "online");
       getUserModel = GetUserModel.fromJson(response);
       // getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
+      // isMutedUser = signInModel.data?.user!.muteUsers!.contains(userId) ?? false;
       setCustomTextController.text = getUserModel?.data?.user?.customStatus;
       customStatusTitle = getUserModel?.data?.user?.customStatus;
       customStatusUrl = getUserModel?.data?.user?.customStatusEmoji;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   Future<void> getUserByIDCallForSecondUser({String? userId}) async {
@@ -120,7 +121,6 @@ class CommonProvider extends ChangeNotifier {
     if (statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
       print("getUserByIDCall2>>>${getUserModel?.data?.user?.pinnedMessageCount}");
-      // emit(CommonInitial());
       return getUserModel;
     }
     notifyListeners();

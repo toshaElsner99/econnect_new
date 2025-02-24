@@ -905,26 +905,6 @@ Widget profileIconWithStatus({
         backgroundColor: Colors.grey[200],
         backgroundImage: NetworkImage(imageUrl),
         onBackgroundImageError: (exception, stackTrace) => Icon(Icons.error),
-        // child: Container(
-        //   padding: EdgeInsets.all(2),
-        //   decoration: BoxDecoration(
-        //     color: Colors.white,
-        //     shape: BoxShape.circle
-        //   ),
-        //   child: ClipOval(
-        //     child: CachedNetworkImage(
-        //       width: 30,
-        //       height: 30,
-        //       imageUrl: imageUrl,
-        //       fit: BoxFit.cover,
-        //       progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
-        //         padding: const EdgeInsets.all(3),
-        //         child: CircularProgressIndicator(value: downloadProgress.progress),
-        //       ),
-        //       errorWidget: (context, url, error) => Icon(Icons.error),
-        //     ),
-        //   ),
-        // ),
       ),
     );
   }

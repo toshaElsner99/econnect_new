@@ -1,19 +1,16 @@
 
-import 'package:e_connect/cubit/sign_in/sign_in_model.dart';
+import 'package:e_connect/model/sign_in_model.dart';
 import 'package:e_connect/screens/bottom_nav_tabs/home_screen.dart';
-import 'package:e_connect/screens/sign_in_screen/sign_in_Screen.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 
-import '../../main.dart';
-import '../../screens/bottom_navigation_screen/bottom_navigation_screen.dart';
-import '../../utils/app_preference_constants.dart';
-import '../../utils/common/common_function.dart';
-import '../../utils/common/prefrance_function.dart';
+import '../main.dart';
+import '../utils/app_preference_constants.dart';
+import '../utils/common/common_function.dart';
+import '../utils/common/prefrance_function.dart';
 
-part 'sign_in_state.dart';
 
 
 class SignInProvider extends ChangeNotifier {

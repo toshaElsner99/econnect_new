@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
@@ -7,8 +6,8 @@ import 'package:e_connect/utils/common/common_function.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../providers/common_provider.dart';
 import '../utils/app_color_constants.dart';
 import '../utils/common/common_widgets.dart';
 
@@ -140,19 +139,37 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: commonTextFormField(
-                  controller: commonProvider.setCustomTextController, hintText: 'Set a custom status',
-                  suffixIcon: (commonProvider.customStatusUrl.isNotEmpty) ? GestureDetector(
-                    onTap: () => commonProvider.selectedIndexOfStatus != null ? commonProvider.clearUpdates() : commonProvider.updateCustomStatusCall(status: "", emojiUrl: ""),
-                    child: Container(
-                        margin: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.close,size: 22,color: Colors.red,)),
-                  ) : SizedBox.shrink()
+              child: TextFormField(
+                controller: commonProvider.setCustomTextController,
+                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14),
+                   decoration: InputDecoration(
+                       hintText: 'Set a custom status',
+                       suffixIcon: (commonProvider.customStatusUrl.isNotEmpty) ? GestureDetector(
+                         onTap: () => commonProvider.selectedIndexOfStatus != null ? commonProvider.clearUpdates() : commonProvider.updateCustomStatusCall(status: "", emojiUrl: ""),
+                         child: Container(
+                             margin: EdgeInsets.all(10),
+                             decoration: BoxDecoration(
+                               color: Colors.white,
+                               shape: BoxShape.circle,
+                             ),
+                             child: Icon(Icons.close,size: 22,color: Colors.red,)),
+                       ) : SizedBox.shrink()
+                   ),
               ),
+
+              // child: commonTextFormField(
+              //     controller: commonProvider.setCustomTextController, hintText: 'Set a custom status',
+              //     suffixIcon: (commonProvider.customStatusUrl.isNotEmpty) ? GestureDetector(
+              //       onTap: () => commonProvider.selectedIndexOfStatus != null ? commonProvider.clearUpdates() : commonProvider.updateCustomStatusCall(status: "", emojiUrl: ""),
+              //       child: Container(
+              //           margin: EdgeInsets.all(10),
+              //           decoration: BoxDecoration(
+              //             color: Colors.white,
+              //             shape: BoxShape.circle,
+              //           ),
+              //           child: Icon(Icons.close,size: 22,color: Colors.red,)),
+              //     ) : SizedBox.shrink()
+              // ),
             ),
           ],
         ),

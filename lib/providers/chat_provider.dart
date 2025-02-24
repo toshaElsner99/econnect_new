@@ -144,14 +144,14 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 
-import '../../main.dart';
-import '../../model/files_listening_in_chat_model.dart';
-import '../../model/get_reply_message_model.dart';
-import '../../model/message_model.dart';
-import '../../providers/file_service_provider.dart';
-import '../../utils/api_service/api_service.dart';
-import '../../utils/api_service/api_string_constants.dart';
-import '../../utils/common/common_function.dart';
+import '../main.dart';
+import '../model/files_listening_in_chat_model.dart';
+import '../model/get_reply_message_model.dart';
+import '../model/message_model.dart';
+import 'file_service_provider.dart';
+import '../utils/api_service/api_service.dart';
+import '../utils/api_service/api_string_constants.dart';
+import '../utils/common/common_function.dart';
 import 'package:http/http.dart' as http;
 
 
@@ -170,6 +170,7 @@ class ChatProvider extends  ChangeNotifier {
   int totalPages = 0;
   GetReplyMessageModel? getReplyMessageModel;
   FilesListingInChatModel? filesListingInChatModel;
+  bool isGettingListFalse = false;
   clearForFirstTimeMessages(bool needToCLear) {
     if (needToCLear) {
       messageGroups.clear();
@@ -413,22 +414,64 @@ class ChatProvider extends  ChangeNotifier {
 
 
   Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID})async{
+  //   {
+  //     "content": "G302",
+  //   "receiverId": "676d5d2de010e883aec47240",
+  //   "senderId": "677b7adc3f5bb1fd3416ca3e",
+  //   "isReply": true,
+  //   "replyTo": "67b88a10d75f40cdb09f7afc",
+  //   "isEdit": true,
+  //   "editMessageId": "67bc0583d75f40cdb0a3511a"
+  // }
+  // {
+  //   "content": "files",
+  //   "receiverId": "676d5d2de010e883aec47240",
+  //   "senderId": "677b7adc3f5bb1fd3416ca3e",
+  //   "isReply": true,
+  //   "replyTo": "67b88a10d75f40cdb09f7afc",
+  //   "isEdit": true,
+  //   "editMessageId": "67bc0a75d75f40cdb0a3aaf2"
+  //   }
+  //   final requestBody = {
+  //     "content": content,
+  //     "receiverId": receiverId,
+  //     "senderId": signInModel.data?.user!.id
+  //   };
+  //   if(editMsgID != null && editMsgID.isNotEmpty){
+  //     requestBody["isEdit"] = true;
+  //     requestBody["editMessageId"] = editMsgID;
+  //   }else if(replyId != null){
+  //     requestBody['replyTo'] = replyId;
+  //     requestBody['isReply'] = true;
+  //   }else{
+  //     if (files != null && files.isNotEmpty) {
+  //       requestBody["files"] = files;
+  //     }
+  //   }
+
     final requestBody = {
       "content": content,
       "receiverId": receiverId,
-      "senderId": signInModel.data?.user!.id
+      "senderId": signInModel.data?.user?.id,
     };
-    if(editMsgID != null && editMsgID.isNotEmpty){
+
+    // Always pass reply keys if replyId is provided
+    if (replyId != null && replyId.isNotEmpty) {
+      requestBody['isReply'] = true;
+      requestBody['replyTo'] = replyId;
+    }
+
+    // Pass edit keys if editMsgID is provided
+    if (editMsgID != null && editMsgID.isNotEmpty) {
       requestBody["isEdit"] = true;
       requestBody["editMessageId"] = editMsgID;
-    }else if(replyId != null){
-      requestBody['replyTo'] = replyId;
-      requestBody['isReply'] = true;
-    }else{
-      if (files != null && files.isNotEmpty) {
-        requestBody["files"] = files;
-      }
     }
+
+    // Pass files if available
+    if (files != null && files.isNotEmpty) {
+      requestBody["files"] = files;
+    }
+
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);

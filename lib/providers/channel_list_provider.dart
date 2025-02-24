@@ -1,8 +1,3 @@
-
-import 'dart:convert';
-
-// import 'package:bloc/bloc.dart';
-import 'package:e_connect/cubit/common_cubit/common_cubit.dart';
 import 'package:e_connect/model/browse_and_search_channel_model.dart';
 import 'package:e_connect/model/channel_list_model.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
@@ -11,22 +6,17 @@ import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:meta/meta.dart';
 import 'package:provider/provider.dart';
 
-import '../../main.dart';
-import '../../model/direct_message_list_model.dart';
-import '../../model/get_users_suggestions.dart';
-import '../sign_in/sign_in_model.dart';
+import '../main.dart';
+import '../model/direct_message_list_model.dart';
+import '../model/get_users_suggestions.dart';
+import '../model/sign_in_model.dart';
+import 'common_provider.dart';
 
-part 'channel_list_state.dart';
 
-
-// class ChannelListCubit extends Cubit<ChannelListState> {
-//   ChannelListCubit() : super(ChannelListInitial());
 
 class ChannelListProvider extends ChangeNotifier{
-  // final commonCubit = CommonCubit();
 final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
   FavoriteListModel? favoriteListModel;
   ChannelListModel? channelListModel;
@@ -34,6 +24,7 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
   BrowseAndSearchChannelModel? browseAndSearchChannelModel;
   GetUserSuggestions? getUserSuggestions;
   SearchUserModel? searchUserModel;
+
   /// GET FAVORITE LIST IN HOME SCREEN ///
   Future<void> getFavoriteList()async{
     print("userID>>>> ${signInModel.data?.user?.id}");
@@ -51,25 +42,16 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
   }
   /// GET CHANNEL LIST IN HOME SCREEN ///
   Future<void> getChannelList()async{
-    // emit(ChannelListInitial());
     print("userID>>>> ${signInModel.data?.user?.id}");
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final response = await ApiService.instance.request(endPoint: ApiString.channelList, method: Method.GET,);
     if(statusCode200Check(response)){
       channelListModel = ChannelListModel.fromJson(response);
-      // emit(ChannelListInitial());
     }
     notifyListeners();
   }
   /// GET DIRECT MESSAGE IN HOME SCREEN ///
   Future<void> getDirectMessageList()async{
-    // emit(ChannelListInitial());
     print("userID>>>> ${signInModel.data?.user?.id}");
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final requestBody = {
       "userId": signInModel.data?.user?.id,
     };
@@ -86,10 +68,6 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
     required String description,
     String? isPrivateChannel,
 })async{
-    // emit(ChannelListInitial());
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final requestBody = {
       "name": channelName,
       "isPrivate": isPrivateChannel,
@@ -104,51 +82,35 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
     notifyListeners();
   }
   /// BROWSE AND SEARCH ///
-  Future<void> browseAndSearchChannel({
-    required String search,
-  }) async {
-    // emit(ChannelListInitial());
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
+  Future<void> browseAndSearchChannel({required String search,bool? needLoader = false}) async {
     final requestBody = {
       "userId": signInModel.data?.user?.id,
       "searchTerm": search.isEmpty ? "" : search,
     };
-    final response = await ApiService.instance.request(
-        endPoint: ApiString.browseChannel,
-        method: Method.POST,
-        reqBody: requestBody);
-    if (statusCode200Check(response)) {
-      browseAndSearchChannelModel = BrowseAndSearchChannelModel.fromJson(response);
-      // emit(ChannelListInitial());
+    try{
+      final response = await ApiService.instance.request(endPoint: ApiString.browseChannel, method: Method.POST, reqBody: requestBody,needLoader: needLoader);
+      if (statusCode200Check(response)) {
+        browseAndSearchChannelModel = BrowseAndSearchChannelModel.fromJson(response);
+      }
+    }catch (e){
+      print("eroor>> $e");
+    }finally {
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   Future<void> getUserSuggestionsListing() async {
-    // emit(ChannelListInitial());
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
-
     final response = await ApiService.instance.request(
         endPoint: ApiString.userSuggestions,
         method: Method.GET,);
     if (statusCode200Check(response)) {
       getUserSuggestions = GetUserSuggestions.fromJson(response);
-      // emit(ChannelListInitial());
     }
     notifyListeners();
   }
 
   Future<void> searchUserByName({required String search}) async {
-    // emit(ChannelListInitial());
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final requestBody = {"searchTerm": search};
-
     final response = await ApiService.instance.request(
         endPoint: ApiString.searchUser,
         method: Method.POST,
@@ -163,10 +125,6 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
   Future<void> removeFromFavorite({
     required String favouriteUserId,
   }) async {
-    // emit(ChannelListInitial());
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final requestBody = {
       "userId": signInModel.data?.user?.id,
       "favouriteUserId": favouriteUserId,
@@ -188,7 +146,6 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
   Future<void> removeChannelFromFavorite({
     required String favoriteChannelID,
   }) async {
-    // emit(ChannelListInitial());
     final header = {
       'Authorization': "Bearer ${signInModel.data!.authToken}",
     };
@@ -196,11 +153,9 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
         endPoint: ApiString.removeFromChannelFromFavorite + favoriteChannelID,
         method: Method.PUT,);
     if (statusCode200Check(response)) {
-      // browseAndSearchChannelModel = BrowseAndSearchChannelModel.fromJson(response);
       getFavoriteList();
       getChannelList();
       getDirectMessageList();
-      // emit(ChannelListInitial());
     }
     notifyListeners();
   }
@@ -210,10 +165,6 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
     required bool isForMute,
     bool? needToCallGetUser = false,
   }) async {
-    // emit(ChannelListInitial());
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final requestBodyForMuteUser = {
        "userIdToMute": userIdToMute
     };
@@ -225,24 +176,14 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
         method: Method.POST,
         reqBody: isForMute == false ? requestBodyForMuteUser : requestBodyForUnMuteUser);
     if (statusCode200Check(response)) {
-      // browseAndSearchChannelModel = BrowseAndSearchChannelModel.fromJson(response);
-      if (isForMute) {
-        signInModel.data?.user?.muteUsers?.remove(userIdToMute);
-      } else {
-        signInModel.data?.user?.muteUsers?.add(userIdToMute);
-      }
-      signInModel.saveToPrefs();
-      await SignInModel.loadFromPrefs();
+      getFavoriteList();
+      getChannelList();
+      getDirectMessageList();
       if(needToCallGetUser==true){
         Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false).getUserByIDCall();
       }
-       getFavoriteList();
-       getChannelList();
-       getDirectMessageList();
-
-       // commonCubit.getUserByIDCall();
+      notifyListeners();
     }
-    notifyListeners();
   }
   Future<void> closeConversation({
     required String conversationUserId,
@@ -328,12 +269,7 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
     required String oppositeUserId,
     required bool isCallForReadMessage
   }) async {
-    // emit(ChannelListInitial());
     print("isCallForReadMessage>>> $isCallForReadMessage");
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
-
     final response = await ApiService.instance.request(
         endPoint: isCallForReadMessage ? "${ApiString.readChannelMessage}$oppositeUserId" : ApiString.unReadChannelMessage + oppositeUserId,
         method: isCallForReadMessage ? Method.GET : Method.PUT,
@@ -343,7 +279,6 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
       await getFavoriteList();
       await getChannelList();
       await getDirectMessageList();
-      // emit(ChannelListInitial());
     }
     notifyListeners();
   }
@@ -352,10 +287,6 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
 Future<void> addUserToFavorite({
     required String favouriteUserId,
   }) async {
-  // emit(ChannelListInitial());
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final requestBody = {
       "userId": signInModel.data?.user?.id,
       "favouriteUserId": favouriteUserId,
@@ -368,16 +299,12 @@ Future<void> addUserToFavorite({
           getFavoriteList();
           getChannelList();
           getDirectMessageList();
-          // emit(ChannelListInitial());
     }
     notifyListeners();
   }
 Future<void> addChannelToFavorite({
     required String channelId,
   }) async {
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final response = await ApiService.instance.request(
         endPoint: ApiString.addChannelTOFavorite + channelId,
         method: Method.PUT,);
@@ -385,7 +312,6 @@ Future<void> addChannelToFavorite({
           getFavoriteList();
           getChannelList();
           getDirectMessageList();
-          // emit(ChannelListInitial());
     }
     notifyListeners();
   }
@@ -394,9 +320,6 @@ Future<void> addChannelToFavorite({
     required String channelId,
     required bool isMutedChannel
   }) async {
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final unMuteBody = {"channelIdToUnmute": channelId};
     final muteBody = {"channelIdToMute": channelId};
     final response = await ApiService.instance.request(
@@ -420,9 +343,6 @@ Future<void> addChannelToFavorite({
   }
 
   Future<void> addUserToChatList({required String selectedUserId}) async {
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final requestBody ={"userId": signInModel.data?.user?.id, "selectedUserId": selectedUserId};
     final response = await ApiService.instance.request(
       endPoint: ApiString.addUserToChatList,
