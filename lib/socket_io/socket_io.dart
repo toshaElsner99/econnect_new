@@ -158,8 +158,15 @@ class SocketIoProvider extends ChangeNotifier{
   void socketListenPinMessage({required Function callFun , required String oppositeUserId}){
     socket.on(notificationForPinMessages, (data) {
       print("listSingleChatScreen >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
+        Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,storeLatest: true);
       callFun.call();
+    });
+  }
+  void socketListenPinMessageInReplyScreen({String? msgId }){
+    socket.off(notificationForPinMessages);
+    socket.on(notificationForPinMessages, (data) {
+      print("listSingleChatScreen >>> $data");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getReplyMessageList(msgId: msgId!, fromWhere: "PIN_MSG_SOCKET");
     });
   }
 

@@ -1058,7 +1058,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   createdAt: messageList.createdAt!,
                   currentUserId: userId,
                   onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.avatarUrl ?? '',forwardMsgId: messageId,)),
-                  // onForward: () => commonForwardMSGDialog(context: context,userName: "",time: "",msgToForward: "",userID: "",otherUserProfile: ""),
                   onReply: () {
                     print("onReply Passing = ${messageId.toString()}");
                   pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));

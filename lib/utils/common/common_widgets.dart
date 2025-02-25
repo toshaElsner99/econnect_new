@@ -664,16 +664,17 @@ Widget popMenu2(
 
 Widget popMenuForReply2(
     BuildContext context, {
-      // required bool opened,
-      // required VoidCallback onOpened,
-      // required VoidCallback onClosed,
+      required bool opened,
+      required bool isPinned,
+      required VoidCallback onOpened,
+      required VoidCallback onClosed,
       required VoidCallback onForward,
       required VoidCallback onPin,
       required VoidCallback onCopy,
       required VoidCallback onEdit,
       required VoidCallback onDelete,
-      required String createdAt,  // Pass createdAt timestamp
-      // required String currentUserId, // Current user's ID
+      required String createdAt,
+      required String currentUserId,
     }) {
   final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
   final double screenHeight = MediaQuery.of(context).size.height;
@@ -686,7 +687,7 @@ Widget popMenuForReply2(
   DateTime now = DateTime.now();
   final isEditable = now.difference(createdTime).inHours < 24;
   print("createdAt>> $createdTime $isEditable");
-  // final isCurrentUser = currentUserId == signInModel.data?.user?.id; // Check if message belongs to the user
+  final isCurrentUser = currentUserId == signInModel.data?.user?.id;
 
   return Container(
     // color: Colors.red,
@@ -730,16 +731,19 @@ Widget popMenuForReply2(
       itemBuilder: (context) {
         List<PopupMenuEntry<int>> menuItems = [
           _menuItem(0, Icons.forward, "Forward"),
-          _menuItem(1, Icons.push_pin, "Pin to Channel"),
-          _menuItem(2, Icons.copy, "Copy Text"),
-          _menuItem(3, Icons.edit, "Edit"),
+          _menuItem(1, Icons.push_pin, isPinned ? "Unpin to Channel" : "Pin to Channel"),
+
         ];
 
-        // Show Edit option only if message is under 24 hours old
-        // if (isCurrentUser && isEditable) {
-          menuItems.add(const PopupMenuDivider());
+        menuItems.add(const PopupMenuDivider());
+        menuItems.add(_menuItem(2, Icons.copy, "Copy Text"),);
+          if(isCurrentUser && isEditable){
+            menuItems.add(_menuItem(3, Icons.edit, "Edit"),);
+          }
+        if(isCurrentUser){
           menuItems.add(_menuItem(4, Icons.delete, "Delete"));
-        // }
+        }
+
 
         // Show Delete option only if the message belongs to the current user
         // if (isCurrentUser) {
@@ -748,7 +752,7 @@ Widget popMenuForReply2(
 
         return menuItems;
       },
-      icon: Icon(Icons.more_vert, color: Colors.black),
+      icon: Icon(Icons.more_vert, color: !opened ? AppColor.borderColor : AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
     ),
   );
 }

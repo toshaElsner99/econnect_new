@@ -136,6 +136,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:e_connect/screens/chat/single_chat_message_screen.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:file_picker/file_picker.dart';
@@ -500,6 +501,15 @@ class ChatProvider extends  ChangeNotifier {
       socketProvider.deleteMessagesSC(response: {"data": response['data']});
     }
   }
+
+  Future<void> deleteMessageForReply({required String messageId, required firsMessageId,required String userName, required String oppId})async{
+    final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE);
+    if(statusCode200Check(response)){
+      deleteMessageFromModel(messageId);
+      socketProvider.deleteMessagesSC(response: {"data": response['data']});
+      if(firsMessageId == messageId) pushReplacement(screen: SingleChatMessageScreen(userName: userName, oppositeUserId: oppId));
+    }
+  }
   Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
@@ -507,6 +517,45 @@ class ChatProvider extends  ChangeNotifier {
       socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
     }
   }
+  Future<void> pinUnPinMessageForReply({required String receiverId,required String messageId,required bool pinned})async{
+    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
+    if(statusCode200Check(response)){
+      _updatePinnedStatus(messageId, pinned);
+      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
+    }
+  }
+
+  void _updatePinnedStatus(String messageId, bool pinned) {
+    // Find the message in the model and update its isPinned status
+    for (var messageGroup in getReplyMessageModel?.data?.messages ?? []) {
+      for (var message in messageGroup.groupMessages ?? []) {
+        if (message.sId == messageId) {
+          message.isPinned = pinned; // Update the isPinned property
+          notifyListeners(); // Notify listeners to update the UI
+          return; // Exit after updating
+        }
+      }
+    }
+  }
+
+  void deleteMessageFromModel(String messageId) {
+    for (var messageGroup in getReplyMessageModel?.data?.messages ?? []) {
+      messageGroup.groupMessages?.removeWhere((message) => message.sId == messageId);
+    }
+    notifyListeners();
+  }
+  // void deleteMessageFromModel(String messageId) {
+  //   late MessageModel messageModel;
+  //   for (var messageGroup in messageModel.data?.messageGroups ?? []) {
+  //     messageGroup.messages?.removeWhere((message) => message.sId == messageId);
+  //     if (messageGroup.messages?.isEmpty ?? true) {
+  //       messageModel.data?.messageGroups?.remove(messageGroup);
+  //     }
+  //   }
+
+    // Notify listeners to update the UI
+    // notifyListeners();
+  // }
   Future<void> getFileListingInChat({required String oppositeUserId})async{
     final requestBody = {"oppositeUserId": oppositeUserId};
     final response = await ApiService.instance.request(endPoint: ApiString.getFileListingInChat, method: Method.POST,reqBody: requestBody);

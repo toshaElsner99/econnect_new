@@ -19,6 +19,7 @@ import '../../../utils/app_image_assets.dart';
 import '../../../utils/app_preference_constants.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 
+import '../forward_message/forward_message_screen.dart';
 import '../media_preview_screen.dart';
 
 
@@ -46,6 +47,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   String currentUserMessageId = "";
+  int? _selectedIndex;
 
   @override
   void initState() {
@@ -53,6 +55,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
     chatProvider.getReplyListUpdateSC(widget.messageId);
+    socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
     print("I'm In initState");
     Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: widget.messageId,fromWhere: "SCREEN INIT");
     Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.messageId);
@@ -150,7 +153,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   GroupMessages? message = messageList?.groupMessages?[index];
                   previousSenderId = message?.senderId!.sId;
                   return chatBubble(
-                    index: index, // Pass index here
+                    chatIndex: index, // Pass index here
                     messageList: message!,
                     messageId: messageList?.groupMessages?[index].sId ?? "",
                     userId: message.senderId?.sId ?? "",
@@ -168,7 +171,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   }
 
   Widget chatBubble({
-    required int index,
+    required int chatIndex,
     required GroupMessages messageList,
     required String userId,
     required String messageId,
@@ -176,7 +179,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     required String time,
   })  {
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
-      final pinnedMsg = messageList.isPinned ?? false;
+      bool pinnedMsg = messageList.isPinned ?? false;
       return Container(
         color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
         padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 8.0),
@@ -214,7 +217,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             commonText(
                                 height: 1.2,
                                 text:
-                                messageList.senderId!.username ?? messageList.senderId!.fullName ?? 'Unknown', fontWeight: FontWeight.bold),
+                                messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown', fontWeight: FontWeight.bold),
                             SizedBox(width: 5),
                             commonText(
                                 height: 1.2,
@@ -239,30 +242,30 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?. ?? "offline",needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl),
+                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          commonText(text: "${messageList.senderOfForward?.username}"),
+                                          commonText(text: messageList.forwardFrom?.senderId?.userName ?? messageList.forwardFrom?.senderId?.fullName ?? ""),
                                           SizedBox(height: 3),
-                                          commonText(text: formatDateString("${messageList.senderOfForward?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          commonText(text: formatDateString("${messageList.forwardFrom?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),
                                   ],),
                                 ),
-                                commonHTMLText(message: "${messageList.forwardInfo?.content}"),
+                                commonHTMLText(message: "${messageList.forwardFrom?.content}"),
                                 Visibility(
-                                  visible: messageList.forwardInfo?.files.length != 0 ? true : false,
+                                  visible: messageList.forwardFrom?.files?.length != 0 ? true : false,
                                   child: ListView.builder(
                                     shrinkWrap: true,
-                                    itemCount: messageList.forwardInfo?.files.length ?? 0,
+                                    itemCount: messageList.forwardFrom?.files?.length ?? 0,
                                     physics: NeverScrollableScrollPhysics(),
                                     itemBuilder: (context, index) {
-                                      final filesUrl = messageList.forwardInfo?.files[index];
-                                      String originalFileName = getFileName(messageList.forwardInfo!.files[index]);
+                                      final filesUrl = messageList.forwardFrom?.files?[index];
+                                      String originalFileName = getFileName(messageList.forwardFrom?.files?[index]);
                                       String formattedFileName = formatFileName(originalFileName);
                                       String fileType = getFileExtension(originalFileName);
                                       return Container(
@@ -336,9 +339,14 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   ),
                 ),
                 popMenuForReply2(context,
-                  onForward: () => {},
-                  onPin: () => {},
-                  onCopy: () => {},
+                  isPinned: pinnedMsg,
+                  onOpened: () =>  setState(() => _selectedIndex = chatIndex),
+                  onClosed: () =>  setState(() => _selectedIndex = null),
+                  opened: chatIndex == _selectedIndex ? true : false,
+                  currentUserId: messageList.senderId?.sId ?? "",
+                  onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
+                  onPin: () => chatProvider.pinUnPinMessageForReply(receiverId: widget.receiverId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
+                  onCopy: () => copyToClipboard(context, message),
                   onEdit: () => setState(() {
                     int position = _controller.document.length - 1;
                     currentUserMessageId = messageId;
@@ -349,8 +357,10 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                       quill.ChangeSource.local,
                     );
                   }),
-                  onDelete: () => {},
-                  createdAt:"${messageList.createdAt}", /*currentUserId: "${signInModel.data!.user!.id}"*/)
+                  onDelete: () {
+                    chatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.messageId,userName: widget.userName,oppId: widget.receiverId);
+                  },
+                  createdAt:"${messageList.createdAt}",)
               ],
             ),
           ],

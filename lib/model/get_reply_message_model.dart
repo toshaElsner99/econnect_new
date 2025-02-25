@@ -172,10 +172,105 @@ class GroupMessages {
 }
 
 
+// class SenderId {
+//   String? sId;
+//   String? fullName;
+//   String? username;
+//   String? email;
+//   String? status;
+//   String? customStatus;
+//   String? customStatusEmoji;
+//   String? avatarUrl;
+//   String? thumbnailAvatarUrl;
+//   String? elsnerEmail;
+//
+//   SenderId(
+//       {this.sId,
+//         this.fullName,
+//         this.username,
+//         this.email,
+//         this.status,
+//         this.customStatus,
+//         this.customStatusEmoji,
+//         this.avatarUrl,
+//         this.thumbnailAvatarUrl,
+//         this.elsnerEmail});
+//
+//   SenderId.fromJson(Map<String, dynamic> json) {
+//     sId = json['_id'];
+//     fullName = json['fullName'];
+//     username = json['username'];
+//     email = json['email'];
+//     status = json['status'];
+//     customStatus = json['custom_status'];
+//     customStatusEmoji = json['custom_status_emoji'];
+//     avatarUrl = json['avatarUrl'];
+//     thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
+//     elsnerEmail = json['elsner_email'];
+//   }
+//
+//   Map<String, dynamic> toJson() {
+//     final Map<String, dynamic> data = <String, dynamic>{};
+//     data['_id'] = this.sId;
+//     data['fullName'] = this.fullName;
+//     data['username'] = this.username;
+//     data['email'] = this.email;
+//     data['status'] = this.status;
+//     data['custom_status'] = this.customStatus;
+//     data['custom_status_emoji'] = this.customStatusEmoji;
+//     data['avatarUrl'] = this.avatarUrl;
+//     data['thumbnail_avatarUrl'] = this.thumbnailAvatarUrl;
+//     data['elsner_email'] = this.elsnerEmail;
+//     return data;
+//   }
+// }
+
+class ForwardFrom {
+  String? sId;
+  SenderId? senderId;
+  String? content;
+  List<dynamic>? files;
+  String? createdAt;
+
+  ForwardFrom({
+    this.sId,
+    this.senderId,
+    this.content,
+    this.files,
+    this.createdAt,
+  });
+
+  ForwardFrom.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
+    senderId = json['senderId'] != null
+        ? SenderId.fromJson(json['senderId'])
+        : null;
+    content = json['content'];
+    if (json['files'] != null) {
+      files = List<dynamic>.from(json['files']);
+    }
+    createdAt = json['createdAt'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['_id'] = sId;
+    if (senderId != null) {
+      data['senderId'] = senderId!.toJson();
+    }
+    data['content'] = content;
+    if (files != null) {
+      data['files'] = files;
+    }
+    data['createdAt'] = createdAt;
+    return data;
+  }
+}
+
 class SenderId {
   String? sId;
   String? fullName;
-  String? username;
+  String? userName;
   String? email;
   String? status;
   String? customStatus;
@@ -184,22 +279,23 @@ class SenderId {
   String? thumbnailAvatarUrl;
   String? elsnerEmail;
 
-  SenderId(
-      {this.sId,
-        this.fullName,
-        this.username,
-        this.email,
-        this.status,
-        this.customStatus,
-        this.customStatusEmoji,
-        this.avatarUrl,
-        this.thumbnailAvatarUrl,
-        this.elsnerEmail});
+  SenderId({
+    this.sId,
+    this.fullName,
+    this.userName,
+    this.email,
+    this.status,
+    this.customStatus,
+    this.customStatusEmoji,
+    this.avatarUrl,
+    this.thumbnailAvatarUrl,
+    this.elsnerEmail,
+  });
 
   SenderId.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     fullName = json['fullName'];
-    username = json['username'];
+    userName = json['username'];
     email = json['email'];
     status = json['status'];
     customStatus = json['custom_status'];
@@ -211,61 +307,16 @@ class SenderId {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['_id'] = this.sId;
-    data['fullName'] = this.fullName;
-    data['username'] = this.username;
-    data['email'] = this.email;
-    data['status'] = this.status;
-    data['custom_status'] = this.customStatus;
-    data['custom_status_emoji'] = this.customStatusEmoji;
-    data['avatarUrl'] = this.avatarUrl;
-    data['thumbnail_avatarUrl'] = this.thumbnailAvatarUrl;
-    data['elsner_email'] = this.elsnerEmail;
-    return data;
-  }
-}
-
-class ForwardFrom {
-  String? sId;
-  String? fullName;
-  String? userName;
-  String? email;
-  String? status;
-  String? customStatus;
-  String? customStatusEmoji;
-  SenderId? senderId;
-  String? content;
-  List<dynamic>? files;
-  String? createdAt;
-
-  ForwardFrom({this.sId, this.senderId, this.content, this.files, this.createdAt});
-
-  ForwardFrom.fromJson(Map<String, dynamic> json) {
-    sId = json['_id'];
-    senderId = json['senderId'] != null
-        ? SenderId.fromJson(json['senderId'])
-        : null;
-    content = json['content'];
-    if (json['files'] != null) {
-      files = <dynamic>[]; // Changed from List<Null> to List<dynamic>
-      json['files'].forEach((v) {
-        files!.add(v); // No need to create a Null instance
-      });
-    }
-    createdAt = json['createdAt'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['_id'] = this.sId;
-    if (this.senderId != null) {
-      data['senderId'] = this.senderId!.toJson();
-    }
-    data['content'] = this.content;
-    if (this.files != null) {
-      data['files'] = this.files; // No need to map toJson
-    }
-    data['createdAt'] = this.createdAt;
+    data['_id'] = sId;
+    data['fullName'] = fullName;
+    data['username'] = userName;
+    data['email'] = email;
+    data['status'] = status;
+    data['custom_status'] = customStatus;
+    data['custom_status_emoji'] = customStatusEmoji;
+    data['avatarUrl'] = avatarUrl;
+    data['thumbnail_avatarUrl'] = thumbnailAvatarUrl;
+    data['elsner_email'] = elsnerEmail;
     return data;
   }
 }
