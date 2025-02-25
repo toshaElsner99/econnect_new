@@ -80,7 +80,7 @@ class GroupMessages {
   bool? isLog;
   bool? isForwarded;
   bool? isEdited;
-  String? forwardFrom;
+  ForwardFrom? forwardFrom;
   List<dynamic>? readBy;
   bool? isSeen;
   bool? isDeleted;
@@ -127,7 +127,8 @@ class GroupMessages {
     isLog = json['isLog'];
     isForwarded = json['isForwarded'];
     isEdited = json['isEdited'];
-    forwardFrom = json['forwardFrom'];
+    // forwardFrom = json['forwardFrom'];
+    forwardFrom = json['forwardFrom'] != null ? ForwardFrom.fromJson(json['forwardFrom']) : null;
     readBy = json['readBy'] != null ? List<dynamic>.from(json['readBy']) : null;
     isSeen = json['is_seen'];
     isDeleted = json['isDeleted'];
@@ -154,7 +155,9 @@ class GroupMessages {
     data['isLog'] = isLog;
     data['isForwarded'] = isForwarded;
     data['isEdited'] = isEdited;
-    data['forwardFrom'] = forwardFrom;
+    if (this.forwardFrom != null) {
+      data['forwardFrom'] = this.forwardFrom!.toJson();
+    }
     data['readBy'] = readBy;
     data['is_seen'] = isSeen;
     data['isDeleted'] = isDeleted;
@@ -224,13 +227,18 @@ class SenderId {
 
 class ForwardFrom {
   String? sId;
+  String? fullName;
+  String? userName;
+  String? email;
+  String? status;
+  String? customStatus;
+  String? customStatusEmoji;
   SenderId? senderId;
   String? content;
-  List<dynamic>? files; // Changed from List<Null> to List<dynamic>
+  List<dynamic>? files;
   String? createdAt;
 
-  ForwardFrom(
-      {this.sId, this.senderId, this.content, this.files, this.createdAt});
+  ForwardFrom({this.sId, this.senderId, this.content, this.files, this.createdAt});
 
   ForwardFrom.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];

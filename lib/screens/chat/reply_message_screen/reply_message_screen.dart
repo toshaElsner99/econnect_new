@@ -224,6 +224,78 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                         ),
                       commonHTMLText(message: message),
                       Visibility(
+                          visible: messageList.isForwarded ?? false,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(vertical: 16,horizontal: 20),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColor.borderColor,width: 0.6),
+                              borderRadius: BorderRadius.circular(12),
+                              color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.forwardColor : Colors.white,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                  child: Row(children: [
+                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?. ?? "offline",needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          commonText(text: "${messageList.senderOfForward?.username}"),
+                                          SizedBox(height: 3),
+                                          commonText(text: formatDateString("${messageList.senderOfForward?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                        ],
+                                      ),
+                                    ),
+                                  ],),
+                                ),
+                                commonHTMLText(message: "${messageList.forwardInfo?.content}"),
+                                Visibility(
+                                  visible: messageList.forwardInfo?.files.length != 0 ? true : false,
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: messageList.forwardInfo?.files.length ?? 0,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemBuilder: (context, index) {
+                                      final filesUrl = messageList.forwardInfo?.files[index];
+                                      String originalFileName = getFileName(messageList.forwardInfo!.files[index]);
+                                      String formattedFileName = formatFileName(originalFileName);
+                                      String fileType = getFileExtension(originalFileName);
+                                      return Container(
+                                        margin: EdgeInsets.only(top: 5,right: 10),
+                                        padding: EdgeInsets.symmetric(horizontal: 20,vertical: 15),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: AppColor.lightGreyColor),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                            SizedBox(width: 20,),
+                                            Flexible(
+                                                flex: 10,
+                                                fit: FlexFit.loose,
+                                                child: commonText(text: formattedFileName,maxLines: 1)),
+                                            Spacer(),
+                                            GestureDetector(
+                                                onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
+                                                child: Image.asset(AppImage.downloadIcon,fit: BoxFit.contain,height: 20,width: 20,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black))
+                                          ],
+                                        ),
+                                      );
+                                    },),
+                                ),
+
+                              ],),
+
+                          )
+                      ),
+
+                      Visibility(
                         visible: messageList.isMedia == true,
                         child: ListView.builder(
                           shrinkWrap: true,
