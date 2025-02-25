@@ -82,18 +82,45 @@ final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.conte
     }
     notifyListeners();
   }
-List<CombinedItem> combinedList = [];
+
 void combineUserDataWithChannels() {
-  List<CombinedItem> combinedList = [];
-  // Add user data
-  browseAndSearchChannelModel?.data?.users?.forEach((user) {
-    combinedList.add(CombinedItem(isChannel: false, item: user));
-  });
-  // Add channel data
-  browseAndSearchChannelModel?.data?.channels?.forEach((channel) {
-    combinedList.add(CombinedItem(isChannel: true, item: channel));
-  });
+ try{
+   browseAndSearchChannelModel?.data?.users?.forEach((user) {
+     combinedList.clear();
+     combinedList.add({
+       'type': 'user',
+       'fullName': user.fullName,
+       'username': user.username,
+       'email': user.email,
+       'avatarUrl': user.avatarUrl,
+       'userId': user.userId
+     });
+   });
+
+   browseAndSearchChannelModel?.data?.channels?.forEach((channel) {
+     combinedList.add({
+       'type': 'channel',
+       'id': channel.sId,
+       'name': channel.name,
+       'isPrivate': channel.isPrivate,
+     });
+   });
+   print("combinedList>>>> ${combinedList}");
+ }catch (e){
+   print("e>>> $e");
+ }finally{
+   notifyListeners();
+ }
 }
+
+final searchController = TextEditingController();
+clearList(){
+  combinedList.clear();
+  searchController.clear();
+  notifyListeners();
+}
+var combinedList = [];
+bool isLoading = false;
 
 /// BROWSE AND SEARCH ///
   Future<void> browseAndSearchChannel({required String search,bool? needLoader = false,bool? combineList = false}) async {
@@ -102,16 +129,20 @@ void combineUserDataWithChannels() {
       "searchTerm": search.isEmpty ? "" : search,
     };
     try{
+      isLoading = true;
       final response = await ApiService.instance.request(endPoint: ApiString.browseChannel, method: Method.POST, reqBody: requestBody,needLoader: needLoader);
       if (statusCode200Check(response)) {
         browseAndSearchChannelModel = BrowseAndSearchChannelModel.fromJson(response);
         if(combineList == true){
           combineUserDataWithChannels();
         }
+      }else if(response['data'] == []){
+        combinedList.clear();
       }
     }catch (e){
       print("eroor>> $e");
     }finally {
+      isLoading = false;
       notifyListeners();
     }
   }
@@ -123,7 +154,6 @@ void combineUserDataWithChannels() {
     if (statusCode200Check(response)) {
       getUserSuggestions = GetUserSuggestions.fromJson(response);
     }
-    notifyListeners();
   }
 
   Future<void> searchUserByName({required String search}) async {

@@ -413,7 +413,7 @@ class ChatProvider extends  ChangeNotifier {
 
 
 
-  Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID})async{
+  Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID,})async{
   //   {
   //     "content": "G302",
   //   "receiverId": "676d5d2de010e883aec47240",
@@ -484,6 +484,13 @@ class ChatProvider extends  ChangeNotifier {
       }
     }
     notifyListeners();
+  }
+
+  Future<void> forwardMessage({required Map<String,dynamic> forwardBody})async{
+    final response = await ApiService.instance.request(endPoint: forwardBody.keys.contains('channelId') ? ApiString.sendChannelMessage : ApiString.sendMessage, method: Method.POST,reqBody: forwardBody,needLoader: false);
+    if(statusCode200Check(response)){
+      socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: false);
+    }
   }
 
   Future<void> deleteMessage({required String messageId,required String receiverId})async{

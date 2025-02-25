@@ -466,6 +466,104 @@ return  showMenu<int>(
     }
   });
 }
+// Widget popMenu2(
+//     BuildContext context, {
+//       required bool opened,
+//       required VoidCallback onOpened,
+//       required VoidCallback onClosed,
+//       required VoidCallback onForward,
+//       required VoidCallback onReply,
+//       required VoidCallback onPin,
+//       required VoidCallback onCopy,
+//       required VoidCallback onEdit,
+//       required VoidCallback onDelete,
+//       required String createdAt,  // Pass createdAt timestamp
+//       required String currentUserId, // Current user's ID
+//       required bool isForwarded,
+//     }) {
+//   final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+//   final double screenHeight = MediaQuery.of(context).size.height;
+//   final double buttonPositionY = overlay.localToGlobal(Offset.zero).dy;
+//   const double menuHeight = 220;
+//
+//   final bool openAbove = (buttonPositionY + menuHeight) > screenHeight;
+//
+//   DateTime createdTime = DateTime.parse(createdAt).toLocal();
+//   DateTime now = DateTime.now();
+//   final isEditable = now.difference(createdTime).inHours < 24;
+//   print("createdAt>> $createdTime $isEditable");
+//   final isCurrentUser = currentUserId == signInModel.data?.user?.id; // Check if message belongs to the user
+//
+//   return Container(
+//     // color: Colors.red,
+//     alignment: Alignment.topCenter,
+//     height: 22,
+//     width: 20,
+//     child: PopupMenuButton<int>(
+//       padding: EdgeInsets.zero, // Remove padding
+//       iconSize: 25, // Reduce icon size
+//       constraints: const BoxConstraints(minWidth: 120), // Limit menu width
+//       color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+//       position: openAbove ? PopupMenuPosition.over : PopupMenuPosition.under,
+//       offset: const Offset(-15, 0),
+//       onOpened: ()=> onOpened(),
+//       onCanceled: ()=> onClosed(),
+//       shape: RoundedRectangleBorder(
+//         borderRadius: BorderRadius.circular(10),
+//         side: AppPreferenceConstants.themeModeBoolValueGet
+//             ? const BorderSide(color: Colors.white38, width: 0.5)
+//             : BorderSide.none,
+//       ),
+//       onSelected: (value) {
+//         switch (value) {
+//           case 0:
+//             onForward.call();
+//             break;
+//           case 1:
+//             onReply.call();
+//             break;
+//           case 2:
+//             onPin.call();
+//             break;
+//           case 3:
+//             onCopy.call();
+//             break;
+//           case 4:
+//             onEdit.call();
+//             break;
+//           case 5:
+//             onDelete.call();
+//             break;
+//         }
+//       },
+//       itemBuilder: (context) {
+//         List<PopupMenuEntry<int>> menuItems = [
+//
+//           _menuItem(1, Icons.reply, "Reply"),
+//           _menuItem(2, Icons.push_pin, "Pin to Channel"),
+//           _menuItem(3, Icons.copy, "Copy Text"),
+//         ];
+//         if(isForwarded == true){
+//           menuItems.add(_menuItem(0, Icons.forward, "Forward"));
+//         }
+//         // Show Edit option only if message is under 24 hours old
+//         if (isCurrentUser && isEditable) {
+//          (_menuItem(4, Icons.edit, "Edit"));
+//         }
+//
+//         // Show Delete option only if the message belongs to the current user
+//         if (isCurrentUser) {
+//           menuItems.add(const PopupMenuDivider());
+//           menuItems.add(_menuItem(5, Icons.delete, "Delete", color: Colors.red));
+//         }
+//
+//         return menuItems;
+//       },
+//       icon: Icon(Icons.more_vert, color: !opened ? AppColor.borderColor : AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
+//     ),
+//   );
+// }
+
 Widget popMenu2(
     BuildContext context, {
       required bool opened,
@@ -479,6 +577,7 @@ Widget popMenu2(
       required VoidCallback onDelete,
       required String createdAt,  // Pass createdAt timestamp
       required String currentUserId, // Current user's ID
+      required bool isForwarded,
     }) {
   final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
   final double screenHeight = MediaQuery.of(context).size.height;
@@ -537,15 +636,17 @@ Widget popMenu2(
       },
       itemBuilder: (context) {
         List<PopupMenuEntry<int>> menuItems = [
-          _menuItem(0, Icons.forward, "Forward"),
+
           _menuItem(1, Icons.reply, "Reply"),
           _menuItem(2, Icons.push_pin, "Pin to Channel"),
           _menuItem(3, Icons.copy, "Copy Text"),
         ];
-
+        if(isForwarded == true){
+          menuItems.insert(0, _menuItem(0, Icons.forward, "Forward"));
+        }
         // Show Edit option only if message is under 24 hours old
         if (isCurrentUser && isEditable) {
-          menuItems.add(_menuItem(4, Icons.edit, "Edit"));
+          (_menuItem(4, Icons.edit, "Edit"));
         }
 
         // Show Delete option only if the message belongs to the current user
@@ -560,6 +661,7 @@ Widget popMenu2(
     ),
   );
 }
+
 Widget popMenuForReply2(
     BuildContext context, {
       // required bool opened,
@@ -651,69 +753,6 @@ Widget popMenuForReply2(
   );
 }
 
-Widget popMenu(
-    BuildContext context, {
-      required VoidCallback onForward,
-      required VoidCallback onReply,
-      required VoidCallback onPin,
-      required VoidCallback onCopy,
-      required VoidCallback onEdit,
-      required VoidCallback onDelete,
-    }) {
-  final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-  final double screenHeight = MediaQuery.of(context).size.height;
-  final double buttonPositionY = overlay.localToGlobal(Offset.zero).dy;
-  const double menuHeight = 220; // Approximate height of the pop-up menu
-
-  // If there's enough space below, open downwards; otherwise, open upwards
-  final bool openAbove = (buttonPositionY + menuHeight) > screenHeight;
-
-  return PopupMenuButton<int>(
-    color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
-    position: openAbove ? PopupMenuPosition.over : PopupMenuPosition.under, // Dynamic positioning
-    offset: Offset(-20, 0),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(10),
-      side: AppPreferenceConstants.themeModeBoolValueGet
-          ? const BorderSide(color: Colors.white38, width: 0.5)
-          : BorderSide.none,
-    ),
-    onSelected: (value) {
-      switch (value) {
-        case 0:
-          onForward();
-          break;
-        case 1:
-          onReply();
-          break;
-        case 2:
-          onPin();
-          break;
-        case 3:
-          onCopy();
-          break;
-        case 4:
-          onEdit();
-          break;
-        case 5:
-          onDelete();
-          break;
-      }
-    },
-    itemBuilder: (context) => [
-      _menuItem(0, Icons.forward, "Forward"),
-      _menuItem(1, Icons.reply, "Reply"),
-      _menuItem(2, Icons.push_pin, "Pin to Channel"),
-      _menuItem(3, Icons.copy, "Copy Text"),
-      _menuItem(4, Icons.edit, "Edit"),
-      const PopupMenuDivider(),
-      _menuItem(5, Icons.delete, "Delete", color: Colors.red),
-    ],
-    icon: Icon(Icons.more_vert, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
-  );
-}
-
-// Helper function for menu items
 PopupMenuItem<int> _menuItem(int value, IconData icon, String text, {Color color = Colors.white}) {
   return PopupMenuItem<int>(
     value: value,

@@ -1,5 +1,8 @@
+import 'package:e_connect/main.dart';
+import 'package:e_connect/providers/chat_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 
 import '../../../providers/channel_list_provider.dart';
@@ -14,6 +17,7 @@ class ForwardMessageScreen extends StatefulWidget {
   final String otherUserProfile;
   final String userName;
   final String time;
+  final String forwardMsgId;
 
   const ForwardMessageScreen({
     super.key,
@@ -22,6 +26,7 @@ class ForwardMessageScreen extends StatefulWidget {
     required this.userID,
     required this.msgToForward,
     required this.otherUserProfile,
+    required this.forwardMsgId,
   });
 
   @override
@@ -29,22 +34,28 @@ class ForwardMessageScreen extends StatefulWidget {
 }
 
 class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
-  final searchController = TextEditingController();
 
+  final provider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
+  final contentController = TextEditingController();
+  List itemInfo = [];
   @override
   void initState() {
     super.initState();
-    context.read<ChannelListProvider>().browseAndSearchChannel(search: searchController.text,needLoader: true,combineList: true);
-    searchController.addListener(() {
-      if (searchController.text.isNotEmpty) {
-        context.read<ChannelListProvider>().browseAndSearchChannel(search: searchController.text,combineList: true);
-      }else {
-        context.read<ChannelListProvider>().browseAndSearchChannel(search: "",combineList: true);
-      }
-    });
+    itemInfo.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      provider.clearList();
+      provider.searchController.addListener(() {
+        if (provider.searchController.text.isNotEmpty) {
+          context.read<ChannelListProvider>().browseAndSearchChannel(search: provider.searchController.text,combineList: true);
+        }else {
+          context.read<ChannelListProvider>().browseAndSearchChannel(search: "",combineList: true);
+          if(provider.searchController.text.length == 0){
+            provider.clearList();
+          }
+        }
+      });
+    },);
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -55,102 +66,228 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
         titleSpacing: 0,
         title: commonText(text: "Forward Message", color: Colors.white)
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Divider(height: 1,),
-          Container(
-            padding: EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: AppColor.appBarColor.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColor.borderColor.withOpacity(0.5))),
-            margin: EdgeInsets.all(20),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.info, color: Colors.white,),
-                SizedBox(width: 10,),
-                Flexible(child: commonText(text: "This message is from a private conversation", fontSize: 18,fontWeight: FontWeight.w500,height: 1.2)),
-              ],
-            ),
-          ),
-          SearchBar(
-
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 20),
-            child: commonTextFormField(
-                controller: TextEditingController(),
-                hintText: "Add a comment (optional)"),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: commonText(
-              text: "Message preview",
-            ),
-          ),
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            decoration: BoxDecoration(
-                color: AppColor.boxBgColor,
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(color: AppColor.borderColor)),
-            padding: EdgeInsets.symmetric(horizontal: 15, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+      body: Consumer2<ChannelListProvider,ChatProvider>(builder: (context, channelListProvider,chatProvider, child) {
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Divider(height: 1,),
+              Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                    color: AppColor.appBarColor.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColor.borderColor.withOpacity(0.5))),
+                margin: EdgeInsets.all(20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    profileIconWithStatus(
-                        userID: widget.userID,
-                        status: "",
-                        otherUserProfile: widget.otherUserProfile,
-                        needToShowIcon: false,
-                        radius: 16),
-                    SizedBox(width: 5),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    Icon(Icons.info, color: Colors.white,),
+                    SizedBox(width: 10,),
+                    Flexible(child: commonText(text: "This message is from a private conversation", fontSize: 18,fontWeight: FontWeight.w500,height: 1.2)),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Wrap(
+                  children: itemInfo.map((item) => Padding(
+                    padding: const EdgeInsets.only(right: 2.0),
+                    child: Chip(
+                      label: commonText(text: item['name'] ?? "unknow",fontSize: 12),
+                      onDeleted: () {
+                        setState(() {
+                          itemInfo.remove(item);
+                        });
+                      },
+                    ),
+                  )).toList(),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20),
+                child: Container(child: commonTextFormField(controller: channelListProvider.searchController, hintText: "Search People",suffixIcon: channelListProvider.combinedList.isEmpty ? null : IconButton(onPressed: () => channelListProvider.clearList(), icon: Icon(Icons.close)))),
+              ),
+              Visibility(
+                visible: (channelListProvider.searchController.text.isNotEmpty && channelListProvider.combinedList.isNotEmpty),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight:  MediaQuery.of(context).size.height * 0.3,
+                    minHeight: 10
+                  ),
+                  child: Stack(
+                    children: [
+                    if(channelListProvider.isLoading == true)...{
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                            borderRadius: const BorderRadius.all(Radius.circular(16)),
+                            color: Colors.black.withOpacity(0.2)
+                        ),
+                        child: const SpinKitCircle(
+                          color: Colors.white,
+                          size: 38,
+                        ),
+                      ),
+                    },
+                      Container(
+                        margin: EdgeInsets.symmetric(horizontal: 20),
+                        color: Colors.white12,
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: channelListProvider.combinedList.length,
+                          padding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
+                          itemBuilder: (context, index) {
+                            final list = channelListProvider.combinedList[index];
+                            print("list>>> ${list['fullName']}");
+                            return GestureDetector(
+                              onTap: () {
+                               setState(() {
+                                 if(list['type'] == "user"){
+                                   itemInfo.add({
+                                     'type' : "user",
+                                     'name': list['fullName'] ?? list['username'],
+                                     'id': list['userId'],
+                                   });
+                                 }else{
+                                   itemInfo.add({
+                                     'type' : "channel",
+                                     'name': list['name'],
+                                     'id': list['id'],
+                                   });
+                                 }
+                                 itemInfo.forEach((element) {
+                                   print("element>>> $element");
+                                 },);
+                                 channelListProvider.clearList();
+                               });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 5.0),
+                                child: Row(children: [
+                                  if(list['type'] == 'user')...{
+                                    profileIconWithStatus(userID: list['userId'], status: "",needToShowIcon: false,otherUserProfile: list['avatarUrl']),
+                                    SizedBox(width: 10,),
+                                    commonText(text: "${list['username']}")
+                                  }else...{
+                                    Container(
+                                      alignment: Alignment.center,
+                                      padding: EdgeInsets.all(13),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: commonText(text: list['name'][0].toString().toUpperCase()),
+                                    ),
+                                    SizedBox(width: 10,),
+                                    Flexible(child: commonText(text: "${list['name']}",maxLines: 1))
+                                  },
+
+                                ],),
+                              ),
+                            );
+                          },),
+                      ) ,
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 20),
+                child: commonTextFormField(
+                    controller: contentController,
+                    hintText: "Add a comment (optional)"),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: commonText(
+                  text: "Message preview",
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                decoration: BoxDecoration(
+                    color: AppColor.boxBgColor,
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(color: AppColor.borderColor)),
+                padding: EdgeInsets.symmetric(horizontal: 15, vertical: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
                       children: [
-                        commonText(text: widget.userName),
-                        SizedBox(height: 4),
-                        commonText(text: widget.time,color: AppColor.borderColor,fontWeight: FontWeight.w400,fontSize: 12),
+                        profileIconWithStatus(
+                            userID: widget.userID,
+                            status: "",
+                            otherUserProfile: widget.otherUserProfile,
+                            needToShowIcon: false,
+                            radius: 16),
+                        SizedBox(width: 5),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            commonText(text: widget.userName),
+                            SizedBox(height: 4),
+                            commonText(text: widget.time,color: AppColor.borderColor,fontWeight: FontWeight.w400,fontSize: 12),
+                          ],
+                        ),
                       ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 5),
+                      child: commonHTMLText(message: widget.msgToForward),
                     ),
                   ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 5),
-                  child: commonHTMLText(message: widget.msgToForward),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 20),
+                child: Row(
+                  children: [
+                    Flexible(child: Container(
+                        margin: EdgeInsets.only(right: 10),
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColor.borderColor)
+                        ),
+                        child: commonElevatedButton(onPressed: () => pop(), buttonText: "Cancel",backgroundColor: Colors.transparent,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black))),
+                    Flexible(child: commonElevatedButton(onPressed: () {
+                      pop();
+                      for (var item in itemInfo) {
+                        if (item['type'] == 'user') {
+                          chatProvider.forwardMessage(forwardBody: {
+                            "content": contentController.text.trim(),
+                            "receiverId": item['id'],
+                            "senderId": signInModel.data?.user!.id,
+                            "isForwarded": true.toString(),
+                            "forwardFrom": widget.forwardMsgId
+                          }, );
+                        } else if (item['type'] == 'channel') {
+                          chatProvider.forwardMessage(forwardBody: {
+                            "content": contentController.text.trim(),
+                            "isForwarded": true.toString(),
+                            "forwardFrom": widget.forwardMsgId,
+                            "channelId": item['id']
+                          }, );
+                        }
+                      }
+
+                    }, buttonText: "Forward"))
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 20),
-            child: Row(
-              children: [
-                Flexible(child: Container(
-                  margin: EdgeInsets.only(right: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColor.borderColor)
-                  ),
-                    child: commonElevatedButton(onPressed: () => pop(), buttonText: "Cancel",backgroundColor: Colors.transparent,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black))),
-                Flexible(child: commonElevatedButton(onPressed: () {}, buttonText: "Forward"))
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },),
     );
   }
 }
 class CombinedItem {
   final bool isChannel;
-  final dynamic item; // Can be User or Channel
+  final dynamic item;
 
   CombinedItem({required this.isChannel, required this.item});
 }

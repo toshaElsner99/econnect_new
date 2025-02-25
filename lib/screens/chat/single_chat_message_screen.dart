@@ -822,7 +822,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           ],
                         ),
 
-                        Visibility(
+                      Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(
                             padding: EdgeInsets.symmetric(vertical: 16,horizontal: 20),
@@ -852,7 +852,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   ),
                                 ],),
                               ),
-                              commonText(text: "${messageList.forwardInfo?.content}"),
+                                commonHTMLText(message: "${messageList.forwardInfo?.content}"),
                                 Visibility(
                                   visible: messageList.forwardInfo?.files.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -1053,10 +1053,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 popMenu2(context,
                   onOpened: () =>  setState(() => _selectedIndex = index),
                   onClosed: () =>  setState(() => _selectedIndex = null),
+                  isForwarded: messageList.isForwarded! ? false : true,
                   opened: index == _selectedIndex ? true : false,
                   createdAt: messageList.createdAt!,
                   currentUserId: userId,
-                  onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.avatarUrl ?? '')),
+                  onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.avatarUrl ?? '',forwardMsgId: messageId,)),
                   // onForward: () => commonForwardMSGDialog(context: context,userName: "",time: "",msgToForward: "",userID: "",otherUserProfile: ""),
                   onReply: () {
                     print("onReply Passing = ${messageId.toString()}");
