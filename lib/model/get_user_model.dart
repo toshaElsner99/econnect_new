@@ -136,7 +136,7 @@ class User {
         muteUsers!.add(v);
       });
     }
-    isLeft = json['isLeft'];
+    isLeft = json['isLeft'] ?? false;
     if (json['custom_status_history'] != null) {
       customStatusHistory = <dynamic>[];
       json['custom_status_history'].forEach((v) {
@@ -181,7 +181,7 @@ class User {
     if (muteUsers != null) {
       data['mute_users'] = muteUsers!.map((v) => v).toList();
     }
-    data['isLeft'] = isLeft;
+    data['isLeft'] = isLeft ?? false;
     if (customStatusHistory != null) {
       data['custom_status_history'] =
           customStatusHistory!.map((v) => v).toList();

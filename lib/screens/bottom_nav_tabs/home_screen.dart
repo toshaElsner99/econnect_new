@@ -21,6 +21,7 @@ import '../../providers/common_provider.dart';
 import '../../socket_io/socket_io.dart';
 import '../../utils/app_preference_constants.dart';
 import '../../utils/common/common_function.dart';
+import '../channel/channel_members_info.dart';
 import '../chat/single_chat_message_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -254,13 +255,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(
                       commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite.sId) ?? false != true
-                          ? Icons.notifications_off_outlined
-                          : Icons.notifications_none,
+                          ? Icons.notifications_none
+                          : Icons.notifications_off_outlined,
                       size: 20),
                   SizedBox(width: 10),
                   commonText(
-                      text: signInModel.data?.user!.muteUsers!
-                          .contains(favorite.sId) !=
+                      text: commonProvider.getUserModel?.data?.user!.muteUsers!.contains(favorite.sId) !=
                           true
                           ? "Mute Conversation"
                           : "Unmute Conversation"),
@@ -346,8 +346,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(
                       commonProvider.getUserModel?.data?.user?.muteUsers?.contains(chatLisDirectMessage.sId) ?? false != true
-                          ? Icons.notifications_off_outlined
-                          : Icons.notifications_none,
+                          ? Icons.notifications_none
+                          : Icons.notifications_off_outlined,
                       size: 20),
                   SizedBox(width: 10),
                   commonText(
@@ -794,7 +794,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       margin: const EdgeInsets.symmetric(vertical: 6),
       child: InkWell(
         onTap: () {
-          // Handle channel row tap
+          print("Channel Tapped");
+          Navigator.push(context, MaterialPageRoute(builder: (context) => ChannelMembersInfo(channelId: channel.sId ?? "", channelName: channel.name!)));
         },
         borderRadius: BorderRadius.circular(8),
         child: Padding(

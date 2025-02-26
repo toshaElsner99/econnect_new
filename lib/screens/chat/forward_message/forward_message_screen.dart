@@ -62,7 +62,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        leading: IconButton(onPressed: () => pop(), icon: Icon(Icons.close)),
+        leading: IconButton(onPressed: () => pop(), icon: Icon(Icons.close,color: Colors.white,)),
         titleSpacing: 0,
         title: commonText(text: "Forward Message", color: Colors.white)
       ),
@@ -71,11 +71,11 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Divider(height: 1,),
+              Divider(height: 1),
               Container(
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                    color: AppColor.appBarColor.withOpacity(0.5),
+                    color: AppPreferenceConstants.themeModeBoolValueGet == false ? AppColor.appBarColor : AppColor.appBarColor.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppColor.borderColor.withOpacity(0.5))),
                 margin: EdgeInsets.all(20),
@@ -84,7 +84,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                   children: [
                     Icon(Icons.info, color: Colors.white,),
                     SizedBox(width: 10,),
-                    Flexible(child: commonText(text: "This message is from a private conversation", fontSize: 18,fontWeight: FontWeight.w500,height: 1.2)),
+                    Flexible(child: commonText(text: "This message is from a private conversation", fontSize: 18,fontWeight: FontWeight.w500,height: 1.2,color: Colors.white)),
                   ],
                 ),
               ),
@@ -105,7 +105,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20),
+                padding: const EdgeInsets.only(top: 10.0, right: 20,left: 20),
                 child: Container(child: commonTextFormField(controller: channelListProvider.searchController, hintText: "Search People",suffixIcon: channelListProvider.combinedList.isEmpty ? null : IconButton(onPressed: () => channelListProvider.clearList(), icon: Icon(Icons.close)))),
               ),
               Visibility(
@@ -132,61 +132,136 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                     },
                       Container(
                         margin: EdgeInsets.symmetric(horizontal: 20),
-                        color: Colors.white12,
-                        child: ListView.builder(
+                        decoration: BoxDecoration(
+                          color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white12 : Colors.white,
+                          border: Border.all(color: AppColor.borderColor),
+                          borderRadius: BorderRadius.circular(5)
+                        ),
+                        // child: ListView.separated(
+                        //   shrinkWrap: true,
+                        //   itemBuilder: (context, index) {
+                        //     return (index == 0 || index == channelListProvider.combinedList.length -1 ) ? null : Divider();
+                        //   },
+                        //   itemCount: channelListProvider.combinedList.length,
+                        //   padding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
+                        //   separatorBuilder: (context, index) {
+                        //     final list = channelListProvider.combinedList[index];
+                        //     print("list>>> ${list['fullName']}");
+                        //     return GestureDetector(
+                        //       onTap: () {
+                        //        setState(() {
+                        //          if(list['type'] == "user"){
+                        //            itemInfo.add({
+                        //              'type' : "user",
+                        //              'name': list['fullName'] ?? list['username'],
+                        //              'id': list['userId'],
+                        //            });
+                        //          }else{
+                        //            itemInfo.add({
+                        //              'type' : "channel",
+                        //              'name': list['name'],
+                        //              'id': list['id'],
+                        //            });
+                        //          }
+                        //          itemInfo.forEach((element) {
+                        //            print("element>>> $element");
+                        //          },);
+                        //          channelListProvider.clearList();
+                        //        });
+                        //       },
+                        //       child: Padding(
+                        //         padding: const EdgeInsets.only(bottom: 5.0),
+                        //         child: Row(children: [
+                        //           if(list['type'] == 'user')...{
+                        //             profileIconWithStatus(userID: list['userId'], status: "",needToShowIcon: false,otherUserProfile: list['avatarUrl']),
+                        //             SizedBox(width: 10,),
+                        //             commonText(text: "${list['username']}")
+                        //           }else...{
+                        //             Container(
+                        //               alignment: Alignment.center,
+                        //               padding: EdgeInsets.all(13),
+                        //               decoration: BoxDecoration(
+                        //                 color: Colors.green,
+                        //                 shape: BoxShape.circle,
+                        //               ),
+                        //               child: commonText(text: list['name'][0].toString().toUpperCase(),color: Colors.white),
+                        //             ),
+                        //             SizedBox(width: 10,),
+                        //             Flexible(child: commonText(text: "${list['name']}",maxLines: 1))
+                        //           },
+                        //
+                        //         ],),
+                        //       ),
+                        //     );
+                        //   },),
+                        child: ListView.separated(
                           shrinkWrap: true,
                           itemCount: channelListProvider.combinedList.length,
-                          padding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                           itemBuilder: (context, index) {
                             final list = channelListProvider.combinedList[index];
-                            print("list>>> ${list['fullName']}");
+
                             return GestureDetector(
                               onTap: () {
-                               setState(() {
-                                 if(list['type'] == "user"){
-                                   itemInfo.add({
-                                     'type' : "user",
-                                     'name': list['fullName'] ?? list['username'],
-                                     'id': list['userId'],
-                                   });
-                                 }else{
-                                   itemInfo.add({
-                                     'type' : "channel",
-                                     'name': list['name'],
-                                     'id': list['id'],
-                                   });
-                                 }
-                                 itemInfo.forEach((element) {
-                                   print("element>>> $element");
-                                 },);
-                                 channelListProvider.clearList();
-                               });
+                                setState(() {
+                                  if (list['type'] == "user") {
+                                    itemInfo.add({
+                                      'type': "user",
+                                      'name': list['fullName'] ?? list['username'],
+                                      'id': list['userId'],
+                                    });
+                                  } else {
+                                    itemInfo.add({
+                                      'type': "channel",
+                                      'name': list['name'],
+                                      'id': list['id'],
+                                    });
+                                  }
+                                  itemInfo.forEach((element) {
+                                    print("element>>> $element");
+                                  });
+                                  channelListProvider.clearList();
+                                });
                               },
                               child: Padding(
                                 padding: const EdgeInsets.only(bottom: 5.0),
-                                child: Row(children: [
-                                  if(list['type'] == 'user')...{
-                                    profileIconWithStatus(userID: list['userId'], status: "",needToShowIcon: false,otherUserProfile: list['avatarUrl']),
-                                    SizedBox(width: 10,),
-                                    commonText(text: "${list['username']}")
-                                  }else...{
-                                    Container(
-                                      alignment: Alignment.center,
-                                      padding: EdgeInsets.all(13),
-                                      decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
+                                child: Row(
+                                  children: [
+                                    if (list['type'] == 'user') ...{
+                                      profileIconWithStatus(
+                                        userID: list['userId'],
+                                        status: "",
+                                        needToShowIcon: false,
+                                        otherUserProfile: list['avatarUrl'],
                                       ),
-                                      child: commonText(text: list['name'][0].toString().toUpperCase()),
-                                    ),
-                                    SizedBox(width: 10,),
-                                    Flexible(child: commonText(text: "${list['name']}",maxLines: 1))
-                                  },
-
-                                ],),
+                                      SizedBox(width: 10),
+                                      commonText(text: "${list['username']}")
+                                    } else ...{
+                                      Container(
+                                        alignment: Alignment.center,
+                                        padding: EdgeInsets.all(13),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: commonText(
+                                          text: list['name'][0].toString().toUpperCase(),
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                      Flexible(child: commonText(text: "${list['name']}", maxLines: 1))
+                                    },
+                                  ],
+                                ),
                               ),
                             );
-                          },),
+                          },
+                          separatorBuilder: (context, index) {
+                            // You can customize the separator here
+                            return Divider();
+                          },
+                        ),
                       ) ,
                     ],
                   ),
@@ -207,7 +282,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
               Container(
                 margin: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 decoration: BoxDecoration(
-                    color: AppColor.boxBgColor,
+                    color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.boxBgColor : Colors.white,
                     borderRadius: BorderRadius.circular(7),
                     border: Border.all(color: AppColor.borderColor)),
                 padding: EdgeInsets.symmetric(horizontal: 15, vertical: 20),
@@ -243,7 +318,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0,vertical: 20),
                 child: Row(
                   children: [
                     Flexible(child: Container(

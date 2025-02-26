@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:e_connect/model/browse_and_search_channel_model.dart';
 import 'package:e_connect/model/channel_list_model.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
@@ -6,25 +8,30 @@ import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 
 import '../main.dart';
+import '../model/channel_members_model.dart';
 import '../model/direct_message_list_model.dart';
 import '../model/get_users_suggestions.dart';
 import '../model/sign_in_model.dart';
 import '../screens/chat/forward_message/forward_message_screen.dart';
 import 'common_provider.dart';
+import 'package:http/http.dart' as http;
 
 
 
 class ChannelListProvider extends ChangeNotifier{
-final commonCubit = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
+final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
   FavoriteListModel? favoriteListModel;
   ChannelListModel? channelListModel;
   DirectMessageListModel? directMessageListModel;
   BrowseAndSearchChannelModel? browseAndSearchChannelModel;
   GetUserSuggestions? getUserSuggestions;
   SearchUserModel? searchUserModel;
+ List<MemberDetails> channelMembersList = [];
+
 
   /// GET FAVORITE LIST IN HOME SCREEN ///
   Future<void> getFavoriteList()async{
@@ -171,6 +178,7 @@ bool isLoading = false;
 
   Future<void> removeFromFavorite({
     required String favouriteUserId,
+    bool? needToUpdateGetUserModel,
   }) async {
     final requestBody = {
       "userId": signInModel.data?.user?.id,
@@ -181,11 +189,13 @@ bool isLoading = false;
         method: Method.POST,
         reqBody: requestBody);
     if (statusCode200Check(response)) {
-      // browseAndSearchChannelModel = BrowseAndSearchChannelModel.fromJson(response);
       getFavoriteList();
       getChannelList();
       getDirectMessageList();
-      // emit(ChannelListInitial());
+      if(needToUpdateGetUserModel == true){
+        commonProvider.getUserModelSecondUser?.data?.user?.isFavourite  = false;
+        notifyListeners();
+      }
     }
     notifyListeners();
   }
@@ -210,7 +220,6 @@ bool isLoading = false;
   Future<void> muteUser({
     required String userIdToMute,
     required bool isForMute,
-    bool? needToCallGetUser = false,
   }) async {
     final requestBodyForMuteUser = {
        "userIdToMute": userIdToMute
@@ -226,9 +235,7 @@ bool isLoading = false;
       getFavoriteList();
       getChannelList();
       getDirectMessageList();
-      if(needToCallGetUser==true){
-        Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false).getUserByIDCall();
-      }
+      Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false).getUserByIDCall();
       notifyListeners();
     }
   }
@@ -333,6 +340,7 @@ bool isLoading = false;
 
 Future<void> addUserToFavorite({
     required String favouriteUserId,
+    bool? needToUpdateGetUserModel,
   }) async {
     final requestBody = {
       "userId": signInModel.data?.user?.id,
@@ -346,6 +354,10 @@ Future<void> addUserToFavorite({
           getFavoriteList();
           getChannelList();
           getDirectMessageList();
+            if(needToUpdateGetUserModel == true){
+              commonProvider.getUserModelSecondUser?.data?.user?.isFavourite  = true;
+              notifyListeners();
+          }
     }
     notifyListeners();
   }
@@ -397,4 +409,45 @@ Future<void> addChannelToFavorite({
       reqBody: requestBody,
       );
   }
+
+
+/// GET Channel Members List ///
+Future<void> getChannelMembersList(String channelId) async {
+  print("channelId>>>> $channelId");
+  final response = await ApiService.instance.request(
+      endPoint: ApiString.getChannelMembersList(channelId),
+      method: Method.GET);
+  if (statusCode200Check(response)) {
+    channelMembersList = (response['data']['memberDetails'] as List)
+        .map((list) => MemberDetails.fromJson(list as Map<String, dynamic>))
+        .toList();
+    print("channelMembersList => ${channelMembersList.length}");
+  }
+  notifyListeners();
+}
+
+/// ADD MEMBER TO CHANNEL ///
+Future<void> addMembersToChannel({
+  required String channelId,
+  required List<String> userIds,
+}) async {
+  var headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ${signInModel.data!.authToken}',
+  };
+  var request = http.Request('PUT', Uri.parse(ApiString.baseUrl + ApiString.addMembersToChannel(channelId)));
+  request.body = json.encode({
+    "members": userIds
+  });
+  request.headers.addAll(headers);
+
+  http.StreamedResponse response = await request.send();
+
+  if (response.statusCode == 200) {
+    getChannelMembersList(channelId);
+  }
+  else {
+    print(response.reasonPhrase);
+  }
+}
 }

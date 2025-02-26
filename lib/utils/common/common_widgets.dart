@@ -7,6 +7,7 @@ import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
@@ -567,6 +568,7 @@ return  showMenu<int>(
 Widget popMenu2(
     BuildContext context, {
       required bool opened,
+      required bool isPinned,
       required VoidCallback onOpened,
       required VoidCallback onClosed,
       required VoidCallback onForward,
@@ -638,7 +640,7 @@ Widget popMenu2(
         List<PopupMenuEntry<int>> menuItems = [
 
           _menuItem(1, Icons.reply, "Reply"),
-          _menuItem(2, Icons.push_pin, "Pin to Channel"),
+          _menuItem(2, Icons.push_pin, isPinned ? "Unpin from Channel": "Pin to Channel"),
           _menuItem(3, Icons.copy, "Copy Text"),
         ];
         if(isForwarded == true){
@@ -731,7 +733,7 @@ Widget popMenuForReply2(
       itemBuilder: (context) {
         List<PopupMenuEntry<int>> menuItems = [
           _menuItem(0, Icons.forward, "Forward"),
-          _menuItem(1, Icons.push_pin, isPinned ? "Unpin to Channel" : "Pin to Channel"),
+          _menuItem(1, Icons.push_pin, isPinned ? "Unpin from Channel" : "Pin to Channel"),
 
         ];
 
@@ -764,7 +766,9 @@ PopupMenuItem<int> _menuItem(int value, IconData icon, String text, {Color color
       children: [
         Icon(icon, color: color, size: 18),
         const SizedBox(width: 10),
-        Text(text, style: TextStyle(color: color)),
+        FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(text, style: TextStyle(color: color))),
       ],
     ),
   );
@@ -1410,14 +1414,82 @@ Widget commonText({
   );
 }
 
-Widget commonHTMLText({required String message}){
+// Widget commonHTMLText({required String message}){
+//   return HtmlWidget(
+//     message.replaceAllMapped(
+//       RegExp(r'<ul class="renderer_bulleted">.*?</ul>', dotAll: true),
+//           (match) {
+//         return match.group(0)!.replaceAll('<li>', '• ').replaceAll('</li>', '\n');
+//       },
+//     ),
+//     textStyle: TextStyle(
+//       height: 1.2,
+//       fontFamily: AppFonts.interFamily,
+//       color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+//       fontSize: 16,
+//     ),
+//     customStylesBuilder: (element) {
+//       // Base styles for all text
+//       Map<String, String> styles = {
+//         'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
+//       };
+//
+//       // Add additional styles for special formatting
+//       if (element.classes.contains('renderer_bold')) {
+//         styles['font-weight'] = 'bold';
+//       }
+//       if (element.classes.contains('renderer_italic')) {
+//         styles['font-style'] = 'italic';
+//       }
+//       if (element.classes.contains('renderer_strikethrough')) {
+//         styles['text-decoration'] = 'line-through';
+//       }
+//       if (element.classes.contains('renderer_link')) {
+//         styles['color'] = '#2196F3';
+//       }
+//       if (element.classes.contains('renderer_emoji')) {
+//         styles['display'] = 'inline-block';
+//         styles['vertical-align'] = 'middle';
+//       }
+//
+//       return styles;
+//     },
+//     customWidgetBuilder: (element) {
+//       if (element.classes.contains('renderer_emoji')) {
+//         final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
+//         if (imageUrl != null) {
+//           return CachedNetworkImage(
+//             imageUrl: imageUrl,
+//             width: 21,
+//             height: 21,
+//             fit: BoxFit.contain,
+//           );
+//         }
+//       }
+//       return null;
+//     },
+//     enableCaching: true,
+//   );
+// }
+Widget commonHTMLText({required String message}) {
+  // Replace @usernames with a span for custom styling
+  String processedMessage = message.replaceAllMapped(
+    RegExp(r'@(\w+)'),
+        (match) {
+      return '<span class="username">@${match.group(1)}</span>';
+    },
+  );
+
+  // Process other HTML tags as needed (e.g., bullet lists)
+  processedMessage = processedMessage.replaceAllMapped(
+    RegExp(r'<ul class="renderer_bulleted">.*?</ul>', dotAll: true),
+        (match) {
+      return match.group(0)!.replaceAll('<li>', '• ').replaceAll('</li>', '\n');
+    },
+  );
+
   return HtmlWidget(
-    message.replaceAllMapped(
-      RegExp(r'<ul class="renderer_bulleted">.*?</ul>', dotAll: true),
-          (match) {
-        return match.group(0)!.replaceAll('<li>', '• ').replaceAll('</li>', '\n');
-      },
-    ),
+    processedMessage,
     textStyle: TextStyle(
       height: 1.2,
       fontFamily: AppFonts.interFamily,
@@ -1425,12 +1497,10 @@ Widget commonHTMLText({required String message}){
       fontSize: 16,
     ),
     customStylesBuilder: (element) {
-      // Base styles for all text
       Map<String, String> styles = {
         'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
       };
 
-      // Add additional styles for special formatting
       if (element.classes.contains('renderer_bold')) {
         styles['font-weight'] = 'bold';
       }
@@ -1446,6 +1516,13 @@ Widget commonHTMLText({required String message}){
       if (element.classes.contains('renderer_emoji')) {
         styles['display'] = 'inline-block';
         styles['vertical-align'] = 'middle';
+      }
+      if (element.classes.contains('username')) {
+        // Styling specifically for @username
+        styles['background-color'] = '#A1A1A1';  // Example: Blue background
+        styles['color'] = '#FFFFFF';  // White text
+        styles['border-radius'] = '5px';
+        styles['padding'] = '2px 6px';
       }
 
       return styles;
@@ -1467,7 +1544,6 @@ Widget commonHTMLText({required String message}){
     enableCaching: true,
   );
 }
-
 
 Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false, Color? color}){
   return Container(
@@ -1846,6 +1922,8 @@ Widget commonElevatedButton({
 
 Widget commonButtonForHeaderFavoriteInfoCallMute(
     {required String icon,
+      required bool needAssetIcon,
+      IconData? iconData,
       required String label,
       required VoidCallback onTap,
       required BuildContext context,
@@ -1864,11 +1942,15 @@ Widget commonButtonForHeaderFavoriteInfoCallMute(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Image.asset(
-            icon,
-            color: isSelected ? AppColor.blueCommonColor : AppColor.whiteColor,
-            height: 20,width: 20,
-          ),
+          if(needAssetIcon)...{
+            Image.asset(
+              icon,
+              color: isSelected ? AppColor.blueCommonColor : AppColor.whiteColor,
+              height: 20,width: 20,
+            ),
+          }else...{
+            Icon(iconData,size: 20, color :isSelected ? AppColor.blueCommonColor : AppColor.whiteColor)
+          },
           const SizedBox(height: 4),
           commonText(
             text: label,
@@ -1881,6 +1963,17 @@ Widget commonButtonForHeaderFavoriteInfoCallMute(
   );
 }
 
+Widget customLoading(){
+  return Expanded(
+    child: Center(
+      child: SpinKitCircle(
+        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.appBarColor,
+        size: 50.0,
+      ),
+    ),
+  );
+}
+
 void showChatSettingsBottomSheet({required String userId}) {
   showModalBottomSheet(
     context: navigatorKey.currentState!.context,
@@ -1888,7 +1981,9 @@ void showChatSettingsBottomSheet({required String userId}) {
     builder: (context) {
       return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider,commonProvider, child) {
         final isMutedUser = commonProvider.getUserModel?.data?.user?.muteUsers?.contains(userId) ?? false;
+        final isFavoriteUser = commonProvider.getUserModelSecondUser?.data?.user?.isFavourite ?? false;
         print("isMutedUserSHEET>>>>> $isMutedUser");
+        print("isFavoriteUserSHEET>>>>> $isFavoriteUser");
         return Container(
           decoration: BoxDecoration(
             color: AppColor.dialogBgColor,
@@ -1928,17 +2023,26 @@ void showChatSettingsBottomSheet({required String userId}) {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    // commonButtonForHeaderFavoriteInfoCallMute(
-                    //     icon: Icons.star,
-                    //     label: 'Favorited',
-                    //     onTap: () {},
-                    //     context: context,
-                    //     totalButtons: 4
-                    // ),
                     commonButtonForHeaderFavoriteInfoCallMute(
-                        icon: isMutedUser ? AppImage.unMuteNotification : AppImage.muteNotification,
-                        label: isMutedUser ? 'Mute' : 'Muted',
-                        onTap: () => Provider.of<ChannelListProvider>(context,listen: false).muteUser(userIdToMute: userId, isForMute: isMutedUser != false ? false : true,needToCallGetUser: true),
+                        icon: '',
+                        iconData: isFavoriteUser ? Icons.star : CupertinoIcons.star,
+                        needAssetIcon: false,
+                        label: isFavoriteUser ? 'Favorited' : "Favorite",
+                        onTap: () {
+                          if(isFavoriteUser){
+                            channelListProvider.removeFromFavorite(favouriteUserId: userId,needToUpdateGetUserModel: true);
+                          }else {
+                            channelListProvider.addUserToFavorite(favouriteUserId: userId,needToUpdateGetUserModel: true);
+                          }
+                        },
+                        context: context,
+                        totalButtons: 4
+                    ),
+                    commonButtonForHeaderFavoriteInfoCallMute(
+                        needAssetIcon: true,
+                        icon: isMutedUser ? AppImage.muteNotification : AppImage.unMuteNotification,
+                        label: isMutedUser ? 'Muted' : 'Mute',
+                        onTap: () => Provider.of<ChannelListProvider>(context,listen: false).muteUser(userIdToMute: userId, isForMute: isMutedUser  ? true : false),
                         context: context,
                         totalButtons: 4
                     ),

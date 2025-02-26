@@ -6,6 +6,7 @@ import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:flutter/cupertino.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../model/get_user_mention_model.dart';
 import '../screens/sign_in_screen/sign_in_Screen.dart';
 import '../utils/common/common_function.dart';
 import '../utils/common/prefrance_function.dart';
@@ -19,6 +20,7 @@ class CommonProvider extends ChangeNotifier {
   String customStatusUrl = "";
   String customStatusTitle = "";
   bool isMutedUser = false;
+  GetUserMentionModel? getUserMentionModel;
 
   void updatesCustomStatus(){
     selectedIndexOfStatus = null;
@@ -98,21 +100,28 @@ class CommonProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  Future<void> getUserByIDCallForSecondUser({String? userId}) async {
+  bool isLoadingGetUser = false;
+  Future<GetUserModelSecondUser?> getUserByIDCallForSecondUser({String? userId}) async {
     print("Called>>>>getUserByIDCallForSecondUser>>>");
-    if(userId != (getUserModelSecondUser?.data?.user?.sId ?? "")){
-      getUserModelSecondUser = null;
+    try{
+      isLoadingGetUser = true;
+      if(userId != (getUserModelSecondUser?.data?.user?.sId ?? "")){
+        getUserModelSecondUser = null;
+        notifyListeners();
+      }
+      final response = await ApiService.instance.request(
+        endPoint: "${ApiString.getUserById}/$userId", method: Method.GET,);
+      if (statusCode200Check(response)) {
+        getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
+        print("getUserByIDCallForSecondUser>>>${getUserModelSecondUser?.data?.user?.pinnedMessageCount}");
+        return getUserModelSecondUser;
+      }
+    }catch (e){
+      print("error>>>> $e");
+    }finally {
+      isLoadingGetUser = false;
       notifyListeners();
-    }
-    final response = await ApiService.instance.request(
-      endPoint: "${ApiString.getUserById}/$userId", method: Method.GET,);
-    if (statusCode200Check(response)) {
-      getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
-      print("getUserByIDCallForSecondUser>>>${getUserModelSecondUser?.data?.user?.pinnedMessageCount}");
-      notifyListeners();
-    }
-  }
+  }}
 
   Future<GetUserModel?> getUserByIDCall2({String? userId}) async {
     final response = await ApiService.instance.request(
@@ -125,4 +134,12 @@ class CommonProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+  Future<void> getUserApi({required String id})async{
+    final requestBody = {"type": "message", "id": id};
+    final response = await ApiService.instance.request(endPoint: ApiString.getUser, method: Method.POST,reqBody: requestBody);
+    if (statusCode200Check(response)) {
+      getUserMentionModel = GetUserMentionModel.fromJson(response);
+    }
+  }
+
 }

@@ -1,142 +1,6 @@
-// import 'dart:io';
-//
-// import 'package:e_connect/chat_model.dart';
-// import 'package:e_connect/socket_io/socket_io.dart';
-// import 'package:file_picker/file_picker.dart';
-// import 'package:flutter/cupertino.dart';
-// import 'package:provider/provider.dart';
-//
-// import '../../main.dart';
-// import '../../model/get_user_model.dart';
-// import '../../model/message_model.dart';
-// import '../../utils/api_service/api_service.dart';
-// import '../../utils/api_service/api_string_constants.dart';
-// import '../../utils/common/common_function.dart';
-//
-//
-//
-// class ChatProvider extends  ChangeNotifier {
-//   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
-//   List<MessageGroups> messageGroups = [];
-//   String? lastOpenedUserId;
-//   String oppUserIdForTyping = "";
-//   int msgLength = 0;
-//   final Map<String, dynamic> userCache = {};
-//
-//   // ChatModel? chatModel;
-//   // MessageModel? messageModel;
-//   getTypingUpdate(){
-//     try {
-//       socketProvider.socket.onAny((event, data) {
-//         print("Event: $event >>> Data: $data");
-//         if (data['type'] == "userTyping" && data['data'] is List) {
-//           var typingData = data['data'];
-//           if (typingData.isNotEmpty) {
-//               msgLength = data['msgLength'] ?? 0;
-//               oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
-//               notifyListeners();
-//             print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength");
-//           } else {
-//               msgLength = 0;
-//               oppUserIdForTyping = "";
-//               notifyListeners();
-//             print("Data array is empty.");
-//           }
-//         } else {
-//           print("Received data is not of the expected structure.");
-//         }
-//       });
-//     } catch (e) {
-//       print("Error processing the socket event: $e");
-//     }finally{
-//       notifyListeners();
-//     }
-//   }
-//
-//
-//   Future<void> getMessagesList(String oppositeUserId,[bool? check]) async {
-//     if (lastOpenedUserId != oppositeUserId) {
-//       messageGroups.clear();
-//       userCache.clear();
-//     }
-//     final response = await ApiService.instance.request(
-//         endPoint: ApiString.getMessages,
-//         method: Method.POST,
-//         reqBody: {
-//           "userId": signInModel.data!.user!.id,
-//           "oppositeUserId": oppositeUserId,
-//           "pageNo": "1"
-//         });
-//     if (statusCode200Check(response)) {
-//       messageGroups = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-//       print("Messages == ${messageGroups.length}");
-//       print("First group == ${messageGroups[0].sId}");
-//       lastOpenedUserId = oppositeUserId;
-//     }
-//     notifyListeners();
-//   }
-//
-//   Future<void> getMessagesList2(String oppositeUserId,[bool? check]) async {
-//     print("getMessagesList2>>>>>");
-//     // if(check == true){
-//     //   print("claaeddd");
-//     // }
-//     if (lastOpenedUserId != oppositeUserId) {
-//       // messageModel = null;
-//       messageGroups.clear();
-//       notifyListeners();
-//     }
-//     final response = await ApiService.instance.request(
-//         endPoint: ApiString.getMessages,
-//         method: Method.POST,
-//         reqBody: {
-//           "userId": signInModel.data!.user!.id,
-//           "oppositeUserId": oppositeUserId,
-//           "pageNo": "1"
-//         });
-//     if (statusCode200Check(response)) {
-//       // messageModel = MessageModel.fromJson(response);
-//       messageGroups = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-//       // print("Messages == ${messageGroups.length}");
-//       // print("First group == ${messageGroups[0].sId}");
-//       lastOpenedUserId = oppositeUserId;
-//       notifyListeners();
-//     }
-//   }
-//
-//
-//   Future<void> sendMessage({required dynamic content , required String receiverId, required String senderId, List<PlatformFile>? selectedFiles,})async{
-//     final requestBody = {
-//       "content": content,
-//       "receiverId": receiverId,
-//       "senderId": senderId
-//     };
-//     if (selectedFiles != null && selectedFiles.isNotEmpty) {
-//       List<File> files = selectedFiles
-//           .where((file) => file.path != null)
-//           .map((file) => File(file.path!))
-//           .toList();
-//       requestBody["files"] = files.map((file) => "message_media/${file.path.split('/').last}").toList();
-//     }
-//     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
-//     if(statusCode200Check(response)){
-//         getMessagesList(receiverId);
-//       socketProvider.sendMessages(response:response['data']);
-//     }
-//   }
-//
-//   Future<void> deleteMessage({required String messageId,required String receiverId})async{
-//     final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE);
-//     if(statusCode200Check(response)){
-//       getMessagesList(receiverId);
-//       socketProvider.sendMessages(response:response['data']);
-//     }
-//   }
-// }
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:e_connect/screens/chat/single_chat_message_screen.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:file_picker/file_picker.dart';
@@ -165,13 +29,13 @@ class ChatProvider extends  ChangeNotifier {
   String oppUserIdForTyping = "";
   int msgLength = 0;
   bool idChatListLoading = false;
-  final Map<String, dynamic> userCache = {};
   final ScrollController scrollController = ScrollController();
   int currentPage = 1;
   int totalPages = 0;
   GetReplyMessageModel? getReplyMessageModel;
   FilesListingInChatModel? filesListingInChatModel;
   bool isGettingListFalse = false;
+
   clearForFirstTimeMessages(bool needToCLear) {
     if (needToCLear) {
       messageGroups.clear();
@@ -179,31 +43,55 @@ class ChatProvider extends  ChangeNotifier {
     }
     notifyListeners();
   }
-
-  // void pagination({required String oppositeUserId}) {
-  //   scrollController.addListener(() {
-  //     if (scrollController.position.pixels ==
-  //         scrollController.position.maxScrollExtent &&
-  //         currentPage < totalPages) { // currentPage is less than totalPages
-  //       currentPage = currentPage + 1; // Increment the currentPage to load the next page
-  //       notifyListeners(); // Update listeners for UI changes
-  //
-  //       getMessagesList(oppositeUserId: oppositeUserId);
-  //
-  //       print('currentPage:--->$currentPage');
-  //     }
-  //   });
-  // }
   void pagination({required String oppositeUserId}) {
     scrollController.addListener(() {
       if (scrollController.position.pixels == scrollController.position.maxScrollExtent && currentPage < totalPages) {
-        currentPage++; // Increment the currentPage to load the next page
-        getMessagesList(oppositeUserId: oppositeUserId,storeLatest: false); // Fetch the next page of messages
+        currentPage++;
+        getMessagesList(oppositeUserId: oppositeUserId,);
         print('currentPage:--->$currentPage');
       }
     });
+    notifyListeners();
   }
+  Future<void> getMessagesList({required String oppositeUserId,/* bool? needClearFirstTime, bool? callingFromSC*/}) async {
+    try {
+      if (lastOpenedUserId != oppositeUserId) {
+        messageGroups.clear();
+        totalPages = 0;
+        currentPage = 1;
+        idChatListLoading = true;
+      }
+      // if (needClearFirstTime == true) {
+      //   totalPages = 0;
+      //   currentPage = 1;
+      // }
+      // if(currentPage != 0 && callingFromSC == true){
+      //   messageGroups.clear();
+      //   totalPages = 0;
+      //   currentPage = 1;
+      //   idChatListLoading = true;
+      // }
+      final response = await ApiService.instance.request(
+          endPoint: ApiString.getMessages,
+          method: Method.POST,
+          reqBody: {
+            "userId": signInModel.data!.user!.id,
+            "oppositeUserId": oppositeUserId,
+            "pageNo": currentPage.toString()
+          });
 
+      if (statusCode200Check(response)) {
+          messageGroups.addAll((response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList());
+          totalPages = response['data']['totalPages'];
+          lastOpenedUserId = oppositeUserId;
+      }
+    } catch (e) {
+      print("ERROR>>>$e");
+    } finally {
+      idChatListLoading = false;
+      notifyListeners();
+    }
+  }
   getTypingUpdate() {
     try {
       socketProvider.socket.onAny((event, data) {
@@ -231,11 +119,9 @@ class ChatProvider extends  ChangeNotifier {
       notifyListeners();
     }
   }
-
   void disposeReplyMSG(){
     socketProvider.socket.off("reply_notification");
   }
-
   void getReplyListUpdateSC(String mId) {
     try {
       // Remove any existing listener before adding a new one
@@ -258,8 +144,6 @@ class ChatProvider extends  ChangeNotifier {
       notifyListeners();
     }
   }
-
-
   Future<void> getReplyMessageList({required String msgId,required String fromWhere}) async {
     print("getReplyMessageList>>>> $fromWhere");
     print("messageId>>>> $msgId");
@@ -278,92 +162,12 @@ class ChatProvider extends  ChangeNotifier {
       notifyListeners();
     }
   }
-
-
-  ///
   Future<void> seenReplayMessage({required String msgId}) async {
     final requestBody = {
       "messageId": msgId
     };
     final response = await ApiService.instance.request(endPoint: ApiString.replayMsgSeen, method: Method.POST,reqBody: requestBody);
   }
-
-  // Future<void> getMessagesList({required String oppositeUserId, bool? needClearFirstTime}) async {
-  //   if (lastOpenedUserId != oppositeUserId) {
-  //     messageGroups = [];
-  //     messageGroups.clear();
-  //     userCache.clear();
-  //     totalPages = 0;
-  //     currentPage = 1;
-  //   }
-  //   if(needClearFirstTime == true){
-  //     totalPages = 0;
-  //     currentPage = 1;
-  //   }
-  //   final response = await ApiService.instance.request(
-  //       endPoint: ApiString.getMessages,
-  //       method: Method.POST,
-  //       reqBody: {
-  //         "userId": signInModel.data!.user!.id,
-  //         "oppositeUserId": oppositeUserId,
-  //         "pageNo": currentPage.toString()
-  //       });
-  //
-  //   if (statusCode200Check(response)) {
-  //     messageGroups = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-  //     // final newMessages = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-  //     // messageGroups.addAll(newMessages);
-  //     // final newMessages = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-  //     // messageGroups.addAll(newMessages);
-  //     totalPages = response['data']['totalPages'];
-  //     print("Messages == ${messageGroups.length}");
-  //     print("First group == ${messageGroups[0].sId}");
-  //     lastOpenedUserId = oppositeUserId;
-  //     notifyListeners();
-  //   }
-  // }
-  Future<void> getMessagesList({required String oppositeUserId, bool? needClearFirstTime, bool? storeLatest = true}) async {
-    try {
-      if (lastOpenedUserId != oppositeUserId) {
-            messageGroups.clear();
-            userCache.clear();
-            totalPages = 0;
-            currentPage = 1;
-            idChatListLoading = true;
-      }
-      if (needClearFirstTime == true) {
-            totalPages = 0;
-            currentPage = 1;
-      }
-      final response = await ApiService.instance.request(
-          endPoint: ApiString.getMessages,
-          method: Method.POST,
-          reqBody: {
-            "userId": signInModel.data!.user!.id,
-            "oppositeUserId": oppositeUserId,
-            "pageNo": currentPage.toString()
-          });
-
-      if (statusCode200Check(response)) {
-        // if(storeLatest == true){
-        //   messageGroups = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-        // }else{
-        //   final newMessages = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-        //   messageGroups.addAll(newMessages);
-        // }
-        messageGroups = (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList();
-        totalPages = response['data']['totalPages'];
-        lastOpenedUserId = oppositeUserId;
-      }
-    } catch (e) {
-      print("ERROR>>>$e");
-    } finally {
-      idChatListLoading = false;
-      notifyListeners();
-    }
-  }
-
-
   Future<List<String>> uploadFiles() async {
    try {
      startLoading();
@@ -411,64 +215,23 @@ class ChatProvider extends  ChangeNotifier {
      stopLoading();
    }
   }
-
-
-
   Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID,})async{
-  //   {
-  //     "content": "G302",
-  //   "receiverId": "676d5d2de010e883aec47240",
-  //   "senderId": "677b7adc3f5bb1fd3416ca3e",
-  //   "isReply": true,
-  //   "replyTo": "67b88a10d75f40cdb09f7afc",
-  //   "isEdit": true,
-  //   "editMessageId": "67bc0583d75f40cdb0a3511a"
-  // }
-  // {
-  //   "content": "files",
-  //   "receiverId": "676d5d2de010e883aec47240",
-  //   "senderId": "677b7adc3f5bb1fd3416ca3e",
-  //   "isReply": true,
-  //   "replyTo": "67b88a10d75f40cdb09f7afc",
-  //   "isEdit": true,
-  //   "editMessageId": "67bc0a75d75f40cdb0a3aaf2"
-  //   }
-  //   final requestBody = {
-  //     "content": content,
-  //     "receiverId": receiverId,
-  //     "senderId": signInModel.data?.user!.id
-  //   };
-  //   if(editMsgID != null && editMsgID.isNotEmpty){
-  //     requestBody["isEdit"] = true;
-  //     requestBody["editMessageId"] = editMsgID;
-  //   }else if(replyId != null){
-  //     requestBody['replyTo'] = replyId;
-  //     requestBody['isReply'] = true;
-  //   }else{
-  //     if (files != null && files.isNotEmpty) {
-  //       requestBody["files"] = files;
-  //     }
-  //   }
-
     final requestBody = {
       "content": content,
       "receiverId": receiverId,
       "senderId": signInModel.data?.user?.id,
     };
 
-    // Always pass reply keys if replyId is provided
     if (replyId != null && replyId.isNotEmpty) {
       requestBody['isReply'] = true;
       requestBody['replyTo'] = replyId;
     }
 
-    // Pass edit keys if editMsgID is provided
     if (editMsgID != null && editMsgID.isNotEmpty) {
       requestBody["isEdit"] = true;
       requestBody["editMessageId"] = editMsgID;
     }
 
-    // Pass files if available
     if (files != null && files.isNotEmpty) {
       requestBody["files"] = files;
     }
@@ -486,28 +249,29 @@ class ChatProvider extends  ChangeNotifier {
     }
     notifyListeners();
   }
-
   Future<void> forwardMessage({required Map<String,dynamic> forwardBody})async{
     final response = await ApiService.instance.request(endPoint: forwardBody.keys.contains('channelId') ? ApiString.sendChannelMessage : ApiString.sendMessage, method: Method.POST,reqBody: forwardBody,needLoader: false);
     if(statusCode200Check(response)){
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: false);
     }
   }
-
   Future<void> deleteMessage({required String messageId,required String receiverId})async{
     final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE);
     if(statusCode200Check(response)){
-      getMessagesList(oppositeUserId: receiverId);
+      // getMessagesList(oppositeUserId: receiverId);
+      deleteMessageFromModelSingleChat(messageId);
       socketProvider.deleteMessagesSC(response: {"data": response['data']});
     }
   }
-
   Future<void> deleteMessageForReply({required String messageId, required firsMessageId,required String userName, required String oppId})async{
     final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE);
     if(statusCode200Check(response)){
-      deleteMessageFromModel(messageId);
+      deleteMessageFromReplyModel(messageId);
       socketProvider.deleteMessagesSC(response: {"data": response['data']});
-      if(firsMessageId == messageId) pushReplacement(screen: SingleChatMessageScreen(userName: userName, oppositeUserId: oppId));
+        if(firsMessageId == messageId) {
+          pop();
+          deleteMessageFromModelSingleChat(messageId);
+        }
     }
   }
   Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned})async{
@@ -524,38 +288,33 @@ class ChatProvider extends  ChangeNotifier {
       socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
     }
   }
-
   void _updatePinnedStatus(String messageId, bool pinned) {
-    // Find the message in the model and update its isPinned status
     for (var messageGroup in getReplyMessageModel?.data?.messages ?? []) {
       for (var message in messageGroup.groupMessages ?? []) {
         if (message.sId == messageId) {
-          message.isPinned = pinned; // Update the isPinned property
-          notifyListeners(); // Notify listeners to update the UI
-          return; // Exit after updating
+          message.isPinned = pinned;
+          notifyListeners();
+          return;
         }
       }
     }
   }
-
-  void deleteMessageFromModel(String messageId) {
+  void deleteMessageFromReplyModel(String messageId) {
     for (var messageGroup in getReplyMessageModel?.data?.messages ?? []) {
       messageGroup.groupMessages?.removeWhere((message) => message.sId == messageId);
     }
     notifyListeners();
   }
-  // void deleteMessageFromModel(String messageId) {
-  //   late MessageModel messageModel;
-  //   for (var messageGroup in messageModel.data?.messageGroups ?? []) {
-  //     messageGroup.messages?.removeWhere((message) => message.sId == messageId);
-  //     if (messageGroup.messages?.isEmpty ?? true) {
-  //       messageModel.data?.messageGroups?.remove(messageGroup);
-  //     }
-  //   }
-
-    // Notify listeners to update the UI
-    // notifyListeners();
-  // }
+  void deleteMessageFromModelSingleChat(String messageId) {
+    for (var messageGroup in messageGroups) {
+      messageGroup.messages?.removeWhere((message) => message.sId == messageId);
+      if (messageGroup.messages?.isEmpty ?? true) {
+        messageGroups.remove(messageGroup);
+        break;
+      }
+    }
+    notifyListeners();
+  }
   Future<void> getFileListingInChat({required String oppositeUserId})async{
     final requestBody = {"oppositeUserId": oppositeUserId};
     final response = await ApiService.instance.request(endPoint: ApiString.getFileListingInChat, method: Method.POST,reqBody: requestBody);

@@ -17,7 +17,6 @@ import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
@@ -58,10 +57,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   final FocusNode _focusNode = FocusNode();
   String? lastSentMessage;
-  List<dynamic>? _lastSentDelta;
   bool _showToolbar = false;
   final Map<String, dynamic> userCache = {};
-  GetUserModel? userDetails;
+  GetUserModelSecondUser? userDetails;
   String currentUserMessageId = "";
   int? _selectedIndex;
 
@@ -79,7 +77,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId);
       /// THis is Doing for update pin message and get Message List ///
       socketProvider.socketListenPinMessage(oppositeUserId: widget.oppositeUserId,callFun: (){
-        chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,needClearFirstTime: true);
+        chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,/*callingFromSC: true*/);
         fetchOppositeUserDetails();
       });
       if(widget.needToCallAddMessage == true){
@@ -87,20 +85,23 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       }
       chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
       channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
-      chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,needClearFirstTime: true);
+      chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,/*callingFromSC: true*/);
       _fetchAndCacheUserDetails();
+      commonProvider.getUserApi(id: widget.oppositeUserId);
     },);
   }
 
   void fetchOppositeUserDetails()async{
-    userDetails = await commonProvider.getUserByIDCall2(userId: widget.oppositeUserId);
+    userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.oppositeUserId);
   }
   void _fetchAndCacheUserDetails() async {
-    userDetails = await commonProvider.getUserByIDCall2(userId: widget.oppositeUserId);
-    await commonProvider.getUserByIDCallForSecondUser(userId: signInModel.data!.user!.id);
+    userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.oppositeUserId);
+    // await commonProvider.getUserByIDCallForSecondUser(userId: signInModel.data!.user!.id);
     setState(()  {
       userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
+      userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
     });
+    print("user>>>>>> ${userCache}");
     print("user>>>>>> ${userDetails?.data!.user!.username}");
     print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.username}");
     print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.sId}");
@@ -109,40 +110,68 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer2<CommonProvider,ChatProvider>(builder: (context, commonProvider,chatProvider, child) {
-      return Scaffold(
-        appBar: buildAppBar(commonProvider, chatProvider),
-        body: Column(
-          children: [
-            Divider(
-              color: Colors.grey.shade800,
-              height: 1,
-            ),
-            if(chatProvider.idChatListLoading)...{
-              Expanded(
-                child: Center(
-                  child: SpinKitCircle(
-                    color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.appBarColor,
-                    size: 50.0,
-                  ),
-                ),
+      return PopScope(
+        canPop: true,
+        onPopInvokedWithResult: (didPop, result) {
+          channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
+        },
+        child: Scaffold(
+          appBar: buildAppBar(commonProvider, chatProvider),
+          body: Column(
+            children: [
+              Divider(
+                color: Colors.grey.shade800,
+                height: 1,
               ),
-            }else...{
-              if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
-              Expanded(child: Center(child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ?? 'Unknown', userImageUrl: ApiString.profileBaseUrl + (userDetails?.data?.user?.avatarUrl ?? ''),))),
+              if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
+                customLoading(),
               }else...{
-                Expanded(
-                  child: ListView(
-                    controller: chatProvider.scrollController,
-                    reverse: true,
-                    children: [
-                      dateHeaders(),
-                    ],
+                if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
+                Expanded(child: Center(child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ?? 'Unknown', userImageUrl: ApiString.profileBaseUrl + (userDetails?.data?.user?.avatarUrl ?? ''),))),
+                }else...{
+                  Expanded(
+                    child: ListView(
+                      controller: chatProvider.scrollController,
+                      reverse: true,
+                      children: [
+                        dateHeaders(),
+                      ],
+                    ),
                   ),
-                ),
-              },
-              inputTextFieldWithEditor()
-            }
-          ],
+                },
+                if(userDetails?.data?.user?.isLeft == false)...{
+                  inputTextFieldWithEditor()
+                }else...{
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border(top: BorderSide(color: AppColor.borderColor))
+                      ),
+                      padding: EdgeInsets.symmetric(horizontal: 30,vertical: 20),
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: TextStyle(
+                            color: Colors.black, // Default text color
+                            fontSize: 16, // Default font size
+                          ),
+                          children: <TextSpan>[
+                            TextSpan(text: 'You are viewing an archived channel with a '),
+                            TextSpan(
+                              text: 'deactivated user',
+                              style: TextStyle(
+                                fontWeight:
+                                    FontWeight.bold, // Make this part bold
+                              ),
+                            ),
+                            TextSpan(text: '. New messages cannot be posted.'),
+                          ],
+                        ),
+                      ),
+                    )
+                }
+              }
+            ],
+          ),
         ),
       );
     },);
@@ -687,14 +716,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     required String time,
     bool showUserDetails = true,
   })  {
-    if (!userCache.containsKey(userId))  {
-      commonProvider.getUserByIDCall2(userId: userId);
-    }
+    // if (!userCache.containsKey(userId))  {
+    //   commonProvider.getUserByIDCall2(userId: userId);
+    // }
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
-      if (!userCache.containsKey(userId) && commonProvider.getUserModel!.data!.user!.sId! == userId) {
-        commonProvider.getUserByIDCall2(userId: userId);
-        userCache[userId] = commonProvider.getUserModel!;
-      }
+      // if (!userCache.containsKey(userId) && commonProvider.getUserModel!.data!.user!.sId! == userId) {
+      //   commonProvider.getUserByIDCall2(userId: userId);
+      //   userCache[userId] = commonProvider.getUserModel!;
+      // }
       final user = userCache[userId];
       bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
@@ -1050,31 +1079,35 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       ],
                   ),
                 ),
-                popMenu2(context,
-                  onOpened: () =>  setState(() => _selectedIndex = index),
-                  onClosed: () =>  setState(() => _selectedIndex = null),
-                  isForwarded: messageList.isForwarded! ? false : true,
-                  opened: index == _selectedIndex ? true : false,
-                  createdAt: messageList.createdAt!,
-                  currentUserId: userId,
-                  onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.avatarUrl ?? '',forwardMsgId: messageId,)),
-                  onReply: () {
-                    print("onReply Passing = ${messageId.toString()}");
-                  pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
-                  },
-                  onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
-                  onCopy: () => copyToClipboard(context, message),
-                  onEdit: () => setState(() {
-                    int position = _controller.document.length - 1;
-                    currentUserMessageId = messageId;
-                    print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
-                    _controller.document.insert(position, message.toString());
-                    _controller.updateSelection(
-                      TextSelection.collapsed(offset: _controller.document.length),
-                      quill.ChangeSource.local,
-                    );
-                  }),
-                  onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)),
+                Visibility(
+                  visible: userDetails?.data?.user?.isLeft == false,
+                  child: popMenu2(context,
+                    isPinned: pinnedMsg,
+                    onOpened: () =>  setState(() => _selectedIndex = index),
+                    onClosed: () =>  setState(() => _selectedIndex = null),
+                    isForwarded: messageList.isForwarded! ? false : true,
+                    opened: index == _selectedIndex ? true : false,
+                    createdAt: messageList.createdAt!,
+                    currentUserId: userId,
+                    onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.avatarUrl ?? '',forwardMsgId: messageId,)),
+                    onReply: () {
+                      print("onReply Passing = ${messageId.toString()}");
+                    pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
+                    },
+                    onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
+                    onCopy: () => copyToClipboard(context, message),
+                    onEdit: () => setState(() {
+                      int position = _controller.document.length - 1;
+                      currentUserMessageId = messageId;
+                      print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
+                      _controller.document.insert(position, message.toString());
+                      _controller.updateSelection(
+                        TextSelection.collapsed(offset: _controller.document.length),
+                        quill.ChangeSource.local,
+                      );
+                    }),
+                    onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)),
+                ),
               ],
             ),
           ],
