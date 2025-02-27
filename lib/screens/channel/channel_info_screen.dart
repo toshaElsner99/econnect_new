@@ -1,0 +1,225 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/channel_list_provider.dart';
+import '../../main.dart';
+import 'channel_members_info.dart';
+
+class ChannelInfoScreen extends StatelessWidget {
+  final String channelId;
+  final String channelName;
+  final bool isPrivate;
+  final String description;
+
+  const ChannelInfoScreen({
+    super.key,
+    required this.channelId,
+    required this.channelName,
+    required this.isPrivate,
+    this.description = "",
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Row(
+          children: [
+            Text(
+              'Info',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              channelName,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          // Favorite and Mute buttons
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildActionButton(
+                  icon: Icons.star_border,
+                  label: 'Favorite',
+                  onTap: () {
+                    context.read<ChannelListProvider>().addChannelToFavorite(
+                      channelId: channelId,
+                    );
+                  },
+                ),
+                _buildActionButton(
+                  icon: Icons.notifications_off_outlined,
+                  label: 'Mute',
+                  onTap: () {
+                    context.read<ChannelListProvider>().muteUnMuteChannels(
+                      channelId: channelId,
+                      isMutedChannel: signInModel.data?.user?.muteChannels?.contains(channelId) ?? false,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Channel Avatar and Name
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.green,
+                  radius: 30,
+                  child: Text(
+                    channelName[0].toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  channelName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'ID: $channelId',
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Members, Pinned Messages, Files sections
+          Consumer<ChannelListProvider>(
+            builder: (context, provider, child) {
+              // Get the members count when screen loads
+              if (provider.channelMembersList.isEmpty) {
+                provider.getChannelMembersList(channelId);
+              }
+
+              return _buildInfoSection(
+                icon: Icons.people_outline,
+                title: 'Members',
+                count: provider.channelMembersList.length.toString(),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChannelMembersInfo(
+                        channelId: channelId,
+                        channelName: channelName,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+          _buildInfoSection(
+            icon: Icons.push_pin_outlined,
+            title: 'Pinned Messages',
+            count: '0',
+            onTap: () {
+              // Navigate to pinned messages
+            },
+          ),
+          _buildInfoSection(
+            icon: Icons.folder_outlined,
+            title: 'Files',
+            count: '0',
+            onTap: () {
+              // Navigate to files
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: Colors.white, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoSection({
+    required IconData icon,
+    required String title,
+    required String count,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              count,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 16,
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+} 

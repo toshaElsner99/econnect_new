@@ -21,6 +21,7 @@ class CommonProvider extends ChangeNotifier {
   String customStatusTitle = "";
   bool isMutedUser = false;
   GetUserMentionModel? getUserMentionModel;
+  List<Users>? allUsers;
 
   void updatesCustomStatus(){
     selectedIndexOfStatus = null;
@@ -140,6 +141,30 @@ class CommonProvider extends ChangeNotifier {
     if (statusCode200Check(response)) {
       getUserMentionModel = GetUserMentionModel.fromJson(response);
     }
+  }
+
+  Future<void> getAllUsers() async {
+    final requestBody = {"type": "message"};
+    final response = await ApiService.instance.request(
+      endPoint: ApiString.getUser,
+      method: Method.POST,
+      reqBody: requestBody
+    );
+    if (statusCode200Check(response)) {
+      getUserMentionModel = GetUserMentionModel.fromJson(response);
+      allUsers = getUserMentionModel?.data?.users;
+      notifyListeners();
+    }
+  }
+
+  List<Users>? filterUsers(String? searchQuery) {
+    if (searchQuery == null || searchQuery.isEmpty) {
+      return allUsers;
+    }
+    return allUsers?.where((user) => 
+      (user.username?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false) ||
+      (user.fullName?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false)
+    ).toList();
   }
 
 }
