@@ -23,6 +23,19 @@ String formatTime(String utcTime) {
   DateTime dateTime = DateTime.parse(utcTime).toLocal(); // Convert to local time
   return DateFormat('hh:mm a').format(dateTime); // Format in 12-hour AM/PM format
 }
+String formatDateTime(DateTime dateTime) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = today.subtract(Duration(days: 1));
+
+  if (dateTime.isAtSameMomentAs(today)) {
+    return 'Today';
+  } else if (dateTime.isAtSameMomentAs(yesterday)) {
+    return 'Yesterday';
+  } else {
+    return DateFormat('yyyy-MM-dd').format(dateTime);
+  }
+}
 
 String formatDateString(String? dateString) {
   if (dateString == null || dateString.isEmpty) {

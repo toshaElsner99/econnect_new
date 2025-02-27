@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/screens/bottom_nav_tabs/setting_screen.dart';
 import 'package:e_connect/screens/browse_and_search_channel/browse_and_search_channel.dart';
+import 'package:e_connect/screens/channel/channel_chat_screen.dart';
 import 'package:e_connect/screens/create_channel_screen/create_channel_screen.dart';
 import 'package:e_connect/screens/find_channel_screen/find_channel_screen.dart';
 import 'package:e_connect/screens/open_direct_message/open_direct_message.dart';
@@ -21,7 +22,7 @@ import '../../providers/common_provider.dart';
 import '../../socket_io/socket_io.dart';
 import '../../utils/app_preference_constants.dart';
 import '../../utils/common/common_function.dart';
-import '../channel/channel_members_info.dart';
+import '../channel/channel_member_info_screen/channel_members_info.dart';
 import '../chat/single_chat_message_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -795,8 +796,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: InkWell(
         onTap: () {
           print("Channel Tapped");
-          Navigator.push(context, MaterialPageRoute(builder: (context) => ChannelMembersInfo(channelId: channel.sId ?? "", channelName: channel.name!)));
-        },
+          pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", channelName: channel.name!));
+          },
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -925,9 +926,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       margin: const EdgeInsets.symmetric(vertical: 6),
       color: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false ? AppColor.borderColor.withOpacity(0.05) : null,
       child: InkWell(
-        onTap: () {
-          // Handle channel tap
-        },
+        onTap: ()=> pushScreen(screen: ChannelChatScreen(channelId: channel.sId!, channelName: channel.name!)),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

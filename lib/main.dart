@@ -1,3 +1,4 @@
+import 'package:e_connect/providers/channel_chat_provider.dart';
 import 'package:e_connect/providers/channel_list_provider.dart';
 import 'package:e_connect/providers/chat_provider.dart';
 import 'package:e_connect/providers/common_provider.dart';
@@ -51,6 +52,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SocketIoProvider()),
+        ChangeNotifierProvider(create: (_) => ChannelChatProvider()),
         ChangeNotifierProvider(create: (_) => LoadingProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => SplashProvider()),

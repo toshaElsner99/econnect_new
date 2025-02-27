@@ -11,6 +11,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import '../../model/get_user_mention_model.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/common_provider.dart';
 import '../api_service/api_string_constants.dart';
@@ -1218,6 +1219,14 @@ Future commonForwardMSGDialog({required BuildContext context,
 //     builder: (context) => showLogOutDialog(),
 //   );
 // }
+
+Widget commonBackButton() {
+  return IconButton(
+    icon: const Icon(Icons.close,color: Colors.white,),
+    color: Colors.white,
+    onPressed: () => pop(),);
+}
+
 Widget commonLogoutDialog() {
   return WillPopScope(
     onWillPop: () async => false,
@@ -1544,7 +1553,175 @@ Widget commonHTMLText({required String message}) {
     enableCaching: true,
   );
 }
+Widget commonHTMLText2({required String message}) {
+  // Replace @usernames with a span for custom styling
+  String processedMessage = message.replaceAllMapped(
+    RegExp(r'@(\w+)'),
+        (match) {
+      return '<span class="username">@${match.group(1)}</span>';
+    },
+  );
 
+  // Replace newline characters with <br> for line breaks
+  processedMessage = processedMessage.replaceAll('\n\n', '<br><br>');
+
+  // Replace spaces with non-breaking spaces to preserve spacing
+  processedMessage = processedMessage.replaceAll(' ', '&nbsp;');
+
+  // Process other HTML tags as needed (e.g., bullet lists)
+  processedMessage = processedMessage.replaceAllMapped(
+    RegExp(r'<ul class="renderer_bulleted">.*?</ul>', dotAll: true),
+        (match) {
+      return match.group(0)!.replaceAll('<li>', '• ').replaceAll('</li>', '\n');
+    },
+  );
+
+  return HtmlWidget(
+    processedMessage,
+    textStyle: TextStyle(
+      height: 1.2,
+      fontFamily: AppFonts.interFamily,
+      color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+      fontSize: 16,
+    ),
+    customStylesBuilder: (element) {
+      Map<String, String> styles = {
+        'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
+      };
+
+      if (element.classes.contains('renderer_bold')) {
+        styles['font-weight'] = 'bold';
+      }
+      if (element.classes.contains('renderer_italic')) {
+        styles['font-style'] = 'italic';
+      }
+      if (element.classes.contains('renderer_strikethrough')) {
+        styles['text-decoration'] = 'line-through';
+      }
+      if (element.classes.contains('renderer_link')) {
+        styles['color'] = '#2196F3';
+      }
+      if (element.classes.contains('renderer_emoji')) {
+        styles['display'] = 'inline-block';
+        styles['vertical-align'] = 'middle';
+      }
+      if (element.classes.contains('username')) {
+        // Styling specifically for @username
+        styles['background-color'] = '#A1A1A1';  // Example: Blue background
+        styles['color'] = '#FFFFFF';  // White text
+        styles['border-radius'] = '5px';
+        styles['padding'] = '2px 6px';
+      }
+
+      return styles;
+    },
+    customWidgetBuilder: (element) {
+      if (element.classes.contains('renderer_emoji')) {
+        final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
+        if (imageUrl != null) {
+          return CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: 21,
+            height: 21,
+            fit: BoxFit.contain,
+          );
+        }
+      }
+      return null;
+    },
+    enableCaching: true,
+  );
+}
+Widget commonHTMLText3({
+  required String message,
+}) {
+  final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
+
+  // Extract usernames from the provider
+  List<String> usernames = commonProvider.getUserMentionModel?.data?.users?.map((user) => user.username ?? '').toList() ?? [];
+
+  // Replace @usernames with a span for custom styling only if they exist in the usernames list
+  String processedMessage = message.replaceAllMapped(
+    RegExp(r'@(\w+)'),
+        (match) {
+      String username = match.group(1) ?? '';
+      if (usernames.contains(username)) {
+        return '<span class="username">@$username</span>';
+      }
+      return match.group(0)!; // Return the original match if not found
+    },
+  );
+
+  // Replace newline characters with <br> for line breaks
+  processedMessage = processedMessage.replaceAll('\n\n', '<br><br>');
+
+  // Replace spaces with non-breaking spaces to preserve spacing
+  processedMessage = processedMessage.replaceAll(' ', '&nbsp;');
+
+  // Process other HTML tags as needed (e.g., bullet lists)
+  processedMessage = processedMessage.replaceAllMapped(
+    RegExp(r'<ul class="renderer_bulleted">.*?</ul>', dotAll: true),
+        (match) {
+      return match.group(0)!.replaceAll('<li>', '• ').replaceAll('</li>', '\n');
+    },
+  );
+
+  return HtmlWidget(
+    processedMessage,
+    textStyle: TextStyle(
+      height: 1.2,
+      fontFamily: AppFonts.interFamily,
+      color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+      fontSize: 16,
+    ),
+    customStylesBuilder: (element) {
+      Map<String, String> styles = {
+        'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
+      };
+
+      if (element.classes.contains('renderer_bold')) {
+        styles['font-weight'] = 'bold';
+      }
+      if (element.classes.contains('renderer_italic')) {
+        styles['font-style'] = 'italic';
+      }
+      if (element.classes.contains('renderer_strikethrough')) {
+        styles['text-decoration'] = 'line-through';
+      }
+      if (element.classes.contains('renderer_link')) {
+        styles['color'] = '#2196F3';
+      }
+      if (element.classes.contains('renderer_emoji')) {
+        styles['display'] = 'inline-block';
+        styles['vertical-align'] = 'middle';
+      }
+      if (element.classes.contains('username')) {
+        // Styling specifically for @username
+        styles['background-color'] = '#A1A1A1';  // Example: Gray background
+        styles['color'] = '#FFFFFF';  // White text
+        styles['border-radius'] = '5px';
+        styles['padding'] = '2px 6px';
+      }
+
+      return styles;
+    },
+    customWidgetBuilder: (element) {
+      if (element.classes.contains('renderer_emoji')) {
+        final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
+        if (imageUrl != null) {
+          return CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: 21,
+            height: 21,
+            fit: BoxFit.contain,
+          );
+        }
+      }
+      return null;
+    },
+    enableCaching: true,
+  );
+}
 Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false, Color? color}){
   return Container(
     width: 32,

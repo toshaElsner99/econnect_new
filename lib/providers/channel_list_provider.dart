@@ -1,24 +1,29 @@
+
 import 'dart:convert';
 
 import 'package:e_connect/model/browse_and_search_channel_model.dart';
+import 'package:e_connect/model/channel_chat_model.dart';
 import 'package:e_connect/model/channel_list_model.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/model/search_user_model.dart';
+import 'package:e_connect/providers/channel_chat_provider.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 
 import '../main.dart';
 import '../model/channel_members_model.dart';
 import '../model/direct_message_list_model.dart';
+import '../model/get_channel_info.dart';
 import '../model/get_users_suggestions.dart';
 import '../model/sign_in_model.dart';
-import '../screens/chat/forward_message/forward_message_screen.dart';
+import '../screens/bottom_nav_tabs/home_screen.dart';
 import 'common_provider.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/http.dart'as http;
 
 
 
@@ -30,8 +35,6 @@ final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.co
   BrowseAndSearchChannelModel? browseAndSearchChannelModel;
   GetUserSuggestions? getUserSuggestions;
   SearchUserModel? searchUserModel;
- List<MemberDetails> channelMembersList = [];
-
 
   /// GET FAVORITE LIST IN HOME SCREEN ///
   Future<void> getFavoriteList()async{
@@ -75,7 +78,7 @@ final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.co
     required String channelName,
     required String description,
     String? isPrivateChannel,
-})async{
+    })async{
     final requestBody = {
       "name": channelName,
       "isPrivate": isPrivateChannel,
@@ -84,8 +87,7 @@ final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.co
     final response = await ApiService.instance.request(endPoint: ApiString.createChannel, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
       pop();
-      directMessageListModel = DirectMessageListModel.fromJson(response);
-      // emit(ChannelListInitial());
+      getChannelList();
     }
     notifyListeners();
   }
@@ -268,25 +270,49 @@ bool isLoading = false;
     notifyListeners();
   }
 
-  Future<void> leaveChannel({
-    required String channelId,
-  }) async {
-    // emit(ChannelListInitial());
-    // final header = {
-    //   'Authorization': "Bearer ${signInModel.data!.authToken}",
-    // };
-    print("userId>>>${signInModel.data?.user?.id}");
-    final response = await ApiService.instance.request(
-        endPoint: ApiString.leaveChannel + channelId,
-        method: Method.PUT);
-    if (statusCode200Check(response)) {
-      await getFavoriteList();
+  // Future<void> leaveChannel({
+  //   required String channelId,
+  // }) async {
+  //   // emit(ChannelListInitial());
+  //   // final header = {
+  //   //   'Authorization': "Bearer ${signInModel.data!.authToken}",
+  //   // };
+  //   print("userId>>>${signInModel.data?.user?.id}");
+  //   final response = await ApiService.instance.request(
+  //       endPoint: ApiString.leaveChannel + channelId,
+  //       method: Method.PUT);
+  //   if (statusCode200Check(response)) {
+  //     await getFavoriteList();
+  //     await getChannelList();
+  //     await getDirectMessageList();
+  //     // emit(ChannelListInitial());
+  //   }
+  //   notifyListeners();
+  // }
+
+Future<void> leaveChannel({
+  required String channelId,
+  bool isFromMembersScreen = false,
+}) async {
+  print("userId>>>${signInModel.data?.user?.id}");
+  final response = await ApiService.instance.request(
+      endPoint: ApiString.leaveChannel + channelId,
+      method: Method.PUT
+  );
+
+  if (statusCode200Check(response)) {
+    if(isFromMembersScreen) {
+      Navigator.pushAndRemoveUntil(
+        navigatorKey.currentState!.context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false,);
+    } else {
       await getChannelList();
+      await getFavoriteList();
       await getDirectMessageList();
-      // emit(ChannelListInitial());
     }
-    notifyListeners();
   }
+  notifyListeners();
+}
 
   Future<void> readUnreadMessages({
     required String oppositeUserId,
@@ -325,10 +351,8 @@ bool isLoading = false;
   }) async {
     print("isCallForReadMessage>>> $isCallForReadMessage");
     final response = await ApiService.instance.request(
-        endPoint: isCallForReadMessage ? "${ApiString.readChannelMessage}$oppositeUserId" : ApiString.unReadChannelMessage + oppositeUserId,
-        method: isCallForReadMessage ? Method.GET : Method.PUT,
-
-       );
+        endPoint: isCallForReadMessage ? "${ApiString.readChannelMessage(oppositeUserId)}" : ApiString.unReadChannelMessage(oppositeUserId),
+        method: isCallForReadMessage ? Method.GET : Method.PUT,);
     if (statusCode200Check(response)) {
       await getFavoriteList();
       await getChannelList();
@@ -410,44 +434,91 @@ Future<void> addChannelToFavorite({
       );
   }
 
+/// TOGGLE ADMIN AND MEMBER STATUS ///
+Future<void> toggleAdminAndMember(
+    {required String channelId, required String userId}) async {
+  var headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ${signInModel.data!.authToken}',
+  };
 
-/// GET Channel Members List ///
-Future<void> getChannelMembersList(String channelId) async {
-  print("channelId>>>> $channelId");
-  final response = await ApiService.instance.request(
-      endPoint: ApiString.getChannelMembersList(channelId),
-      method: Method.GET);
-  if (statusCode200Check(response)) {
-    channelMembersList = (response['data']['memberDetails'] as List)
-        .map((list) => MemberDetails.fromJson(list as Map<String, dynamic>))
-        .toList();
-    print("channelMembersList => ${channelMembersList.length}");
+  var request = http.Request(
+      'PUT',
+      Uri.parse(
+          ApiString.baseUrl + ApiString.toggleAdminAndMember(channelId)));
+  request.body = json.encode({"memberId": userId});
+  print(
+      "URL = ${ApiString.baseUrl + ApiString.toggleAdminAndMember(channelId)}");
+  print("memberId: $userId");
+  request.headers.addAll(headers);
+
+  http.StreamedResponse response = await request.send();
+  print("response =${response.statusCode}");
+  if (response.statusCode == 200) {
+    await Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false).getChannelMembersList(channelId);
+  } else {
+    print(response.reasonPhrase);
   }
-  notifyListeners();
 }
 
-/// ADD MEMBER TO CHANNEL ///
-Future<void> addMembersToChannel({
+/// REMOVE MEMBER FROM CHANNEL ///
+Future<void> removeMember(
+    {required String channelId, required String userId}) async {
+  var headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ${signInModel.data!.authToken}',
+  };
+
+  var request = http.Request(
+      'PUT',
+      Uri.parse(
+          ApiString.baseUrl + ApiString.removeMember(channelId, userId)));
+  print(
+      "URL = ${ApiString.baseUrl + ApiString.removeMember(channelId, userId)}");
+  request.headers.addAll(headers);
+
+  http.StreamedResponse response = await request.send();
+  print("response =${response.statusCode}");
+  if (response.statusCode == 200) {
+    await Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false).getChannelMembersList(channelId);
+  } else {
+    print(response.reasonPhrase);
+  }
+}
+
+/// RENAME CHANNEL ///
+Future<void> renameChannel({
   required String channelId,
-  required List<String> userIds,
+  required String name,
+  required bool isPrivate,
+  String description = "",
 }) async {
   var headers = {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer ${signInModel.data!.authToken}',
   };
-  var request = http.Request('PUT', Uri.parse(ApiString.baseUrl + ApiString.addMembersToChannel(channelId)));
+
+  var request = http.Request(
+      'PUT',
+      Uri.parse(ApiString.baseUrl + ApiString.renameChannel(channelId))
+  );
   request.body = json.encode({
-    "members": userIds
+    "name": name,
+    "isPrivate": isPrivate,
+    "description": description
   });
+  print("URL = ${ApiString.baseUrl + ApiString.renameChannel(channelId)}");
+  print("Request Body: ${request.body}");
   request.headers.addAll(headers);
 
   http.StreamedResponse response = await request.send();
-
+  print("response =${response.statusCode}");
   if (response.statusCode == 200) {
-    getChannelMembersList(channelId);
-  }
-  else {
+    await getChannelList();
+  } else {
     print(response.reasonPhrase);
   }
 }
+
+
 }

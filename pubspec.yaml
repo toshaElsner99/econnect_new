@@ -59,6 +59,7 @@ dependencies:
   insta_image_viewer: ^1.0.4
   webview_flutter: ^4.10.0
   dropdown_button2: ^2.3.9
+  grouped_list: ^6.0.0
 #  vsc_quill_delta_to_html: ^1.0.5
 
 dev_dependencies:

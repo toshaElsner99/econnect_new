@@ -34,8 +34,8 @@ class ApiString{
   // Chat
 
   static const getMessages = "messages/get-message";
-  static const readChannelMessage = "messages/channel/channel-message-seen/";
-  static const unReadChannelMessage = "channels/message-unread/";
+  // static const readChannelMessage = "messages/channel/channel-message-seen/";
+  // static const unReadChannelMessage = "channels/message-unread/";
   static const addChannelTOFavorite = "favouriteLists/channel/add/";
   static const unMuteChannel = "user/unmute-channel";
   static const muteChannel = "user/mute-channel";
@@ -53,5 +53,12 @@ class ApiString{
   // Channel
   static getChannelMembersList(String channelId) => "/channels/getChannelMembers/$channelId";
   static addMembersToChannel(String channelId) => "/channels/addMember/$channelId";
+  static getChannelInfo(String channelId) => "/channels/getChannel/$channelId";
+  static readChannelMessage(String channelId) => "/messages/channel/channel-message-seen/$channelId";
+  static unReadChannelMessage(String channelId) => "channels/message-unread/$channelId";
+  static const getChannelChat = "messages/channel/get-message";
+  static toggleAdminAndMember(String channelId) => "/channels/toggleAdmin/$channelId";
+  static removeMember(String channelId, String memberId) => "/channels/removeMember/$channelId/$memberId";
+  static renameChannel(String channelId) => "channels/update/$channelId";
 
 }

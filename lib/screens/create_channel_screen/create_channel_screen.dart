@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/channel_list_provider.dart';
+import '../../utils/common/common_function.dart';
+import '../bottom_nav_tabs/home_screen.dart';
 
 class CreateChannelScreen extends StatefulWidget {
   const CreateChannelScreen({super.key});
@@ -37,11 +39,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          color: Colors.white,
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: commonBackButton(),
         title:  commonText(
           text : 'New Channel',
             fontSize: 20,
@@ -49,6 +47,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
         actions: [
           TextButton(
             onPressed: () {
+              pushReplacement(screen: HomeScreen());
               if(_nameController.text.trim().isNotEmpty){
                 context.read<ChannelListProvider>().createNewChannelCall(
                   channelName: _nameController.text.trim(),

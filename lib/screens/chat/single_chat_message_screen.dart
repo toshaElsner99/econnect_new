@@ -24,6 +24,7 @@ import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 import 'package:provider/provider.dart';
 
+import '../../model/browse_and_search_channel_model.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/common_provider.dart';
@@ -49,7 +50,7 @@ class SingleChatMessageScreen extends StatefulWidget {
 
 
 class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
-  final quill.QuillController _controller = quill.QuillController.basic();
+  // final quill.QuillController _controller = quill.QuillController.basic();
   final chatProvider = Provider.of<ChatProvider>(navigatorKey.currentState!.context,listen: false);
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
   final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
@@ -62,6 +63,327 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   GetUserModelSecondUser? userDetails;
   String currentUserMessageId = "";
   int? _selectedIndex;
+  final LayerLink _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  bool _showMentionList = false;
+  int _mentionCursorPosition = 0;
+  final TextEditingController _messageController = TextEditingController();
+
+
+  void _onTextChanged() {
+    final text = _messageController.text;
+    final cursorPosition = _messageController.selection.baseOffset;
+
+    if (cursorPosition > 0) {
+      // Check if @ was just typed
+      if (text[cursorPosition - 1] == '@') {
+        _mentionCursorPosition = cursorPosition;
+        _showMentionOverlay();
+      }
+      // Check if we should keep showing the mention list and filter based on input
+      else if (_showMentionList) {
+        // Find the last @ before cursor
+        int lastAtIndex = text.substring(0, cursorPosition).lastIndexOf('@');
+        if (lastAtIndex == -1) {
+          // No @ found before cursor, remove overlay
+          _removeMentionOverlay();
+        } else {
+          // Get the search query (text between @ and cursor)
+          String searchQuery = text.substring(lastAtIndex + 1, cursorPosition).toLowerCase();
+          _showMentionOverlay(searchQuery: searchQuery);
+        }
+      }
+    } else {
+      // Text is empty or cursor at start, remove overlay
+      _removeMentionOverlay();
+    }
+
+    // Keep existing typing event
+    socketProvider.userTypingEvent(
+        oppositeUserId: widget.oppositeUserId,
+        isReplyMsg: false,
+        isTyping: text.trim().length > 1 ? 1 : 0
+    );
+  }
+
+  void _showMentionOverlay({String? searchQuery}) {
+    _removeMentionOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        final screenSize = MediaQuery.of(context).size;
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        final maxHeight = (screenSize.height - keyboardHeight) * 0.4; // 40% of available height
+
+        return Positioned(
+          width: screenSize.width * 0.8, // 80% of screen width
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            targetAnchor: Alignment.topCenter,
+            followerAnchor: Alignment.bottomCenter,
+            offset: const Offset(0, -8),
+            child: Material(
+              elevation: 0, // Remove shadow
+              color: Colors.transparent,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: maxHeight,
+                ),
+                margin: EdgeInsets.symmetric(horizontal: screenSize.width * 0.1), // Center horizontally
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade900,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade800),
+                ),
+                child: Consumer<CommonProvider>(
+                  builder: (context, provider, child) {
+                    final usersToShow = _getFilteredUsers(searchQuery, provider);
+
+                    return SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Channel Members Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Text(
+                              'CHANNEL MEMBERS',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (usersToShow.isEmpty && searchQuery?.isNotEmpty == true)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Text(
+                                'No matching users found',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              padding: EdgeInsets.zero,
+                              itemCount: usersToShow.length,
+                              itemBuilder: (context, index) {
+                                final user = usersToShow[index];
+                                return InkWell(
+                                  onTap: () => _onMentionSelected(user),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundImage: CachedNetworkImageProvider(
+                                            ApiString.profileBaseUrl + (user?.avatarUrl ?? ''),
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                user?.username ?? 'Unknown',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              if (user?.fullName != null)
+                                                Text(
+                                                  user.fullName!,
+                                                  style: TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 12,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+
+                          // Special Mention Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            margin: EdgeInsets.only(top: 8),
+                            child: Text(
+                              'SPECIAL MENTION',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          // Special mention items
+                          _buildSpecialMentionItem(
+                            icon: Icons.group,
+                            label: '@here',
+                            onTap: () => _onMentionSelected({'username': 'here'}),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.people,
+                            label: '@channel',
+                            onTap: () => _onMentionSelected({'username': 'channel'}),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.people_outline,
+                            label: '@all',
+                            onTap: () => _onMentionSelected({'username': 'all'}),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _showMentionList = true);
+  }
+
+  Widget _buildSpecialMentionItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _removeMentionOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    setState(() => _showMentionList = false);
+  }
+
+  void _onMentionSelected(dynamic user) {
+    final text = _messageController.text;
+
+    // Find the last @ before cursor
+    int lastAtIndex = text.substring(0, _mentionCursorPosition).lastIndexOf('@');
+    if (lastAtIndex == -1) return;
+
+    // Extract the substring after '@' to find the partial mention
+    int endIndex = _mentionCursorPosition;
+    while (endIndex < text.length && text[endIndex] != ' ') {
+      endIndex++; // Move until space (end of mention)
+    }
+
+    // Get the text before @mention and after the partial mention
+    final beforeMention = text.substring(0, lastAtIndex); // Text before @
+    final afterMention = text.substring(endIndex); // Text after the partial mention
+
+    // Handle both Users object and special mention map
+    String mentionText;
+    if (user is Users) {
+      mentionText = '@${user.username} ';
+    } else if (user is Map<String, dynamic>) {
+      mentionText = '@${user['username']} ';
+    } else if (user is User) {
+      mentionText = '@${user.username} ';
+    } else {
+      return; // Invalid user object
+    }
+
+    // Update the TextField with corrected mention text
+    _messageController.value = TextEditingValue(
+      text: beforeMention + mentionText + afterMention,
+      selection: TextSelection.collapsed(
+        offset: beforeMention.length + mentionText.length, // Move cursor after mention
+      ),
+    );
+
+    _removeMentionOverlay();
+  }
+
+
+  List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
+    // Show initial users (current user and recipient)
+    final List<User> initialUsers = [];
+    final currentUser = userCache[signInModel.data?.user?.id];
+    final recipientUser = userCache[widget.oppositeUserId];
+
+    if (searchQuery?.isEmpty ?? true) {
+      if (currentUser?.data?.user != null) {
+        initialUsers.add(currentUser.data.user);
+      }
+      if (recipientUser?.data?.user != null && widget.oppositeUserId != signInModel.data?.user?.id) {
+        initialUsers.add(recipientUser.data.user);
+      }
+      return initialUsers;
+    }
+
+    // Filter users from getUserMentionModel based on search
+    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
+    final query = searchQuery!.toLowerCase();
+
+    // First add matching initial users
+    if (currentUser?.data?.user != null &&
+        ((currentUser.data.user.username?.toLowerCase().contains(query) ?? false) ||
+            (currentUser.data.user.fullName?.toLowerCase().contains(query) ?? false))) {
+      initialUsers.add(currentUser.data.user);
+    }
+    if (recipientUser?.data?.user != null &&
+        widget.oppositeUserId != signInModel.data?.user?.id &&
+        ((recipientUser.data.user.username?.toLowerCase().contains(query) ?? false) ||
+            (recipientUser.data.user.fullName?.toLowerCase().contains(query) ?? false))) {
+      initialUsers.add(recipientUser.data.user);
+    }
+
+    // Then add other matching users
+    final otherUsers = allUsers.where((user) =>
+    ((user.username?.toLowerCase().contains(query) ?? false) ||
+        (user.fullName?.toLowerCase().contains(query) ?? false)) &&
+        user.sId != signInModel.data?.user?.id &&
+        user.sId != widget.oppositeUserId
+    ).toList();
+
+    return [...initialUsers, ...otherUsers];
+  }
+
 
   @override
   void initState() {
@@ -70,9 +392,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       Provider.of<ChatProvider>(context,listen: false).pagination(oppositeUserId: widget.oppositeUserId);
       commonProvider.updateStatusCall(status: "online");
       chatProvider.getTypingUpdate();
-      _controller.addListener(() {
-        socketProvider.userTypingEvent(oppositeUserId: widget.oppositeUserId, isReplyMsg: false, isTyping: _controller.document.toPlainText().trim().length > 1 ? 1 : 0);
-      },);
+      // _controller.addListener(() {
+      //   socketProvider.userTypingEvent(oppositeUserId: widget.oppositeUserId, isReplyMsg: false, isTyping: _controller.document.toPlainText().trim().length > 1 ? 1 : 0);
+      // },);
       /// THis Is Socket Listening Event ///
       socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId);
       /// THis is Doing for update pin message and get Message List ///
@@ -89,6 +411,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       _fetchAndCacheUserDetails();
       commonProvider.getUserApi(id: widget.oppositeUserId);
     },);
+    _messageController.addListener(_onTextChanged);
+
   }
 
   void fetchOppositeUserDetails()async{
@@ -179,7 +503,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   AppBar buildAppBar(CommonProvider commonProvider, ChatProvider chatProvider) {
     return AppBar(
       toolbarHeight: 60,
-      leadingWidth: 35,
+      // leadingWidth: 35,
       leading: Padding(
         padding: const EdgeInsets.only(left: 15.0),
         child: IconButton(icon: Icon(CupertinoIcons.back,color: Colors.white,),color: Colors.white, onPressed: () {
@@ -187,7 +511,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
         },),
       ),
-      titleSpacing: 20,
+      titleSpacing: 0,
       title:  Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -238,8 +562,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 ),
                 const SizedBox(width: 5),
                 Visibility(
-                  visible: userDetails?.data?.user?.customStatusEmoji != null &&
-                      userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
+                  visible: userDetails?.data?.user?.customStatusEmoji != null && userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
                   child: Padding(
                     padding: const EdgeInsets.only(right: 8.0),
                     child: CachedNetworkImage(
@@ -250,11 +573,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 5),
-                Image.asset(AppImage.pinIcon, height: 15, width: 18, color: Colors.white),
-                const SizedBox(width: 3),
                 GestureDetector(
-                  onTap: () => PinnedPostsScreen(userName: widget.userName, oppositeUserId: widget.oppositeUserId),
+                  onTap: () => pushScreen(screen: PinnedPostsScreen(userName: widget.userName, oppositeUserId: widget.oppositeUserId,userCache: userCache,)),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -263,12 +583,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
                       ),
-                      const SizedBox(width: 6),
-                      GestureDetector(
-                          onTap: () => pushScreen(screen: FilesListingScreen(userName: widget.userName,oppositeUserId: widget.oppositeUserId,)),
-                          child: Image.asset(AppImage.fileIcon, height: 15, width: 15, color: Colors.white)),
+                      Image.asset(AppImage.pinIcon, height: 15, width: 18, color: Colors.white),
+                      const SizedBox(width: 4),
                   ],),
-                )
+                ),
+                GestureDetector(
+                    onTap: () => pushScreen(screen: FilesListingScreen(userName: widget.userName,oppositeUserId: widget.oppositeUserId,)),
+                    child: Image.asset(AppImage.fileIcon, height: 15, width: 15, color: Colors.white)),
               ],
             ),
           ),
@@ -287,7 +608,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
   void _clearInputAndDismissKeyboard() {
     _focusNode.unfocus();
-    _controller.clear();
+    _messageController.clear();
+    // _controller.clear();
+    _messageController.clear();
     setState(() {
       _showToolbar = false;
     });
@@ -296,11 +619,158 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    // _controller.dispose();
+    // _focusNode.dispose();
+    _messageController.removeListener(_onTextChanged);
+    _messageController.dispose();
     _focusNode.dispose();
+    _removeMentionOverlay();
     super.dispose();
   }
 
+  // Widget inputTextFieldWithEditor() {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+  //       border: Border(
+  //         top: BorderSide(
+  //           color: Colors.grey.shade800,
+  //           width: 0.5,
+  //         ),
+  //       ),
+  //     ),
+  //     child: Column(
+  //       children: [
+  //         if (_showToolbar)
+  //           Container(
+  //             padding: const EdgeInsets.symmetric(vertical: 8),
+  //             child: quill.QuillToolbar.simple(
+  //               configurations: quill.QuillSimpleToolbarConfigurations(
+  //                   controller: _controller,
+  //                   sharedConfigurations: const quill.QuillSharedConfigurations(
+  //                     locale: Locale('en'),
+  //                   ),
+  //                   showDividers: false,
+  //                   showFontFamily: false,
+  //                   showFontSize: false,
+  //                   showBoldButton: true,
+  //                   showItalicButton: true,
+  //                   showUnderLineButton: false,
+  //                   showStrikeThrough: true,
+  //                   showInlineCode: true,
+  //                   showColorButton: false,
+  //                   showBackgroundColorButton: false,
+  //                   showClearFormat: false,
+  //                   showAlignmentButtons: false,
+  //                   showLeftAlignment: false,
+  //                   showCenterAlignment: false,
+  //                   showRightAlignment: false,
+  //                   showJustifyAlignment: false,
+  //                   showHeaderStyle: true,
+  //                   showListNumbers: true,
+  //                   showListBullets: true,
+  //                   showListCheck: false,
+  //                   showCodeBlock: true,
+  //                   showQuote: true,
+  //                   showIndent: false,
+  //                   showLink: true,
+  //                   showUndo: false,
+  //                   showRedo: false,
+  //                   showSearchButton: false,
+  //                   showClipboardCut: false,
+  //                   showClipboardCopy: false,
+  //                   showClipboardPaste: false,
+  //                   multiRowsDisplay: false,
+  //                   showSubscript: false,
+  //                   showSuperscript: false),
+  //             ),
+  //           ),
+  //         Container(
+  //           padding: const EdgeInsets.symmetric(horizontal: 8),
+  //           child: Row(
+  //             children: [
+  //               IconButton(
+  //                 icon: Icon(
+  //                   Icons.edit,
+  //                   color: _showToolbar ? Colors.blue : AppColor.whiteColor,
+  //                 ),
+  //                 onPressed: () {
+  //                   setState(() {
+  //                     _showToolbar = !_showToolbar;
+  //                   });
+  //                 },
+  //               ),
+  //               Expanded(
+  //                 child: Container(
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.grey.shade900,
+  //                     borderRadius: BorderRadius.circular(25),
+  //                   ),
+  //                   child: quill.QuillEditor(
+  //                       controller: _controller,
+  //                       focusNode: _focusNode,
+  //                       scrollController: ScrollController(),
+  //                       configurations: quill.QuillEditorConfigurations(
+  //                         scrollable: true,
+  //                         autoFocus: false,
+  //                         checkBoxReadOnly: false,
+  //                         placeholder: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
+  //                         padding: const EdgeInsets.symmetric(
+  //                           horizontal: 16,
+  //                           vertical: 8,
+  //                         ),
+  //                         maxHeight: 100,
+  //                         minHeight: 40,
+  //                         customStyles: const quill.DefaultStyles(
+  //                           paragraph: quill.DefaultTextBlockStyle(
+  //                               TextStyle(
+  //                                 color: AppColor.whiteColor,
+  //                                 fontSize: 16,
+  //                               ),
+  //                               quill.HorizontalSpacing.zero,
+  //                               quill.VerticalSpacing.zero,
+  //                               quill.VerticalSpacing.zero,
+  //                               BoxDecoration(color: Colors.transparent)),
+  //                           placeHolder: quill.DefaultTextBlockStyle(
+  //                               TextStyle(
+  //                                 color: Colors.grey,
+  //                                 fontSize: 16,
+  //                               ),
+  //                               quill.HorizontalSpacing.zero,
+  //                               quill.VerticalSpacing.zero,
+  //                               quill.VerticalSpacing.zero,
+  //                               BoxDecoration(color: Colors.transparent)),
+  //                           quote: quill.DefaultTextBlockStyle(
+  //                             TextStyle(
+  //                               color: AppColor.whiteColor,
+  //                               fontSize: 16,
+  //                             ),
+  //                             quill.HorizontalSpacing(16, 0),
+  //                             quill.VerticalSpacing(8, 0),
+  //                             quill.VerticalSpacing(8, 0),
+  //                             BoxDecoration(
+  //                               border: Border(
+  //                                 left: BorderSide(
+  //                                   color: AppColor.whiteColor,
+  //                                   width: 4,
+  //                                 ),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                         ),
+  //                       )),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         const SizedBox(height: 8),
+  //         selectedFilesWidget(),
+  //         fileSelectionAndSendButtonRow()
+  //       ],
+  //     ),
+  //   );
+  // }
   Widget inputTextFieldWithEditor() {
     return Container(
       decoration: BoxDecoration(
@@ -314,137 +784,102 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       ),
       child: Column(
         children: [
-          if (_showToolbar)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: quill.QuillToolbar.simple(
-                configurations: quill.QuillSimpleToolbarConfigurations(
-                    controller: _controller,
-                    sharedConfigurations: const quill.QuillSharedConfigurations(
-                      locale: Locale('en'),
-                    ),
-                    showDividers: false,
-                    showFontFamily: false,
-                    showFontSize: false,
-                    showBoldButton: true,
-                    showItalicButton: true,
-                    showUnderLineButton: false,
-                    showStrikeThrough: true,
-                    showInlineCode: true,
-                    showColorButton: false,
-                    showBackgroundColorButton: false,
-                    showClearFormat: false,
-                    showAlignmentButtons: false,
-                    showLeftAlignment: false,
-                    showCenterAlignment: false,
-                    showRightAlignment: false,
-                    showJustifyAlignment: false,
-                    showHeaderStyle: true,
-                    showListNumbers: true,
-                    showListBullets: true,
-                    showListCheck: false,
-                    showCodeBlock: true,
-                    showQuote: true,
-                    showIndent: false,
-                    showLink: true,
-                    showUndo: false,
-                    showRedo: false,
-                    showSearchButton: false,
-                    showClipboardCut: false,
-                    showClipboardCopy: false,
-                    showClipboardPaste: false,
-                    multiRowsDisplay: false,
-                    showSubscript: false,
-                    showSuperscript: false),
-              ),
-            ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.edit,
-                    color: _showToolbar ? Colors.blue : AppColor.whiteColor,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _showToolbar = !_showToolbar;
-                    });
-                  },
-                ),
                 Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade900,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: quill.QuillEditor(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        scrollController: ScrollController(),
-                        configurations: quill.QuillEditorConfigurations(
-                          scrollable: true,
-                          autoFocus: false,
-                          checkBoxReadOnly: false,
-                          placeholder: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          maxHeight: 100,
-                          minHeight: 40,
-                          customStyles: const quill.DefaultStyles(
-                            paragraph: quill.DefaultTextBlockStyle(
-                                TextStyle(
-                                  color: AppColor.whiteColor,
-                                  fontSize: 16,
-                                ),
-                                quill.HorizontalSpacing.zero,
-                                quill.VerticalSpacing.zero,
-                                quill.VerticalSpacing.zero,
-                                BoxDecoration(color: Colors.transparent)),
-                            placeHolder: quill.DefaultTextBlockStyle(
-                                TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16,
-                                ),
-                                quill.HorizontalSpacing.zero,
-                                quill.VerticalSpacing.zero,
-                                quill.VerticalSpacing.zero,
-                                BoxDecoration(color: Colors.transparent)),
-                            quote: quill.DefaultTextBlockStyle(
-                              TextStyle(
-                                color: AppColor.whiteColor,
-                                fontSize: 16,
+                  child: CompositedTransformTarget(
+                    link: _layerLink,
+                    child: Container(
+                      margin: EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade900,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _messageController,
+                              focusNode: _focusNode,
+                              style: TextStyle(color: AppColor.whiteColor),
+                              decoration: InputDecoration(
+                                hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
+                                hintStyle: TextStyle(color: Colors.grey),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               ),
-                              quill.HorizontalSpacing(16, 0),
-                              quill.VerticalSpacing(8, 0),
-                              quill.VerticalSpacing(8, 0),
-                              BoxDecoration(
-                                border: Border(
-                                  left: BorderSide(
-                                    color: AppColor.whiteColor,
-                                    width: 4,
-                                  ),
-                                ),
-                              ),
+                              maxLines: null,
+                              textCapitalization: TextCapitalization.sentences,
                             ),
                           ),
-                        )),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColor.blueColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
+                    onPressed: () async {
+                      final plainText = _messageController.text.trim();
+                      if(plainText.isNotEmpty || fileServiceProvider.selectedFiles.isNotEmpty) {
+                        if(fileServiceProvider.selectedFiles.isNotEmpty){
+                          final filesOfList = await chatProvider.uploadFiles();
+                          chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, files: filesOfList);
+                        } else {
+                          chatProvider.sendMessage(
+                              content: plainText,
+                              receiverId: widget.oppositeUserId,
+                              editMsgID: currentUserMessageId
+                          ).then((value) => setState(() {
+                            currentUserMessageId = "";
+                          }));
+                        }
+                        _clearInputAndDismissKeyboard();
+                      }
+                    },
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
           selectedFilesWidget(),
-          fileSelectionAndSendButtonRow()
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.attach_file, color: AppColor.whiteColor, size: 22),
+                  onPressed: () {
+                    FileServiceProvider.instance.pickFiles();
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.image, color: AppColor.whiteColor, size: 22),
+                  onPressed: () {
+                    FileServiceProvider.instance.pickImages();
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.camera_alt, color: AppColor.whiteColor, size: 22),
+                  onPressed: () {
+                    showCameraOptionsBottomSheet(context);
+                  },
+                )
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
-
   // File selected to send
   Widget selectedFilesWidget() {
     return Consumer<FileServiceProvider>(
@@ -567,66 +1002,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     );
   }
 
-  Widget fileSelectionAndSendButtonRow() {
-    return Container(
-      padding: const EdgeInsets.only(
-        left: 8,
-        right: 8,
-        bottom: 8,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.alternate_email, color: AppColor.whiteColor),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.attach_file, color: AppColor.whiteColor),
-            onPressed: () {
-              FileServiceProvider.instance.pickFiles();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.image, color: AppColor.whiteColor),
-            onPressed: () {
-              FileServiceProvider.instance.pickImages();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.camera_alt, color: AppColor.whiteColor),
-            onPressed: () {
-              showCameraOptionsBottomSheet(context);
-            },
-          ),
-          GestureDetector(
-            onTap: () async {
-              final plainText = _controller.document.toPlainText().trim();
-              if(fileServiceProvider.selectedFiles.isNotEmpty){
-               final filesOfList = await chatProvider.uploadFiles();
-               chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, files: filesOfList);
-               _clearInputAndDismissKeyboard();
-              }else{
-                chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
-                  currentUserMessageId = "";
-                }),);
-                _clearInputAndDismissKeyboard();
-              }
-            },
-            child: Container(
-                decoration: BoxDecoration(
-                    color: AppColor.lightBlueColor,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5),
-                  child: Icon(Icons.send, color: AppColor.whiteColor),
-                )),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget dateHeaders() {
     return Consumer<ChatProvider>(builder: (context, value, child) {
@@ -691,19 +1066,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     },);
   }
 
-  String formatDateTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(Duration(days: 1));
-
-    if (dateTime.isAtSameMomentAs(today)) {
-      return 'Today';
-    } else if (dateTime.isAtSameMomentAs(yesterday)) {
-      return 'Yesterday';
-    } else {
-      return DateFormat('yyyy-MM-dd').format(dateTime);
-    }
-  }
 
 
 
@@ -923,7 +1285,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           )
                       ),
                       Visibility(
-                        visible: messageList.isMedia == true,
+                        visible: messageList.files?.length != 0,
                         child: ListView.builder(
                           shrinkWrap: true,
                           itemCount: messageList.files?.length ?? 0,
@@ -1096,16 +1458,22 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     },
                     onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
                     onCopy: () => copyToClipboard(context, message),
-                    onEdit: () => setState(() {
-                      int position = _controller.document.length - 1;
+                    // onEdit: () => setState(() {
+                    //   int position = _controller.document.length - 1;
+                    //   currentUserMessageId = messageId;
+                    //   print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
+                    //   _controller.document.insert(position, message.toString());
+                    //   _controller.updateSelection(
+                    //     TextSelection.collapsed(offset: _controller.document.length),
+                    //     quill.ChangeSource.local,
+                    //   );
+                    // }),
+                      onEdit: ()=> setState(() {
+                      int position = _messageController.text.length;
                       currentUserMessageId = messageId;
                       print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
-                      _controller.document.insert(position, message.toString());
-                      _controller.updateSelection(
-                        TextSelection.collapsed(offset: _controller.document.length),
-                        quill.ChangeSource.local,
-                      );
-                    }),
+                       _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
+                      }),
                     onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)),
                 ),
               ],
