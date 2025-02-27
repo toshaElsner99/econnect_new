@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/channel_list_provider.dart';
 import '../../utils/app_color_constants.dart';
+import 'channel_info_screen/channel_info_screen.dart';
 
 class ChannelChatScreen extends StatefulWidget {
   final String channelId;
@@ -81,7 +82,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               // onPressed: () => pushScreen(screen: ChannelMembersInfo(channelId: widget.channelId, channelName: widget.channelName)),
               onPressed: () {
                 print("Channel Tapped");
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ChannelMembersInfo(channelId: widget.channelId, channelName: widget.channelName)));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ChannelInfoScreen(channelId: widget.channelId, channelName: widget.channelName, isPrivate: false,)));
               },
             ),
           ],

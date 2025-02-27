@@ -1,8 +1,10 @@
+import 'package:e_connect/providers/channel_chat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/channel_list_provider.dart';
-import '../../main.dart';
-import 'channel_members_info.dart';
+import '../../../providers/channel_list_provider.dart';
+import '../../../main.dart';
+import '../channel_member_info_screen/channel_members_info.dart';
+// import 'channel_members_info.dart';
 
 class ChannelInfoScreen extends StatelessWidget {
   final String channelId;
@@ -117,7 +119,7 @@ class ChannelInfoScreen extends StatelessWidget {
           ),
 
           // Members, Pinned Messages, Files sections
-          Consumer<ChannelListProvider>(
+          Consumer<ChannelChatProvider>(
             builder: (context, provider, child) {
               // Get the members count when screen loads
               if (provider.channelMembersList.isEmpty) {

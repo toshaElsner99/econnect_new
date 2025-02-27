@@ -99,11 +99,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }
 
     // Keep existing typing event
-    socketProvider.userTypingEvent(
-        oppositeUserId: widget.oppositeUserId,
-        isReplyMsg: false,
-        isTyping: text.trim().length > 1 ? 1 : 0
-    );
+     socketProvider.userTypingEvent(
+         oppositeUserId: widget.oppositeUserId,
+         isReplyMsg: false,
+         isTyping: text.trim().length > 1 ? 1 : 0
+     );
   }
 
   void _showMentionOverlay({String? searchQuery}) {
