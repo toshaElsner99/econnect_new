@@ -36,13 +36,6 @@ class ChatProvider extends  ChangeNotifier {
   FilesListingInChatModel? filesListingInChatModel;
   bool isGettingListFalse = false;
 
-  clearForFirstTimeMessages(bool needToCLear) {
-    if (needToCLear) {
-      messageGroups.clear();
-      currentPagea = 1;
-    }
-    notifyListeners();
-  }
   void pagination({required String oppositeUserId}) {
     scrollController.addListener(() {
       if (scrollController.position.pixels == scrollController.position.maxScrollExtent && currentPagea < totalPages) {

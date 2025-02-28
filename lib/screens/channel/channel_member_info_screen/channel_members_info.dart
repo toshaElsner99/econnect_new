@@ -48,7 +48,7 @@
 //   final String channelId;
 //   final String channelName;
 //   const ChannelMembersInfo({
-//     super.key, 
+//     super.key,
 //     required this.channelId,
 //     required this.channelName,
 //   });
@@ -358,7 +358,7 @@
 //   final String channelId;
 //   final String channelName;
 //   const AddPeopleToChannel({
-//     super.key, 
+//     super.key,
 //     required this.channelId,
 //     required this.channelName,
 //   });
@@ -415,13 +415,13 @@
 //             onPressed: selectedUsers.isEmpty ? null : () async {
 //               // Get only the user IDs from selected users
 //               final userIds = selectedUsers.map((user) => user.id ?? '').toList();
-//              
+//
 //               // Call the API with just the list of IDs
 //               await context.read<ChannelChatProvider>().addMembersToChannel(
 //                 channelId: widget.channelId,
 //                 userIds: userIds,
 //               );
-//              
+//
 //               // Close the screen
 //               if (mounted) {
 //                 Navigator.pop(context);
@@ -461,7 +461,7 @@
 //                         ...selectedUsers.map((user) => Container(
 //                           margin: const EdgeInsets.symmetric(vertical: 6),
 //                           padding: const EdgeInsets.symmetric(
-//                             horizontal: 8, 
+//                             horizontal: 8,
 //                             vertical: 10,
 //                           ),
 //                           decoration: BoxDecoration(
@@ -552,7 +552,7 @@
 //               ),
 //             ),
 //           ),
-//          
+//
 //           // Search Results
 //           Expanded(
 //             child: Consumer<ChannelChatProvider>(
@@ -568,7 +568,7 @@
 //                 }
 //
 //                 final users = provider.searchUserModel?.data?.users;
-//                
+//
 //                 if (users == null || users.isEmpty) {
 //                   return const Center(
 //                     child: Text(
@@ -579,7 +579,7 @@
 //                 }
 //
 //                 // Filter the users list
-//                 final filteredUsers = users.where((user) => 
+//                 final filteredUsers = users.where((user) =>
 //                   // Exclude current user
 //                   user.sId != signInModel.data?.user?.id &&
 //                   // Exclude already selected users

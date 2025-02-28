@@ -6,11 +6,6 @@ class ApiString{
   // static const String baseUrl= 'https://dev-econnect.elsnerdev.co/v1/'; /// THIS DEVELOPMENT URL
   static const String profileBaseUrl = 'https://e-connect.elsner.com/public/'; /// Profile Image
 
-
-
-
-
-
   /// End Point , Don't Change Belows End Point until didn't confirm through backend ///
   static const login = "user/login";
   static const updateStatus = "user/update";
@@ -47,18 +42,19 @@ class ApiString{
   static const getRepliesMsg = "messages/get-replies";
   static const uploadFileForMessageMedia = "files/upload?file_for=message_media";
   static const getFileListingInChat = "messages/getFilesListing";
-  static const getUser = "/user/getUsers";
+  static const getUser = "user/getUsers";
   static String pinMessage(String messageId, bool pinned) => "messages/message-pin/$messageId/$pinned";
   // static const getRepliesMsg = "messages/get-replies";
   // Channel
-  static getChannelMembersList(String channelId) => "/channels/getChannelMembers/$channelId";
-  static addMembersToChannel(String channelId) => "/channels/addMember/$channelId";
-  static getChannelInfo(String channelId) => "/channels/getChannel/$channelId";
-  static readChannelMessage(String channelId) => "/messages/channel/channel-message-seen/$channelId";
+  static getChannelMembersList(String channelId) => "channels/getChannelMembers/$channelId";
+  static addMembersToChannel(String channelId) => "channels/addMember/$channelId";
+  static getChannelInfo(String channelId) => "channels/getChannel/$channelId";
+  static readChannelMessage(String channelId) => "messages/channel/channel-message-seen/$channelId";
   static unReadChannelMessage(String channelId) => "channels/message-unread/$channelId";
   static const getChannelChat = "messages/channel/get-message";
-  static toggleAdminAndMember(String channelId) => "/channels/toggleAdmin/$channelId";
-  static removeMember(String channelId, String memberId) => "/channels/removeMember/$channelId/$memberId";
+  static toggleAdminAndMember(String channelId) => "channels/toggleAdmin/$channelId";
+  static removeMember(String channelId, String memberId) => "channels/removeMember/$channelId/$memberId";
   static renameChannel(String channelId) => "channels/update/$channelId";
   static const getFilesListingInChannelChat = "messages/channel/getFilesListingForChannel";
+  static const getChannelPinnedMessage = "messages/channel/get-pinned-message-for-channel";
 }

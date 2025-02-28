@@ -23,6 +23,12 @@ String formatTime(String utcTime) {
   DateTime dateTime = DateTime.parse(utcTime).toLocal(); // Convert to local time
   return DateFormat('hh:mm a').format(dateTime); // Format in 12-hour AM/PM format
 }
+
+String formatDateWithYear(String dateHeader){
+  DateTime date = DateTime.parse(dateHeader);
+  String formattedDate = DateFormat('MMMM dd,yyyy').format(date);
+  return formattedDate;
+}
 String formatDateTime(DateTime dateTime) {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
