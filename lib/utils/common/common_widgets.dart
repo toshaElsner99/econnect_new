@@ -1219,10 +1219,30 @@ Future commonForwardMSGDialog({required BuildContext context,
 //     builder: (context) => showLogOutDialog(),
 //   );
 // }
+Row newMessageDivider() {
+  return Row(children: [
+    Expanded(child: Divider(color: Colors.orange,)),
+    Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(
+          horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.orange,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: commonText(
+        text: "New Messages",
+        fontSize: 12,
+        color: Colors.white,
+      ),
+    ),
+    Expanded(child: Divider(color: Colors.orange,)),
+  ],);
+}
 
 Widget commonBackButton() {
   return IconButton(
-    icon: const Icon(Icons.close,color: Colors.white,),
+    icon: const Icon(CupertinoIcons.back,color: Colors.white,),
     color: Colors.white,
     onPressed: () => pop(),);
 }
@@ -2141,12 +2161,10 @@ Widget commonButtonForHeaderFavoriteInfoCallMute(
 }
 
 Widget customLoading(){
-  return Expanded(
-    child: Center(
-      child: SpinKitCircle(
-        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.appBarColor,
-        size: 50.0,
-      ),
+  return Center(
+    child: SpinKitCircle(
+      color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.appBarColor,
+      size: 50.0,
     ),
   );
 }

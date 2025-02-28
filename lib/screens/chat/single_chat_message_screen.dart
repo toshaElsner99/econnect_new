@@ -17,10 +17,8 @@ import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 import 'package:provider/provider.dart';
 
@@ -50,7 +48,6 @@ class SingleChatMessageScreen extends StatefulWidget {
 
 
 class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
-  // final quill.QuillController _controller = quill.QuillController.basic();
   final chatProvider = Provider.of<ChatProvider>(navigatorKey.currentState!.context,listen: false);
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
   final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
@@ -58,7 +55,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   final FocusNode _focusNode = FocusNode();
   String? lastSentMessage;
-  bool _showToolbar = false;
   final Map<String, dynamic> userCache = {};
   GetUserModelSecondUser? userDetails;
   String currentUserMessageId = "";
@@ -389,30 +385,34 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print("oppositeUserId in init==> ${widget.oppositeUserId}");
+      /// this is for pagination ///
       Provider.of<ChatProvider>(context,listen: false).pagination(oppositeUserId: widget.oppositeUserId);
       commonProvider.updateStatusCall(status: "online");
+      /// opposite user typing listen ///
       chatProvider.getTypingUpdate();
-      // _controller.addListener(() {
-      //   socketProvider.userTypingEvent(oppositeUserId: widget.oppositeUserId, isReplyMsg: false, isTyping: _controller.document.toPlainText().trim().length > 1 ? 1 : 0);
-      // },);
       /// THis Is Socket Listening Event ///
       socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId);
       /// THis is Doing for update pin message and get Message List ///
       socketProvider.socketListenPinMessage(oppositeUserId: widget.oppositeUserId,callFun: (){
-        chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,/*callingFromSC: true*/);
-        fetchOppositeUserDetails();
+        chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,currentPage: 1,isFromMsgListen: true);
+        // fetchOppositeUserDetails();
       });
+      /// this for add user to chat list on home screen 3rd Expansion tiles ///
       if(widget.needToCallAddMessage == true){
         channelListProvider.addUserToChatList(selectedUserId: widget.oppositeUserId);
       }
-      chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
+      // chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
+      /// this is for read message ///
       channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
-      chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,/*callingFromSC: true*/);
+      /// this is default call with page 1 for chat listing ///
+      chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,currentPage: 1,);
+      /// this is for fetch other user details and store it to cache memory ///
       _fetchAndCacheUserDetails();
+      /// this is for get user mention listing api ///
       commonProvider.getUserApi(id: widget.oppositeUserId);
     },);
     _messageController.addListener(_onTextChanged);
-
   }
 
   void fetchOppositeUserDetails()async{
@@ -448,7 +448,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 height: 1,
               ),
               if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
-                customLoading(),
+                  Flexible(child: customLoading())
               }else...{
                 if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
                 Expanded(child: Center(child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ?? 'Unknown', userImageUrl: ApiString.profileBaseUrl + (userDetails?.data?.user?.avatarUrl ?? ''),))),
@@ -609,18 +609,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   void _clearInputAndDismissKeyboard() {
     _focusNode.unfocus();
     _messageController.clear();
-    // _controller.clear();
     _messageController.clear();
-    setState(() {
-      _showToolbar = false;
-    });
     FocusScope.of(context).unfocus();
   }
 
   @override
   void dispose() {
-    // _controller.dispose();
-    // _focusNode.dispose();
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _focusNode.dispose();
@@ -1010,8 +1004,20 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         shrinkWrap: true,
         reverse: true,
         physics: NeverScrollableScrollPhysics(),
-        itemCount: sortedGroups.length,
+        itemCount: sortedGroups.length + 1,
         itemBuilder: (itemContext, index) {
+          if(index == sortedGroups.length){
+            if(value.totalPages > value.currentPagea) {
+              return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: customLoading(),
+            );
+            }else if(value.totalPages == value.currentPagea){
+              return ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ?? 'Unknown', userImageUrl: ApiString.profileBaseUrl + (userDetails?.data?.user?.avatarUrl ?? ''),);
+            } else {
+              return SizedBox.shrink();
+            }
+          }
           final group = sortedGroups[index];
           List<Messages> sortedMessages = (group.messages ?? [])..sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
           String? previousSenderId;
@@ -1320,7 +1326,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             );
                           },),
                       ),
-                        Visibility(
+                      Visibility(
                           visible: messageList.replies?.isNotEmpty ?? false,
                           child: GestureDetector(
                             onTap: () {
@@ -1485,25 +1491,5 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     );
   }
 
-  Row newMessageDivider() {
-    return Row(children: [
-                Expanded(child: Divider(color: Colors.orange,)),
-                Container(
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: commonText(
-                    text: "New Messages",
-                    fontSize: 12,
-                    color: Colors.white,
-                  ),
-                ),
-                Expanded(child: Divider(color: Colors.orange,)),
-              ],);
-  }
 }
 

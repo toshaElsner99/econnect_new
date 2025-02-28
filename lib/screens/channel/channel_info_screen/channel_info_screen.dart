@@ -1,4 +1,6 @@
 import 'package:e_connect/providers/channel_chat_provider.dart';
+import 'package:e_connect/utils/app_color_constants.dart';
+import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/channel_list_provider.dart';
@@ -26,28 +28,16 @@ class ChannelInfoScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Row(
-          children: [
-            Text(
-              'Info',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              channelName,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-              ),
-            ),
-          ],
+        leading: commonBackButton(),
+        title: Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              commonText(text: "Info",color: Colors.white,fontSize: 16),
+              const SizedBox(height: 4),
+              commonText(text: channelName,maxLines: 2,fontSize: 12,color: AppColor.borderColor),
+            ],
+          ),
         ),
       ),
       body: Column(

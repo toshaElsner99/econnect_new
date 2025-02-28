@@ -17,6 +17,7 @@ ThemeData lightMode = ThemeData(
       trackColor: WidgetStatePropertyAll(AppColor.white),
     ),
     appBarTheme: const AppBarTheme(
+        titleSpacing: 0,
         surfaceTintColor: Colors.transparent,
         // backgroundColor: Colors.transparent,
         backgroundColor: AppColor.appBarColor,
@@ -57,6 +58,7 @@ ThemeData darkMode = ThemeData(
       trackColor: WidgetStatePropertyAll(AppColor.white),
     ),
     appBarTheme: const AppBarTheme(
+        titleSpacing: 0,
         surfaceTintColor: Colors.transparent,
         // backgroundColor: Colors.transparent,
         backgroundColor: AppColor.darkAppBarColor,

@@ -60,5 +60,5 @@ class ApiString{
   static toggleAdminAndMember(String channelId) => "/channels/toggleAdmin/$channelId";
   static removeMember(String channelId, String memberId) => "/channels/removeMember/$channelId/$memberId";
   static renameChannel(String channelId) => "channels/update/$channelId";
-
+  static const getFilesListingInChannelChat = "messages/channel/getFilesListingForChannel";
 }

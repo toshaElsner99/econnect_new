@@ -716,14 +716,13 @@ class ChannelMembersInfo extends StatefulWidget {
 }
 
 class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
-  bool isManageMode = false; // Add this flag to track manage mode
+  bool isManageMode = false;
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    Provider.of<ChannelChatProvider>(context, listen: false)
-        .getChannelMembersList(widget.channelId);
+    // Provider.of<ChannelChatProvider>(context, listen: false).getChannelMembersList(widget.channelId);
   }
 
   @override

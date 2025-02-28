@@ -30,7 +30,7 @@ class ChatProvider extends  ChangeNotifier {
   int msgLength = 0;
   bool idChatListLoading = false;
   final ScrollController scrollController = ScrollController();
-  int currentPage = 1;
+  int currentPagea = 1;
   int totalPages = 0;
   GetReplyMessageModel? getReplyMessageModel;
   FilesListingInChatModel? filesListingInChatModel;
@@ -39,38 +39,39 @@ class ChatProvider extends  ChangeNotifier {
   clearForFirstTimeMessages(bool needToCLear) {
     if (needToCLear) {
       messageGroups.clear();
-      currentPage = 1;
+      currentPagea = 1;
     }
     notifyListeners();
   }
   void pagination({required String oppositeUserId}) {
     scrollController.addListener(() {
-      if (scrollController.position.pixels == scrollController.position.maxScrollExtent && currentPage < totalPages) {
-        currentPage++;
-        getMessagesList(oppositeUserId: oppositeUserId,);
-        print('currentPage:--->$currentPage');
+      if (scrollController.position.pixels == scrollController.position.maxScrollExtent && currentPagea < totalPages) {
+        currentPagea++;
+        print("oppositeUserId in pagination==> $oppositeUserId");
+        getMessagesList(oppositeUserId: oppositeUserId,currentPage: currentPagea);
+        print('currentPage:--->$currentPagea');
       }
     });
     notifyListeners();
   }
-  Future<void> getMessagesList({required String oppositeUserId,/* bool? needClearFirstTime, bool? callingFromSC*/}) async {
+  Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false}) async {
+    print("oppositeUserId in getMessagesList==> $oppositeUserId");
+
     try {
       if (lastOpenedUserId != oppositeUserId) {
         messageGroups.clear();
         totalPages = 0;
         currentPage = 1;
+        currentPagea = 1;
         idChatListLoading = true;
+        print("List Length ${messageGroups.length}");
       }
-      // if (needClearFirstTime == true) {
-      //   totalPages = 0;
-      //   currentPage = 1;
-      // }
-      // if(currentPage != 0 && callingFromSC == true){
-      //   messageGroups.clear();
-      //   totalPages = 0;
-      //   currentPage = 1;
-      //   idChatListLoading = true;
-      // }
+      print("Current Page ==> $currentPage");
+      if(currentPage == 1 && !isFromMsgListen){
+        messageGroups.clear();
+        currentPagea = 1;
+      }
+
       final response = await ApiService.instance.request(
           endPoint: ApiString.getMessages,
           method: Method.POST,
@@ -81,7 +82,22 @@ class ChatProvider extends  ChangeNotifier {
           });
 
       if (statusCode200Check(response)) {
+          //
+        if(isFromMsgListen){
+          for (var newItem in (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList()) {
+            int existingIndex = messageGroups.indexWhere((item) => item.sId == newItem.sId);
+
+            if (existingIndex != -1) {
+              // Replace existing data
+              messageGroups[existingIndex] = newItem;
+            } else {
+              // Add new data if not found
+              messageGroups.add(newItem);
+            }
+          }
+        }else{
           messageGroups.addAll((response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList());
+        }
           totalPages = response['data']['totalPages'];
           lastOpenedUserId = oppositeUserId;
       }
@@ -240,11 +256,11 @@ class ChatProvider extends  ChangeNotifier {
     if(statusCode200Check(response)){
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
       if(replyId != null){
-        getMessagesList(oppositeUserId: receiverId);
+        // getMessagesList(oppositeUserId: receiverId);
         print("I'm In sendMessage");
         getReplyMessageList(msgId: replyId,fromWhere: "SEND_REPLY_MESSAGE");
       }else {
-        getMessagesList(oppositeUserId: receiverId);
+        // getMessagesList(oppositeUserId: receiverId);
       }
     }
     notifyListeners();
@@ -277,7 +293,7 @@ class ChatProvider extends  ChangeNotifier {
   Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
-      getMessagesList(oppositeUserId: receiverId);
+      // getMessagesList(oppositeUserId: receiverId);
       socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
     }
   }

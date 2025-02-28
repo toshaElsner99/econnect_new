@@ -146,11 +146,11 @@ class SocketIoProvider extends ChangeNotifier{
     }
     socket.on((deleteMessageForListen), (data) {
       print("deleteMessageForListen >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,/*callingFromSC: true*/);
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1, isFromMsgListen: true);
     });
     socket.on(notification, (data) {
       print("listSingleChatScreen >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,/*callingFromSC: true*/);
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
     });
   }
 
@@ -158,7 +158,7 @@ class SocketIoProvider extends ChangeNotifier{
   void socketListenPinMessage({required Function callFun , required String oppositeUserId}){
     socket.on(notificationForPinMessages, (data) {
       print("listSingleChatScreen >>> $data");
-        Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,);
+        Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
       callFun.call();
     });
   }
