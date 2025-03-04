@@ -4,12 +4,13 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 
 import '../main.dart';
-import '../model/channel_chat_model.dart';
+import '../model/channel_chat_model.dart' as msg;
 import '../model/channel_members_model.dart';
 import '../model/channel_pinned_message_model.dart';
 import '../model/files_listing_in_channel_chat_model.dart';
@@ -24,14 +25,31 @@ import 'file_service_provider.dart';
 class ChannelChatProvider extends ChangeNotifier{
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
   GetChannelInfo? getChannelInfo;
-  ChannelChatModel? channelChatModel;
+  msg.ChannelChatModel? channelChatModel;
   ChannelPinnedMessageModel? channelPinnedMessageModel;
   List<MemberDetails> channelMembersList = [];
   FilesListingInChannelChatModel? filesListingInChannelChatModel;
-  List<MessageGroup> messageGroups = [];
+  List<msg.MessageGroup> messageGroups = [];
   int currentPage = 1;
   int totalPages = 0;
   final ScrollController scrollController = ScrollController();
+  Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned})async{
+    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
+    if(statusCode200Check(response)){
+      // togglePinModel(messageId);
+      for (var messageGroup in messageGroups) {
+        for (var message in messageGroup.messages ?? []) {
+          if (message.id == messageId) {
+            message.isPinned = pinned; // Set the isPinned status based on the response
+            notifyListeners(); // Notify listeners to update the UI
+            break; // Exit the inner loop once the message is found and updated
+          }
+        }
+      }
+      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
+    }
+  }
+
 
   Future<List<String>> uploadFiles() async {
     try {
@@ -99,12 +117,34 @@ class ChannelChatProvider extends ChangeNotifier{
     if (files != null && files.isNotEmpty) {
       requestBody["files"] = files;
     }
-
+    final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
-      messageGroups.where((element) => element.id == "2025-03-04",);
-      messageGroups.insert(0, response['data']);
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
+      if (editMsgID != null && editMsgID.isNotEmpty) {
+        int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.id == editMsgID));
+
+        if (editIndex != -1) {
+          // Update the existing message
+          msg.Message editedMessage = msg.Message.fromJson(response['data']);
+          editedMessage.isEdited = true; // Set isEdited to true
+          // messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
+
+          messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.id == editMsgID)] = editedMessage;
+        }
+      } else /*if(replyId == null && replyId == "")*/ {
+        int existingIndex = messageGroups.indexWhere((item) => item.id == todayDate);
+        if (existingIndex != -1) {
+          messageGroups[existingIndex].messages!.add(msg.Message.fromJson(response['data']));
+        } else {
+          final newListOfDate = response['data'];
+          messageGroups.add(msg.MessageGroup.fromJson({
+            "_id": todayDate,
+            'messages': [newListOfDate],
+            "count": 1,
+          }));
+        }
+      }
       if(replyId != null){
         // getMessagesList(oppositeUserId: receiverId);
         print("I'm In sendMessage");
@@ -156,29 +196,8 @@ class ChannelChatProvider extends ChangeNotifier{
       currentPage = 1;
     }
     final response  = await ApiService.instance.request(endPoint: ApiString.getChannelChat, method: Method.POST,reqBody: requestBody);
-    // if(statusCode200Check(response)){
-    //   // channelChatModel = ChannelChatModel.fromJson(response);
-    //   messageGroups.addAll((response['data']['messages'] as List).map((message) => MessageGroup.fromJson(message)).toList());
-    //   // lastOpenedChannelId = lastOpenedChannelId;
-    //   isChannelChatLoading = false;
-    // }else{
-    //   isChannelChatLoading = false;
-    // }
-    if(isFromMsgListen){
-      for (var newItem in (response['data']['messages'] as List).map((message) => MessageGroup.fromJson(message)).toList()) {
-        int existingIndex = messageGroups.indexWhere((item) => item.id == newItem.id);
 
-        if (existingIndex != -1) {
-          // Replace existing data
-          messageGroups[existingIndex] = newItem;
-        } else {
-          // Add new data if not found
-          messageGroups.add(newItem);
-        }
-      }
-    }else{
-        messageGroups.addAll((response['data']['messages'] as List).map((message) => MessageGroup.fromJson(message)).toList());
-    }
+
     totalPages = response['data']['totalPages'];
     notifyListeners();
   }

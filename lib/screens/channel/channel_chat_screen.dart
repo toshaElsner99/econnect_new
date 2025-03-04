@@ -827,9 +827,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         // print("onReply Passing = ${messageId.toString()}");
                         // pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
                       },
-                      onPin: () => (){},
+                      onPin: () => setState(() {
+                        _selectedIndex = null;
+                        channelChatProvider.pinUnPinMessage(receiverId: widget.channelId, messageId: messageId, pinned: pinnedMsg = !pinnedMsg );
+                      }),
                       onCopy: () => copyToClipboard(context, message),
                       onEdit: ()=> setState(() {
+                        _messageController.clear();
                         FocusScope.of(context).requestFocus(_focusNode);
                         int position = _messageController.text.length;
                         currentUserMessageId = messageId;

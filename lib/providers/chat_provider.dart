@@ -251,19 +251,30 @@ class ChatProvider extends  ChangeNotifier {
       /// Socket Emit ///
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
       /// find where to add ///
-      int existingIndex = messageGroups.indexWhere((item) => item.sId == todayDate);
-      // int replyIndex = messageGroups.indexWhere((item) => item.messages. == todayDate);
-      if(existingIndex != -1){
-        /// grp date exists then add ///
-        messageGroups[existingIndex].messages!.add(msg.Messages.fromJson(response['data']));
-      }else{
-        /// grp date not exists then add ///
-        final newListOfDate = response['data'];
-        messageGroups.add(msg.MessageGroups.fromJson({"_id" : todayDate,'messages':[newListOfDate],"count":1}));
+      if (editMsgID != null && editMsgID.isNotEmpty) {
+        int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.sId == editMsgID));
+
+        if (editIndex != -1) {
+          // Update the existing message
+          msg.Messages editedMessage = msg.Messages.fromJson(response['data']);
+          editedMessage.isEdited = true; // Set isEdited to true
+          messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
+        }
+      } else /*if(replyId == null && replyId == "")*/ {
+        int existingIndex = messageGroups.indexWhere((item) => item.sId == todayDate);
+        if (existingIndex != -1) {
+          messageGroups[existingIndex].messages!.add(msg.Messages.fromJson(response['data']));
+        } else {
+          final newListOfDate = response['data'];
+          messageGroups.add(msg.MessageGroups.fromJson({
+            "_id": todayDate,
+            'messages': [newListOfDate],
+            "count": 1,
+          }));
+        }
       }
+
       if(replyId != null){
-        // getReplyMessageList(msgId: replyId,fromWhere: "SEND_REPLY_MESSAGE");
-        // messageGroups.
 
 
       }else {
@@ -301,6 +312,8 @@ class ChatProvider extends  ChangeNotifier {
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
       // getMessagesList(oppositeUserId: receiverId);
+      togglePinModel(messageId);
+      // _updatePinnedStatus(messageId, pinned);
       socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
     }
   }
@@ -327,6 +340,17 @@ class ChatProvider extends  ChangeNotifier {
       messageGroup.groupMessages?.removeWhere((message) => message.sId == messageId);
     }
     notifyListeners();
+  }
+  void togglePinModel(String messageId) {
+    for (var messageGroup in messageGroups ?? []) {
+      for (var message in messageGroup.messages ?? []) {
+        if (message.sId == messageId) {
+          message.isPinned = !(message.isPinned ?? false); // Toggle the isPinned status
+          notifyListeners(); // Notify listeners if you're using a state management solution
+          return; // Exit after updating
+        }
+      }
+    }
   }
   void deleteMessageFromModelSingleChat(String messageId) {
     for (var messageGroup in messageGroups) {

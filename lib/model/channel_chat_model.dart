@@ -195,7 +195,7 @@ class Message {
           ? List<Reply>.from(json['replies'].map((reply) => Reply.fromJson(reply)))
           : null,
       isPinned: json['isPinned'],
-      replyCount: json['replyCount'],
+      replyCount: json['replyCount'] ?? 0,
       repliesSenderInfo: json['repliesSenderInfo'] != null
           ? List<SenderInfo>.from(
           json['repliesSenderInfo'].map((info) => SenderInfo.fromJson(info)))
@@ -230,7 +230,7 @@ class Message {
       'updatedAt': updatedAt?.toIso8601String(),
       '__v': v,
       'replies': replies?.map((reply) => reply.toJson()).toList(),
-      'replyCount': replyCount,
+      'replyCount': replyCount ?? 0,
       'repliesSenderInfo': repliesSenderInfo?.map((info) => info.toJson()).toList(),
       'senderInfo': senderInfo?.toJson(),
       'receiverInfo': receiverInfo,
