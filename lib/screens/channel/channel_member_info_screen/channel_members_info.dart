@@ -728,9 +728,9 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      // backgroundColor: Colors.black,
       appBar: AppBar(
-          backgroundColor: Colors.black,
+          // backgroundColor: Colors.black,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
@@ -740,8 +740,7 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
           title: Consumer<ChannelChatProvider>(
             builder: (context, provider, child) {
               return Text(
-                '${provider.channelMembersList.length} members',
-                style: const TextStyle(color: Colors.white),
+                '${provider.channelMembersList.length} members'
               );
             },
           )),
@@ -823,13 +822,13 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
                               ),
                               icon: const Icon(
                                 Icons.person_add_outlined,
-                                color: Colors.white,
+                                // color: Colors.white,
                                 size: 16,
                               ),
                               label: const Text(
                                 'Add',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  // color: Colors.white,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -889,7 +888,7 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
       title: Text(
         member.fullName ?? member.username ?? '',
         style: const TextStyle(
-          color: Colors.white,
+          // color: Colors.white,
           fontSize: 16,
         ),
       ),
@@ -914,13 +913,13 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
               Text(
                 member.isAdmin == true ? 'Admin' : 'Member',
                 style: const TextStyle(
-                  color: Colors.blue,
+                  // color: Colors.blue,
                   fontSize: 14,
                 ),
               ),
               const Icon(
                 Icons.keyboard_arrow_down,
-                color: Colors.blue,
+                // color: Colors.blue,
                 size: 20,
               ),
             ],
@@ -1058,9 +1057,9 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      // backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        // backgroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -1109,7 +1108,8 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
+                // color: Colors.grey,
+                border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Row(
@@ -1128,7 +1128,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E1E1E),
+                            // color: const Color(0xFF1E1E1E),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                                 color: Colors.grey[800]!,
@@ -1158,7 +1158,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                               Text(
                                 user.username ?? '',
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  // color: Colors.white,
                                   fontSize: 14,
                                 ),
                               ),
@@ -1177,8 +1177,8 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                                   ),
                                   child: const Icon(
                                     Icons.close,
-                                    color: Colors.white,  // White X icon
-                                    size: 14,
+                                    color: Colors.white,
+                                    size: 14
                                   ),
                                 ),
                               ),
@@ -1191,7 +1191,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                           child: IntrinsicWidth(
                             child: TextField(
                               controller: _searchController,
-                              style: const TextStyle(color: Colors.white),
+                              // style: const TextStyle(color: Colors.white),
                               decoration: InputDecoration(
                                 hintText: selectedUsers.isEmpty ? 'Search for users' : '',
                                 hintStyle: TextStyle(color: Colors.grey[600]),
@@ -1255,8 +1255,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                 if (filteredUsers.isEmpty) {
                   return const Center(
                     child: Text(
-                      'No users found',
-                      style: TextStyle(color: Colors.grey),
+                      'No users found'
                     ),
                   );
                 }
@@ -1274,14 +1273,14 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                       title: Text(
                         user.fullName ?? user.username ?? '',
                         style: const TextStyle(
-                          color: Colors.white,
+                          // color: Colors.white,
                           fontSize: 16,
                         ),
                       ),
                       subtitle: Text(
                         user.email ?? '',
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          // color: Colors.grey[600],
                           fontSize: 14,
                         ),
                       ),
