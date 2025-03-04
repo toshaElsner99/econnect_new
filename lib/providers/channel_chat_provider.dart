@@ -1,7 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:intl/intl.dart';
+import 'package:mime/mime.dart';
+import 'package:provider/provider.dart';
 
 import '../main.dart';
 import '../model/channel_chat_model.dart';
@@ -9,11 +15,15 @@ import '../model/channel_members_model.dart';
 import '../model/channel_pinned_message_model.dart';
 import '../model/files_listing_in_channel_chat_model.dart';
 import '../model/get_channel_info.dart';
+import '../socket_io/socket_io.dart';
 import '../utils/api_service/api_service.dart';
 import '../utils/api_service/api_string_constants.dart';
 import '../utils/common/common_function.dart';
+import '../utils/common/common_widgets.dart';
+import 'file_service_provider.dart';
 
 class ChannelChatProvider extends ChangeNotifier{
+  final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
   GetChannelInfo? getChannelInfo;
   ChannelChatModel? channelChatModel;
   ChannelPinnedMessageModel? channelPinnedMessageModel;
@@ -23,6 +33,87 @@ class ChannelChatProvider extends ChangeNotifier{
   int currentPage = 1;
   int totalPages = 0;
   final ScrollController scrollController = ScrollController();
+
+  Future<List<String>> uploadFiles() async {
+    try {
+      startLoading();
+      List<PlatformFile> selectedFiles = FileServiceProvider.instance.selectedFiles;
+      List<File> filesToUpload = selectedFiles.map((platformFile) {
+        return File(platformFile.path!);
+      }).toList();
+      print("<<<<<<<<<<SUIIIII>>>>>>>>>>>");
+      var request = http.MultipartRequest('POST', Uri.parse(ApiString.baseUrl + ApiString.uploadFileForMessageMedia));
+      request.headers.addAll({
+        'Authorization': "Bearer ${signInModel.data?.authToken}",
+      });
+      for (var file in filesToUpload) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'files',
+            file.path,
+            contentType: MediaType.parse(lookupMimeType(file.path) ?? 'application/octet-stream'),
+          ),
+        );
+      }
+      var response = await request.send();
+      var responseData = await http.Response.fromStream(response);
+      if (response.statusCode == 200) {
+        selectedFiles.clear();
+        var jsonResponse = jsonDecode(responseData.body);
+        if (jsonResponse['data'] != null && jsonResponse['data'] is List) {
+          List<String> filePaths = [];
+          for (var item in jsonResponse['data']) {
+            if (item['file_path'] != null) {
+              filePaths.add(item['file_path']);
+            }
+          }
+          print("filesPathRes>>>>> $filePaths");
+          return filePaths;
+        } else {
+          throw Exception("Unexpected response structure");
+        }
+      } else {
+        throw Exception('Failed to upload files: ${responseData.body}');
+      }
+    }catch (e){
+      throw Exception("$e");
+    }finally{
+      stopLoading();
+    }
+  }
+  Future<void> sendMessage({required dynamic content , required String channelId, List<String>? files,String? replyId , String? editMsgID,})async{
+    final requestBody = {
+      "content": content,
+      "channelId": channelId,
+    };
+
+    if (replyId != null && replyId.isNotEmpty) {
+      requestBody['isReply'] = true;
+      requestBody['replyTo'] = replyId;
+    }
+
+    if (editMsgID != null && editMsgID.isNotEmpty) {
+      requestBody["isEdit"] = true;
+      requestBody["editMessageId"] = editMsgID;
+    }
+
+    if (files != null && files.isNotEmpty) {
+      requestBody["files"] = files;
+    }
+
+    final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST,reqBody: requestBody);
+    if(statusCode200Check(response)){
+      socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
+      if(replyId != null){
+        // getMessagesList(oppositeUserId: receiverId);
+        print("I'm In sendMessage");
+        // getReplyMessageList(msgId: replyId,fromWhere: "SEND_REPLY_MESSAGE");
+      }else {
+        // getMessagesList(oppositeUserId: receiverId);
+      }
+    }
+    notifyListeners();
+  }
 
   void pagination({required String channelId}) {
     scrollController.addListener(() {
@@ -150,4 +241,6 @@ class ChannelChatProvider extends ChangeNotifier{
     }
     notifyListeners();
   }
+
+
 }

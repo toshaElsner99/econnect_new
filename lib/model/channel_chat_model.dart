@@ -3,7 +3,7 @@ class ChannelChatModel {
   int? status;
   String? message;
   Data? data;
-  List<dynamic?>? metadata;
+  List<dynamic>? metadata;
 
   ChannelChatModel({
     this.statusCode,

@@ -443,10 +443,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           appBar: buildAppBar(commonProvider, chatProvider),
           body: Column(
             children: [
-              Divider(
-                color: Colors.grey.shade800,
-                height: 1,
-              ),
+              Divider(color: Colors.grey.shade800, height: 1,),
               if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
                   Flexible(child: customLoading())
               }else...{
@@ -874,7 +871,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       ),
     );
   }
-  // File selected to send
   Widget selectedFilesWidget() {
     return Consumer<FileServiceProvider>(
       builder: (context, provider, _) {
@@ -946,55 +942,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     );
   }
 
-  void showCameraOptionsBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColor.appBarColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              commonText(
-                text: 'Camera Options',
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColor.whiteColor,
-              ),
-              const SizedBox(height: 20),
-              ListTile(
-                leading:
-                const Icon(Icons.camera_alt, color: AppColor.whiteColor),
-                title: commonText(
-                  text: 'Capture Photo',
-                  color: AppColor.whiteColor,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.captureMedia(isVideo: false);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.videocam, color: AppColor.whiteColor),
-                title: commonText(
-                  text: 'Record Video',
-                  color: AppColor.whiteColor,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.captureMedia(isVideo: true);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
 
   Widget dateHeaders() {
