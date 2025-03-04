@@ -6,13 +6,14 @@ import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:intl/intl.dart';
 import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 
 import '../main.dart';
 import '../model/files_listening_in_chat_model.dart';
 import '../model/get_reply_message_model.dart';
-import '../model/message_model.dart';
+import '../model/message_model.dart' as msg;
 import 'file_service_provider.dart';
 import '../utils/api_service/api_service.dart';
 import '../utils/api_service/api_string_constants.dart';
@@ -23,7 +24,7 @@ import 'package:http/http.dart' as http;
 
 class ChatProvider extends  ChangeNotifier {
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
-  List<MessageGroups> messageGroups = [];
+  List<msg.MessageGroups> messageGroups = [];
   String? lastOpenedUserId;
   String? lastOpenedUserMSGId;
   String oppUserIdForTyping = "";
@@ -77,7 +78,7 @@ class ChatProvider extends  ChangeNotifier {
       if (statusCode200Check(response)) {
           //
         if(isFromMsgListen){
-          for (var newItem in (response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList()) {
+          for (var newItem in (response['data']['messages'] as List).map((message) => msg.MessageGroups.fromJson(message)).toList()) {
             int existingIndex = messageGroups.indexWhere((item) => item.sId == newItem.sId);
 
             if (existingIndex != -1) {
@@ -89,7 +90,7 @@ class ChatProvider extends  ChangeNotifier {
             }
           }
         }else{
-          messageGroups.addAll((response['data']['messages'] as List).map((message) => MessageGroups.fromJson(message)).toList());
+          messageGroups.addAll((response['data']['messages'] as List).map((message) => msg.MessageGroups.fromJson(message)).toList());
         }
           totalPages = response['data']['totalPages'];
           lastOpenedUserId = oppositeUserId;
@@ -244,14 +245,38 @@ class ChatProvider extends  ChangeNotifier {
     if (files != null && files.isNotEmpty) {
       requestBody["files"] = files;
     }
-
+    final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
+      /// Socket Emit ///
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
+      /// find where to add ///
+      if (editMsgID != null && editMsgID.isNotEmpty) {
+        int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.sId == editMsgID));
+
+        if (editIndex != -1) {
+          // Update the existing message
+          msg.Messages editedMessage = msg.Messages.fromJson(response['data']);
+          editedMessage.isEdited = true; // Set isEdited to true
+          messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
+        }
+      } else /*if(replyId == null && replyId == "")*/ {
+        int existingIndex = messageGroups.indexWhere((item) => item.sId == todayDate);
+        if (existingIndex != -1) {
+          messageGroups[existingIndex].messages!.add(msg.Messages.fromJson(response['data']));
+        } else {
+          final newListOfDate = response['data'];
+          messageGroups.add(msg.MessageGroups.fromJson({
+            "_id": todayDate,
+            'messages': [newListOfDate],
+            "count": 1,
+          }));
+        }
+      }
+
       if(replyId != null){
-        // getMessagesList(oppositeUserId: receiverId);
-        print("I'm In sendMessage");
-        getReplyMessageList(msgId: replyId,fromWhere: "SEND_REPLY_MESSAGE");
+
+
       }else {
         // getMessagesList(oppositeUserId: receiverId);
       }
@@ -287,6 +312,8 @@ class ChatProvider extends  ChangeNotifier {
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
       // getMessagesList(oppositeUserId: receiverId);
+      togglePinModel(messageId);
+      // _updatePinnedStatus(messageId, pinned);
       socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
     }
   }
@@ -313,6 +340,17 @@ class ChatProvider extends  ChangeNotifier {
       messageGroup.groupMessages?.removeWhere((message) => message.sId == messageId);
     }
     notifyListeners();
+  }
+  void togglePinModel(String messageId) {
+    for (var messageGroup in messageGroups ?? []) {
+      for (var message in messageGroup.messages ?? []) {
+        if (message.sId == messageId) {
+          message.isPinned = !(message.isPinned ?? false); // Toggle the isPinned status
+          notifyListeners(); // Notify listeners if you're using a state management solution
+          return; // Exit after updating
+        }
+      }
+    }
   }
   void deleteMessageFromModelSingleChat(String messageId) {
     for (var messageGroup in messageGroups) {

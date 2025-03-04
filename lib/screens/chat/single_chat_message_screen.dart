@@ -828,11 +828,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           final filesOfList = await chatProvider.uploadFiles();
                           chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, files: filesOfList);
                         } else {
-                          chatProvider.sendMessage(
-                              content: plainText,
-                              receiverId: widget.oppositeUserId,
-                              editMsgID: currentUserMessageId
-                          ).then((value) => setState(() {
+                          chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
                             currentUserMessageId = "";
                           }));
                         }
@@ -872,127 +868,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           ),
         ],
       ),
-    );
-  }
-  // File selected to send
-  Widget selectedFilesWidget() {
-    return Consumer<FileServiceProvider>(
-      builder: (context, provider, _) {
-        return Visibility(
-          visible: provider.selectedFiles.isNotEmpty,
-          child: SizedBox(
-            height: 80,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: provider.selectedFiles.length,
-              itemBuilder: (context, index) {
-                print("FILES>>>> ${provider.selectedFiles[index].path}");
-                return Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MediaPreviewScreen(
-                              files: provider.selectedFiles,
-                              initialIndex: index,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          color: AppColor.commonAppColor,
-                          child: getFileIcon(
-                            provider.selectedFiles[index].extension!,
-                            provider.selectedFiles[index].path,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: GestureDetector(
-                        onTap: () {
-                          provider.removeFile(index);
-                        },
-                        child: CircleAvatar(
-                          radius: 12,
-                          backgroundColor: AppColor.blackColor,
-                          child: CircleAvatar(
-                            radius: 10,
-                            backgroundColor: AppColor.borderColor,
-                            child: Icon(
-                              Icons.close,
-                              color: AppColor.blackColor,
-                              size: 15,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void showCameraOptionsBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColor.appBarColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              commonText(
-                text: 'Camera Options',
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColor.whiteColor,
-              ),
-              const SizedBox(height: 20),
-              ListTile(
-                leading:
-                const Icon(Icons.camera_alt, color: AppColor.whiteColor),
-                title: commonText(
-                  text: 'Capture Photo',
-                  color: AppColor.whiteColor,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.captureMedia(isVideo: false);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.videocam, color: AppColor.whiteColor),
-                title: commonText(
-                  text: 'Record Video',
-                  color: AppColor.whiteColor,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.captureMedia(isVideo: true);
-                },
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 

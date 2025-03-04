@@ -11,7 +11,6 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
-import '../../model/get_user_mention_model.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/common_provider.dart';
 import '../../providers/file_service_provider.dart';
@@ -470,6 +469,109 @@ return  showMenu<int>(
     }
   });
 }
+
+Widget popMenuChannel(
+    BuildContext context, {
+      required bool opened,
+      required bool isPinned,
+      required VoidCallback onOpened,
+      required VoidCallback onClosed,
+      required VoidCallback onForward,
+      required VoidCallback onReply,
+      required VoidCallback onPin,
+      required VoidCallback onCopy,
+      required VoidCallback onEdit,
+      required VoidCallback onDelete,
+      required String createdAt,  // Pass createdAt timestamp
+      required String currentUserId, // Current user's ID
+      required bool isForwarded,
+    }) {
+  final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+  final double screenHeight = MediaQuery.of(context).size.height;
+  final double buttonPositionY = overlay.localToGlobal(Offset.zero).dy;
+  const double menuHeight = 220;
+
+  final bool openAbove = (buttonPositionY + menuHeight) > screenHeight;
+  print("cretedTime>>>>POPOP $createdAt");
+  print("cretedTime>>>>POPOP $currentUserId");
+  DateTime createdTime = DateTime.parse(createdAt).toLocal();
+  DateTime now = DateTime.now();
+  final isEditable = now.difference(createdTime).inHours < 24;
+  print("createdAt>> $createdTime $isEditable");
+  final isCurrentUser = currentUserId == signInModel.data?.user?.id; // Check if message belongs to the user
+
+  return Container(
+    // color: Colors.red,
+    alignment: Alignment.topCenter,
+    height: 22,
+    width: 20,
+    child: PopupMenuButton<int>(
+      padding: EdgeInsets.zero, // Remove padding
+      iconSize: 25, // Reduce icon size
+      constraints: const BoxConstraints(minWidth: 120), // Limit menu width
+      color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+      position: openAbove ? PopupMenuPosition.over : PopupMenuPosition.under,
+      offset: const Offset(-15, 0),
+      onOpened: ()=> onOpened(),
+      onCanceled: ()=> onClosed(),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: AppPreferenceConstants.themeModeBoolValueGet
+            ? const BorderSide(color: Colors.white38, width: 0.5)
+            : BorderSide.none,
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 0:
+            onForward.call();
+            break;
+          case 1:
+            onReply.call();
+            break;
+          case 2:
+            onPin.call();
+            break;
+          case 3:
+            onCopy.call();
+            break;
+          case 4:
+            onEdit.call();
+            break;
+          case 5:
+            onDelete.call();
+            break;
+        }
+      },
+      itemBuilder: (context) {
+        List<PopupMenuEntry<int>> menuItems = [
+          _menuItem(0, Icons.forward, "Forward"),
+          _menuItem(1, Icons.reply, "Reply"),
+          _menuItem(2, Icons.push_pin, isPinned ? "Unpin from Channel": "Pin to Channel"),
+          _menuItem(3, Icons.copy, "Copy Text"),
+        ];
+        // if(isForwarded == true){
+        //   menuItems.insert(0, _menuItem(0, Icons.forward, "Forward"));
+        //
+        // }
+        // Show Edit option only if message is under 24 hours old
+        if (isCurrentUser && isEditable) {
+          menuItems.add(_menuItem(4, Icons.edit, "Edit"));
+        }
+
+        // Show Delete option only if the message belongs to the current user
+        if (isCurrentUser) {
+          menuItems.add(const PopupMenuDivider());
+          menuItems.add(_menuItem(5, Icons.delete, "Delete", color: Colors.red));
+        }
+
+        return menuItems;
+      },
+      icon: Icon(Icons.more_vert, color: !opened ? AppColor.borderColor : AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
+    ),
+  );
+}
+
+
 // Widget popMenu2(
 //     BuildContext context, {
 //       required bool opened,
@@ -590,7 +692,8 @@ Widget popMenu2(
   const double menuHeight = 220;
 
   final bool openAbove = (buttonPositionY + menuHeight) > screenHeight;
-
+  print("cretedTime>>>>POPOP $createdAt");
+  print("cretedTime>>>>POPOP $currentUserId");
   DateTime createdTime = DateTime.parse(createdAt).toLocal();
   DateTime now = DateTime.now();
   final isEditable = now.difference(createdTime).inHours < 24;
@@ -651,7 +754,7 @@ Widget popMenu2(
         }
         // Show Edit option only if message is under 24 hours old
         if (isCurrentUser && isEditable) {
-          (_menuItem(4, Icons.edit, "Edit"));
+          menuItems.add(_menuItem(4, Icons.edit, "Edit"));
         }
 
         // Show Delete option only if the message belongs to the current user
@@ -2291,55 +2394,7 @@ void showChatSettingsBottomSheet({required String userId}) {
 }
 
 
-void showCameraOptionsBottomSheet(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    backgroundColor: AppColor.appBarColor,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (context) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            commonText(
-              text: 'Camera Options',
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColor.whiteColor,
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading:
-              const Icon(Icons.camera_alt, color: AppColor.whiteColor),
-              title: commonText(
-                text: 'Capture Photo',
-                color: AppColor.whiteColor,
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                FileServiceProvider.instance.captureMedia(isVideo: false);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.videocam, color: AppColor.whiteColor),
-              title: commonText(
-                text: 'Record Video',
-                color: AppColor.whiteColor,
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                FileServiceProvider.instance.captureMedia(isVideo: true);
-              },
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+// File selected to send
 Widget selectedFilesWidget() {
   return Consumer<FileServiceProvider>(
     builder: (context, provider, _) {
@@ -2405,6 +2460,56 @@ Widget selectedFilesWidget() {
               );
             },
           ),
+        ),
+      );
+    },
+  );
+}
+
+void showCameraOptionsBottomSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: AppColor.appBarColor,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            commonText(
+              text: 'Camera Options',
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColor.whiteColor,
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading:
+              const Icon(Icons.camera_alt, color: AppColor.whiteColor),
+              title: commonText(
+                text: 'Capture Photo',
+                color: AppColor.whiteColor,
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                FileServiceProvider.instance.captureMedia(isVideo: false);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam, color: AppColor.whiteColor),
+              title: commonText(
+                text: 'Record Video',
+                color: AppColor.whiteColor,
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                FileServiceProvider.instance.captureMedia(isVideo: true);
+              },
+            ),
+          ],
         ),
       );
     },

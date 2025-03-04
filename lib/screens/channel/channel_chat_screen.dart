@@ -38,6 +38,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
+  String currentUserMessageId = "";
 
 
   @override
@@ -56,7 +57,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
 
   void _showRenameChannelDialog() {
     final TextEditingController _nameController = TextEditingController(text: widget.channelName);
-    
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -214,15 +215,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       final plainText = _messageController.text.trim();
                       if(plainText.isNotEmpty || fileServiceProvider.selectedFiles.isNotEmpty) {
                         if(fileServiceProvider.selectedFiles.isNotEmpty){
-                          // final filesOfList = await chatProvider.uploadFiles();
-                          // chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, files: filesOfList);
+                          final filesOfList = await channelChatProvider.uploadFiles();
+                          channelChatProvider.sendMessage(content: plainText, channelId: widget.channelId, files: filesOfList);
                         } else {
-                          // channelChatProvider.sendMessage(
-                          //   content: plainText,
-                          //   channelId: widget.channelId,
-                          // );
+                          channelChatProvider.sendMessage(content: plainText, channelId: widget.channelId,editMsgID: currentUserMessageId).then((value) => setState(() {
+                            currentUserMessageId = "";
+                          }),);
                         }
-                        // _clearInputAndDismissKeyboard();
+                        _clearInputAndDismissKeyboard();
                       }
                     },
                   ),
@@ -261,6 +261,10 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     );
   }
 
+  void _clearInputAndDismissKeyboard() {
+    _focusNode.unfocus();
+    _messageController.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -386,7 +390,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     commonText(text: widget.channelName,fontSize: 18),
                     SizedBox(height: 10),
                     commonText(text: "This is the start of the ${widget.channelName} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",textAlign: TextAlign.center,
-                        height: 1.35),
+                    height: 1.35),
                   ],
                 ),
               );
@@ -448,7 +452,6 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       );
     },);
   }
-
 
   Widget chatBubble({
     required int index,
@@ -810,41 +813,34 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 // Spacer(),
                 Visibility(
                   visible: !(messageList.isLog ?? false),
-                  child: popMenu2(context,
+                  child: popMenu2(
+                      context,
                       isPinned: pinnedMsg,
+                      createdAt: messageList.createdAt.toString(),
+                      currentUserId: userId,
                       onOpened: () =>  setState(() => _selectedIndex = index),
                       onClosed: () =>  setState(() => _selectedIndex = null),
                       isForwarded: messageList.isForwarded! ? false : true,
                       opened: index == _selectedIndex ? true : false,
-                      createdAt: time,
-                      currentUserId: userId,
-                      onForward: () =>
-                        pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId)),
+                      onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId)),
                       onReply: () {
                         // print("onReply Passing = ${messageId.toString()}");
                         // pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
                       },
-                      onPin: () => (){},
-                      onCopy: () => copyToClipboard(context, message),
-                      // onEdit: () => setState(() {
-                      //   int position = _controller.document.length - 1;
-                      //   currentUserMessageId = messageId;
-                      //   print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
-                      //   _controller.document.insert(position, message.toString());
-                      //   _controller.updateSelection(
-                      //     TextSelection.collapsed(offset: _controller.document.length),
-                      //     quill.ChangeSource.local,
-                      //   );
-                      // }),
-                      onEdit: ()=> setState(() {
-                        // int position = _messageController.text.length;
-                        // currentUserMessageId = messageId;
-                        // print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
-                        // _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
+                      onPin: () => setState(() {
+                        _selectedIndex = null;
+                        channelChatProvider.pinUnPinMessage(receiverId: widget.channelId, messageId: messageId, pinned: pinnedMsg = !pinnedMsg );
                       }),
-                      onDelete: () => 
-                        Provider.of<ChannelChatProvider>(context,listen: false)
-                          .deleteMessageFromChannel(messageId: messageId)),
+                      onCopy: () => copyToClipboard(context, message),
+                      onEdit: ()=> setState(() {
+                        _messageController.clear();
+                        FocusScope.of(context).requestFocus(_focusNode);
+                        int position = _messageController.text.length;
+                        currentUserMessageId = messageId;
+                        print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
+                        _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
+                      }),
+                      onDelete: () => Provider.of<ChannelChatProvider>(context,listen: false).deleteMessageFromChannel(messageId: messageId)),
                 )
               ],
             ),
