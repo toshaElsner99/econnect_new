@@ -443,7 +443,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           appBar: buildAppBar(commonProvider, chatProvider),
           body: Column(
             children: [
-              Divider(color: Colors.grey.shade800, height: 1,),
+              Divider(
+                color: Colors.grey.shade800,
+                height: 1,
+              ),
               if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
                   Flexible(child: customLoading())
               }else...{
@@ -825,11 +828,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           final filesOfList = await chatProvider.uploadFiles();
                           chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, files: filesOfList);
                         } else {
-                          chatProvider.sendMessage(
-                              content: plainText,
-                              receiverId: widget.oppositeUserId,
-                              editMsgID: currentUserMessageId
-                          ).then((value) => setState(() {
+                          chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
                             currentUserMessageId = "";
                           }));
                         }
@@ -871,77 +870,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       ),
     );
   }
-  Widget selectedFilesWidget() {
-    return Consumer<FileServiceProvider>(
-      builder: (context, provider, _) {
-        return Visibility(
-          visible: provider.selectedFiles.isNotEmpty,
-          child: SizedBox(
-            height: 80,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: provider.selectedFiles.length,
-              itemBuilder: (context, index) {
-                print("FILES>>>> ${provider.selectedFiles[index].path}");
-                return Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MediaPreviewScreen(
-                              files: provider.selectedFiles,
-                              initialIndex: index,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          color: AppColor.commonAppColor,
-                          child: getFileIcon(
-                            provider.selectedFiles[index].extension!,
-                            provider.selectedFiles[index].path,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: GestureDetector(
-                        onTap: () {
-                          provider.removeFile(index);
-                        },
-                        child: CircleAvatar(
-                          radius: 12,
-                          backgroundColor: AppColor.blackColor,
-                          child: CircleAvatar(
-                            radius: 10,
-                            backgroundColor: AppColor.borderColor,
-                            child: Icon(
-                              Icons.close,
-                              color: AppColor.blackColor,
-                              size: 15,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
 
 
   Widget dateHeaders() {

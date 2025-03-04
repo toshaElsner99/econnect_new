@@ -122,7 +122,7 @@ class Messages {
   bool? isLog;
   bool? isForwarded;
   bool? isEdited;
-  List<Null>? readBy;
+  List<Null>? readBy ;
   bool? isSeen;
   bool? isDeleted;
   List<Null>? taggedUsers;
@@ -215,7 +215,7 @@ class Messages {
         });
       }
 
-      replyCount = json['replyCount'];
+      replyCount = json['replyCount'] ?? 0;
       if (json['repliesSenderInfo'] != null) {
         repliesSenderInfo = <RepliesSenderInfo>[];
         json['repliesSenderInfo'].forEach((v) {
@@ -280,7 +280,7 @@ class Messages {
       data['replies'] = this.replies!.map((v) => v.toJson()).toList();
     }
 
-    data['replyCount'] = this.replyCount;
+    data['replyCount'] = this.replyCount ?? 0;
     if (this.repliesSenderInfo != null) {
       data['repliesSenderInfo'] =
           this.repliesSenderInfo!.map((v) => v.toJson()).toList();

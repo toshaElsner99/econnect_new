@@ -1,13 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:intl/intl.dart';
 import 'package:mime/mime.dart';
-import 'package:provider/provider.dart';
 
 import '../main.dart';
 import '../model/channel_chat_model.dart';
@@ -103,6 +102,8 @@ class ChannelChatProvider extends ChangeNotifier{
 
     final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
+      messageGroups.where((element) => element.id == "2025-03-04",);
+      messageGroups.insert(0, response['data']);
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
       if(replyId != null){
         // getMessagesList(oppositeUserId: receiverId);
@@ -258,7 +259,7 @@ class ChannelChatProvider extends ChangeNotifier{
         socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
       }else{
         print("Message Not Deleted");
-        print("response = ${response}");
+        print("response = $response");
       }
     } on Exception catch (e) {
       // TODO
@@ -276,4 +277,14 @@ class ChannelChatProvider extends ChangeNotifier{
     }
     notifyListeners();
   }
+  // void addMessageToList(String messageId) {
+  //   for (var messageGroup in messageGroups) {
+  //     messageGroup.messages?.removeWhere((message) => message.id == messageId);
+  //     if (messageGroup.messages?.isEmpty ?? true) {
+  //       messageGroups.remove(messageGroup);
+  //       break;
+  //     }
+  //   }
+  //   notifyListeners();
+  // }
 }
