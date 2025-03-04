@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:e_connect/main.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
@@ -172,6 +174,16 @@ class SocketIoProvider extends ChangeNotifier{
       print("listSingleChatScreen >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getReplyMessageList(msgId: msgId!, fromWhere: "PIN_MSG_SOCKET");
     });
+  }
+
+  memberAdminToggleSC({required Map<String, dynamic> response}) {
+    log("emit>>>>> memberAdminToggleSC $response");
+    socket.emit(channelMemberUpdate, response);
+  }
+
+  memberRemoveSC({required Map<String, dynamic> response}) {
+    log("emit>>>>> memberRemoveSC $response");
+    socket.emit(removeMember, response);
   }
 
 }

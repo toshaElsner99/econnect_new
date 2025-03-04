@@ -28,15 +28,15 @@ class ChannelInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      // backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        // backgroundColor: Colors.black,
         leading: commonBackButton(),
         title: Flexible(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              commonText(text: "Info",color: Colors.white,fontSize: 16),
+              commonText(text: "Info", fontSize: 16),
               const SizedBox(height: 4),
               commonText(text: channelName,maxLines: 2,fontSize: 12,color: AppColor.borderColor),
             ],
@@ -101,7 +101,7 @@ class ChannelInfoScreen extends StatelessWidget {
                 Text(
                   channelName,
                   style: const TextStyle(
-                    color: Colors.white,
+                    // color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -183,12 +183,12 @@ class ChannelInfoScreen extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 24),
+          Icon(icon, size: 24),
           const SizedBox(height: 4),
           Text(
             label,
             style: const TextStyle(
-              color: Colors.white,
+              // color: Colors.white,
               fontSize: 12,
             ),
           ),
@@ -209,12 +209,12 @@ class ChannelInfoScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 24),
+            Icon(icon, color: Colors.black, size: 24),
             const SizedBox(width: 16),
             Text(
               title,
               style: const TextStyle(
-                color: Colors.white,
+                // color: Colors.white,
                 fontSize: 16,
               ),
             ),

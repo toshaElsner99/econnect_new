@@ -1,5 +1,5 @@
-
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:e_connect/model/browse_and_search_channel_model.dart';
 import 'package:e_connect/model/channel_chat_model.dart';
@@ -22,6 +22,7 @@ import '../model/get_channel_info.dart';
 import '../model/get_users_suggestions.dart';
 import '../model/sign_in_model.dart';
 import '../screens/bottom_nav_tabs/home_screen.dart';
+import '../socket_io/socket_io.dart';
 import 'common_provider.dart';
 import 'package:http/http.dart'as http;
 
@@ -35,6 +36,7 @@ final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.co
   BrowseAndSearchChannelModel? browseAndSearchChannelModel;
   GetUserSuggestions? getUserSuggestions;
   SearchUserModel? searchUserModel;
+  final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
 
   /// GET FAVORITE LIST IN HOME SCREEN ///
   Future<void> getFavoriteList()async{
@@ -447,15 +449,19 @@ Future<void> toggleAdminAndMember(
       Uri.parse(
           ApiString.baseUrl + ApiString.toggleAdminAndMember(channelId)));
   request.body = json.encode({"memberId": userId});
-  print(
+  log(
       "URL = ${ApiString.baseUrl + ApiString.toggleAdminAndMember(channelId)}");
-  print("memberId: $userId");
+  log("memberId: $userId");
   request.headers.addAll(headers);
 
   http.StreamedResponse response = await request.send();
   print("response =${response.statusCode}");
   if (response.statusCode == 200) {
     await Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false).getChannelMembersList(channelId);
+    socketProvider.memberAdminToggleSC(response: {
+      "senderId": signInModel.data!.user!.id,
+      "channelId": channelId
+    });
   } else {
     print(response.reasonPhrase);
   }
@@ -473,14 +479,31 @@ Future<void> removeMember(
       'PUT',
       Uri.parse(
           ApiString.baseUrl + ApiString.removeMember(channelId, userId)));
-  print(
+  log(
       "URL = ${ApiString.baseUrl + ApiString.removeMember(channelId, userId)}");
   request.headers.addAll(headers);
 
   http.StreamedResponse response = await request.send();
-  print("response =${response.statusCode}");
+  log("response status code =${response.statusCode}");
+  
   if (response.statusCode == 200) {
+    final responseString = await response.stream.bytesToString();
+    final responseData = json.decode(responseString);
+    log("Response data: $responseData");
+    List<String> memberIds = [];
+    // Extract and print member IDs
+    if (responseData['data'] != null && responseData['data']['members'] != null) {
+      final members = responseData['data']['members'] as List;
+      memberIds = members.map((member) => member['id'].toString()).toList();
+      log("Member IDs: $memberIds");
+    }
+    
     await Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false).getChannelMembersList(channelId);
+    socketProvider.memberRemoveSC(response: {
+      "senderId": signInModel.data!.user!.id,
+      "removeduser": userId,
+      "receiverId": memberIds,
+      "channelId": channelId});
   } else {
     print(response.reasonPhrase);
   }
