@@ -14,6 +14,8 @@ import 'package:provider/provider.dart';
 import '../../model/get_user_mention_model.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/common_provider.dart';
+import '../../providers/file_service_provider.dart';
+import '../../screens/chat/media_preview_screen.dart';
 import '../api_service/api_string_constants.dart';
 import '../app_color_constants.dart';
 import '../app_fonts_constants.dart';
@@ -2289,3 +2291,122 @@ void showChatSettingsBottomSheet({required String userId}) {
 }
 
 
+void showCameraOptionsBottomSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: AppColor.appBarColor,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            commonText(
+              text: 'Camera Options',
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColor.whiteColor,
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading:
+              const Icon(Icons.camera_alt, color: AppColor.whiteColor),
+              title: commonText(
+                text: 'Capture Photo',
+                color: AppColor.whiteColor,
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                FileServiceProvider.instance.captureMedia(isVideo: false);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam, color: AppColor.whiteColor),
+              title: commonText(
+                text: 'Record Video',
+                color: AppColor.whiteColor,
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                FileServiceProvider.instance.captureMedia(isVideo: true);
+              },
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+Widget selectedFilesWidget() {
+  return Consumer<FileServiceProvider>(
+    builder: (context, provider, _) {
+      return Visibility(
+        visible: provider.selectedFiles.isNotEmpty,
+        child: SizedBox(
+          height: 80,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: provider.selectedFiles.length,
+            itemBuilder: (context, index) {
+              print("FILES>>>> ${provider.selectedFiles[index].path}");
+              return Stack(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MediaPreviewScreen(
+                            files: provider.selectedFiles,
+                            initialIndex: index,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        color: AppColor.commonAppColor,
+                        child: getFileIcon(
+                          provider.selectedFiles[index].extension!,
+                          provider.selectedFiles[index].path,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: GestureDetector(
+                      onTap: () {
+                        provider.removeFile(index);
+                      },
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: AppColor.blackColor,
+                        child: CircleAvatar(
+                          radius: 10,
+                          backgroundColor: AppColor.borderColor,
+                          child: Icon(
+                            Icons.close,
+                            color: AppColor.blackColor,
+                            size: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+    },
+  );
+}

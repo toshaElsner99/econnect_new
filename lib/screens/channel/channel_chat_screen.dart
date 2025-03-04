@@ -15,9 +15,11 @@ import 'package:provider/provider.dart';
 import '../../main.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/download_provider.dart';
+import '../../providers/file_service_provider.dart';
 import '../../utils/api_service/api_string_constants.dart';
 import '../../utils/app_color_constants.dart';
 import '../../utils/app_preference_constants.dart';
+import '../chat/forward_message/forward_message_screen.dart';
 import 'channel_info_screen/channel_info_screen.dart';
 
 class ChannelChatScreen extends StatefulWidget {
@@ -30,6 +32,13 @@ class ChannelChatScreen extends StatefulWidget {
 }
 
 class _ChannelChatScreenState extends State<ChannelChatScreen> {
+
+  int? _selectedIndex;
+  final LayerLink _layerLink = LayerLink();
+  final TextEditingController _messageController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
+
 
   @override
   void initState() {
@@ -45,6 +54,214 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     },);
    }
 
+  void _showRenameChannelDialog() {
+    final TextEditingController _nameController = TextEditingController(text: widget.channelName);
+    
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.grey[900],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  commonText(
+                    text: "Rename Channel",
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColor.whiteColor,
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: AppColor.whiteColor),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              commonText(
+                text: "Display Name",
+                fontSize: 14,
+                color: AppColor.borderColor,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.grey[800]!),
+                ),
+                child: TextField(
+                  controller: _nameController,
+                  style: TextStyle(color: AppColor.whiteColor),
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    border: InputBorder.none,
+                    hintText: "Enter channel name",
+                    hintStyle: TextStyle(color: Colors.grey[600]),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: commonText(
+                      text: "Cancel",
+                      color: AppColor.whiteColor,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.blueColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    onPressed: () {
+                      final newName = _nameController.text.trim();
+                      if (newName.isNotEmpty) {
+                        Provider.of<ChannelListProvider>(context, listen: false)
+                          .renameChannel(
+                            channelId: widget.channelId,
+                            name: newName,
+                            isPrivate: false
+                          )
+                          .then((_) => Navigator.pop(context));
+                      }
+                    },
+                    child: commonText(
+                      text: "Save",
+                      color: AppColor.whiteColor,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget inputTextFieldWithEditor(ChannelChatProvider channelChatProvider) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey.shade800,
+            width: 0.5,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CompositedTransformTarget(
+                    link: _layerLink,
+                    child: Container(
+                      margin: EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade900,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _messageController,
+                              focusNode: _focusNode,
+                              style: TextStyle(color: AppColor.whiteColor),
+                              decoration: InputDecoration(
+                                hintText: 'Write to ${widget.channelName}',
+                                hintStyle: TextStyle(color: Colors.grey),
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
+                              maxLines: null,
+                              textCapitalization: TextCapitalization.sentences,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColor.blueColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
+                    onPressed: () async {
+                      final plainText = _messageController.text.trim();
+                      if(plainText.isNotEmpty || fileServiceProvider.selectedFiles.isNotEmpty) {
+                        if(fileServiceProvider.selectedFiles.isNotEmpty){
+                          // final filesOfList = await chatProvider.uploadFiles();
+                          // chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, files: filesOfList);
+                        } else {
+                          // channelChatProvider.sendMessage(
+                          //   content: plainText,
+                          //   channelId: widget.channelId,
+                          // );
+                        }
+                        // _clearInputAndDismissKeyboard();
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          selectedFilesWidget(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.attach_file, color: AppColor.whiteColor, size: 22),
+                  onPressed: () {
+                    FileServiceProvider.instance.pickFiles();
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.image, color: AppColor.whiteColor, size: 22),
+                  onPressed: () {
+                    FileServiceProvider.instance.pickImages();
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.camera_alt, color: AppColor.whiteColor, size: 22),
+                  onPressed: () {
+                    showCameraOptionsBottomSheet(context);
+                  },
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
@@ -56,7 +273,17 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              commonText(text: widget.channelName,maxLines: 1,fontSize: 14),
+              Row(
+                children: [
+                  commonText(text: widget.channelName, maxLines: 1, fontSize: 14),
+                  SizedBox(width: 10),
+                  GestureDetector(
+                      onTap: (){
+                        _showRenameChannelDialog();
+                      },
+                      child: Image.asset(AppImage.editIcon, height: 15, width: 15, color: AppColor.borderColor)),
+                ],
+              ),
               SizedBox(height: 10),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,15 +342,20 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         body: Column(
           children: [
             Divider(color: Colors.grey.shade800, height: 1,),
-            Expanded(
-              child: ListView(
-                controller: channelChatProvider.scrollController,
-                reverse: true,
-                children: [
-                  dateHeaders(),
-                ],
+            if(channelChatProvider.isChannelChatLoading )...{
+              Flexible(child: customLoading())
+            }else...{
+              Expanded(
+                child: ListView(
+                  controller: channelChatProvider.scrollController,
+                  reverse: true,
+                  children: [
+                    dateHeaders(),
+                  ],
+                ),
               ),
-            ),
+            },
+            inputTextFieldWithEditor(channelChatProvider),
           ],
         ),
       );
@@ -144,6 +376,19 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: customLoading(),
+              );
+            }else if(channelChatProvider.totalPages == channelChatProvider.currentPage){
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    commonText(text: widget.channelName,fontSize: 18),
+                    SizedBox(height: 10),
+                    commonText(text: "This is the start of the ${widget.channelName} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",textAlign: TextAlign.center,
+                        height: 1.35),
+                  ],
+                ),
               );
             }else {
               return SizedBox.shrink();
@@ -203,6 +448,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       );
     },);
   }
+
 
   Widget chatBubble({
     required int index,
@@ -561,6 +807,45 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     ],
                   ),
                 ),
+                // Spacer(),
+                Visibility(
+                  visible: !(messageList.isLog ?? false),
+                  child: popMenu2(context,
+                      isPinned: pinnedMsg,
+                      onOpened: () =>  setState(() => _selectedIndex = index),
+                      onClosed: () =>  setState(() => _selectedIndex = null),
+                      isForwarded: messageList.isForwarded! ? false : true,
+                      opened: index == _selectedIndex ? true : false,
+                      createdAt: time,
+                      currentUserId: userId,
+                      onForward: () =>
+                        pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId)),
+                      onReply: () {
+                        // print("onReply Passing = ${messageId.toString()}");
+                        // pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
+                      },
+                      onPin: () => (){},
+                      onCopy: () => copyToClipboard(context, message),
+                      // onEdit: () => setState(() {
+                      //   int position = _controller.document.length - 1;
+                      //   currentUserMessageId = messageId;
+                      //   print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
+                      //   _controller.document.insert(position, message.toString());
+                      //   _controller.updateSelection(
+                      //     TextSelection.collapsed(offset: _controller.document.length),
+                      //     quill.ChangeSource.local,
+                      //   );
+                      // }),
+                      onEdit: ()=> setState(() {
+                        // int position = _messageController.text.length;
+                        // currentUserMessageId = messageId;
+                        // print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
+                        // _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
+                      }),
+                      onDelete: () => 
+                        Provider.of<ChannelChatProvider>(context,listen: false)
+                          .deleteMessageFromChannel(messageId: messageId)),
+                )
               ],
             ),
           ],

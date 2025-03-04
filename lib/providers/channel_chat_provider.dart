@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 
 import '../main.dart';
 import '../model/channel_chat_model.dart';
@@ -9,6 +10,7 @@ import '../model/channel_members_model.dart';
 import '../model/channel_pinned_message_model.dart';
 import '../model/files_listing_in_channel_chat_model.dart';
 import '../model/get_channel_info.dart';
+import '../socket_io/socket_io.dart';
 import '../utils/api_service/api_service.dart';
 import '../utils/api_service/api_string_constants.dart';
 import '../utils/common/common_function.dart';
@@ -23,6 +25,7 @@ class ChannelChatProvider extends ChangeNotifier{
   int currentPage = 1;
   int totalPages = 0;
   final ScrollController scrollController = ScrollController();
+  final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
 
   void pagination({required String channelId}) {
     scrollController.addListener(() {
@@ -147,6 +150,41 @@ class ChannelChatProvider extends ChangeNotifier{
     final response = await ApiService.instance.request(endPoint: ApiString.getFilesListingInChannelChat, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
       filesListingInChannelChatModel = FilesListingInChannelChatModel.fromJson(response);
+    }
+    notifyListeners();
+  }
+
+  // Delete Message from Channel
+  Future<void> deleteMessageFromChannel({
+    required String messageId
+  }) async {
+
+    try {
+      final response = await ApiService.instance.request(
+          endPoint: ApiString.deleteMessageFromChannel(messageId),
+          method: Method.DELETE
+      );
+      if (statusCode200Check(response)) {
+        print("Message Deleted");
+        removeMessageFromList(messageId);
+        socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
+      }else{
+        print("Message Not Deleted");
+        print("response = ${response}");
+      }
+    } on Exception catch (e) {
+      // TODO
+      print("catch = ${e.toString()}");
+    }
+  }
+
+  void removeMessageFromList(String messageId) {
+    for (var messageGroup in messageGroups) {
+      messageGroup.messages?.removeWhere((message) => message.id == messageId);
+      if (messageGroup.messages?.isEmpty ?? true) {
+        messageGroups.remove(messageGroup);
+        break;
+      }
     }
     notifyListeners();
   }

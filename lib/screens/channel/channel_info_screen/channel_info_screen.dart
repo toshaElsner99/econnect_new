@@ -5,7 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/channel_list_provider.dart';
 import '../../../main.dart';
+import '../../../utils/common/common_function.dart';
 import '../channel_member_info_screen/channel_members_info.dart';
+import '../channel_pinned_messages/channel_pinned_messages_screen.dart';
+import '../files_listing_channel/files_listing_in_channel_screen.dart';
 // import 'channel_members_info.dart';
 
 class ChannelInfoScreen extends StatelessWidget {
@@ -43,32 +46,39 @@ class ChannelInfoScreen extends StatelessWidget {
       body: Column(
         children: [
           // Favorite and Mute buttons
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildActionButton(
-                  icon: Icons.star_border,
-                  label: 'Favorite',
-                  onTap: () {
-                    context.read<ChannelListProvider>().addChannelToFavorite(
-                      channelId: channelId,
-                    );
-                  },
+          Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildActionButton(
+                      icon:
+                      channelChatProvider.getChannelInfo?.data?.isFavourite == true
+                          ? Icons.star
+                          :
+                      Icons.star_border,
+                      label:  channelChatProvider.getChannelInfo?.data?.isFavourite == true ? 'Favorited':'Favorite',
+                      onTap: () {
+                        context.read<ChannelListProvider>().addChannelToFavorite(
+                          channelId: channelId,
+                        );
+                      },
+                    ),
+                    _buildActionButton(
+                      icon: Icons.notifications_off_outlined,
+                      label: 'Mute',
+                      onTap: () {
+                        context.read<ChannelListProvider>().muteUnMuteChannels(
+                          channelId: channelId,
+                          isMutedChannel: signInModel.data?.user?.muteChannels?.contains(channelId) ?? false,
+                        );
+                      },
+                    ),
+                  ],
                 ),
-                _buildActionButton(
-                  icon: Icons.notifications_off_outlined,
-                  label: 'Mute',
-                  onTap: () {
-                    context.read<ChannelListProvider>().muteUnMuteChannels(
-                      channelId: channelId,
-                      isMutedChannel: signInModel.data?.user?.muteChannels?.contains(channelId) ?? false,
-                    );
-                  },
-                ),
-              ],
-            ),
+              );
+            }
           ),
 
           // Channel Avatar and Name
@@ -134,13 +144,20 @@ class ChannelInfoScreen extends StatelessWidget {
               );
             },
           ),
-          _buildInfoSection(
-            icon: Icons.push_pin_outlined,
-            title: 'Pinned Messages',
-            count: '0',
-            onTap: () {
-              // Navigate to pinned messages
-            },
+          Consumer<ChannelChatProvider>(
+              builder: (context, provider, child) {
+              return _buildInfoSection(
+                icon: Icons.push_pin_outlined,
+                title: 'Pinned Messages',
+                count: provider.getChannelInfo?.data?.pinnedMessagesCount != null ?
+                provider.getChannelInfo?.data?.pinnedMessagesCount.toString() :
+                '0',
+                onTap: () {
+                  // Navigate to pinned messages
+                  pushScreen(screen: ChannelPinnedPostsScreen(channelName: channelName, channelId: channelId));
+                },
+              );
+            }
           ),
           _buildInfoSection(
             icon: Icons.folder_outlined,
@@ -148,6 +165,7 @@ class ChannelInfoScreen extends StatelessWidget {
             count: '0',
             onTap: () {
               // Navigate to files
+              pushScreen(screen: FilesListingScreen(channelName: channelName, channelId: channelId));
             },
           ),
         ],
@@ -182,7 +200,7 @@ class ChannelInfoScreen extends StatelessWidget {
   Widget _buildInfoSection({
     required IconData icon,
     required String title,
-    required String count,
+    required String? count,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -202,7 +220,7 @@ class ChannelInfoScreen extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              count,
+              count!,
               style: const TextStyle(
                 color: Colors.grey,
                 fontSize: 16,

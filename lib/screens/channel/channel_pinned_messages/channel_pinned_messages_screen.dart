@@ -59,13 +59,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
       body: Column(
         children: [
           Divider(color: Colors.grey.shade800, height: 1,),
-          Expanded(
-            child: ListView(
-              children: [
-                dateHeaders(),
-              ],
-            ),
-          ),
+          dateHeaders(),
         ],
       ),
     );
@@ -73,7 +67,38 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
 
   Widget dateHeaders() {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-      return channelChatProvider.messageGroups.isEmpty? SizedBox.shrink() : ListView.builder(
+      return channelChatProvider.messageGroups.isEmpty? SizedBox.shrink() :
+      channelChatProvider.channelPinnedMessageModel?.data?.messages!.length == 0 ?
+      Expanded(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              AppImage.pinIcon,
+              height: 60,
+              width: 60,
+              color: AppColor.blackColor,
+            ),
+            const SizedBox(height: 16),
+            commonText(
+              text: "No pinned posts yet",
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColor.whiteColor,
+            ),
+            const SizedBox(height: 12),
+            commonText(
+              text: "Pin important messages which are visible to the whole channel. Open the context menu on a message and choose Pin to Channel to save it here.",
+              textAlign: TextAlign.center,
+              fontSize: 14,
+              color: AppColor.borderColor,
+              height: 1.5,
+            ),
+          ],
+        ),
+      )
+          :
+      ListView.builder(
         shrinkWrap: true,
         reverse: true,
         physics: NeverScrollableScrollPhysics(),
