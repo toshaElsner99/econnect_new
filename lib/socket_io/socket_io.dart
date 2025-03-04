@@ -113,20 +113,24 @@ class SocketIoProvider extends ChangeNotifier{
     socket.emit(userTyping,{"senderId": signInModel.data?.user?.id ?? "","receiverId": oppositeUserId,"inputValue":isTyping,"isReply":isReplyMsg});
   }
 
-  sendMessagesSC({required Map<String, dynamic> response,bool? emitReplyMsg = false}) {
+  sendMessagesSC({required Map<String, dynamic> response,bool emitReplyMsg = false}) {
     print("emit>>>>> Send Message $response");
-    socket.emit(sendReplyMessage, response);
-    socket.on(sendReplyMessage, (data) {
+    socket.on(  emitReplyMsg ? sendReplyMessage : sendMessage, (data) {
       print("sendReplyMessage>>>>>DD $data");
     },);
-    socket.emit(sendMessage, response);
+    socket.emit(  emitReplyMsg ? sendReplyMessage : sendMessage, response);
     // if(emitReplyMsg == true){
     // }
   }
 
   deleteMessagesSC({required Map<String, dynamic> response}) {
-    print("emit>>>>> Send Message $response");
+    print("emit>>>>> Delete Message $response");
     socket.emit(deleteMessages, response);
+  }
+
+  deleteMessagesFromChannelSC({required Map<String, dynamic> response}) {
+    print("emit>>>>> Delete Message $response");
+    socket.emit(deleteMessageChannel, response);
   }
 
   void listenForNotifications() {

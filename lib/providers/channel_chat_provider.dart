@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:intl/intl.dart';
 import 'package:mime/mime.dart';
@@ -242,5 +242,38 @@ class ChannelChatProvider extends ChangeNotifier{
     notifyListeners();
   }
 
+  // Delete Message from Channel
+  Future<void> deleteMessageFromChannel({
+    required String messageId
+  }) async {
 
+    try {
+      final response = await ApiService.instance.request(
+          endPoint: ApiString.deleteMessageFromChannel(messageId),
+          method: Method.DELETE
+      );
+      if (statusCode200Check(response)) {
+        print("Message Deleted");
+        removeMessageFromList(messageId);
+        socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
+      }else{
+        print("Message Not Deleted");
+        print("response = ${response}");
+      }
+    } on Exception catch (e) {
+      // TODO
+      print("catch = ${e.toString()}");
+    }
+  }
+
+  void removeMessageFromList(String messageId) {
+    for (var messageGroup in messageGroups) {
+      messageGroup.messages?.removeWhere((message) => message.id == messageId);
+      if (messageGroup.messages?.isEmpty ?? true) {
+        messageGroups.remove(messageGroup);
+        break;
+      }
+    }
+    notifyListeners();
+  }
 }
