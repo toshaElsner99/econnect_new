@@ -463,7 +463,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     bool showUserDetails = true,
   })  {
     return Consumer2<ChannelChatProvider,CommonProvider>(builder: (context, channelChatProvider,commonProvider, child) {
-      // final user = channelChatProvider.getUserById(userId);
+      final user = channelChatProvider.getUserById(userId);
       bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
       return Container(
@@ -497,7 +497,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(userID: messageList.senderInfo?.id ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? "",radius: 17),
+                    // child: profileIconWithStatus(userID: messageList.senderInfo?.id ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? "",radius: 17),
+                    child: profileIconWithStatus(userID: user?.sId ?? "", status: user?.status ?? "offline",otherUserProfile: user?.avatarUrl ?? "",radius: 17),
                   )
                 } else ...{
                   SizedBox(width: 50)

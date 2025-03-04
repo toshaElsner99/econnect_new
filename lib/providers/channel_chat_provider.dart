@@ -196,8 +196,20 @@ class ChannelChatProvider extends ChangeNotifier{
       currentPage = 1;
     }
     final response  = await ApiService.instance.request(endPoint: ApiString.getChannelChat, method: Method.POST,reqBody: requestBody);
-
-
+    if(statusCode200Check(response)){
+      if(isFromMsgListen){
+        for (var newItem in (response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList()) {
+          int existingIndex = messageGroups.indexWhere((item) => item.id == newItem.id);
+          if (existingIndex != -1) {
+            messageGroups[existingIndex] = newItem;
+          } else {
+            messageGroups.add(newItem);
+          }
+        }
+      }else{
+        messageGroups.addAll((response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList());
+      }
+    }
     totalPages = response['data']['totalPages'];
     notifyListeners();
   }
