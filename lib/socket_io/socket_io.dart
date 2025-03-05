@@ -212,8 +212,22 @@ class SocketIoProvider extends ChangeNotifier{
   }
 
   memberAdminToggleSC({required Map<String, dynamic> response}) {
-    log("emit>>>>> memberAdminToggleSC $response");
-    socket.emit(channelMemberUpdate, response);
+    log("emit>>>>> memberAdminToggleSC ${"data : $response"}");
+    socket.emit(channelMemberUpdate,{
+      {"data : $response"}
+    });
+
+  //   {
+  //     "data": {
+  //   "senderId": response["senderId"],
+  //   "channelId": response["channelId"]
+  // }
+  // }
+  }
+  listenMemberUpdates(){
+    socket.on(channelMemberUpdateNotification, (data) {
+
+    },);
   }
 
   memberRemoveSC({required Map<String, dynamic> response}) {
