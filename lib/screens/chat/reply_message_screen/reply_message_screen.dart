@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/get_reply_message_model.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
@@ -5,8 +6,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 
 import '../../../main.dart';
+import '../../../model/get_user_mention_model.dart';
+import '../../../model/get_user_model.dart';
 import '../../../providers/channel_list_provider.dart';
 import '../../../providers/chat_provider.dart';
 import '../../../providers/common_provider.dart';
@@ -39,7 +45,6 @@ class ReplyMessageScreen extends StatefulWidget {
 class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   final scrollController = ScrollController();
   bool _showToolbar = false;
-  final quill.QuillController _controller = quill.QuillController.basic();
   final FocusNode _focusNode = FocusNode();
   final chatProvider = Provider.of<ChatProvider>(navigatorKey.currentState!.context,listen: false);
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
@@ -48,25 +53,99 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   String currentUserMessageId = "";
   int? _selectedIndex;
+  final TextEditingController _messageController = TextEditingController();
+  
+  // Mention-related variables
+  OverlayEntry? _overlayEntry;
+  final LayerLink _layerLink = LayerLink();
+  bool _showMentionList = false;
+  final _textFieldKey = GlobalKey();
+  int _mentionCursorPosition = 0;
+  final Map<String, dynamic> userCache = {};
+  GetUserModelSecondUser? userDetails;
+  bool _isTextFieldEmpty = true;
 
   @override
   void initState() {
     print("msgIDD>>>> ${widget.messageId}");
     super.initState();
+    _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-    chatProvider.getReplyListUpdateSC(widget.messageId);
-    socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
-    print("I'm In initState");
-    Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: widget.messageId,fromWhere: "SCREEN INIT");
-    Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.messageId);
-  });
-}
-
-@override
-  void dispose() {
-  Provider.of<ChatProvider>(context, listen: false).disposeReplyMSG();
-  super.dispose();
+      chatProvider.getReplyListUpdateSC(widget.messageId);
+      socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
+      _fetchAndCacheUserDetails();
+      print("I'm In initState");
+      Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: widget.messageId,fromWhere: "SCREEN INIT");
+      Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.messageId);
+      Provider.of<CommonProvider>(context, listen: false).getAllUsers();
+    });
   }
+
+  void _fetchAndCacheUserDetails() async {
+    userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.receiverId);
+    // await commonProvider.getUserByIDCallForSecondUser(userId: signInModel.data!.user!.id);
+    setState(()  {
+      userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
+      userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
+    });
+    print("user>>>>>> ${userCache}");
+    print("user>>>>>> ${userDetails?.data!.user!.username}");
+    print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.username}");
+    print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.sId}");
+  }
+
+  @override
+  void dispose() {
+    _messageController.removeListener(_onTextChanged);
+    _messageController.dispose();
+    _focusNode.dispose();
+    _removeMentionOverlay();
+    super.dispose();
+  }
+  List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
+    // Show initial users (current user and recipient)
+    final List<dynamic> initialUsers = [];
+    final currentUser = userCache[signInModel.data?.user?.id];
+    final recipientUser = userCache[widget.receiverId];
+
+    if (searchQuery?.isEmpty ?? true) {
+      if (currentUser?.data?.user != null) {
+        initialUsers.add(currentUser.data.user);
+      }
+      if (recipientUser?.data?.user != null && widget.receiverId != signInModel.data?.user?.id) {
+        initialUsers.add(recipientUser.data.user);
+      }
+      return initialUsers;
+    }
+
+    // Filter users from getUserMentionModel based on search
+    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
+    final query = searchQuery!.toLowerCase();
+
+    // First add matching initial users
+    if (currentUser?.data?.user != null &&
+        ((currentUser.data.user.username?.toLowerCase().contains(query) ?? false) ||
+            (currentUser.data.user.fullName?.toLowerCase().contains(query) ?? false))) {
+      initialUsers.add(currentUser.data.user);
+    }
+    if (recipientUser?.data?.user != null &&
+        widget.receiverId != signInModel.data?.user?.id &&
+        ((recipientUser.data.user.username?.toLowerCase().contains(query) ?? false) ||
+            (recipientUser.data.user.fullName?.toLowerCase().contains(query) ?? false))) {
+      initialUsers.add(recipientUser.data.user);
+    }
+
+    // Then add other matching users
+    final otherUsers = allUsers.where((user) =>
+    ((user.username?.toLowerCase().contains(query) ?? false) ||
+        (user.fullName?.toLowerCase().contains(query) ?? false)) &&
+        user.sId != signInModel.data?.user?.id &&
+        user.sId != widget.receiverId
+    ).toList();
+
+    return [...initialUsers, ...otherUsers];
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -348,14 +427,10 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   onPin: () => chatProvider.pinUnPinMessageForReply(receiverId: widget.receiverId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
                   onCopy: () => copyToClipboard(context, message),
                   onEdit: () => setState(() {
-                    int position = _controller.document.length - 1;
+                    int position = _messageController.text.length;
                     currentUserMessageId = messageId;
                     print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
-                    _controller.document.insert(position, message.toString());
-                    _controller.updateSelection(
-                      TextSelection.collapsed(offset: _controller.document.length),
-                      quill.ChangeSource.local,
-                    );
+                    _messageController.text = message;
                   }),
                   onDelete: () {
                     chatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.messageId,userName: widget.userName,oppId: widget.receiverId);
@@ -372,281 +447,113 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
   Widget inputTextFieldWithEditor() {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey.shade800,
-            width: 0.5,
-          ),
-        ),
+        color: Colors.grey[900],
+        borderRadius: BorderRadius.circular(24),
       ),
-      child: Column(
+      child: Row(
         children: [
-          if (_showToolbar)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: quill.QuillToolbar.simple(
-                configurations: quill.QuillSimpleToolbarConfigurations(
-                    controller: _controller,
-                    sharedConfigurations: const quill.QuillSharedConfigurations(
-                      locale: Locale('en'),
-                    ),
-                    showDividers: false,
-                    showFontFamily: false,
-                    showFontSize: false,
-                    showBoldButton: true,
-                    showItalicButton: true,
-                    showUnderLineButton: false,
-                    showStrikeThrough: true,
-                    showInlineCode: true,
-                    showColorButton: false,
-                    showBackgroundColorButton: false,
-                    showClearFormat: false,
-                    showAlignmentButtons: false,
-                    showLeftAlignment: false,
-                    showCenterAlignment: false,
-                    showRightAlignment: false,
-                    showJustifyAlignment: false,
-                    showHeaderStyle: true,
-                    showListNumbers: true,
-                    showListBullets: true,
-                    showListCheck: false,
-                    showCodeBlock: true,
-                    showQuote: true,
-                    showIndent: false,
-                    showLink: true,
-                    showUndo: false,
-                    showRedo: false,
-                    showSearchButton: false,
-                    showClipboardCut: false,
-                    showClipboardCopy: false,
-                    showClipboardPaste: false,
-                    multiRowsDisplay: false,
-                    showSubscript: false,
-                    showSuperscript: false),
+          Expanded(
+            child: CompositedTransformTarget(
+              link: _layerLink,
+              child: TextField(
+                key: _textFieldKey,
+                controller: _messageController,
+                focusNode: _focusNode,
+                maxLines: 5,
+                minLines: 1,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Type a message...',
+                  hintStyle: TextStyle(color: Colors.grey),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  suffixIcon: _messageController.text.isEmpty
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            GestureDetector(
+                              onTap: () => _showAttachmentOptions(context),
+                              child: const Icon(Icons.attach_file, color: Colors.grey),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => _pickImage(ImageSource.gallery),
+                              child: const Icon(Icons.image, color: Colors.grey),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => _showCameraOptions(context),
+                              child: const Icon(Icons.camera_alt, color: Colors.grey),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                        )
+                      : null,
+                ),
+                onChanged: (value) {
+                  setState(() {});
+                  _onTextChanged();
+                },
               ),
             ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.edit,
-                    color: _showToolbar ? Colors.blue : AppColor.whiteColor,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _showToolbar = !_showToolbar;
-                    });
-                  },
-                ),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade900,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: quill.QuillEditor(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        scrollController: ScrollController(),
-                        configurations: quill.QuillEditorConfigurations(
-                          scrollable: true,
-                          autoFocus: false,
-                          checkBoxReadOnly: false,
-                          placeholder: 'Write to ${widget.userName}',
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          maxHeight: 100,
-                          minHeight: 40,
-                          customStyles: const quill.DefaultStyles(
-                            paragraph: quill.DefaultTextBlockStyle(
-                                TextStyle(
-                                  color: AppColor.whiteColor,
-                                  fontSize: 16,
-                                ),
-                                quill.HorizontalSpacing.zero,
-                                quill.VerticalSpacing.zero,
-                                quill.VerticalSpacing.zero,
-                                BoxDecoration(color: Colors.transparent)),
-                            placeHolder: quill.DefaultTextBlockStyle(
-                                TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16,
-                                ),
-                                quill.HorizontalSpacing.zero,
-                                quill.VerticalSpacing.zero,
-                                quill.VerticalSpacing.zero,
-                                BoxDecoration(color: Colors.transparent)),
-                            quote: quill.DefaultTextBlockStyle(
-                              TextStyle(
-                                color: AppColor.whiteColor,
-                                fontSize: 16,
-                              ),
-                              quill.HorizontalSpacing(16, 0),
-                              quill.VerticalSpacing(8, 0),
-                              quill.VerticalSpacing(8, 0),
-                              BoxDecoration(
-                                border: Border(
-                                  left: BorderSide(
-                                    color: AppColor.whiteColor,
-                                    width: 4,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        )),
-                  ),
-                ),
-              ],
-            ),
           ),
-          const SizedBox(height: 8),
-          selectedFilesWidget(),
-          fileSelectionAndSendButtonRow()
-        ],
-      ),
-    );
-  }
-  Widget selectedFilesWidget() {
-    return Consumer<FileServiceProvider>(
-      builder: (context, provider, _) {
-        return Visibility(
-          visible: provider.selectedFiles.isNotEmpty,
-          child: SizedBox(
-            height: 80,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: provider.selectedFiles.length,
-              itemBuilder: (context, index) {
-                print("FILES>>>> ${provider.selectedFiles[index].path}");
-                return Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MediaPreviewScreen(
-                              files: provider.selectedFiles,
-                              initialIndex: index,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          color: AppColor.commonAppColor,
-                          child: getFileIcon(
-                            provider.selectedFiles[index].extension!,
-                            provider.selectedFiles[index].path,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: GestureDetector(
-                        onTap: () {
-                          provider.removeFile(index);
-                        },
-                        child: CircleAvatar(
-                          radius: 12,
-                          backgroundColor: AppColor.blackColor,
-                          child: CircleAvatar(
-                            radius: 10,
-                            backgroundColor: AppColor.borderColor,
-                            child: Icon(
-                              Icons.close,
-                              color: AppColor.blackColor,
-                              size: 15,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColor.blueColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: IconButton(
+              icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
+              onPressed: () async {
+                final plainText = _messageController.text.trim();
+                if(plainText.isEmpty && fileServiceProvider.selectedFiles.isEmpty) return;
+                
+                try {
+                  if(fileServiceProvider.selectedFiles.isNotEmpty){
+                    final filesOfList = await chatProvider.uploadFiles();
+                    await chatProvider.sendMessage(
+                      content: plainText, 
+                      receiverId: widget.receiverId,
+                      files: filesOfList,
+                      replyId: widget.messageId
+                    );
+                  } else {
+                    await chatProvider.sendMessage(
+                      content: plainText, 
+                      receiverId: widget.receiverId,
+                      replyId: widget.messageId,
+                      editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId
+                    );
+                  }
+                  
+                  // Update reply count in single chat screen
+                  chatProvider.updateReplyCount(widget.messageId);
+                  
+                  setState(() {
+                    currentUserMessageId = "";
+                  });
+                  
+                  _clearInputAndDismissKeyboard();
+                } catch (e) {
+                  print("Error sending message: $e");
+                }
               },
             ),
           ),
-        );
-      },
-    );
-  }
-  Widget fileSelectionAndSendButtonRow() {
-    return Container(
-      padding: const EdgeInsets.only(
-        left: 8,
-        right: 8,
-        bottom: 8,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.alternate_email, color: AppColor.whiteColor),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.attach_file, color: AppColor.whiteColor),
-            onPressed: () {
-              FileServiceProvider.instance.pickFiles();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.image, color: AppColor.whiteColor),
-            onPressed: () {
-              FileServiceProvider.instance.pickImages();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.camera_alt, color: AppColor.whiteColor),
-            onPressed: () {
-              showCameraOptionsBottomSheet(context);
-            },
-          ),
-          GestureDetector(
-            onTap: () async {
-              final plainText = _controller.document.toPlainText().trim();
-              if(fileServiceProvider.selectedFiles.isNotEmpty){
-                final filesOfList = await chatProvider.uploadFiles();
-                chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,files: filesOfList,replyId: widget.messageId);
-                _clearInputAndDismissKeyboard();
-              }else{
-                chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId,replyId: widget.messageId,editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId).then((value) => setState(() {
-                  currentUserMessageId = "";
-                }),);
-                _clearInputAndDismissKeyboard();
-              }
-            },
-            child: Container(
-                decoration: BoxDecoration(
-                    color: AppColor.lightBlueColor,
-                    borderRadius: BorderRadius.circular(10)),
-                child: Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5),
-                  child: Icon(Icons.send, color: AppColor.whiteColor),
-                )),
-          ),
         ],
       ),
     );
   }
-  void showCameraOptionsBottomSheet(BuildContext context) {
+
+  void _showAttachmentOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColor.appBarColor,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -656,31 +563,65 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              commonText(
-                text: 'Camera Options',
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColor.whiteColor,
-              ),
-              const SizedBox(height: 20),
               ListTile(
-                leading:
-                const Icon(Icons.camera_alt, color: AppColor.whiteColor),
-                title: commonText(
-                  text: 'Capture Photo',
-                  color: AppColor.whiteColor,
-                ),
+                leading: const Icon(Icons.attach_file),
+                title: const Text('Document'),
+                onTap: () {
+                  Navigator.pop(context);
+                  FileServiceProvider.instance.pickFiles();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo),
+                title: const Text('Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Camera'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _pickImage(ImageSource source) {
+    FileServiceProvider.instance.pickImages();
+  }
+
+  void _showCameraOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Capture Photo'),
                 onTap: () {
                   Navigator.pop(context);
                   FileServiceProvider.instance.captureMedia(isVideo: false);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.videocam, color: AppColor.whiteColor),
-                title: commonText(
-                  text: 'Record Video',
-                  color: AppColor.whiteColor,
-                ),
+                leading: const Icon(Icons.videocam),
+                title: const Text('Record Video'),
                 onTap: () {
                   Navigator.pop(context);
                   FileServiceProvider.instance.captureMedia(isVideo: true);
@@ -692,12 +633,10 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
       },
     );
   }
+
   void _clearInputAndDismissKeyboard() {
     _focusNode.unfocus();
-    _controller.clear();
-    setState(() {
-      _showToolbar = false;
-    });
+    _messageController.clear();
     FocusScope.of(context).unfocus();
   }
 
@@ -715,4 +654,282 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     }
   }
 
+  void _onTextChanged() {
+    final text = _messageController.text;
+    final cursorPosition = _messageController.selection.baseOffset;
+
+    // Update text field empty state
+    setState(() {
+      _isTextFieldEmpty = text.isEmpty;
+    });
+
+    if (cursorPosition > 0) {
+      // Check if @ was just typed
+      if (text[cursorPosition - 1] == '@') {
+        _mentionCursorPosition = cursorPosition;
+        _showMentionOverlay();
+      }
+      // Check if we should keep showing the mention list and filter based on input
+      else if (_showMentionList) {
+        // Find the last @ before cursor
+        int lastAtIndex = text.substring(0, cursorPosition).lastIndexOf('@');
+        if (lastAtIndex == -1) {
+          // No @ found before cursor, remove overlay
+          _removeMentionOverlay();
+        } else {
+          // Get the search query (text between @ and cursor)
+          String searchQuery = text.substring(lastAtIndex + 1, cursorPosition).toLowerCase();
+          _showMentionOverlay(searchQuery: searchQuery);
+        }
+      }
+    } else {
+      // Text is empty or cursor at start, remove overlay
+      _removeMentionOverlay();
+    }
+
+    // Keep existing typing event
+    socketProvider.userTypingEvent(
+        oppositeUserId: widget.receiverId,
+        isReplyMsg: false,
+        isTyping: text.trim().length > 1 ? 1 : 0
+    );
+  }
+
+  void _showMentionOverlay({String? searchQuery}) {
+    _removeMentionOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        final screenSize = MediaQuery.of(context).size;
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        final maxHeight = (screenSize.height - keyboardHeight) * 0.4; // 40% of available height
+
+        return Positioned(
+          width: screenSize.width * 0.8, // 80% of screen width
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            targetAnchor: Alignment.topCenter,
+            followerAnchor: Alignment.bottomCenter,
+            offset: const Offset(0, -8),
+            child: Material(
+              elevation: 0, // Remove shadow
+              color: Colors.transparent,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: maxHeight,
+                ),
+                margin: EdgeInsets.symmetric(horizontal: screenSize.width * 0.1), // Center horizontally
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade900,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade800),
+                ),
+                child: Consumer<CommonProvider>(
+                  builder: (context, provider, child) {
+                    final usersToShow = _getFilteredUsers(searchQuery, provider);
+
+                    return SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Channel Members Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Text(
+                              'CHANNEL MEMBERS',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (usersToShow.isEmpty && searchQuery?.isNotEmpty == true)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Text(
+                                'No matching users found',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              padding: EdgeInsets.zero,
+                              itemCount: usersToShow.length,
+                              itemBuilder: (context, index) {
+                                final user = usersToShow[index];
+                                return InkWell(
+                                  onTap: () => _onMentionSelected(user),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundImage: CachedNetworkImageProvider(
+                                            ApiString.profileBaseUrl + (user?.avatarUrl ?? ''),
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                user?.username ?? 'Unknown',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              if (user?.fullName != null)
+                                                Text(
+                                                  user.fullName!,
+                                                  style: TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 12,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+
+                          // Special Mention Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            margin: EdgeInsets.only(top: 8),
+                            child: Text(
+                              'SPECIAL MENTION',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          // Special mention items
+                          _buildSpecialMentionItem(
+                            icon: Icons.group,
+                            label: '@here',
+                            onTap: () => _onMentionSelected({'username': 'here'}),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.people,
+                            label: '@channel',
+                            onTap: () => _onMentionSelected({'username': 'channel'}),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.people_outline,
+                            label: '@all',
+                            onTap: () => _onMentionSelected({'username': 'all'}),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _showMentionList = true);
+  }
+
+  void _removeMentionOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    setState(() => _showMentionList = false);
+  }
+
+  void _onMentionSelected(dynamic user) {
+    final text = _messageController.text;
+
+    // Find the last @ before cursor
+    int lastAtIndex = text.substring(0, _mentionCursorPosition).lastIndexOf('@');
+    if (lastAtIndex == -1) return;
+
+    // Extract the substring after '@' to find the partial mention
+    int endIndex = _mentionCursorPosition;
+    while (endIndex < text.length && text[endIndex] != ' ') {
+      endIndex++; // Move until space (end of mention)
+    }
+
+    // Get the text before @mention and after the partial mention
+    final beforeMention = text.substring(0, lastAtIndex); // Text before @
+    final afterMention = text.substring(endIndex); // Text after the partial mention
+
+    // Handle both Users object and special mention map
+    String mentionText;
+    print("User type = ${user.runtimeType}");
+    if (user is Users) { // Users from user_mention_model.dart
+      print("user = ${user.username}");
+      mentionText = '@${user.username} ';
+    }else if (user is SecondUser) {
+      mentionText = '@${user.username} ';
+    } else if (user is Map<String, dynamic>) {
+      mentionText = '@${user['username']} ';
+    } else if (user is User) {
+      mentionText = '@${user.username} ';
+    } else {
+      print("user = ${user.username}");
+      return; // Invalid user object
+    }
+
+    // Update the TextField with corrected mention text
+    _messageController.value = TextEditingValue(
+      text: beforeMention + mentionText + afterMention,
+      selection: TextSelection.collapsed(
+        offset: beforeMention.length + mentionText.length, // Move cursor after mention
+      ),
+    );
+
+    _removeMentionOverlay();
+  }
+
+  Widget _buildSpecialMentionItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

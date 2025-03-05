@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -24,7 +23,8 @@ import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
 
-import '../../model/browse_and_search_channel_model.dart';
+// import '../../model/browse_and_search_channel_model.dart';
+import '../../model/get_user_mention_model.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/common_provider.dart';
@@ -66,11 +66,17 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   bool _showMentionList = false;
   int _mentionCursorPosition = 0;
   final TextEditingController _messageController = TextEditingController();
+  bool _isTextFieldEmpty = true;
 
 
   void _onTextChanged() {
     final text = _messageController.text;
     final cursorPosition = _messageController.selection.baseOffset;
+    
+    // Update text field empty state
+    setState(() {
+      _isTextFieldEmpty = text.isEmpty;
+    });
 
     if (cursorPosition > 0) {
       // Check if @ was just typed
@@ -97,11 +103,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }
 
     // Keep existing typing event
-     socketProvider.userTypingEvent(
-         oppositeUserId: widget.oppositeUserId,
-         isReplyMsg: false,
-         isTyping: text.trim().length > 1 ? 1 : 0
-     );
+    socketProvider.userTypingEvent(
+      oppositeUserId: widget.oppositeUserId,
+      isReplyMsg: false,
+      isTyping: text.trim().length > 1 ? 1 : 0
+    );
   }
 
   void _showMentionOverlay({String? searchQuery}) {
@@ -316,13 +322,18 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
     // Handle both Users object and special mention map
     String mentionText;
-    if (user is Users) {
+    print("User type = ${user.runtimeType}");
+    if (user is Users) { // Users from user_mention_model.dart
+      print("user = ${user.username}");
+      mentionText = '@${user.username} ';
+    }else if (user is SecondUser) {
       mentionText = '@${user.username} ';
     } else if (user is Map<String, dynamic>) {
       mentionText = '@${user['username']} ';
     } else if (user is User) {
       mentionText = '@${user.username} ';
     } else {
+      print("user = ${user.username}");
       return; // Invalid user object
     }
 
@@ -340,7 +351,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
     // Show initial users (current user and recipient)
-    final List<User> initialUsers = [];
+    final List<dynamic> initialUsers = [];
     final currentUser = userCache[signInModel.data?.user?.id];
     final recipientUser = userCache[widget.oppositeUserId];
 
@@ -632,149 +643,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     super.dispose();
   }
 
-  // Widget inputTextFieldWithEditor() {
-  //   return Container(
-  //     decoration: BoxDecoration(
-  //       color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
-  //       border: Border(
-  //         top: BorderSide(
-  //           color: Colors.grey.shade800,
-  //           width: 0.5,
-  //         ),
-  //       ),
-  //     ),
-  //     child: Column(
-  //       children: [
-  //         if (_showToolbar)
-  //           Container(
-  //             padding: const EdgeInsets.symmetric(vertical: 8),
-  //             child: quill.QuillToolbar.simple(
-  //               configurations: quill.QuillSimpleToolbarConfigurations(
-  //                   controller: _controller,
-  //                   sharedConfigurations: const quill.QuillSharedConfigurations(
-  //                     locale: Locale('en'),
-  //                   ),
-  //                   showDividers: false,
-  //                   showFontFamily: false,
-  //                   showFontSize: false,
-  //                   showBoldButton: true,
-  //                   showItalicButton: true,
-  //                   showUnderLineButton: false,
-  //                   showStrikeThrough: true,
-  //                   showInlineCode: true,
-  //                   showColorButton: false,
-  //                   showBackgroundColorButton: false,
-  //                   showClearFormat: false,
-  //                   showAlignmentButtons: false,
-  //                   showLeftAlignment: false,
-  //                   showCenterAlignment: false,
-  //                   showRightAlignment: false,
-  //                   showJustifyAlignment: false,
-  //                   showHeaderStyle: true,
-  //                   showListNumbers: true,
-  //                   showListBullets: true,
-  //                   showListCheck: false,
-  //                   showCodeBlock: true,
-  //                   showQuote: true,
-  //                   showIndent: false,
-  //                   showLink: true,
-  //                   showUndo: false,
-  //                   showRedo: false,
-  //                   showSearchButton: false,
-  //                   showClipboardCut: false,
-  //                   showClipboardCopy: false,
-  //                   showClipboardPaste: false,
-  //                   multiRowsDisplay: false,
-  //                   showSubscript: false,
-  //                   showSuperscript: false),
-  //             ),
-  //           ),
-  //         Container(
-  //           padding: const EdgeInsets.symmetric(horizontal: 8),
-  //           child: Row(
-  //             children: [
-  //               IconButton(
-  //                 icon: Icon(
-  //                   Icons.edit,
-  //                   color: _showToolbar ? Colors.blue : AppColor.whiteColor,
-  //                 ),
-  //                 onPressed: () {
-  //                   setState(() {
-  //                     _showToolbar = !_showToolbar;
-  //                   });
-  //                 },
-  //               ),
-  //               Expanded(
-  //                 child: Container(
-  //                   decoration: BoxDecoration(
-  //                     color: Colors.grey.shade900,
-  //                     borderRadius: BorderRadius.circular(25),
-  //                   ),
-  //                   child: quill.QuillEditor(
-  //                       controller: _controller,
-  //                       focusNode: _focusNode,
-  //                       scrollController: ScrollController(),
-  //                       configurations: quill.QuillEditorConfigurations(
-  //                         scrollable: true,
-  //                         autoFocus: false,
-  //                         checkBoxReadOnly: false,
-  //                         placeholder: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
-  //                         padding: const EdgeInsets.symmetric(
-  //                           horizontal: 16,
-  //                           vertical: 8,
-  //                         ),
-  //                         maxHeight: 100,
-  //                         minHeight: 40,
-  //                         customStyles: const quill.DefaultStyles(
-  //                           paragraph: quill.DefaultTextBlockStyle(
-  //                               TextStyle(
-  //                                 color: AppColor.whiteColor,
-  //                                 fontSize: 16,
-  //                               ),
-  //                               quill.HorizontalSpacing.zero,
-  //                               quill.VerticalSpacing.zero,
-  //                               quill.VerticalSpacing.zero,
-  //                               BoxDecoration(color: Colors.transparent)),
-  //                           placeHolder: quill.DefaultTextBlockStyle(
-  //                               TextStyle(
-  //                                 color: Colors.grey,
-  //                                 fontSize: 16,
-  //                               ),
-  //                               quill.HorizontalSpacing.zero,
-  //                               quill.VerticalSpacing.zero,
-  //                               quill.VerticalSpacing.zero,
-  //                               BoxDecoration(color: Colors.transparent)),
-  //                           quote: quill.DefaultTextBlockStyle(
-  //                             TextStyle(
-  //                               color: AppColor.whiteColor,
-  //                               fontSize: 16,
-  //                             ),
-  //                             quill.HorizontalSpacing(16, 0),
-  //                             quill.VerticalSpacing(8, 0),
-  //                             quill.VerticalSpacing(8, 0),
-  //                             BoxDecoration(
-  //                               border: Border(
-  //                                 left: BorderSide(
-  //                                   color: AppColor.whiteColor,
-  //                                   width: 4,
-  //                                 ),
-  //                               ),
-  //                             ),
-  //                           ),
-  //                         ),
-  //                       )),
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //         const SizedBox(height: 8),
-  //         selectedFilesWidget(),
-  //         fileSelectionAndSendButtonRow()
-  //       ],
-  //     ),
-  //   );
-  // }
   Widget inputTextFieldWithEditor() {
     return Container(
       decoration: BoxDecoration(
@@ -808,14 +676,37 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               controller: _messageController,
                               focusNode: _focusNode,
                               style: TextStyle(color: AppColor.whiteColor),
+                              maxLines: 5,
+                              minLines: 1,
+                              keyboardType: TextInputType.multiline,
+                              textInputAction: TextInputAction.newline,
+                              scrollPhysics: const BouncingScrollPhysics(),
                               decoration: InputDecoration(
                                 hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
                                 hintStyle: TextStyle(color: Colors.grey),
                                 border: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                suffixIcon: _isTextFieldEmpty ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => FileServiceProvider.instance.pickFiles(),
+                                      child: const Icon(Icons.attach_file, color: AppColor.whiteColor, size: 22),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => FileServiceProvider.instance.pickImages(),
+                                      child: const Icon(Icons.image, color: AppColor.whiteColor, size: 22),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => showCameraOptionsBottomSheet(context),
+                                      child: const Icon(Icons.camera_alt, color: AppColor.whiteColor, size: 22),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                ) : null,
                               ),
-                              maxLines: null,
-                              textCapitalization: TextCapitalization.sentences,
                             ),
                           ),
                         ],
@@ -851,31 +742,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             ),
           ),
           selectedFilesWidget(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.attach_file, color: AppColor.whiteColor, size: 22),
-                  onPressed: () {
-                    FileServiceProvider.instance.pickFiles();
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.image, color: AppColor.whiteColor, size: 22),
-                  onPressed: () {
-                    FileServiceProvider.instance.pickImages();
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.camera_alt, color: AppColor.whiteColor, size: 22),
-                  onPressed: () {
-                    showCameraOptionsBottomSheet(context);
-                  },
-                )
-              ],
-            ),
-          ),
         ],
       ),
     );

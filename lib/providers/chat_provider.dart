@@ -146,6 +146,17 @@ class ChatProvider extends  ChangeNotifier {
         if (mId == data['replyTo']) {
           print("I'm In socketProvider for msgId: $mId");
           getReplyMessageList(msgId: mId, fromWhere: "SOCKET INIT");
+          
+          // Update reply count in messageGroups when receiving socket event
+          for (var messageGroup in messageGroups) {
+            for (var message in messageGroup.messages ?? []) {
+              if (message.sId == mId) {
+                message.replyCount = (message.replyCount ?? 0) + 1;
+                notifyListeners();
+                return;
+              }
+            }
+          }
         }
       });
     } catch (e) {
@@ -247,6 +258,7 @@ class ChatProvider extends  ChangeNotifier {
     }
     final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
+    print("Send Message requestBody -= $requestBody");
     if(statusCode200Check(response)){
       /// Socket Emit ///
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
@@ -260,7 +272,20 @@ class ChatProvider extends  ChangeNotifier {
           editedMessage.isEdited = true; // Set isEdited to true
           messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
         }
-      } else /*if(replyId == null && replyId == "")*/ {
+      } else if(replyId != null && replyId != ""){
+        // int existingIndex = getReplyMessageModel!.data!.messages!.indexWhere((item) => item.date == todayDate);
+        // if (existingIndex != -1) {
+        //   getReplyMessageModel!.data!.messages![existingIndex].groupMessages!.add(GroupMessages.fromJson(response['data']));
+        // } else {
+        //   final newListOfDate = response['data'];
+        //   // getReplyMessageModel!.data!.messages!.add(GroupMessages.fromJson({
+        //   //   "_id": todayDate,
+        //   //   'messages': [newListOfDate],
+        //   //   "count": 1,
+        //   // }));
+        // }
+       getReplyMessageList(msgId: replyId, fromWhere: "Reply Send");
+      }else /*if(replyId == null && replyId == "")*/ {
         int existingIndex = messageGroups.indexWhere((item) => item.sId == todayDate);
         if (existingIndex != -1) {
           messageGroups[existingIndex].messages!.add(msg.Messages.fromJson(response['data']));
@@ -274,12 +299,12 @@ class ChatProvider extends  ChangeNotifier {
         }
       }
 
-      if(replyId != null){
-
-
-      }else {
-        // getMessagesList(oppositeUserId: receiverId);
-      }
+      // if(replyId != null){
+      //
+      //
+      // }else {
+      //   // getMessagesList(oppositeUserId: receiverId);
+      // }
     }
     notifyListeners();
   }
@@ -369,5 +394,24 @@ class ChatProvider extends  ChangeNotifier {
       filesListingInChatModel = FilesListingInChatModel.fromJson(response);
     }
     notifyListeners();
+  }
+  void updateReplyCount(String messageId) {
+    // Update reply count in local state
+    for (var messageGroup in messageGroups) {
+      for (var message in messageGroup.messages ?? []) {
+        if (message.sId == messageId) {
+          message.replyCount = (message.replyCount ?? 0) + 1;
+          notifyListeners();
+          
+          // Emit socket event to notify other users
+          socketProvider.socket.emit('reply_notification', {
+            'messageId': messageId,
+            'replyTo': messageId,
+            'senderId': signInModel.data?.user?.id,
+          });
+          return;
+        }
+      }
+    }
   }
 }
