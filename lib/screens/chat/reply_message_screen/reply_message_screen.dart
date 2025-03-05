@@ -33,10 +33,8 @@ class ReplyMessageScreen extends StatefulWidget {
   final String userName;
   String messageId;
   final String receiverId;
-  // final String currentMSGID;
 
-   ReplyMessageScreen(
-      {super.key, required this.userName, required this.messageId, required this.receiverId,/*required this.currentMSGID*/});
+   ReplyMessageScreen({super.key, required this.userName, required this.messageId, required this.receiverId,});
 
   @override
   State<ReplyMessageScreen> createState() => _ReplyMessageScreenState();

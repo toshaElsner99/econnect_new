@@ -67,6 +67,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
 
   Widget dateHeaders() {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+
       return channelChatProvider.messageGroups.isEmpty? SizedBox.shrink() :
       channelChatProvider.channelPinnedMessageModel?.data?.messages!.length == 0 ?
       Expanded(
@@ -96,11 +97,10 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
             ),
           ],
         ),
-      )
-          :
+      ) :
       ListView.builder(
         shrinkWrap: true,
-        reverse: true,
+        reverse: false,
         physics: NeverScrollableScrollPhysics(),
         itemCount: channelChatProvider.channelPinnedMessageModel?.data?.messages?.length ?? 0,
         itemBuilder: (itemContext, index) {
@@ -166,31 +166,12 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
     bool showUserDetails = true,
   })  {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-      bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
       return Container(
         margin: EdgeInsets.only(top: 1),
-        color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
         padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 8.0),
         child: Column(
           children: [
-            Visibility(
-                visible: (messageList.isSeen == false && userId != signInModel.data?.user?.id),
-                child: newMessageDivider()),
-            Visibility(
-                visible: pinnedMsg,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40.0,vertical: 5),
-                  child: Row(
-                    children: [
-                      Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                        child: commonText(text: "Pinned",color: AppColor.blueColor),
-                      ),
-                    ],
-                  ),
-                )),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,

@@ -14,8 +14,10 @@ import '../utils/common/prefrance_function.dart';
 
 
 class SignInProvider extends ChangeNotifier {
-  final emailController = TextEditingController(text: "etamd501@elsner.com");
-  final passwordController = TextEditingController(text: "Bhavik@123");
+  // final emailController = TextEditingController(text: "etamd501@elsner.com");
+  final emailController = TextEditingController(text: "");
+  // final passwordController = TextEditingController(text: "Bhavik@123");
+  final passwordController = TextEditingController(text: "");
   bool isVisible = true;
   final formKey = GlobalKey<FormState>();
   // late SignInModel signInModel;
