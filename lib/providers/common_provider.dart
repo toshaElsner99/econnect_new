@@ -140,19 +140,19 @@ class CommonProvider extends ChangeNotifier {
     }
   }
 
-  // Future<void> getAllUsers() async {
-  //   final requestBody = {"type": "message"};
-  //   final response = await ApiService.instance.request(
-  //     endPoint: ApiString.getUser,
-  //     method: Method.POST,
-  //     reqBody: requestBody
-  //   );
-  //   if (statusCode200Check(response)) {
-  //     getUserMentionModel = GetUserMentionModel.fromJson(response);
-  //     allUsers = getUserMentionModel?.data?.users;
-  //     notifyListeners();
-  //   }
-  // }
+  Future<void> getAllUsers() async {
+    final requestBody = {"type": "message"};
+    final response = await ApiService.instance.request(
+      endPoint: ApiString.getUser,
+      method: Method.POST,
+      reqBody: requestBody
+    );
+    if (statusCode200Check(response)) {
+      getUserMentionModel = GetUserMentionModel.fromJson(response);
+      allUsers = getUserMentionModel?.data?.users;
+      notifyListeners();
+    }
+  }
 
 
   List<Users>? filterUsers(String? searchQuery) {
