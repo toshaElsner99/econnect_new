@@ -973,10 +973,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     //   commonProvider.getUserByIDCall2(userId: userId);
     // }
     dynamic user = userCache[userId];
-    print("userID = $userId");
-    print("user = ${(user?.data!.user!)}");
-    print("DATa = ${jsonEncode(user?.data!.user!)}");
-    print("NAME = ${user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown'}");
+    // print("userID = $userId");
+    // print("user = ${(user?.data!.user!)}");
+    // print("DATa = ${jsonEncode(user?.data!.user!)}");
+    // print("NAME = ${user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown'}");
+    print("Sender Info => ${messageList.senderOfForward}");
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
       // if (!userCache.containsKey(userId) && commonProvider.getUserModel!.data!.user!.sId! == userId) {
       //   commonProvider.getUserByIDCall2(userId: userId);

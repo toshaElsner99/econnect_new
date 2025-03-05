@@ -87,7 +87,10 @@ class ChatProvider extends  ChangeNotifier {
             }
           }
         }else{
-          messageGroups.addAll((response['data']['messages'] as List).map((message) => msg.MessageGroups.fromJson(message)).toList());
+          print("MSG = ${response['data']['messages'] as List}");
+          messageGroups.addAll((response['data']['messages'] as List).map((message) {
+            return msg.MessageGroups.fromJson(message);
+          }).toList());
         }
           totalPages = response['data']['totalPages'];
           lastOpenedUserId = oppositeUserId;
