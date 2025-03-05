@@ -1,4 +1,6 @@
 
+import 'dart:convert';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/model/get_user_model.dart';
@@ -379,6 +381,15 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
     return [...initialUsers, ...otherUsers];
   }
+  final ScrollController scrollController = ScrollController();
+
+  void pagination({required String oppositeUserId}) {
+    scrollController.addListener(() {
+      if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
+        Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
+      }
+    });
+  }
 
 
   @override
@@ -387,7 +398,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       print("oppositeUserId in init==> ${widget.oppositeUserId}");
       /// this is for pagination ///
-      Provider.of<ChatProvider>(context,listen: false).pagination(oppositeUserId: widget.oppositeUserId);
+      pagination(oppositeUserId: widget.oppositeUserId);
       commonProvider.updateStatusCall(status: "online");
       /// opposite user typing listen ///
       chatProvider.getTypingUpdate();
@@ -455,7 +466,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 }else...{
                   Expanded(
                     child: ListView(
-                      controller: chatProvider.scrollController,
+                      controller: scrollController,
                       reverse: true,
                       children: [
                         dateHeaders(),
@@ -962,12 +973,17 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     // if (!userCache.containsKey(userId))  {
     //   commonProvider.getUserByIDCall2(userId: userId);
     // }
+    dynamic user = userCache[userId];
+    print("userID = $userId");
+    print("user = ${(user?.data!.user!)}");
+    print("DATa = ${jsonEncode(user?.data!.user!)}");
+    print("NAME = ${user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown'}");
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
       // if (!userCache.containsKey(userId) && commonProvider.getUserModel!.data!.user!.sId! == userId) {
       //   commonProvider.getUserByIDCall2(userId: userId);
       //   userCache[userId] = commonProvider.getUserModel!;
       // }
-      final user = userCache[userId];
+
       bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
       return Container(

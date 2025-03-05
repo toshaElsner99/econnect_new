@@ -30,24 +30,24 @@ class ChatProvider extends  ChangeNotifier {
   String oppUserIdForTyping = "";
   int msgLength = 0;
   bool idChatListLoading = false;
-  final ScrollController scrollController = ScrollController();
+  // final ScrollController scrollController = ScrollController();
   int currentPagea = 1;
   int totalPages = 0;
   GetReplyMessageModel? getReplyMessageModel;
   FilesListingInChatModel? filesListingInChatModel;
   bool isGettingListFalse = false;
 
-  void pagination({required String oppositeUserId}) {
-    scrollController.addListener(() {
-      if (scrollController.position.pixels == scrollController.position.maxScrollExtent && currentPagea < totalPages) {
-        currentPagea++;
-        print("oppositeUserId in pagination==> $oppositeUserId");
-        getMessagesList(oppositeUserId: oppositeUserId,currentPage: currentPagea);
-        print('currentPage:--->$currentPagea');
-      }
-    });
-    notifyListeners();
+  void paginationAPICall({required String oppositeUserId}) {
+    if(currentPagea < totalPages) {
+      currentPagea++;
+      print("oppositeUserId in pagination==> $oppositeUserId");
+      getMessagesList(
+          oppositeUserId: oppositeUserId, currentPage: currentPagea);
+      print('currentPage:--->$currentPagea');
+      notifyListeners();
+    }
   }
+
   Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false}) async {
     print("oppositeUserId in getMessagesList==> $oppositeUserId");
 
