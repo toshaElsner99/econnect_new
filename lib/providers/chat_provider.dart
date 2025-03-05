@@ -307,14 +307,14 @@ class ChatProvider extends  ChangeNotifier {
       // getMessagesList(oppositeUserId: receiverId);
       togglePinModel(messageId);
       // _updatePinnedStatus(messageId, pinned);
-      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
+      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId,isEmitForChannel: false);
     }
   }
   Future<void> pinUnPinMessageForReply({required String receiverId,required String messageId,required bool pinned})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
       _updatePinnedStatus(messageId, pinned);
-      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
+      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId,isEmitForChannel: false);
     }
   }
   void _updatePinnedStatus(String messageId, bool pinned) {

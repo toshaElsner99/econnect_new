@@ -52,8 +52,6 @@ class CommonProvider extends ChangeNotifier {
   }
 
   Future<void> updateStatusCall({required String status}) async {
-    if(getUserModel == null) return;
-    if(getUserModel?.data!.user!.status != "offline") return;
     final requestBody = {
       "status": status,
       "user_id": signInModel.data?.user?.id,
@@ -88,10 +86,9 @@ class CommonProvider extends ChangeNotifier {
   }
 
 
-  Future<void> getUserByIDCall(/*{String? userId}*/) async {
+  Future<void> getUserByIDCall() async {
     final response = await ApiService.instance.request(endPoint: "${ApiString.getUserById}//${/*userId ?? */signInModel.data?.user?.id ?? ""}", method: Method.GET,);
     if (statusCode200Check(response)) {
-      updateStatusCall(status: "online");
       getUserModel = GetUserModel.fromJson(response);
       // getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
       // isMutedUser = signInModel.data?.user!.muteUsers!.contains(userId) ?? false;
@@ -143,27 +140,20 @@ class CommonProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> getAllUsers() async {
-    final requestBody = {"type": "message"};
-    final response = await ApiService.instance.request(
-      endPoint: ApiString.getUser,
-      method: Method.POST,
-      reqBody: requestBody
-    );
-    if (statusCode200Check(response)) {
-      getUserMentionModel = GetUserMentionModel.fromJson(response);
-      allUsers = getUserMentionModel?.data?.users;
-      notifyListeners();
-    }
-  }
+  // Future<void> getAllUsers() async {
+  //   final requestBody = {"type": "message"};
+  //   final response = await ApiService.instance.request(
+  //     endPoint: ApiString.getUser,
+  //     method: Method.POST,
+  //     reqBody: requestBody
+  //   );
+  //   if (statusCode200Check(response)) {
+  //     getUserMentionModel = GetUserMentionModel.fromJson(response);
+  //     allUsers = getUserMentionModel?.data?.users;
+  //     notifyListeners();
+  //   }
+  // }
 
-  Users? getUserById(String userId) {
-    try {
-      return getUserMentionModel!.data?.users?.firstWhere((user) => user.sId == userId);
-    } catch (e) {
-      return null;
-    }
-  }
 
   List<Users>? filterUsers(String? searchQuery) {
     if (searchQuery == null || searchQuery.isEmpty) {

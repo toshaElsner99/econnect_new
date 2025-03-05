@@ -796,7 +796,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: InkWell(
         onTap: () {
           print("Channel Tapped");
-          pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", channelName: channel.name!));
+          pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", /*channelName: channel.name!*/));
           },
         borderRadius: BorderRadius.circular(8),
         child: Padding(
@@ -926,7 +926,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       margin: const EdgeInsets.symmetric(vertical: 6),
       color: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false ? AppColor.borderColor.withOpacity(0.05) : null,
       child: InkWell(
-        onTap: ()=> pushScreen(screen: ChannelChatScreen(channelId: channel.sId!, channelName: channel.name!)),
+        onTap: ()=> pushScreen(screen: ChannelChatScreen(channelId: channel.sId!, /*channelName: channel.name!*/)),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),

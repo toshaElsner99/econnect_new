@@ -16,6 +16,12 @@ ThemeData lightMode = ThemeData(
       thumbColor: WidgetStatePropertyAll(AppColor.appBarColor),
       trackColor: WidgetStatePropertyAll(AppColor.white),
     ),
+    popupMenuTheme: PopupMenuThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.transparent),
+      ),
+    ),
     appBarTheme: const AppBarTheme(
         titleSpacing: 0,
         surfaceTintColor: Colors.transparent,
@@ -56,6 +62,12 @@ ThemeData darkMode = ThemeData(
     ),
     switchTheme: SwitchThemeData(
       trackColor: WidgetStatePropertyAll(AppColor.white),
+    ),
+    popupMenuTheme: PopupMenuThemeData(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: AppColor.borderColor),
+      ),
     ),
     appBarTheme: const AppBarTheme(
         titleSpacing: 0,

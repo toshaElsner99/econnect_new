@@ -404,10 +404,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       /// THis Is Socket Listening Event ///
       socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId);
       /// THis is Doing for update pin message and get Message List ///
-      socketProvider.socketListenPinMessage(oppositeUserId: widget.oppositeUserId,callFun: (){
-        chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,currentPage: 1,isFromMsgListen: true);
-        // fetchOppositeUserDetails();
-      });
+      // socketProvider.socketListenPinMessage(oppositeUserId: widget.oppositeUserId,callFun: (){
+      //   chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,currentPage: 1,isFromMsgListen: true);
+      //   fetchOppositeUserDetails();
+      // });
       /// this for add user to chat list on home screen 3rd Expansion tiles ///
       if(widget.needToCallAddMessage == true){
         channelListProvider.addUserToChatList(selectedUserId: widget.oppositeUserId);
