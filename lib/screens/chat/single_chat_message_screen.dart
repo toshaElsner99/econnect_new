@@ -391,7 +391,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     });
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -1126,7 +1125,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                                 child: Row(children: [
-                                  profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "", status: messageList.senderOfForward?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl),
+                                  profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "" , status: messageList.senderOfForward?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                     child: Column(

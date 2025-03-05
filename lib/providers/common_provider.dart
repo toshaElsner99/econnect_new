@@ -157,6 +157,14 @@ class CommonProvider extends ChangeNotifier {
     }
   }
 
+  Users? getUserById(String userId) {
+    try {
+      return getUserMentionModel!.data?.users?.firstWhere((user) => user.sId == userId);
+    } catch (e) {
+      return null;
+    }
+  }
+
   List<Users>? filterUsers(String? searchQuery) {
     if (searchQuery == null || searchQuery.isEmpty) {
       return allUsers;
