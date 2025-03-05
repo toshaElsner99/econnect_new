@@ -39,15 +39,31 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   final FocusNode _focusNode = FocusNode();
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   String currentUserMessageId = "";
+  final ScrollController _scrollController = ScrollController();
+  void pagination({required String channelId}) {
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+        Provider.of<ChannelChatProvider>(context,listen: false).paginationAPICall(channelId: channelId);
+      }
+    });
+  }
 
-
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  _scrollController.dispose();
+  _messageController.dispose();
+  _focusNode.dispose();
+  }
+  
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     print("CHANNELID>>> ${widget.channelId}");
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ChannelChatProvider>(context,listen: false).pagination(channelId: widget.channelId);
+      pagination(channelId: widget.channelId);
       Provider.of<ChannelChatProvider>(context, listen: false).getChannelInfoApiCall(channelId: widget.channelId);
       Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
       Provider.of<ChannelChatProvider>(context, listen: false).getChannelChatApiCall(channelId: widget.channelId,pageNo: 1);
@@ -351,7 +367,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
             }else...{
               Expanded(
                 child: ListView(
-                  controller: channelChatProvider.scrollController,
+                  controller: _scrollController,
                   reverse: true,
                   children: [
                     dateHeaders(),

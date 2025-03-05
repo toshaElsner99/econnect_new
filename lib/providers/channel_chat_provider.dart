@@ -32,7 +32,7 @@ class ChannelChatProvider extends ChangeNotifier{
   List<msg.MessageGroup> messageGroups = [];
   int currentPage = 1;
   int totalPages = 0;
-  final ScrollController scrollController = ScrollController();
+
   Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
@@ -153,16 +153,17 @@ class ChannelChatProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  void pagination({required String channelId}) {
-    scrollController.addListener(() {
-      if (scrollController.position.pixels == scrollController.position.maxScrollExtent && currentPage < totalPages) {
-        currentPage++;
-        print("oppositeUserId in pagination==> $channelId");
-        getChannelChatApiCall(channelId: channelId,pageNo: currentPage);
-        print('currentPage:--->$currentPage');
-      }
-    });
-    notifyListeners();
+  // void pagination({required String channelId}) {
+  //       currentPage++;
+  //       getChannelChatApiCall(channelId: channelId,pageNo: currentPage);
+  //   notifyListeners();
+  // }
+  void paginationAPICall({required String channelId}) {
+    if(currentPage < totalPages) {
+      currentPage++;
+      notifyListeners();
+      getChannelChatApiCall(channelId: channelId,pageNo: currentPage);
+    }
   }
 
   Future<void> getChannelPinnedMessage({required String channelID})async{
