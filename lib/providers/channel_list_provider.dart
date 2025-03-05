@@ -323,9 +323,6 @@ Future<void> leaveChannel({
   }) async {
     // emit(ChannelListInitial());
     print("isCallForReadMessage>>> $isCallForReadMessage");
-    // final header = {
-    //   'Authorization': "Bearer ${signInModel.data!.authToken}",
-    // };
 
     final requestBody = {
       "acknowledged": true,

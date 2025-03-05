@@ -125,11 +125,8 @@ class ChannelChatProvider extends ChangeNotifier{
         int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.id == editMsgID));
 
         if (editIndex != -1) {
-          // Update the existing message
           msg.Message editedMessage = msg.Message.fromJson(response['data']);
-          editedMessage.isEdited = true; // Set isEdited to true
-          // messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
-
+          editedMessage.isEdited = true;
           messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.id == editMsgID)] = editedMessage;
         }
       } else /*if(replyId == null && replyId == "")*/ {

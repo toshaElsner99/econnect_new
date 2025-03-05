@@ -80,12 +80,9 @@ class ChatProvider extends  ChangeNotifier {
         if(isFromMsgListen){
           for (var newItem in (response['data']['messages'] as List).map((message) => msg.MessageGroups.fromJson(message)).toList()) {
             int existingIndex = messageGroups.indexWhere((item) => item.sId == newItem.sId);
-
             if (existingIndex != -1) {
-              // Replace existing data
               messageGroups[existingIndex] = newItem;
             } else {
-              // Add new data if not found
               messageGroups.add(newItem);
             }
           }

@@ -498,7 +498,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
                     // child: profileIconWithStatus(userID: messageList.senderInfo?.id ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? "",radius: 17),
-                    child: profileIconWithStatus(userID: user?.sId ?? "", status: user?.status ?? "offline",otherUserProfile: user?.avatarUrl ?? "",radius: 17),
+                    child: profileIconWithStatus(userID:  messageList.senderInfo?.id ?? user?.sId ?? "", status:  messageList.senderInfo?.status ?? user?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? user?.avatarUrl ?? "",radius: 17),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -512,17 +512,19 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            commonText(height: 1.2, text: messageList.senderInfo?.username ?? "", fontWeight: FontWeight.bold),
-                              Visibility(
-                                visible: (messageList.senderInfo?.customStatusEmoji != "" && messageList.senderInfo?.customStatusEmoji != null)? true : false,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 5.0),
-                                  child: CachedNetworkImage(
-                                    width: 20,
-                                    height: 20,
-                                    imageUrl: messageList.senderInfo?.customStatusEmoji ?? "",
-                                  ),),
+                            commonText(height: 1.2, text: messageList.senderInfo?.username ?? user?.username ?? "", fontWeight: FontWeight.bold),
+                            Visibility(
+                              visible: (messageList.senderInfo?.customStatusEmoji != null && messageList.senderInfo!.customStatusEmoji!.isNotEmpty) ||
+                                  (user?.customStatusEmoji != null && user!.customStatusEmoji!.isNotEmpty),
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 5.0),
+                                child: CachedNetworkImage(
+                                  width: 20,
+                                  height: 20,
+                                  imageUrl: messageList.senderInfo?.customStatusEmoji ?? user?.customStatusEmoji ?? "",
+                                ),
                               ),
+                            ),
                             Padding(padding: const EdgeInsets.only(left: 5.0),
                               child: commonText(height: 1.2, text: formatTime(time), color: Colors.grey, fontSize: 12),
                             ),
@@ -823,7 +825,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       onClosed: () =>  setState(() => _selectedIndex = null),
                       isForwarded: messageList.isForwarded! ? false : true,
                       opened: index == _selectedIndex ? true : false,
-                      onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId)),
+                      onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,)),
                       onReply: () {
                         // print("onReply Passing = ${messageId.toString()}");
                         // pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
