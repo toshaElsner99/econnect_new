@@ -934,12 +934,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         child: GestureDetector(
                           onTap: () {
                             print("Simple Passing = ${messageId.toString()}");
-                          /*  pushScreenWithTransition(
-                              ReplyMessageScreen(
-                                userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
-                                messageId: messageId.toString(),
-                                receiverId: widget.oppositeUserId,
-                              ),
+                            pushScreenWithTransition(
+                              ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: widget.channelId,)
                             ).then((value) {
                               print("value>>> $value");
                               if (messageList.replies != null && messageList.replies!.isNotEmpty) {
@@ -950,7 +946,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   }
                                 }
                               }
-                            });*/},
+                            });},
                           child: Container(
                             // color: Colors.red,
                             margin: const EdgeInsets.symmetric(vertical: 4),
@@ -1067,18 +1063,19 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       isForwarded: messageList.isForwarded! ? false : true,
                       opened: false,
                       onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,)),
-                      onReply: () {},
+                      onReply: () => pushScreen(screen: ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: widget.channelId,)),
                       onPin: () => channelChatProvider.pinUnPinMessage(receiverId: widget.channelId, messageId: messageId, pinned: pinnedMsg = !pinnedMsg ),
                       onCopy: () => copyToClipboard(context, message),
-                      onEdit: () {
+                      onEdit: () => setState(() {
                         _messageController.clear();
                         FocusScope.of(context).requestFocus(_focusNode);
                         int position = _messageController.text.length;
                         currentUserMessageId = messageId;
                         print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                         _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
-                      },
-                      onDelete: () => Provider.of<ChannelChatProvider>(context,listen: false).deleteMessageFromChannel(messageId: messageId)),
+                      }),
+                      onDelete: () => Provider.of<ChannelChatProvider>(context,listen: false).deleteMessageFromChannel(messageId: messageId,)
+                  ),
                 )
               ],
             ),

@@ -142,12 +142,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: (){
-          // setState(() {
-            // widget.messageId = "";
-          // });
-          pop(popValue: true);
-        },
+        leading: IconButton(onPressed: ()=> pop(popValue: true),
         icon: Icon(CupertinoIcons.back,color: Colors.white,)),
         bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
         titleSpacing: 0,
@@ -184,7 +179,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
   Widget dateHeaders() {
     return Consumer<ChatProvider>(builder: (context, value, child) {
-      return value.messageGroups.isEmpty ? SizedBox.shrink() : ListView.builder(
+      return value.getReplyMessageModel?.data?.messages?.length == 0 ? SizedBox.shrink() : ListView.builder(
         shrinkWrap: true,
         reverse: false,
         physics: NeverScrollableScrollPhysics(),
@@ -427,7 +422,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                     _messageController.text = message;
                   }),
                   onDelete: () {
-                    chatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.messageId,userName: widget.userName,oppId: widget.receiverId);
+                    chatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.messageId);
                   },
                   createdAt:"${messageList.createdAt}",)
               ],

@@ -244,6 +244,7 @@ class Reply {
   String? id;
   String? senderId;
   String? channelId;
+  String? receiverId;
   String? content;
   List<String>? files;
   bool? isReply;
@@ -264,6 +265,7 @@ class Reply {
     this.id,
     this.senderId,
     this.channelId,
+    this.receiverId,
     this.content,
     this.files,
     this.isReply,
@@ -286,6 +288,7 @@ class Reply {
       id: json['_id'],
       senderId: json['senderId'],
       channelId: json['channelId'],
+      receiverId: json['receiverId'],
       content: json['content'],
       files: json['files'] != null ? List<String>.from(json['files']) : null,
       isReply: json['isReply'],
@@ -310,6 +313,7 @@ class Reply {
       'senderId': senderId,
       'channelId': channelId,
       'content': content,
+      'receiverId': receiverId,
       'files': files,
       'isReply': isReply,
       'isLog': isLog,

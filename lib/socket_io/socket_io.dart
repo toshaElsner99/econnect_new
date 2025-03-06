@@ -132,9 +132,9 @@ class SocketIoProvider extends ChangeNotifier{
     // }
   }
 
-  deleteMessagesSC({required Map<String, dynamic> response}) {
+  deleteMessagesSC({required Map<String, dynamic> response,bool? isForChannel = false}) {
     print("emit>>>>> Delete Message $response");
-    socket.emit(deleteMessagesEmit, response);
+    socket.emit(isForChannel == true ? deleteMessagesChannelEmit : deleteMessagesEmit , response);
   }
 
   deleteMessagesFromChannelSC({required Map<String, dynamic> response}) {
@@ -194,6 +194,7 @@ class SocketIoProvider extends ChangeNotifier{
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelInfoApiCall(channelId: channelId);
     });
   }
+
 
 
 /// single Chat //
