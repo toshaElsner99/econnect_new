@@ -17,6 +17,7 @@ ThemeData lightMode = ThemeData(
       trackColor: WidgetStatePropertyAll(AppColor.white),
     ),
     popupMenuTheme: PopupMenuThemeData(
+      position: PopupMenuPosition.under,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: Colors.transparent),
@@ -64,6 +65,7 @@ ThemeData darkMode = ThemeData(
       trackColor: WidgetStatePropertyAll(AppColor.white),
     ),
     popupMenuTheme: PopupMenuThemeData(
+      position: PopupMenuPosition.under,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: AppColor.borderColor),

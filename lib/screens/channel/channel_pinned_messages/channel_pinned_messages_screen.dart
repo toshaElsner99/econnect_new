@@ -180,7 +180,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(userID: messageList.senderInfo?.sId ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? "",radius: 17),
+                    child: profileIconWithStatus(userID: messageList.senderInfo?.sId ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.thumbnailAvatarUrl ?? "",radius: 17),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -277,7 +277,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.senderOfForward?.sId ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl ?? ""),
+                                    profileIconWithStatus(userID: messageList.senderOfForward?.sId ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl ?? ""),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
@@ -410,7 +410,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                               status: "",
                                               needToShowIcon: false,
                                               radius: 12,
-                                              otherUserProfile: messageList.repliesSenderInfo?[0].avatarUrl ?? "",
+                                              otherUserProfile: messageList.repliesSenderInfo?[0].thumbnailAvatarUrl ?? "",
                                             ),
                                             if (messageList.repliesSenderInfo!.length > 1)
                                               Positioned(
@@ -420,7 +420,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                                   status: "",
                                                   needToShowIcon: false,
                                                   radius: 12,
-                                                  otherUserProfile: messageList.repliesSenderInfo?[1].avatarUrl ?? "",
+                                                  otherUserProfile: messageList.repliesSenderInfo?[1].thumbnailAvatarUrl ?? "",
                                                 ),
                                               ),
                                           ],

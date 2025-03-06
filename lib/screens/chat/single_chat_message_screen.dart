@@ -60,7 +60,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final Map<String, dynamic> userCache = {};
   GetUserModelSecondUser? userDetails;
   String currentUserMessageId = "";
-  int? _selectedIndex;
+  // int? _selectedIndex;
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   bool _showMentionList = false;
@@ -68,6 +68,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final TextEditingController _messageController = TextEditingController();
   bool _isTextFieldEmpty = true;
 
+  // clearSelectedIndex({required Function call}){
+  //   setState(() {
+  //     _selectedIndex = null;
+  //   });
+  //   call.call();
+  // }
 
   void _onTextChanged() {
     final text = _messageController.text;
@@ -190,7 +196,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                         CircleAvatar(
                                           radius: 16,
                                           backgroundImage: CachedNetworkImageProvider(
-                                            ApiString.profileBaseUrl + (user?.avatarUrl ?? ''),
+                                            ApiString.profileBaseUrl + (user?.thumbnailAvatarUrl ?? ''),
                                           ),
                                         ),
                                         SizedBox(width: 12),
@@ -472,8 +478,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   Flexible(child: customLoading())
               }else...{
                 if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
-                Expanded(child: Center(child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ?? 'Unknown', userImageUrl: ApiString.profileBaseUrl + (userDetails?.data?.user?.avatarUrl ?? ''),))),
-                }else...{
+                  Expanded(
+                        child: Center(
+                            child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',
+                            userImageUrl: userDetails?.data?.user?.thumbnailAvatarUrl ?? '',
+                            userId: userDetails?.data?.user?.sId ?? "",
+                            userStatus: userDetails?.data?.user?.status ?? "offline",
+                    ))),
+                  }else...{
                   Expanded(
                     child: ListView(
                       controller: scrollController,
@@ -483,6 +495,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       ],
                     ),
                   ),
+                  SizedBox(height: 20,),
                 },
                 if(userDetails?.data?.user?.isLeft == false)...{
                   inputTextFieldWithEditor()
@@ -514,7 +527,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       ),
                     )
                 }
-              }
+              },
             ],
           ),
         ),
@@ -522,32 +535,143 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     },);
   }
   AppBar buildAppBar(CommonProvider commonProvider, ChatProvider chatProvider) {
+    // return AppBar(
+    //   toolbarHeight: 60,
+    //   // leadingWidth: 35,
+    //   leading: Padding(
+    //     padding: const EdgeInsets.only(left: 15.0),
+    //     child: IconButton(icon: Icon(CupertinoIcons.back,color: Colors.white,),color: Colors.white, onPressed: () {
+    //       pop();
+    //       channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
+    //     },),
+    //   ),
+    //   titleSpacing: 0,
+    //   title:  Column(
+    //     crossAxisAlignment: CrossAxisAlignment.start,
+    //     children: [
+    //       Row(
+    //         mainAxisSize: MainAxisSize.min,
+    //         children: [
+    //           Flexible(
+    //             fit: FlexFit.loose,
+    //             child: commonText(
+    //               text: widget.userName,
+    //               fontSize: 16,
+    //               fontWeight: FontWeight.w600,
+    //               color: Colors.white,
+    //               maxLines: 1,
+    //               overflow: TextOverflow.ellipsis, // Prevent overflow
+    //             ),
+    //           ),
+    //           Visibility(
+    //             visible: userDetails?.data?.user?.isFavourite ?? false,
+    //             child: Icon(Icons.star_rate_rounded, color: Colors.yellow, size: 18),
+    //           ),
+    //         ],
+    //       ),
+    //       Padding(
+    //         padding: const EdgeInsets.only(top: 8.0),
+    //         child: Row(
+    //           children: [
+    //             getCommonStatusIcons(
+    //               size: 15,
+    //               status: userDetails?.data?.user?.status ?? "offline",
+    //               assetIcon: false,
+    //             ),
+    //             const SizedBox(width: 5),
+    //             Flexible(
+    //               child: commonText(
+    //                 text: (userDetails?.data!.user!.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1)
+    //                     ? "Typing..."
+    //                     : getLastOnlineStatus(
+    //                   userDetails?.data?.user?.status ?? ".....",
+    //                   userDetails?.data?.user!.lastActiveTime,
+    //                 ),
+    //                 height: 1,
+    //                 fontWeight: FontWeight.w400,
+    //                 fontSize: 15,
+    //                 maxLines: 1,
+    //                 overflow: TextOverflow.ellipsis,
+    //               ),
+    //             ),
+    //             const SizedBox(width: 5),
+    //             Visibility(
+    //               visible: userDetails?.data?.user?.customStatusEmoji != null && userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
+    //               child: Padding(
+    //                 padding: const EdgeInsets.only(right: 8.0),
+    //                 child: CachedNetworkImage(
+    //                   imageUrl: userDetails?.data?.user!.customStatusEmoji ?? "",
+    //                   height: 20,
+    //                   width: 20,
+    //                   errorWidget: (context, url, error) => Icon(Icons.error, size: 20), // Handle image errors
+    //                 ),
+    //               ),
+    //             ),
+    //             GestureDetector(
+    //               onTap: () => pushScreen(screen: PinnedPostsScreen(userName: widget.userName, oppositeUserId: widget.oppositeUserId,userCache: userCache,)),
+    //               child: Container(
+    //                 padding: EdgeInsets.symmetric(horizontal: 5),
+    //                 // color: Colors.red,
+    //                 child: Row(
+    //                   mainAxisSize: MainAxisSize.min,
+    //                   children: [
+    //                     commonText(
+    //                       text: "${userDetails?.data?.user!.pinnedMessageCount ?? 0}",
+    //                       fontSize: 16,
+    //                       fontWeight: FontWeight.w400,
+    //                     ),
+    //                     Image.asset(AppImage.pinIcon, height: 15, width: 18, color: Colors.white),
+    //                     SizedBox(width: 5,)
+    //                 ],),
+    //               ),
+    //             ),
+    //             GestureDetector(
+    //                 onTap: () => pushScreen(screen: FilesListingScreen(userName: widget.userName,oppositeUserId: widget.oppositeUserId,)),
+    //                 child: Image.asset(AppImage.fileIcon, height: 18, width: 16, color: Colors.white)),
+    //           ],
+    //         ),
+    //       ),
+    //     ],
+    //   ),
+    //   actions: [
+    //     IconButton(
+    //       icon: const Icon(Icons.more_vert, color: AppColor.whiteColor),
+    //       onPressed: () {
+    //         showChatSettingsBottomSheet(userId: widget.oppositeUserId);
+    //       },
+    //     ),
+    //   ],
+    // );
     return AppBar(
       toolbarHeight: 60,
-      // leadingWidth: 35,
       leading: Padding(
         padding: const EdgeInsets.only(left: 15.0),
-        child: IconButton(icon: Icon(CupertinoIcons.back,color: Colors.white,),color: Colors.white, onPressed: () {
-          pop();
-          channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
-        },),
+        child: IconButton(
+          icon: Icon(CupertinoIcons.back, color: Colors.white),
+          onPressed: () {
+            pop();
+            channelListProvider.readUnreadMessages(
+              oppositeUserId: widget.oppositeUserId,
+              isCalledForFav: widget.calledForFavorite ?? false,
+              isCallForReadMessage: true,
+            );
+          },
+        ),
       ),
       titleSpacing: 0,
-      title:  Column(
+      title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
               Flexible(
-                fit: FlexFit.loose,
                 child: commonText(
                   text: widget.userName,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis, // Prevent overflow
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Visibility(
@@ -556,63 +680,82 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Row(
-              children: [
-                getCommonStatusIcons(
-                  size: 15,
-                  status: userDetails?.data?.user?.status ?? "offline",
-                  assetIcon: false,
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              getCommonStatusIcons(
+                size: 15,
+                status: userDetails?.data?.user?.status ?? "offline",
+                assetIcon: false,
+              ),
+              const SizedBox(width: 5),
+              Flexible(
+                child: commonText(
+                  text: (userDetails?.data?.user?.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1)
+                      ? "Typing..."
+                      : getLastOnlineStatus(
+                    userDetails?.data?.user?.status ?? ".....",
+                    userDetails?.data?.user?.lastActiveTime,
+                  ),
+                  height: 1,
+                  fontWeight: FontWeight.w400,
+                  fontSize: 15,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 5),
-                Flexible(
-                  child: commonText(
-                    text: (userDetails?.data!.user!.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1)
-                        ? "Typing..."
-                        : getLastOnlineStatus(
-                      userDetails?.data?.user?.status ?? ".....",
-                      userDetails?.data?.user!.lastActiveTime,
-                    ),
-                    height: 1,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 15,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(width: 5),
+              Visibility(
+                visible: userDetails?.data?.user?.customStatusEmoji != null &&
+                    userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 5.0),
+                  child: CachedNetworkImage(
+                    imageUrl: userDetails?.data?.user?.customStatusEmoji ?? "",
+                    height: 20,
+                    width: 20,
+                    errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
                   ),
                 ),
-                const SizedBox(width: 5),
-                Visibility(
-                  visible: userDetails?.data?.user?.customStatusEmoji != null && userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: CachedNetworkImage(
-                      imageUrl: userDetails?.data?.user!.customStatusEmoji ?? "",
-                      height: 20,
-                      width: 20,
-                      errorWidget: (context, url, error) => Icon(Icons.error, size: 20), // Handle image errors
-                    ),
+              ),
+              const SizedBox(width: 10),
+
+              /// Pinned Messages & Navigation
+              GestureDetector(
+                onTap: () => pushScreen(
+                  screen: PinnedPostsScreen(
+                    userName: widget.userName,
+                    oppositeUserId: widget.oppositeUserId,
+                    userCache: userCache,
                   ),
                 ),
-                GestureDetector(
-                  onTap: () => pushScreen(screen: PinnedPostsScreen(userName: widget.userName, oppositeUserId: widget.oppositeUserId,userCache: userCache,)),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      commonText(
-                        text: "${userDetails?.data?.user!.pinnedMessageCount ?? 0}",
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      Image.asset(AppImage.pinIcon, height: 15, width: 18, color: Colors.white),
-                      const SizedBox(width: 4),
-                  ],),
+                child: Row(
+                  children: [
+                    commonText(
+                      text: "${userDetails?.data?.user?.pinnedMessageCount ?? 0}",
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 3),
+                    Image.asset(AppImage.pinIcon, height: 18, width: 18, color: Colors.white),
+                  ],
                 ),
-                GestureDetector(
-                    onTap: () => pushScreen(screen: FilesListingScreen(userName: widget.userName,oppositeUserId: widget.oppositeUserId,)),
-                    child: Image.asset(AppImage.fileIcon, height: 15, width: 15, color: Colors.white)),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+
+              /// File & Navigation
+              GestureDetector(
+                onTap: () => pushScreen(
+                  screen: FilesListingScreen(
+                    userName: widget.userName,
+                    oppositeUserId: widget.oppositeUserId,
+                  ),
+                ),
+                child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: Colors.white),
+              ),
+            ],
           ),
         ],
       ),
@@ -764,7 +907,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               child: customLoading(),
             );
             }else if(value.totalPages == value.currentPagea){
-              return ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ?? 'Unknown', userImageUrl: ApiString.profileBaseUrl + (userDetails?.data?.user?.avatarUrl ?? ''),);
+              return ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',
+                userImageUrl: userDetails?.data?.user?.thumbnailAvatarUrl ?? '',
+                userId: userDetails?.data?.user?.sId ?? "",
+                userStatus: userDetails?.data?.user?.status ?? "offline",
+              );
             } else {
               return SizedBox.shrink();
             }
@@ -883,7 +1030,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "${user?.data!.user!.status}",otherUserProfile: user?.data!.user!.avatarUrl ?? '',radius: 17),
+                    child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "${user?.data!.user!.status}",otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',radius: 17),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -927,53 +1074,56 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           ],
                         ),
                       SizedBox(height: 5),
-                        Wrap(
-                          direction: Axis.horizontal,
-                          children: [
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  WidgetSpan(
-                                    alignment: PlaceholderAlignment.baseline,
-                                    baseline: TextBaseline.alphabetic,
-                                    child: commonHTMLText(message: message),
-                                  ),
-
-                                  if (isEdited)
+                        Visibility(
+                          visible: message.isNotEmpty,
+                          child: Wrap(
+                            direction: Axis.horizontal,
+                            children: [
+                              RichText(
+                                text: TextSpan(
+                                  children: [
                                     WidgetSpan(
                                       alignment: PlaceholderAlignment.baseline,
                                       baseline: TextBaseline.alphabetic,
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 4.0),
-                                        // Space between content & label
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          // Ensures compact fit
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.edit_outlined,
-                                              size: 13,
-                                              color: AppColor.borderColor,
-                                            ),
-                                            const SizedBox(width: 2),
-                                            commonText(
-                                              text: "Edited",
-                                              fontSize: 10,
-                                              color: AppColor.borderColor,
-                                              fontStyle: FontStyle.italic,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ],
+                                      child: commonHTMLText(message: message),
+                                    ),
+
+                                    if (isEdited)
+                                      WidgetSpan(
+                                        alignment: PlaceholderAlignment.baseline,
+                                        baseline: TextBaseline.alphabetic,
+                                        child: Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 4.0),
+                                          // Space between content & label
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            // Ensures compact fit
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.edit_outlined,
+                                                size: 13,
+                                                color: AppColor.borderColor,
+                                              ),
+                                              const SizedBox(width: 2),
+                                              commonText(
+                                                text: "Edited",
+                                                fontSize: 10,
+                                                color: AppColor.borderColor,
+                                                fontStyle: FontStyle.italic,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
 
                       Visibility(
@@ -992,7 +1142,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                                 child: Row(children: [
-                                  profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "" , status: messageList.senderOfForward?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl),
+                                  profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "" , status: messageList.senderOfForward?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                     child: Column(
@@ -1006,7 +1156,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   ),
                                 ],),
                               ),
-                                commonHTMLText(message: "${messageList.forwardInfo?.content}"),
+                                Visibility(
+                                    visible: messageList.forwardInfo?.content != "",
+                                    child: commonHTMLText(message: "${messageList.forwardInfo?.content}")),
                                 Visibility(
                                   visible: messageList.forwardInfo?.files.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -1125,7 +1277,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                                 status: "",
                                                 needToShowIcon: false,
                                                 radius: 12,
-                                                otherUserProfile: messageList.repliesSenderInfo![0].avatarUrl,
+                                                otherUserProfile: messageList.repliesSenderInfo![0].thumbnailAvatarUrl,
                                               ),
                                               if (messageList.repliesSenderInfo!.length > 1)
                                                 Positioned(
@@ -1135,7 +1287,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                                     status: "",
                                                     needToShowIcon: false,
                                                     radius: 12,
-                                                    otherUserProfile: messageList.repliesSenderInfo![1].avatarUrl,
+                                                    otherUserProfile: messageList.repliesSenderInfo![1].thumbnailAvatarUrl,
                                                   ),
                                                 ),
                                             ],
@@ -1208,37 +1360,37 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   visible: userDetails?.data?.user?.isLeft == false,
                   child: popMenu2(context,
                     isPinned: pinnedMsg,
-                    onOpened: () =>  setState(() => _selectedIndex = index),
-                    onClosed: () =>  setState(() => _selectedIndex = null),
+                    onOpened: () {},
+                    onClosed: () {},
                     isForwarded: messageList.isForwarded! ? false : true,
-                    opened: index == _selectedIndex ? true : false,
+                    opened: /*index == _selectedIndex ? true : */false,
                     createdAt: messageList.createdAt!,
                     currentUserId: userId,
-                    onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.avatarUrl ?? '',forwardMsgId: messageId,)),
-                    onReply: () {
-                      print("onReply Passing = ${messageId.toString()}");
-                    pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
-                    },
+                    onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,)),
+                    onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,)),
                     onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
                     onCopy: () => copyToClipboard(context, message),
-                    // onEdit: () => setState(() {
-                    //   int position = _controller.document.length - 1;
-                    //   currentUserMessageId = messageId;
-                    //   print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
-                    //   _controller.document.insert(position, message.toString());
-                    //   _controller.updateSelection(
-                    //     TextSelection.collapsed(offset: _controller.document.length),
-                    //     quill.ChangeSource.local,
-                    //   );
-                    // }),
-                      onEdit: ()=> setState(() {
-                      int position = _messageController.text.length;
-                      currentUserMessageId = messageId;
-                      print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
-                       _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
-                      }),
-                    onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)),
-                ),
+                    onEdit: () {
+                        _messageController.clear();
+                        FocusScope.of(context).requestFocus(_focusNode);
+                        int position = _messageController.text.length;
+                        currentUserMessageId = messageId;
+                        print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
+                        _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);},
+                    onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId))),
+                    // onForward: ()=> clearSelectedIndex(call: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,))),
+                    // onReply: () => clearSelectedIndex(call: ()=>  pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,))),
+                    // onPin: () => clearSelectedIndex(call:()=> chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg )),
+                    // onCopy: () => clearSelectedIndex(call: ()=> copyToClipboard(context, message)),
+                    // onEdit: () => clearSelectedIndex(call: (){
+                    //     _messageController.clear();
+                    //     FocusScope.of(context).requestFocus(_focusNode);
+                    //     int position = _messageController.text.length;
+                    //     currentUserMessageId = messageId;
+                    //     print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
+                    //     _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
+                    //   }),
+                    // onDelete: () => clearSelectedIndex(call: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)))),
               ],
             ),
           ],

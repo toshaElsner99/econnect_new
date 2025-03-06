@@ -39,7 +39,7 @@ String formatDateTime(DateTime dateTime) {
   } else if (dateTime.isAtSameMomentAs(yesterday)) {
     return 'Yesterday';
   } else {
-    return DateFormat('yyyy-MM-dd').format(dateTime);
+    return DateFormat('dd-MM-yyyy').format(dateTime);
   }
 }
 

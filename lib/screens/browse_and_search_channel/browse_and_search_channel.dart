@@ -7,7 +7,9 @@ import 'package:provider/provider.dart';
 
 import '../../main.dart';
 import '../../providers/channel_list_provider.dart';
+import '../../utils/common/common_function.dart';
 import '../../utils/common/common_widgets.dart';
+import '../channel/channel_chat_screen.dart';
 
 class BrowseAndSearchChannel extends StatefulWidget {
   const BrowseAndSearchChannel({super.key});
@@ -213,13 +215,16 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                                 ],
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5),
-                                border: Border.all(width: 1, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.commonAppColor),
+                            GestureDetector(
+                              onTap: () => pushReplacement(screen: ChannelChatScreen(channelId: channelListing.sId ?? "")),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(width: 1, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.commonAppColor),
+                                ),
+                                child: commonText(text: "View", color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.commonAppColor),
                               ),
-                              child: commonText(text: "View", color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.commonAppColor),
                             ),
                           ],
                         ),

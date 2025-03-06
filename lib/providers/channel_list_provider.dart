@@ -103,7 +103,7 @@ void combineUserDataWithChannels() {
        'fullName': user.fullName,
        'username': user.username,
        'email': user.email,
-       'avatarUrl': user.avatarUrl,
+       'avatarUrl': user.thumbnailAvatarUrl,
        'userId': user.userId
      });
    });
@@ -247,9 +247,6 @@ bool isLoading = false;
     required String conversationUserId,
     required bool isCalledForFav,
   }) async {
-    // final header = {
-    //   'Content-Type': 'application/json',
-    // };
     print("userId>>>${signInModel.data?.user?.id}");
     final requestBodyForFav = {
       "userId": signInModel.data!.user!.id,
@@ -456,8 +453,10 @@ Future<void> toggleAdminAndMember(
   if (response.statusCode == 200) {
     await Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false).getChannelMembersList(channelId);
     socketProvider.memberAdminToggleSC(response: {
-      "senderId": signInModel.data!.user!.id,
-      "channelId": channelId
+      "data": {
+        "senderId": signInModel.data!.user!.id,
+        "channelId": channelId
+      }
     });
   } else {
     print(response.reasonPhrase);

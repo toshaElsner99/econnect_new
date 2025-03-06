@@ -175,40 +175,44 @@ class ChannelChatProvider extends ChangeNotifier{
   }
 
   Future<void> getChannelChatApiCall({required String channelId,required int pageNo,bool isFromMsgListen = false})async {
-    // if (lastOpenedChannelId != lastOpenedChannelId) {
-    //   channelChatModel = null;
-    //   channelChatModel?.data.messages.clear();
-    //   isChannelChatLoading = true;
-    //   // messageGroups.clear();
-    //   // totalPages = 0;
-    //   // currentPage = 1;
-    //   // idChatListLoading = true;
-    // }
-    final requestBody = {
-      "channelId": channelId,
-      "pageNo": pageNo.toString()
-    };
-    if(pageNo == 1 && !isFromMsgListen){
-      messageGroups.clear();
-      currentPage = 1;
-    }
-    final response  = await ApiService.instance.request(endPoint: ApiString.getChannelChat, method: Method.POST,reqBody: requestBody);
-    if(statusCode200Check(response)){
-      if(isFromMsgListen){
-        for (var newItem in (response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList()) {
-          int existingIndex = messageGroups.indexWhere((item) => item.id == newItem.id);
-          if (existingIndex != -1) {
-            messageGroups[existingIndex] = newItem;
-          } else {
-            messageGroups.add(newItem);
-          }
-        }
-      }else{
-        messageGroups.addAll((response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList());
-      }
-    }
-    totalPages = response['data']['totalPages'];
-    notifyListeners();
+   try{
+     if (lastOpenedChannelId != channelId) {
+       messageGroups.clear();
+       totalPages = 0;
+       currentPage = 1;
+       isChannelChatLoading = true;
+     }
+     final requestBody = {
+       "channelId": channelId,
+       "pageNo": pageNo.toString()
+     };
+     if(pageNo == 1 && !isFromMsgListen){
+       messageGroups.clear();
+       currentPage = 1;
+     }
+     final response  = await ApiService.instance.request(endPoint: ApiString.getChannelChat, method: Method.POST,reqBody: requestBody);
+     if(statusCode200Check(response)){
+       if(isFromMsgListen){
+         for (var newItem in (response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList()) {
+           int existingIndex = messageGroups.indexWhere((item) => item.id == newItem.id);
+           if (existingIndex != -1) {
+             messageGroups[existingIndex] = newItem;
+           } else {
+             messageGroups.add(newItem);
+           }
+         }
+       }else{
+         messageGroups.addAll((response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList());
+       }
+     }
+     totalPages = response['data']['totalPages'];
+     lastOpenedChannelId = channelId;
+   }catch (e){
+     print("error >>> $e");
+   }finally{
+     isChannelChatLoading = false;
+     notifyListeners();
+   }
   }
 
   MemberDetails? getUserById(String userId) {

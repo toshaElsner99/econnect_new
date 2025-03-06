@@ -2,6 +2,7 @@ import 'package:e_connect/model/channel_members_model.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
 import 'package:e_connect/providers/channel_list_provider.dart';
 import 'package:e_connect/screens/chat/single_chat_message_screen.dart';
+import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:flutter/cupertino.dart';
@@ -64,10 +65,12 @@ class ChannelMembersInfo extends StatefulWidget {
 class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
   bool isManageMode = false;
   final TextEditingController _searchController = TextEditingController();
+  final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context);
 
   @override
   void initState() {
     super.initState();
+    socketProvider.listenMemberUpdates(channelID : widget.channelId);
     // Provider.of<ChannelChatProvider>(context, listen: false).getChannelMembersList(widget.channelId);
   }
 

@@ -5,6 +5,7 @@ import 'package:e_connect/providers/common_provider.dart';
 import 'package:e_connect/screens/channel/channel_member_info_screen/channel_members_info.dart';
 import 'package:e_connect/screens/channel/channel_pinned_messages/channel_pinned_messages_screen.dart';
 import 'package:e_connect/screens/channel/files_listing_channel/files_listing_in_channel_screen.dart';
+import 'package:e_connect/screens/channel/reply_message_screen_channel/reply_message_screen_channel.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
@@ -36,7 +37,7 @@ class ChannelChatScreen extends StatefulWidget {
 class _ChannelChatScreenState extends State<ChannelChatScreen> {
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   final channelChatProviderInit = Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false);
-  int? _selectedIndex;
+  // int? _selectedIndex;
   final LayerLink _layerLink = LayerLink();
   final TextEditingController _messageController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
@@ -303,76 +304,195 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   Widget build(BuildContext context) {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
       return Scaffold(
+        // appBar: AppBar(
+        //   toolbarHeight: 60,
+        //   titleSpacing: 0,
+        //   leading: commonBackButton(),
+        //   title: Column(
+        //     mainAxisSize: MainAxisSize.min,
+        //     children: [
+        //       Row(
+        //         children: [
+        //           Flexible(child: commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "", maxLines: 1, fontSize: 14)),
+        //           if(channelChatProvider.getChannelInfo?.data?.ownerId?.sId == signInModel.data?.user?.id)...{
+        //             SizedBox(width: 10),
+        //             GestureDetector(
+        //                 onTap: ()=>_showRenameChannelDialog(),
+        //                 child: Image.asset(AppImage.editIcon, height: 15, width: 15, color: AppColor.borderColor)),
+        //           }
+        //         ],
+        //       ),
+        //       SizedBox(height: 10),
+        //       Row(
+        //         crossAxisAlignment: CrossAxisAlignment.start,
+        //         children: [
+        //           /// User Count & navigation ///
+        //           GestureDetector(
+        //             onTap: () {
+        //               if(channelChatProvider.getChannelInfo?.data?.members?.length != 0){
+        //                 pushScreen(screen: ChannelMembersInfo(channelId: widget.channelId, channelName: channelChatProvider.getChannelInfo?.data?.name ?? ""));
+        //               }
+        //             },
+        //             child: Container(
+        //               padding: EdgeInsets.symmetric(horizontal: 5,vertical: 4),
+        //               child: Row(
+        //                 children: [
+        //                   Image.asset(AppImage.person,height: 16,width: 16,color: AppColor.white,),
+        //                   const SizedBox(width: 2),
+        //                   commonText(text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",fontSize: 15,color: AppColor.white,fontWeight: FontWeight.w500),
+        //                 ],
+        //               ),
+        //             ),
+        //           ),
+        //           /// Pin Messages & navigation ///
+        //           GestureDetector(
+        //             onTap: () => pushScreen(screen: ChannelPinnedPostsScreen(channelName:channelChatProvider.getChannelInfo?.data?.name ?? "", channelId: widget.channelId)),
+        //             child: Container(
+        //               padding: EdgeInsets.symmetric(horizontal: 10,vertical: 4),
+        //               child: Row(
+        //                 crossAxisAlignment: CrossAxisAlignment.start,
+        //                 mainAxisSize: MainAxisSize.min,
+        //                 children: [
+        //                   Image.asset(AppImage.pinIcon, height: 18, width: 16, color: Colors.white),
+        //                   const SizedBox(width: 3),
+        //                   commonText(
+        //                     text: "${channelChatProvider.getChannelInfo?.data?.pinnedMessagesCount ?? 0}",
+        //                     fontSize: 16,
+        //                     color: AppColor.white,
+        //                     fontWeight: FontWeight.w400,
+        //                   ),
+        //                 ],),
+        //             ),
+        //           ),
+        //           /// File & Navigation ///
+        //           GestureDetector(
+        //               onTap: () => pushScreen(screen: FilesListingScreen(channelName: channelChatProvider.getChannelInfo?.data?.name ?? "", channelId: widget.channelId)),
+        //               child: Image.asset(AppImage.fileIcon, height: 18, width: 16, color: AppColor.white)),
+        //         ],
+        //       )
+        //     ],
+        //   ),
+        //   actions: [
+        //     IconButton(
+        //       icon: const Icon(Icons.info, color: AppColor.whiteColor),
+        //       onPressed: () => pushScreen(screen: ChannelInfoScreen(channelId: widget.channelId, channelName: channelChatProvider.getChannelInfo?.data?.name ?? "", isPrivate: false,)),
+        //     ),
+        //   ],
+        // ),
         appBar: AppBar(
           toolbarHeight: 60,
           titleSpacing: 0,
           leading: commonBackButton(),
           title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
-                  Flexible(child: commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "", maxLines: 1, fontSize: 14)),
-                  if(channelChatProvider.getChannelInfo?.data?.ownerId?.sId == signInModel.data?.user?.id)...{
-                    SizedBox(width: 10),
-                    GestureDetector(
-                        onTap: ()=>_showRenameChannelDialog(),
-                        child: Image.asset(AppImage.editIcon, height: 15, width: 15, color: AppColor.borderColor)),
-                  }
+                  Flexible(
+                    child: commonText(
+                      text: channelChatProvider.isChannelChatLoading ? "Loading..." :  channelChatProvider.getChannelInfo?.data?.name ?? "",
+                      maxLines: 1,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (channelChatProvider.getChannelInfo?.data?.ownerId?.sId == signInModel.data?.user?.id)
+                    ...{
+                      SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: () => _showRenameChannelDialog(),
+                        child: Image.asset(
+                          AppImage.editIcon,
+                          height: 15,
+                          width: 15,
+                          color: AppColor.borderColor,
+                        ),
+                      ),
+                    }
                 ],
               ),
               SizedBox(height: 10),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center, // Ensures proper alignment
                 children: [
-                  /// User Count & navigation ///
+                  /// User Count & Navigation ///
                   GestureDetector(
                     onTap: () {
-                      if(channelChatProvider.getChannelInfo?.data?.members?.length != 0){
-                        pushScreen(screen: ChannelMembersInfo(channelId: widget.channelId, channelName: channelChatProvider.getChannelInfo?.data?.name ?? ""));
+                      if (channelChatProvider.getChannelInfo?.data?.members?.isNotEmpty ?? false) {
+                        pushScreen(
+                          screen: ChannelMembersInfo(
+                            channelId: widget.channelId,
+                            channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                          ),
+                        );
                       }
                     },
-                    child: Row(
-                      children: [
-                        Image.asset(AppImage.person,height: 16,width: 16,color: AppColor.borderColor,),
-                        const SizedBox(width: 2),
-                        commonText(text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",fontSize: 15,color: AppColor.borderColor,fontWeight: FontWeight.w500),
-                      ],
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      child: Row(
+                        children: [
+                          Image.asset(AppImage.person, height: 18, width: 18, color: AppColor.white),
+                          SizedBox(width: 4),
+                          commonText(
+                            text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",
+                            fontSize: 15,
+                            color: AppColor.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  /// Pin Messages & navigation ///
+                  /// Pin Messages & Navigation ///
                   GestureDetector(
-                    onTap: () => pushScreen(screen: ChannelPinnedPostsScreen(channelName:channelChatProvider.getChannelInfo?.data?.name ?? "", channelId: widget.channelId)),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    onTap: () => pushScreen(
+                      screen: ChannelPinnedPostsScreen(
+                        channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                        channelId: widget.channelId,
+                      ),
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Image.asset(AppImage.pinTiltIcon, height: 15, width: 15, color: AppColor.borderColor),
-                          const SizedBox(width: 3),
+                          Image.asset(AppImage.pinIcon, height: 18, width: 18, color: Colors.white),
+                          SizedBox(width: 4),
                           commonText(
                             text: "${channelChatProvider.getChannelInfo?.data?.pinnedMessagesCount ?? 0}",
-                            fontSize: 16,
-                            color: AppColor.borderColor,
+                            fontSize: 15,
+                            color: AppColor.white,
                             fontWeight: FontWeight.w400,
                           ),
-                        ],),
+                        ],
+                      ),
                     ),
                   ),
                   /// File & Navigation ///
                   GestureDetector(
-                      onTap: () => pushScreen(screen: FilesListingScreen(channelName: channelChatProvider.getChannelInfo?.data?.name ?? "", channelId: widget.channelId)),
-                      child: Image.asset(AppImage.fileIcon, height: 18, width: 15, color: AppColor.borderColor)),
+                    onTap: () => pushScreen(
+                      screen: FilesListingScreen(
+                        channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                        channelId: widget.channelId,
+                      ),
+                    ),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4), // Consistent padding
+                      child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: AppColor.white),
+                    ),
+                  ),
                 ],
-              )
+              ),
             ],
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.info, color: AppColor.whiteColor),
-              onPressed: () => pushScreen(screen: ChannelInfoScreen(channelId: widget.channelId, channelName: channelChatProvider.getChannelInfo?.data?.name ?? "", isPrivate: false,)),
+              icon: Icon(Icons.info, color: AppColor.whiteColor),
+              onPressed: () => pushScreen(
+                screen: ChannelInfoScreen(
+                  channelId: widget.channelId,
+                  channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                  isPrivate: false,
+                ),
+              ),
             ),
           ],
         ),
@@ -392,6 +512,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 ),
               ),
             },
+            SizedBox(height: 20),
             inputTextFieldWithEditor(channelChatProvider),
           ],
         ),
@@ -644,7 +765,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                     ),
                                   ],),
                                 ),
-                                commonHTMLText(message: "${messageList.forwards?.content}"),
+                                Visibility(
+                                    visible: messageList.forwards?.content != "",
+                                    child: commonHTMLText(message: "${messageList.forwards?.content}")),
                                 Visibility(
                                   visible: messageList.forwards?.files?.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -854,29 +977,22 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       isPinned: pinnedMsg,
                       createdAt: messageList.createdAt.toString(),
                       currentUserId: userId,
-                      onOpened: () =>  setState(() => _selectedIndex = index),
-                      onClosed: () =>  setState(() => _selectedIndex = null),
+                      onOpened: () {},
+                      onClosed: () {},
                       isForwarded: messageList.isForwarded! ? false : true,
-                      opened: index == _selectedIndex ? true : false,
+                      opened: false,
                       onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,)),
-                      onReply: () {
-                        setState(() => _selectedIndex == null);
-                        print("onReply Passing = ${messageId.toString()}");
-                        // pushScreen(screen: ReplyMessageScreen(userName: widget.channelName, messageId: messageId.toString(),receiverId: widget.oppositeUserId,));
-                      },
-                      onPin: () => setState(() {
-                        _selectedIndex = null;
-                        channelChatProvider.pinUnPinMessage(receiverId: widget.channelId, messageId: messageId, pinned: pinnedMsg = !pinnedMsg );
-                      }),
+                      onReply: () {},
+                      onPin: () => channelChatProvider.pinUnPinMessage(receiverId: widget.channelId, messageId: messageId, pinned: pinnedMsg = !pinnedMsg ),
                       onCopy: () => copyToClipboard(context, message),
-                      onEdit: ()=> setState(() {
+                      onEdit: () {
                         _messageController.clear();
                         FocusScope.of(context).requestFocus(_focusNode);
                         int position = _messageController.text.length;
                         currentUserMessageId = messageId;
                         print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                         _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
-                      }),
+                      },
                       onDelete: () => Provider.of<ChannelChatProvider>(context,listen: false).deleteMessageFromChannel(messageId: messageId)),
                 )
               ],

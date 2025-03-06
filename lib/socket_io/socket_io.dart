@@ -152,6 +152,7 @@ class SocketIoProvider extends ChangeNotifier{
     });
   }
 
+
   void listenSingleChatScreen({required String oppositeUserId,}) {
     if (!socket.connected) {
       print("⚠️ Socket is not connected. Attempting to reconnect...");
@@ -213,20 +214,14 @@ class SocketIoProvider extends ChangeNotifier{
 
   memberAdminToggleSC({required Map<String, dynamic> response}) {
     log("emit>>>>> memberAdminToggleSC ${"data : $response"}");
-    socket.emit(channelMemberUpdate,{
-      {"data : $response"}
-    });
+    socket.emit(channelMemberUpdate,response);
 
-  //   {
-  //     "data": {
-  //   "senderId": response["senderId"],
-  //   "channelId": response["channelId"]
-  // }
-  // }
+
   }
-  listenMemberUpdates(){
+  listenMemberUpdates({required String channelID}){
+    socket.off(channelMemberUpdateNotification);
     socket.on(channelMemberUpdateNotification, (data) {
-
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelMembersList(channelID);
     },);
   }
 

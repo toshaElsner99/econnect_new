@@ -23,10 +23,8 @@ import '../../../utils/api_service/api_string_constants.dart';
 import '../../../utils/app_color_constants.dart';
 import '../../../utils/app_image_assets.dart';
 import '../../../utils/app_preference_constants.dart';
-import 'package:flutter_quill/flutter_quill.dart' as quill;
 
 import '../forward_message/forward_message_screen.dart';
-import '../media_preview_screen.dart';
 
 
 class ReplyMessageScreen extends StatefulWidget {
@@ -42,7 +40,6 @@ class ReplyMessageScreen extends StatefulWidget {
 
 class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   final scrollController = ScrollController();
-  bool _showToolbar = false;
   final FocusNode _focusNode = FocusNode();
   final chatProvider = Provider.of<ChatProvider>(navigatorKey.currentState!.context,listen: false);
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
@@ -50,7 +47,6 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   String currentUserMessageId = "";
-  int? _selectedIndex;
   final TextEditingController _messageController = TextEditingController();
   
   // Mention-related variables
@@ -180,6 +176,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
               ],
             ),
           ),
+          SizedBox(height: 20,),
           inputTextFieldWithEditor(),
         ],
       ),
@@ -417,9 +414,9 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                 ),
                 popMenuForReply2(context,
                   isPinned: pinnedMsg,
-                  onOpened: () =>  setState(() => _selectedIndex = chatIndex),
-                  onClosed: () =>  setState(() => _selectedIndex = null),
-                  opened: chatIndex == _selectedIndex ? true : false,
+                  onOpened: () {}  ,
+                  onClosed: () {} ,
+                  opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
                   onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
                   onPin: () => chatProvider.pinUnPinMessageForReply(receiverId: widget.receiverId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),

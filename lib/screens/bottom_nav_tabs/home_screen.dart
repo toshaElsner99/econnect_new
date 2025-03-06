@@ -22,7 +22,6 @@ import '../../providers/common_provider.dart';
 import '../../socket_io/socket_io.dart';
 import '../../utils/app_preference_constants.dart';
 import '../../utils/common/common_function.dart';
-import '../channel/channel_member_info_screen/channel_members_info.dart';
 import '../chat/single_chat_message_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -183,33 +182,38 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Container buildOpenSetting() {
     return Container(
-                          margin: EdgeInsets.only(right: 7),
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColor.borderColor.withOpacity(0.05),
-                          ),
-                          child: IconButton(
-                              padding: EdgeInsets.zero,
-                              icon: Icon(
-                                Icons.settings_suggest_rounded,
-                                color: Colors.white.withOpacity(0.8),
-                                size: 16,
-                              ),
-                              onPressed: () => pushScreenWithTransition(SettingScreen())),
-                        );
+      height: 35,
+      width: 35,
+      margin: const EdgeInsets.only(right: 7),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColor.borderColor.withOpacity(0.05),
+      ),
+      child: IconButton(
+        constraints: BoxConstraints(),
+        padding: EdgeInsets.zero,
+        icon: Icon(
+          Icons.settings_suggest_rounded,
+          color: Colors.white,
+          size: 25,
+        ),
+        onPressed: () => pushScreenWithTransition(SettingScreen()),
+      ),
+    );
   }
+
 
   Widget _buildPopupMenuForFavorite({ChatList? favorite}) {
     return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider,commonProvider, child) {
       return SizedBox(
-        height: 20,
+        height: 30,
         width: 30,
         child: PopupMenuButton<String>(
           padding: EdgeInsets.zero,
           constraints: BoxConstraints(minWidth: 150),
-          icon: Icon(Icons.more_vert, size: 24,color: Colors.white,),
+          icon: Icon(Icons.more_vert, size: 25,color: Colors.white,),
+          // offset: Offset(0, 10),
           onSelected: (value) {
             print("Selected: $value");
             if (value == "unread") {
@@ -275,10 +279,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.exit_to_app, size: 20, color: Colors.red),
                   SizedBox(width: 10),
-                  Text(
-                    "Close Conversation",
-                    style: TextStyle(color: Colors.red),
-                  ),
+                  commonText(text: "Close Conversation", color: Colors.red,),
                 ],
               ),
             ),
@@ -290,12 +291,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildPopupMenuForDirectMessage({ChatListDirectMessage? chatLisDirectMessage}) {
     return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
       return SizedBox(
-        height: 20,
+        height: 30,
         width: 30,
         child: PopupMenuButton<String>(
           padding: EdgeInsets.zero,
           constraints: BoxConstraints(minWidth: 150),
-          icon: Icon(Icons.more_vert, size: 24,color: Colors.white,),
+          icon: Icon(Icons.more_vert, size: 25,color: Colors.white,),
           onSelected: (value) {
             print("Selected: $value");
             if (value == "unread") {
@@ -365,10 +366,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.exit_to_app, size: 20, color: Colors.red),
                   SizedBox(width: 10),
-                  Text(
-                    "Close Conversation",
-                    style: TextStyle(color: Colors.red),
-                  ),
+                  commonText(text: "Close Conversation", color: Colors.red),
                 ],
               ),
             ),
@@ -381,12 +379,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildPopupMenuForFavChannel({FavouriteChannels? favouriteChannels}) {
     return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
       return SizedBox(
-        height: 20,
+        height: 30,
         width: 30,
         child: PopupMenuButton<String>(
           padding: EdgeInsets.zero,
           constraints: BoxConstraints(minWidth: 150),
-          icon: Icon(Icons.more_vert, size: 24,color: Colors.white,),
+          icon: Icon(Icons.more_vert, size: 25,color: Colors.white,),
           onSelected: (value) {
             print("Selected: $value");
             if( value == "unread"){
@@ -441,10 +439,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.exit_to_app, size: 20, color: Colors.red),
                   SizedBox(width: 10),
-                  Text(
-                    "Leave Channel",
-                    style: TextStyle(color: Colors.red),
-                  ),
+                  commonText(text: "Leave Channel", color: Colors.red),
                 ],
               ),
             ),
@@ -456,12 +451,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildPopupMenuForChannel({ChannelList? channelListModel}) {
     return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
       return SizedBox(
-        height: 20,
+        height: 30,
         width: 30,
         child: PopupMenuButton<String>(
           padding: EdgeInsets.zero,
           constraints: BoxConstraints(minWidth: 150),
-          icon: Icon(Icons.more_vert, size: 24,color: Colors.white,),
+          icon: Icon(Icons.more_vert, size: 25,color: Colors.white,),
           onSelected: (value) {
             print("Selected: $value");
             if( value == "unread"){
@@ -516,10 +511,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.exit_to_app, size: 20, color: Colors.red),
                   SizedBox(width: 10),
-                  Text(
-                    "Leave Channel",
-                    style: TextStyle(color: Colors.red),
-                  ),
+                  commonText(text: "Leave Channel", color: Colors.red),
                 ],
               ),
             ),
@@ -706,25 +698,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Widget _buildAddButton() {
     return Container(
-      width: 28,
-      height: 28,
+      height: 35,
+      width: 35,
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: AppColor.borderColor.withOpacity(0.05),
       ),
       child: IconButton(
+        constraints: const BoxConstraints(),
         padding: EdgeInsets.zero,
         icon: Icon(
           CupertinoIcons.plus,
-          color: Colors.white.withOpacity(0.8),
-          size: 16,
+          color: Colors.white,
+          size: 25,
         ),
-        onPressed: () {
-          showOptionsBottomSheet(context: context, options: options);
-        },
+        onPressed: () => showOptionsBottomSheet(context: context, options: options),
       ),
     );
   }
+
 
   Widget _buildUserRow({
     required int index,
