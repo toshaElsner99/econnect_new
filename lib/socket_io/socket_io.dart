@@ -230,4 +230,7 @@ class SocketIoProvider extends ChangeNotifier{
     socket.emit(removeMember, response);
   }
 
+  void addMemberToChannel({required Map<String, dynamic> response}){
+    socket.emit(addMember,response);
+  }
 }

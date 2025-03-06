@@ -71,7 +71,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
       print("I'm In initState");
       Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: widget.messageId,fromWhere: "SCREEN INIT");
       Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.messageId);
-      Provider.of<CommonProvider>(context, listen: false).getAllUsers();
+      Provider.of<CommonProvider>(context, listen: false).getUserApi(id :widget.receiverId);
     });
   }
 
@@ -94,52 +94,50 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     _messageController.dispose();
     _focusNode.dispose();
     _removeMentionOverlay();
+    Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
     super.dispose();
   }
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
-    // Show initial users (current user and recipient)
     final List<dynamic> initialUsers = [];
-    final currentUser = userCache[signInModel.data?.user?.id];
-    final recipientUser = userCache[widget.receiverId];
+    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
 
+    // If no search query, show first two users from API response
     if (searchQuery?.isEmpty ?? true) {
-      if (currentUser?.data?.user != null) {
-        initialUsers.add(currentUser.data.user);
-      }
-      if (recipientUser?.data?.user != null && widget.receiverId != signInModel.data?.user?.id) {
-        initialUsers.add(recipientUser.data.user);
+      // Add first two users if available
+      if (allUsers.isNotEmpty) {
+        initialUsers.add(allUsers[0]);
+        if (allUsers.length > 1) {
+          initialUsers.add(allUsers[1]);
+        }
       }
       return initialUsers;
     }
 
-    // Filter users from getUserMentionModel based on search
-    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
+    // Filter users based on search query
     final query = searchQuery!.toLowerCase();
 
-    // First add matching initial users
-    if (currentUser?.data?.user != null &&
-        ((currentUser.data.user.username?.toLowerCase().contains(query) ?? false) ||
-            (currentUser.data.user.fullName?.toLowerCase().contains(query) ?? false))) {
-      initialUsers.add(currentUser.data.user);
-    }
-    if (recipientUser?.data?.user != null &&
-        widget.receiverId != signInModel.data?.user?.id &&
-        ((recipientUser.data.user.username?.toLowerCase().contains(query) ?? false) ||
-            (recipientUser.data.user.fullName?.toLowerCase().contains(query) ?? false))) {
-      initialUsers.add(recipientUser.data.user);
+    // First add first two users if they match the search
+    if (allUsers.isNotEmpty) {
+      if (((allUsers[0].username?.toLowerCase().contains(query) ?? false) ||
+          (allUsers[0].fullName?.toLowerCase().contains(query) ?? false))) {
+        initialUsers.add(allUsers[0]);
+      }
+      if (allUsers.length > 1 &&
+          ((allUsers[1].username?.toLowerCase().contains(query) ?? false) ||
+          (allUsers[1].fullName?.toLowerCase().contains(query) ?? false))) {
+        initialUsers.add(allUsers[1]);
+      }
     }
 
     // Then add other matching users
-    final otherUsers = allUsers.where((user) =>
-    ((user.username?.toLowerCase().contains(query) ?? false) ||
-        (user.fullName?.toLowerCase().contains(query) ?? false)) &&
-        user.sId != signInModel.data?.user?.id &&
-        user.sId != widget.receiverId
+    final otherUsers = allUsers.skip(2).where((user) =>
+        ((user.username?.toLowerCase().contains(query) ?? false) ||
+            (user.fullName?.toLowerCase().contains(query) ?? false))
     ).toList();
 
     return [...initialUsers, ...otherUsers];
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -178,6 +176,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
           ),
           SizedBox(height: 20,),
           inputTextFieldWithEditor(),
+          selectedFilesWidget(),
         ],
       ),
     );
@@ -471,7 +470,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             GestureDetector(
-                              onTap: () => _showAttachmentOptions(context),
+                              onTap: () => FileServiceProvider.instance.pickFiles(),
                               child: const Icon(Icons.attach_file, color: Colors.grey),
                             ),
                             const SizedBox(width: 8),
@@ -507,32 +506,32 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
               onPressed: () async {
                 final plainText = _messageController.text.trim();
                 if(plainText.isEmpty && fileServiceProvider.selectedFiles.isEmpty) return;
-                
+
                 try {
                   if(fileServiceProvider.selectedFiles.isNotEmpty){
                     final filesOfList = await chatProvider.uploadFiles();
                     await chatProvider.sendMessage(
-                      content: plainText, 
+                      content: plainText,
                       receiverId: widget.receiverId,
                       files: filesOfList,
                       replyId: widget.messageId
                     );
                   } else {
                     await chatProvider.sendMessage(
-                      content: plainText, 
+                      content: plainText,
                       receiverId: widget.receiverId,
                       replyId: widget.messageId,
                       editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId
                     );
                   }
-                  
+
                   // Update reply count in single chat screen
                   chatProvider.updateReplyCount(widget.messageId);
-                  
+
                   setState(() {
                     currentUserMessageId = "";
                   });
-                  
+
                   _clearInputAndDismissKeyboard();
                 } catch (e) {
                   print("Error sending message: $e");
