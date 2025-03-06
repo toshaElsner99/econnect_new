@@ -13,12 +13,15 @@ import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:e_connect/utils/loading_widget/loading_widget.dart';
 import 'package:e_connect/utils/network_connectivity/network_connectivity.dart';
 import 'package:e_connect/utils/theme/theme_cubit.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:oktoast/oktoast.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-
 import 'model/sign_in_model.dart';
+import 'notificationServices/pushNotificationService.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 late SignInModel signInModel;
@@ -30,7 +33,28 @@ void main() {
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
-  ]).then((value) => runApp(const MyApp()),);
+  ]).then((value)async{
+    await Firebase.initializeApp();
+    await PushNotificationService().setupInteractedMessage();
+    RemoteMessage? initialMessage =
+    await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      // App received a notification when it was killed
+    }
+    await Permission.notification.isDenied.then(
+          (bool value) {
+        if (value) {
+          Permission.notification.request();
+        }
+      },
+    );
+    String? fcmToken = "";
+    Future.delayed(const Duration(seconds: 2), () async {
+      fcmToken = await FirebaseMessaging.instance.getToken();
+      print("FCM_Token  ::::> $fcmToken");
+    });
+    runApp(const MyApp());
+  },);
 }
 
 

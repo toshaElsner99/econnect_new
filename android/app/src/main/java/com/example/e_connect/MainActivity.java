@@ -1,4 +1,4 @@
-package com.example.e_connect;
+package com.elsner.econnect;
 
 import io.flutter.embedding.android.FlutterActivity;
 
