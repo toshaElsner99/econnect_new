@@ -233,7 +233,7 @@ class ChatProvider extends  ChangeNotifier {
      stopLoading();
    }
   }
-  Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID,})async{
+  Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID,bool? isEditFromReply = false})async{
     final requestBody = {
       "content": content,
       "receiverId": receiverId,
@@ -261,6 +261,9 @@ class ChatProvider extends  ChangeNotifier {
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
       /// find where to add ///
       if (editMsgID != null && editMsgID.isNotEmpty) {
+        if(isEditFromReply == true){
+
+        }
         int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.sId == editMsgID));
 
         if (editIndex != -1) {
@@ -269,6 +272,7 @@ class ChatProvider extends  ChangeNotifier {
           editedMessage.isEdited = true; // Set isEdited to true
           messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
         }
+
       } else if(replyId != null && replyId != ""){
         // int existingIndex = getReplyMessageModel!.data!.messages!.indexWhere((item) => item.date == todayDate);
         // if (existingIndex != -1) {

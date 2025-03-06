@@ -23,6 +23,7 @@ import '../../../utils/app_image_assets.dart';
 import '../../../utils/app_preference_constants.dart';
 import '../../../utils/common/common_function.dart';
 import '../../../utils/common/common_widgets.dart';
+import '../../chat/forward_message/forward_message_screen.dart';
 
 class ReplyMessageScreenChannel extends StatefulWidget {
   final String channelName;
@@ -344,17 +345,18 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                   onClosed: () {} ,
                   opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
-                  onForward: () {},
-      // pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,))
+                  onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.username ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
                   onPin: () {
                     // chatProvider.pinUnPinMessageForReply(receiverId: widget.receiverId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg )
                   },
                   onCopy: () => copyToClipboard(context, message),
                   onEdit: () => setState(() {
+                    _messageController.clear();
+                    FocusScope.of(context).requestFocus(_focusNode);
                     int position = _messageController.text.length;
                     currentUserMessageId = messageId;
-                    print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
-                    _messageController.text = message;
+                    print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
+                    _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                   }),
                   onDelete: () {
                     channelChatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.msgID);

@@ -1369,13 +1369,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,)),
                     onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
                     onCopy: () => copyToClipboard(context, message),
-                    onEdit: () {
-                        _messageController.clear();
-                        FocusScope.of(context).requestFocus(_focusNode);
-                        int position = _messageController.text.length;
-                        currentUserMessageId = messageId;
-                        print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
-                        _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);},
+                    onEdit: () => setState(() {
+                      _messageController.clear();
+                      FocusScope.of(context).requestFocus(_focusNode);
+                      int position = _messageController.text.length;
+                      currentUserMessageId = messageId;
+                      print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
+                      _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
+                    }),
                     onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId))),
                     // onForward: ()=> clearSelectedIndex(call: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,))),
                     // onReply: () => clearSelectedIndex(call: ()=>  pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,))),
