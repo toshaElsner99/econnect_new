@@ -139,21 +139,22 @@ class ChatProvider extends  ChangeNotifier {
         print("replyTo socket = ${data['replyTo']}");
 
         // Ensure we update only when replyTo matches the current message
-        if (mId == data['replyTo']) {
-          print("I'm In socketProvider for msgId: $mId");
-          getReplyMessageList(msgId: mId, fromWhere: "SOCKET INIT");
-          
-          // Update reply count in messageGroups when receiving socket event
-          for (var messageGroup in messageGroups) {
-            for (var message in messageGroup.messages ?? []) {
-              if (message.sId == mId) {
-                message.replyCount = (message.replyCount ?? 0) + 1;
-                notifyListeners();
-                return;
+          if (mId == data['replyTo']) {
+            print("I'm In socketProvider for msgId: $mId");
+            getReplyMessageList(msgId: mId, fromWhere: "SOCKET INIT");
+
+            // Update reply count in messageGroups when receiving socket event
+            for (var messageGroup in messageGroups) {
+              for (var message in messageGroup.messages ?? []) {
+                if (message.sId == mId) {
+                  message.replyCount = (message.replyCount ?? 0) + 1;
+                  notifyListeners();
+                  return;
+                }
               }
             }
           }
-        }
+
       });
     } catch (e) {
       print("Error processing the socket event: $e");
@@ -318,7 +319,7 @@ class ChatProvider extends  ChangeNotifier {
       socketProvider.deleteMessagesSC(response: {"data": response['data']});
     }
   }
-  Future<void> deleteMessageForReply({required String messageId, required firsMessageId,required String userName, required String oppId})async{
+  Future<void> deleteMessageForReply({required String messageId, required firsMessageId})async{
     final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE);
     if(statusCode200Check(response)){
       deleteMessageFromReplyModel(messageId);

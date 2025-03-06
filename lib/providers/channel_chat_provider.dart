@@ -16,6 +16,7 @@ import '../model/channel_members_model.dart';
 import '../model/channel_pinned_message_model.dart';
 import '../model/files_listing_in_channel_chat_model.dart';
 import '../model/get_channel_info.dart';
+import '../model/get_reply_message_channel_model.dart';
 import '../socket_io/socket_io.dart';
 import '../utils/api_service/api_service.dart';
 import '../utils/api_service/api_string_constants.dart';
@@ -28,6 +29,7 @@ class ChannelChatProvider extends ChangeNotifier{
   GetChannelInfo? getChannelInfo;
   msg.ChannelChatModel? channelChatModel;
   ChannelPinnedMessageModel? channelPinnedMessageModel;
+  GetReplyMessageChannelModel? getReplyMessageChannelModel;
   List<MemberDetails> channelMembersList = [];
   FilesListingInChannelChatModel? filesListingInChannelChatModel;
   List<msg.MessageGroup> messageGroups = [];
@@ -129,7 +131,9 @@ class ChannelChatProvider extends ChangeNotifier{
           editedMessage.isEdited = true;
           messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.id == editMsgID)] = editedMessage;
         }
-      } else /*if(replyId == null && replyId == "")*/ {
+      } else if(replyId != null && replyId != ""){
+        getReplyMessageListChannel(msgId: replyId, fromWhere: "Reply Send Channel");
+      }else /*if(replyId == null && replyId == "")*/ {
         int existingIndex = messageGroups.indexWhere((item) => item.id == todayDate);
         if (existingIndex != -1) {
           messageGroups[existingIndex].messages!.add(msg.Message.fromJson(response['data']));
@@ -287,31 +291,75 @@ class ChannelChatProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  // Delete Message from Channel
-  Future<void> deleteMessageFromChannel({
-    required String messageId
-  }) async {
 
+
+
+
+
+  String? lastOpenedUserMSGId;
+
+  Future<void> getReplyMessageListChannel({required String msgId,required String fromWhere}) async {
+    print("getReplyMessageListChannel>>>> $fromWhere");
+    print("messageId>>>> $msgId");
+    if (lastOpenedUserMSGId != msgId) {
+      print("lastOpenedUserMSGId => $lastOpenedUserMSGId => msgId = $msgId");
+    }
+    final requestBody = {
+      "messageId": msgId
+    };
+    final response = await ApiService.instance.request(endPoint: ApiString.getRepliesMsg, method: Method.POST,reqBody: requestBody);
+    if(statusCode200Check(response)){
+      getReplyMessageChannelModel = GetReplyMessageChannelModel.fromJson(response);
+    }
+    lastOpenedUserMSGId = msgId;
+    print("lastOpenedUserMSGId store=> $lastOpenedUserMSGId");
+    notifyListeners();
+  }
+
+
+  // socket.on((deleteMessageChannelListen), (data) {
+  // print("deleteMessageForListen >>> $data");
+  // Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId,pageNo: 1,isFromMsgListen: true);
+  // });
+  // ******* delete listen is pending
+
+  void getReplyListUpdateSocketForChannel(String mId,) {
     try {
-      final response = await ApiService.instance.request(
-          endPoint: ApiString.deleteMessageFromChannel(messageId),
-          method: Method.DELETE
-      );
-      if (statusCode200Check(response)) {
-        print("Message Deleted");
-        removeMessageFromList(messageId);
-        socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
-      }else{
-        print("Message Not Deleted");
-        print("response = $response");
-      }
-    } on Exception catch (e) {
-      // TODO
-      print("catch = ${e.toString()}");
+      // Remove any existing listener before adding a new one
+      socketProvider.socket.off("reply_notification");
+
+      socketProvider.socket.on("reply_notification", (data) {
+        print("Event: reply_notification >>> Data: $data");
+
+        print("mId = $mId");
+        print("replyTo socket = ${data['replyTo']}");
+
+        // Ensure we update only when replyTo matches the current message
+        if (mId == data['replyTo']) {
+          print("I'm In socketProvider for msgId: $mId");
+            getReplyMessageListChannel(msgId: mId, fromWhere: "SOCKET INIT For Channel Reply List");
+
+            for (var messageGroup in messageGroups) {
+              for (var message in messageGroup.messages ?? []) {
+                if (message.sId == mId) {
+                  message.replyCount = (message.replyCount ?? 0) + 1;
+                  notifyListeners();
+                  return;
+                }
+              }
+            }
+        }
+
+      });
+    } catch (e) {
+      print("Error processing the socket event: $e");
+    } finally {
+      notifyListeners();
     }
   }
 
-  void removeMessageFromList(String messageId) {
+
+  void deleteMessageFromModelChannelChat(String messageId) {
     for (var messageGroup in messageGroups) {
       messageGroup.messages?.removeWhere((message) => message.id == messageId);
       if (messageGroup.messages?.isEmpty ?? true) {
@@ -331,4 +379,57 @@ class ChannelChatProvider extends ChangeNotifier{
   //   }
   //   notifyListeners();
   // }
+
+
+  Future<void> deleteMessageFromChannel({required String messageId,}) async {
+    try {
+      final response = await ApiService.instance.request(
+          endPoint: ApiString.deleteMessageFromChannel(messageId),
+          method: Method.DELETE
+      );
+      if (statusCode200Check(response)) {
+        print("Message Deleted");
+        removeMessageFromModelList(messageId);
+        socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
+      }else{
+        print("Message Not Deleted");
+        print("response = $response");
+      }
+    } on Exception catch (e) {
+      print("catch = ${e.toString()}");
+    }
+  }
+
+  Future<void> deleteMessageForReply({required String messageId, required firsMessageId})async{
+    final response = await ApiService.instance.request(endPoint: ApiString.deleteMessageFromChannel(messageId), method: Method.DELETE);
+    if(statusCode200Check(response)){
+      deleteMessageFromReplyModel(messageId);
+      socketProvider.deleteMessagesSC(response: {"data": response['data']},isForChannel: true);
+      socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
+      if(firsMessageId == messageId) {
+        pop();
+        deleteMessageFromModelChannelChat(messageId);
+      }
+    }
+  }
+
+  /// Model Functionality ///
+  void deleteMessageFromReplyModel(String messageId) {
+    for (var messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+      messageGroup.groupMessages?.removeWhere((message) => message.sId == messageId);
+    }
+    notifyListeners();
+  }
+
+  /// Channel Chat ///
+  void removeMessageFromModelList(String messageId) {
+    for (var messageGroup in messageGroups) {
+      messageGroup.messages?.removeWhere((message) => message.id == messageId);
+      if (messageGroup.messages?.isEmpty ?? true) {
+        messageGroups.remove(messageGroup);
+        break;
+      }
+    }
+    notifyListeners();
+  }
 }

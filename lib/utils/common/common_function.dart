@@ -8,11 +8,16 @@ import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:http/http.dart' as http;
 import 'package:insta_image_viewer/insta_image_viewer.dart';
 import 'package:intl/intl.dart';
 
 import '../../main.dart';
+import '../../providers/file_service_provider.dart';
+
+
+
 String formatDateString1(String dateString) {
   DateTime dateTime = DateTime.parse(dateString);
   String formattedDate = DateFormat('dd-MM-yyyy hh:mm a').format(dateTime);
@@ -24,10 +29,22 @@ String formatTime(String utcTime) {
   return DateFormat('hh:mm a').format(dateTime); // Format in 12-hour AM/PM format
 }
 
-String formatDateWithYear(String dateHeader){
-  DateTime date = DateTime.parse(dateHeader);
-  String formattedDate = DateFormat('MMMM dd,yyyy').format(date);
-  return formattedDate;
+// String formatDateWithYear(String dateHeader){
+//   DateTime date = DateTime.parse(dateHeader);
+//   String formattedDate = DateFormat('MMMM dd,yyyy').format(date);
+//   return formattedDate;
+// }
+
+String formatDateWithYear(String dateHeader) {
+  try {
+    print("Parsing date: $dateHeader");
+    DateTime date = DateTime.parse(dateHeader);
+    String formattedDate = DateFormat('MMMM dd, yyyy').format(date);
+    return formattedDate;
+  } catch (e) {
+    print("Error parsing date: $e");
+    return "";
+  }
 }
 String formatDateTime(DateTime dateTime) {
   final now = DateTime.now();
