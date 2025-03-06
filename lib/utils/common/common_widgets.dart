@@ -1,4 +1,3 @@
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
@@ -993,75 +992,126 @@ Widget commonPopUpForMsg({double size = 20,Function? delete,Function? pinMessage
 // }
 
 
-
 Widget profileIconWithStatus({
   required String userID,
   required String status,
   String? otherUserProfile,
   double radius = 15.0,
-  bool? needToShowIcon = true,
-}){
-  print("userId>>>> $userID");
-  print("status>>>> $status");
-  print("otherUserProfile>>>> $otherUserProfile");
+  double iconSize = 14.0,
+  double containerSize = 10.0,
+  bool needToShowIcon = true,
+}) {
   String imageUrl = signInModel.data?.user?.id == userID
-      ? ApiString.profileBaseUrl + signInModel.data!.user!.avatarUrl!
+      ? ApiString.profileBaseUrl + (signInModel.data!.user!.thumbnailAvatarUrl ?? '')
       : ApiString.profileBaseUrl + (otherUserProfile ?? '');
-  if(needToShowIcon == true){
-    return Stack(
-      alignment: Alignment.bottomRight,
-      children: [
-        CircleAvatar(
-          radius: radius,
-          backgroundColor: Colors.grey[200],
-          backgroundImage: NetworkImage(imageUrl),
-          onBackgroundImageError: (exception, stackTrace) => Icon(Icons.error),
-          // child: ClipOval(
-          //   child: CachedNetworkImage(
-          //     width: 30,
-          //     height: 30,
-          //     imageUrl: imageUrl,
-          //     fit: BoxFit.cover,
-          //     progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
-          //       padding: const EdgeInsets.all(3),
-          //       child: CircularProgressIndicator(value: downloadProgress.progress),
-          //     ),
-          //     errorWidget: (context, url, error) => Icon(Icons.error),
-          //   ),
-          // ),
+
+  return Stack(
+    alignment: Alignment.bottomRight,
+    children: [
+      CircleAvatar(
+        radius: radius,
+        backgroundColor: Colors.grey[200],
+        child: ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: radius * 2,
+            height: radius * 2,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => CircularProgressIndicator(
+              strokeWidth: 2,
+            ),
+            errorWidget: (context, url, error) => Icon(Icons.error, size: radius),
+          ),
         ),
+      ),
+      if (needToShowIcon)
         Stack(
-          clipBehavior: Clip.hardEdge,
           alignment: Alignment.center,
           children: [
             Container(
-              height:10,
-              width: 10,
+              height: containerSize,
+              width: containerSize,
               decoration: BoxDecoration(
                 color: status.contains("offline") ? Colors.transparent : Colors.white,
                 shape: BoxShape.circle,
-              ),),
-            getCommonStatusIcons(status: status,size: 14,assetIcon: false),
+              ),
+            ),
+            getCommonStatusIcons(status: status, size: iconSize, assetIcon: false),
           ],
-        )
-      ],
-    );
-  }else{
-    return Container(
-      padding: EdgeInsets.all(2),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle
         ),
-      child: CircleAvatar(
-        radius: radius,
-        backgroundColor: Colors.grey[200],
-        backgroundImage: NetworkImage(imageUrl),
-        onBackgroundImageError: (exception, stackTrace) => Icon(Icons.error),
-      ),
-    );
-  }
+    ],
+  );
 }
+// Widget profileIconWithStatus({
+//   required String userID,
+//   required String status,
+//   String? otherUserProfile,
+//   double radius = 15.0,
+//   double iconSize = 14.0,
+//   double containerSize = 10.0,
+//   bool? needToShowIcon = true,
+// }){
+//   print("userId>>>> $userID");
+//   print("status>>>> $status");
+//   print("otherUserProfile>>>> $otherUserProfile");
+//   String imageUrl = signInModel.data?.user?.id == userID
+//       ? ApiString.profileBaseUrl + signInModel.data!.user!.avatarUrl!
+//       : ApiString.profileBaseUrl + (otherUserProfile ?? '');
+//   if(needToShowIcon == true){
+//     return Stack(
+//       alignment: Alignment.bottomRight,
+//       children: [
+//         CircleAvatar(
+//           radius: radius,
+//           backgroundColor: Colors.grey[200],
+//           backgroundImage: NetworkImage(imageUrl),
+//           onBackgroundImageError: (exception, stackTrace) => Icon(Icons.error),
+//           // child: ClipOval(
+//           //   child: CachedNetworkImage(
+//           //     width: 30,
+//           //     height: 30,
+//           //     imageUrl: imageUrl,
+//           //     fit: BoxFit.cover,
+//           //     progressIndicatorBuilder: (context, url, downloadProgress) => Padding(
+//           //       padding: const EdgeInsets.all(3),
+//           //       child: CircularProgressIndicator(value: downloadProgress.progress),
+//           //     ),
+//           //     errorWidget: (context, url, error) => Icon(Icons.error),
+//           //   ),
+//           // ),
+//         ),
+//         Stack(
+//           clipBehavior: Clip.hardEdge,
+//           alignment: Alignment.center,
+//           children: [
+//             Container(
+//               height:containerSize,
+//               width: containerSize,
+//               decoration: BoxDecoration(
+//                 color: status.contains("offline") ? Colors.transparent : Colors.white,
+//                 shape: BoxShape.circle,
+//               ),),
+//             getCommonStatusIcons(status: status,size: iconSize,assetIcon: false),
+//           ],
+//         )
+//       ],
+//     );
+//   }else{
+//     return Container(
+//       padding: EdgeInsets.all(2),
+//         decoration: BoxDecoration(
+//           color: Colors.white,
+//           shape: BoxShape.circle
+//         ),
+//       child: CircleAvatar(
+//         radius: radius,
+//         backgroundColor: Colors.grey[200],
+//         backgroundImage: NetworkImage(imageUrl),
+//         onBackgroundImageError: (exception, stackTrace) => Icon(Icons.error),
+//       ),
+//     );
+//   }
+// }
 
 
 
@@ -1374,9 +1424,9 @@ Widget commonLogoutDialog() {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 20,horizontal: 15),
           decoration: BoxDecoration(
-            color: AppColor.commonAppColor,
+            color: AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.appBarColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColor.borderColor.withOpacity(0.2)),
+            border: Border.all(color: AppColor.borderColor.withOpacity(AppPreferenceConstants.themeModeBoolValueGet ? 0.9 : 0.2)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.2),
@@ -1606,21 +1656,45 @@ Widget commonText({
 //   );
 // }
 Widget commonHTMLText({required String message}) {
-  // Replace @usernames with a span for custom styling
+  final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
+  
+  // First process @mentions
   String processedMessage = message.replaceAllMapped(
     RegExp(r'@(\w+)'),
-        (match) {
+    (match) {
       return '<span class="username">@${match.group(1)}</span>';
     },
   );
 
-  // Process other HTML tags as needed (e.g., bullet lists)
-  processedMessage = processedMessage.replaceAllMapped(
-    RegExp(r'<ul class="renderer_bulleted">.*?</ul>', dotAll: true),
-        (match) {
-      return match.group(0)!.replaceAll('<li>', '• ').replaceAll('</li>', '\n');
-    },
-  );
+  // Then process usernames/fullnames without @ symbol
+  if (commonProvider.getUserMentionModel?.data?.users != null) {
+    for (var user in commonProvider.getUserMentionModel!.data!.users!) {
+      if (user.username != null) {
+        processedMessage = processedMessage.replaceAllMapped(
+          RegExp(r'\b' + RegExp.escape(user.username!) + r'\b', caseSensitive: false),
+          (match) {
+            // Don't wrap if it's already wrapped in username span
+            if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
+              return match.group(0)!;
+            }
+            return '<span class="username">${match.group(0)}</span>';
+          },
+        );
+      }
+      if (user.fullName != null) {
+        processedMessage = processedMessage.replaceAllMapped(
+          RegExp(r'\b' + RegExp.escape(user.fullName!) + r'\b', caseSensitive: false),
+          (match) {
+            // Don't wrap if it's already wrapped in username span
+            if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
+              return match.group(0)!;
+            }
+            return '<span class="username">${match.group(0)}</span>';
+          },
+        );
+      }
+    }
+  }
 
   return HtmlWidget(
     processedMessage,
@@ -1652,12 +1726,36 @@ Widget commonHTMLText({required String message}) {
         styles['vertical-align'] = 'middle';
       }
       if (element.classes.contains('username')) {
-        // Styling specifically for @username
-        styles['background-color'] = '#A1A1A1';  // Example: Blue background
-        styles['color'] = '#FFFFFF';  // White text
-        styles['border-radius'] = '5px';
-        styles['padding'] = '2px 6px';
+        // Get the username text from the element
+        String username = element.text;
+        // Remove @ symbol if present
+        if (username.startsWith('@')) {
+          username = username.substring(1);
+        }
+
+        // Get CommonProvider instance
+        final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
+        
+        // If allUsers is null, fetch them first
+        if (commonProvider.getUserMentionModel == null) {
+          // We can't make this async, so we'll trigger the fetch and update will happen on next rebuild
+          commonProvider.getUserApi(id: signInModel.data!.user!.id!);
+          return {}; // Return empty styles for now
+        }
+
+        // Check if username exists in allUsers
+        bool isValidUser = commonProvider.isUserInAllUsers(username);
+        username = element.text;
+        if (isValidUser) {
+          styles['background-color'] = '#007770';  // Teal background
+          styles['color'] = '#FFFFFF';  // White text
+          styles['border-radius'] = '10px';  // Rounded corners
+          styles['padding'] = '4px 8px';  // Adjusted padding
+          styles['margin'] = '2px';  // Spacing between elements
+          styles['display'] = 'inline-block';  // Ensure proper spacing when multiple items are in the same line
+        }
       }
+
 
       return styles;
     },
@@ -1679,16 +1777,49 @@ Widget commonHTMLText({required String message}) {
   );
 }
 Widget commonHTMLText2({required String message}) {
-  // Replace @usernames with a span for custom styling
+  final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
+  
+  // First process @mentions
   String processedMessage = message.replaceAllMapped(
     RegExp(r'@(\w+)'),
-        (match) {
+    (match) {
       return '<span class="username">@${match.group(1)}</span>';
     },
   );
 
+  // Then process usernames/fullnames without @ symbol
+  if (commonProvider.getUserMentionModel?.data?.users != null) {
+    for (var user in commonProvider.getUserMentionModel!.data!.users!) {
+      if (user.username != null) {
+        processedMessage = processedMessage.replaceAllMapped(
+          RegExp(r'\b' + RegExp.escape(user.username!) + r'\b', caseSensitive: false),
+          (match) {
+            // Don't wrap if it's already wrapped in username span
+            if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
+              return match.group(0)!;
+            }
+            return '<span class="username">${match.group(0)}</span>';
+          },
+        );
+      }
+      if (user.fullName != null) {
+        processedMessage = processedMessage.replaceAllMapped(
+          RegExp(r'\b' + RegExp.escape(user.fullName!) + r'\b', caseSensitive: false),
+          (match) {
+            // Don't wrap if it's already wrapped in username span
+            if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
+              return match.group(0)!;
+            }
+            return '<span class="username">${match.group(0)}</span>';
+          },
+        );
+      }
+    }
+  }
+
   // Replace newline characters with <br> for line breaks
   processedMessage = processedMessage.replaceAll('\n\n', '<br><br>');
+  processedMessage = processedMessage.replaceAll('\n', '<br>');
 
   // Replace spaces with non-breaking spaces to preserve spacing
   processedMessage = processedMessage.replaceAll(' ', '&nbsp;');
@@ -1696,7 +1827,7 @@ Widget commonHTMLText2({required String message}) {
   // Process other HTML tags as needed (e.g., bullet lists)
   processedMessage = processedMessage.replaceAllMapped(
     RegExp(r'<ul class="renderer_bulleted">.*?</ul>', dotAll: true),
-        (match) {
+    (match) {
       return match.group(0)!.replaceAll('<li>', '• ').replaceAll('</li>', '\n');
     },
   );
@@ -2282,8 +2413,10 @@ void showChatSettingsBottomSheet({required String userId}) {
       return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider,commonProvider, child) {
         final isMutedUser = commonProvider.getUserModel?.data?.user?.muteUsers?.contains(userId) ?? false;
         final isFavoriteUser = commonProvider.getUserModelSecondUser?.data?.user?.isFavourite ?? false;
+        // final userID = commonProvider.getUserModelSecondUser?.data?.user?.sId ?? "";
         print("isMutedUserSHEET>>>>> $isMutedUser");
         print("isFavoriteUserSHEET>>>>> $isFavoriteUser");
+        // print("userID>>>>> $userID");
         return Container(
           decoration: BoxDecoration(
             color: AppColor.dialogBgColor,
@@ -2346,42 +2479,18 @@ void showChatSettingsBottomSheet({required String userId}) {
                         context: context,
                         totalButtons: 4
                     ),
-                    // commonButtonForHeaderFavoriteInfoCallMute(
-                    //     icon: Icons.call,
-                    //     label: 'Start Call',
-                    //     onTap: () {},
-                    //     context: context,
-                    //     totalButtons: 4
-                    // ),
+
                   ],
                 ),
               ),
-              // Container(
-              //   decoration: BoxDecoration(
-              //     border: Border(
-              //       bottom: BorderSide(
-              //         color: Colors.grey[800]!,
-              //         width: 1,
-              //       ),
-              //     ),
-              //   ),
-              //   child: ListTile(
-              //     leading: const Icon(Icons.info_outline, color: Colors.white),
-              //     title: const Text('View info',
-              //         style: TextStyle(color: Colors.white)),
-              //     onTap: () {
-              //       Navigator.pop(context);
-              //       // Add your view info logic here
-              //     },
-              //   ),
-              // ),
               ListTile(
                 leading: Icon(Icons.close, color: AppColor.redColor),
                 title: Text('Close direct message',
                     style: TextStyle(color: AppColor.redColor)),
                 onTap: () {
-                  Navigator.pop(context);
-                  // Add your close chat logic here
+                  pop();
+                  pop();
+                  channelListProvider.closeConversation(conversationUserId: userId, isCalledForFav: isFavoriteUser);
                 },
               ),
               const SizedBox(height: 16),

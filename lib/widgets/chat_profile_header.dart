@@ -1,14 +1,20 @@
-import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 
-import 'chat_header_buttons.dart';
 
 class ChatProfileHeader extends StatelessWidget {
+  final String userId;
   final String userName;
   final String userImageUrl;
+  final String userStatus;
 
-  ChatProfileHeader({required this.userName, required this.userImageUrl});
+  const ChatProfileHeader({
+    super.key,
+    required this.userId,
+    required this.userName,
+    required this.userStatus,
+    required this.userImageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,51 +23,29 @@ class ChatProfileHeader extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundImage: NetworkImage(userImageUrl),
-              ),
-              Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  color: AppColor.blackColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: AppColor.greenColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check,
-                    color: AppColor.whiteColor,
-                    size: 12,
-                  ),
-                ),
-              ),
-            ],
+          profileIconWithStatus(
+            userID: userId,
+            status: userStatus,
+            otherUserProfile: userImageUrl,
+            radius: 60,
+            iconSize: 25,
+            containerSize: 20,
           ),
           const SizedBox(height: 12),
-          // Name
           commonText(
-              text: userName,
-              // color: AppColor.whiteColor,
-              fontSize: 24,
-              fontWeight: FontWeight.bold),
+            text: userName,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
           const SizedBox(height: 8),
-          // Description
           commonText(
-              text:
-                  'This is the start of your conversation\nwith $userName. Messages and files\nshared here are not shown to anyone\nelse.',
-              textAlign: TextAlign.center,
-              // color:AppColor.whiteColor,
-              fontWeight: FontWeight.normal,
-              fontSize: 15,
-              height: 1.5),
+            text:
+            'This is the start of your conversation\nwith $userName. Messages and files\nshared here are not shown to anyone\nelse.',
+            textAlign: TextAlign.center,
+            fontWeight: FontWeight.normal,
+            fontSize: 15,
+            height: 1.5,
+          ),
         ],
       ),
     );

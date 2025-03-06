@@ -30,24 +30,20 @@ class ChatProvider extends  ChangeNotifier {
   String oppUserIdForTyping = "";
   int msgLength = 0;
   bool idChatListLoading = false;
-  final ScrollController scrollController = ScrollController();
   int currentPagea = 1;
   int totalPages = 0;
   GetReplyMessageModel? getReplyMessageModel;
   FilesListingInChatModel? filesListingInChatModel;
   bool isGettingListFalse = false;
 
-  void pagination({required String oppositeUserId}) {
-    scrollController.addListener(() {
-      if (scrollController.position.pixels == scrollController.position.maxScrollExtent && currentPagea < totalPages) {
-        currentPagea++;
-        print("oppositeUserId in pagination==> $oppositeUserId");
-        getMessagesList(oppositeUserId: oppositeUserId,currentPage: currentPagea);
-        print('currentPage:--->$currentPagea');
-      }
-    });
-    notifyListeners();
+  void paginationAPICall({required String oppositeUserId}) {
+    if(currentPagea < totalPages) {
+      currentPagea++;
+      getMessagesList(oppositeUserId: oppositeUserId, currentPage: currentPagea);
+      notifyListeners();
+    }
   }
+
   Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false}) async {
     print("oppositeUserId in getMessagesList==> $oppositeUserId");
 
@@ -80,17 +76,17 @@ class ChatProvider extends  ChangeNotifier {
         if(isFromMsgListen){
           for (var newItem in (response['data']['messages'] as List).map((message) => msg.MessageGroups.fromJson(message)).toList()) {
             int existingIndex = messageGroups.indexWhere((item) => item.sId == newItem.sId);
-
             if (existingIndex != -1) {
-              // Replace existing data
               messageGroups[existingIndex] = newItem;
             } else {
-              // Add new data if not found
               messageGroups.add(newItem);
             }
           }
         }else{
-          messageGroups.addAll((response['data']['messages'] as List).map((message) => msg.MessageGroups.fromJson(message)).toList());
+          print("MSG = ${response['data']['messages'] as List}");
+          messageGroups.addAll((response['data']['messages'] as List).map((message) {
+            return msg.MessageGroups.fromJson(message);
+          }).toList());
         }
           totalPages = response['data']['totalPages'];
           lastOpenedUserId = oppositeUserId;
@@ -146,6 +142,17 @@ class ChatProvider extends  ChangeNotifier {
         if (mId == data['replyTo']) {
           print("I'm In socketProvider for msgId: $mId");
           getReplyMessageList(msgId: mId, fromWhere: "SOCKET INIT");
+          
+          // Update reply count in messageGroups when receiving socket event
+          for (var messageGroup in messageGroups) {
+            for (var message in messageGroup.messages ?? []) {
+              if (message.sId == mId) {
+                message.replyCount = (message.replyCount ?? 0) + 1;
+                notifyListeners();
+                return;
+              }
+            }
+          }
         }
       });
     } catch (e) {
@@ -247,28 +254,53 @@ class ChatProvider extends  ChangeNotifier {
     }
     final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
+    print("Send Message requestBody -= $requestBody");
     if(statusCode200Check(response)){
       /// Socket Emit ///
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
       /// find where to add ///
-      int existingIndex = messageGroups.indexWhere((item) => item.sId == todayDate);
-      // int replyIndex = messageGroups.indexWhere((item) => item.messages. == todayDate);
-      if(existingIndex != -1){
-        /// grp date exists then add ///
-        messageGroups[existingIndex].messages!.add(msg.Messages.fromJson(response['data']));
-      }else{
-        /// grp date not exists then add ///
-        final newListOfDate = response['data'];
-        messageGroups.add(msg.MessageGroups.fromJson({"_id" : todayDate,'messages':[newListOfDate],"count":1}));
-      }
-      if(replyId != null){
-        // getReplyMessageList(msgId: replyId,fromWhere: "SEND_REPLY_MESSAGE");
-        // messageGroups.
+      if (editMsgID != null && editMsgID.isNotEmpty) {
+        int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.sId == editMsgID));
 
-
-      }else {
-        // getMessagesList(oppositeUserId: receiverId);
+        if (editIndex != -1) {
+          // Update the existing message
+          msg.Messages editedMessage = msg.Messages.fromJson(response['data']);
+          editedMessage.isEdited = true; // Set isEdited to true
+          messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
+        }
+      } else if(replyId != null && replyId != ""){
+        // int existingIndex = getReplyMessageModel!.data!.messages!.indexWhere((item) => item.date == todayDate);
+        // if (existingIndex != -1) {
+        //   getReplyMessageModel!.data!.messages![existingIndex].groupMessages!.add(GroupMessages.fromJson(response['data']));
+        // } else {
+        //   final newListOfDate = response['data'];
+        //   // getReplyMessageModel!.data!.messages!.add(GroupMessages.fromJson({
+        //   //   "_id": todayDate,
+        //   //   'messages': [newListOfDate],
+        //   //   "count": 1,
+        //   // }));
+        // }
+       getReplyMessageList(msgId: replyId, fromWhere: "Reply Send");
+      }else /*if(replyId == null && replyId == "")*/ {
+        int existingIndex = messageGroups.indexWhere((item) => item.sId == todayDate);
+        if (existingIndex != -1) {
+          messageGroups[existingIndex].messages!.add(msg.Messages.fromJson(response['data']));
+        } else {
+          final newListOfDate = response['data'];
+          messageGroups.add(msg.MessageGroups.fromJson({
+            "_id": todayDate,
+            'messages': [newListOfDate],
+            "count": 1,
+          }));
+        }
       }
+
+      // if(replyId != null){
+      //
+      //
+      // }else {
+      //   // getMessagesList(oppositeUserId: receiverId);
+      // }
     }
     notifyListeners();
   }
@@ -301,14 +333,16 @@ class ChatProvider extends  ChangeNotifier {
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
       // getMessagesList(oppositeUserId: receiverId);
-      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
+      togglePinModel(messageId);
+      // _updatePinnedStatus(messageId, pinned);
+      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId,isEmitForChannel: false);
     }
   }
   Future<void> pinUnPinMessageForReply({required String receiverId,required String messageId,required bool pinned})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
       _updatePinnedStatus(messageId, pinned);
-      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
+      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId,isEmitForChannel: false);
     }
   }
   void _updatePinnedStatus(String messageId, bool pinned) {
@@ -328,6 +362,17 @@ class ChatProvider extends  ChangeNotifier {
     }
     notifyListeners();
   }
+  void togglePinModel(String messageId) {
+    for (var messageGroup in messageGroups ?? []) {
+      for (var message in messageGroup.messages ?? []) {
+        if (message.sId == messageId) {
+          message.isPinned = !(message.isPinned ?? false); // Toggle the isPinned status
+          notifyListeners(); // Notify listeners if you're using a state management solution
+          return; // Exit after updating
+        }
+      }
+    }
+  }
   void deleteMessageFromModelSingleChat(String messageId) {
     for (var messageGroup in messageGroups) {
       messageGroup.messages?.removeWhere((message) => message.sId == messageId);
@@ -345,5 +390,24 @@ class ChatProvider extends  ChangeNotifier {
       filesListingInChatModel = FilesListingInChatModel.fromJson(response);
     }
     notifyListeners();
+  }
+  void updateReplyCount(String messageId) {
+    // Update reply count in local state
+    for (var messageGroup in messageGroups) {
+      for (var message in messageGroup.messages ?? []) {
+        if (message.sId == messageId) {
+          message.replyCount = (message.replyCount ?? 0) + 1;
+          notifyListeners();
+          
+          // Emit socket event to notify other users
+          socketProvider.socket.emit('reply_notification', {
+            'messageId': messageId,
+            'replyTo': messageId,
+            'senderId': signInModel.data?.user?.id,
+          });
+          return;
+        }
+      }
+    }
   }
 }

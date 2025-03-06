@@ -498,6 +498,7 @@ class Forward {
   String id;
   String senderId;
   String receiverId;
+  String channelId;
   String content;
   List<String> files;
   String? replyTo;
@@ -519,6 +520,7 @@ class Forward {
     required this.id,
     required this.senderId,
     required this.receiverId,
+    required this.channelId,
     required this.content,
     required this.files,
     this.replyTo,
@@ -542,7 +544,8 @@ class Forward {
     return Forward(
       id: json['_id'],
       senderId: json['senderId'],
-      receiverId: json['receiverId'],
+      receiverId: json.containsKey('receiverId') ? json['receiverId'] : json['channelId'],
+      channelId: json.containsKey('channelId') ? json['channelId'] : json['receiverId'],
       content: json['content'],
       files: List<String>.from(json['files']),
       replyTo: json['replyTo'],
@@ -567,7 +570,8 @@ class Forward {
     return {
       '_id': id,
       'senderId': senderId,
-      'receiverId': receiverId,
+      if (receiverId != null) 'receiverId': receiverId else 'receiverId': channelId,  // Only include if not null
+      if (channelId != null) 'channelId': channelId else 'channelId': receiverId, // Only include if not null
       'content': content,
       'files': files,
       'replyTo': replyTo,

@@ -28,19 +28,18 @@ class ChannelInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      // backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        // backgroundColor: Colors.black,
         leading: commonBackButton(),
-        title: Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              commonText(text: "Info",color: Colors.white,fontSize: 16),
-              const SizedBox(height: 4),
-              commonText(text: channelName,maxLines: 2,fontSize: 12,color: AppColor.borderColor),
-            ],
-          ),
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            commonText(text: "Info", fontSize: 16),
+            const SizedBox(height: 4),
+            commonText(text: channelName,maxLines: 1,fontSize: 12,color: AppColor.borderColor),
+          ],
         ),
       ),
       body: Column(
@@ -67,7 +66,7 @@ class ChannelInfoScreen extends StatelessWidget {
                     ),
                     _buildActionButton(
                       icon: Icons.notifications_off_outlined,
-                      label: 'Mute',
+                      label: signInModel.data?.user?.muteChannels?.contains(channelId) ?? false ? 'Muted' : 'Mute',
                       onTap: () {
                         context.read<ChannelListProvider>().muteUnMuteChannels(
                           channelId: channelId,
@@ -101,7 +100,7 @@ class ChannelInfoScreen extends StatelessWidget {
                 Text(
                   channelName,
                   style: const TextStyle(
-                    color: Colors.white,
+                    // color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -130,17 +129,7 @@ class ChannelInfoScreen extends StatelessWidget {
                 icon: Icons.people_outline,
                 title: 'Members',
                 count: provider.channelMembersList.length.toString(),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChannelMembersInfo(
-                        channelId: channelId,
-                        channelName: channelName,
-                      ),
-                    ),
-                  );
-                },
+                onTap: () => pushScreen(screen: ChannelMembersInfo(channelId: channelId, channelName: channelName)),
               );
             },
           ),
@@ -152,22 +141,18 @@ class ChannelInfoScreen extends StatelessWidget {
                 count: provider.getChannelInfo?.data?.pinnedMessagesCount != null ?
                 provider.getChannelInfo?.data?.pinnedMessagesCount.toString() :
                 '0',
-                onTap: () {
-                  // Navigate to pinned messages
-                  pushScreen(screen: ChannelPinnedPostsScreen(channelName: channelName, channelId: channelId));
-                },
+                onTap: () => pushScreen(screen: ChannelPinnedPostsScreen(channelName: channelName, channelId: channelId)),
               );
             }
           ),
-          _buildInfoSection(
+        Consumer<ChannelChatProvider>(builder: (context, value, child) {
+          return  _buildInfoSection(
             icon: Icons.folder_outlined,
             title: 'Files',
-            count: '0',
-            onTap: () {
-              // Navigate to files
-              pushScreen(screen: FilesListingScreen(channelName: channelName, channelId: channelId));
-            },
-          ),
+            count: value.filesListingInChannelChatModel?.data?.messages?.length.toString() ?? "0",
+            onTap: () => pushScreen(screen: FilesListingScreen(channelName: channelName, channelId: channelId)),
+          );
+        },),
         ],
       ),
     );
@@ -183,12 +168,12 @@ class ChannelInfoScreen extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 24),
+          Icon(icon, size: 24),
           const SizedBox(height: 4),
           Text(
             label,
             style: const TextStyle(
-              color: Colors.white,
+              // color: Colors.white,
               fontSize: 12,
             ),
           ),
@@ -209,12 +194,12 @@ class ChannelInfoScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white, size: 24),
+            Icon(icon, size: 24),
             const SizedBox(width: 16),
             Text(
               title,
               style: const TextStyle(
-                color: Colors.white,
+                // color: Colors.white,
                 fontSize: 16,
               ),
             ),

@@ -1,15 +1,17 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 
 import '../main.dart';
-import '../model/channel_chat_model.dart';
+import '../model/channel_chat_model.dart' as msg;
 import '../model/channel_members_model.dart';
 import '../model/channel_pinned_message_model.dart';
 import '../model/files_listing_in_channel_chat_model.dart';
@@ -24,14 +26,30 @@ import 'file_service_provider.dart';
 class ChannelChatProvider extends ChangeNotifier{
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
   GetChannelInfo? getChannelInfo;
-  ChannelChatModel? channelChatModel;
+  msg.ChannelChatModel? channelChatModel;
   ChannelPinnedMessageModel? channelPinnedMessageModel;
   List<MemberDetails> channelMembersList = [];
   FilesListingInChannelChatModel? filesListingInChannelChatModel;
-  List<MessageGroup> messageGroups = [];
+  List<msg.MessageGroup> messageGroups = [];
   int currentPage = 1;
   int totalPages = 0;
-  final ScrollController scrollController = ScrollController();
+
+  Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned})async{
+    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
+    if(statusCode200Check(response)){
+      for (var messageGroup in messageGroups) {
+        for (var message in messageGroup.messages ?? []) {
+          if (message.id == messageId) {
+            message.isPinned = pinned;
+            notifyListeners();
+            break;
+          }
+        }
+      }
+      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId,isEmitForChannel: true);
+    }
+  }
+
 
   Future<List<String>> uploadFiles() async {
     try {
@@ -99,12 +117,31 @@ class ChannelChatProvider extends ChangeNotifier{
     if (files != null && files.isNotEmpty) {
       requestBody["files"] = files;
     }
-
+    final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
-      messageGroups.where((element) => element.id == "2025-03-04",);
-      messageGroups.insert(0, response['data']);
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
+      if (editMsgID != null && editMsgID.isNotEmpty) {
+        int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.id == editMsgID));
+
+        if (editIndex != -1) {
+          msg.Message editedMessage = msg.Message.fromJson(response['data']);
+          editedMessage.isEdited = true;
+          messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.id == editMsgID)] = editedMessage;
+        }
+      } else /*if(replyId == null && replyId == "")*/ {
+        int existingIndex = messageGroups.indexWhere((item) => item.id == todayDate);
+        if (existingIndex != -1) {
+          messageGroups[existingIndex].messages!.add(msg.Message.fromJson(response['data']));
+        } else {
+          final newListOfDate = response['data'];
+          messageGroups.add(msg.MessageGroup.fromJson({
+            "_id": todayDate,
+            'messages': [newListOfDate],
+            "count": 1,
+          }));
+        }
+      }
       if(replyId != null){
         // getMessagesList(oppositeUserId: receiverId);
         print("I'm In sendMessage");
@@ -116,16 +153,17 @@ class ChannelChatProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  void pagination({required String channelId}) {
-    scrollController.addListener(() {
-      if (scrollController.position.pixels == scrollController.position.maxScrollExtent && currentPage < totalPages) {
-        currentPage++;
-        print("oppositeUserId in pagination==> $channelId");
-        getChannelChatApiCall(channelId: channelId,pageNo: currentPage);
-        print('currentPage:--->$currentPage');
-      }
-    });
-    notifyListeners();
+  // void pagination({required String channelId}) {
+  //       currentPage++;
+  //       getChannelChatApiCall(channelId: channelId,pageNo: currentPage);
+  //   notifyListeners();
+  // }
+  void paginationAPICall({required String channelId}) {
+    if(currentPage < totalPages) {
+      currentPage++;
+      notifyListeners();
+      getChannelChatApiCall(channelId: channelId,pageNo: currentPage);
+    }
   }
 
   Future<void> getChannelPinnedMessage({required String channelID})async{
@@ -138,49 +176,44 @@ class ChannelChatProvider extends ChangeNotifier{
   }
 
   Future<void> getChannelChatApiCall({required String channelId,required int pageNo,bool isFromMsgListen = false})async {
-    // if (lastOpenedChannelId != lastOpenedChannelId) {
-    //   channelChatModel = null;
-    //   channelChatModel?.data.messages.clear();
-    //   isChannelChatLoading = true;
-    //   // messageGroups.clear();
-    //   // totalPages = 0;
-    //   // currentPage = 1;
-    //   // idChatListLoading = true;
-    // }
-    final requestBody = {
-      "channelId": channelId,
-      "pageNo": pageNo.toString()
-    };
-    if(pageNo == 1 && !isFromMsgListen){
-      messageGroups.clear();
-      currentPage = 1;
-    }
-    final response  = await ApiService.instance.request(endPoint: ApiString.getChannelChat, method: Method.POST,reqBody: requestBody);
-    // if(statusCode200Check(response)){
-    //   // channelChatModel = ChannelChatModel.fromJson(response);
-    //   messageGroups.addAll((response['data']['messages'] as List).map((message) => MessageGroup.fromJson(message)).toList());
-    //   // lastOpenedChannelId = lastOpenedChannelId;
-    //   isChannelChatLoading = false;
-    // }else{
-    //   isChannelChatLoading = false;
-    // }
-    if(isFromMsgListen){
-      for (var newItem in (response['data']['messages'] as List).map((message) => MessageGroup.fromJson(message)).toList()) {
-        int existingIndex = messageGroups.indexWhere((item) => item.id == newItem.id);
-
-        if (existingIndex != -1) {
-          // Replace existing data
-          messageGroups[existingIndex] = newItem;
-        } else {
-          // Add new data if not found
-          messageGroups.add(newItem);
-        }
-      }
-    }else{
-        messageGroups.addAll((response['data']['messages'] as List).map((message) => MessageGroup.fromJson(message)).toList());
-    }
-    totalPages = response['data']['totalPages'];
-    notifyListeners();
+   try{
+     if (lastOpenedChannelId != channelId) {
+       messageGroups.clear();
+       totalPages = 0;
+       currentPage = 1;
+       isChannelChatLoading = true;
+     }
+     final requestBody = {
+       "channelId": channelId,
+       "pageNo": pageNo.toString()
+     };
+     if(pageNo == 1 && !isFromMsgListen){
+       messageGroups.clear();
+       currentPage = 1;
+     }
+     final response  = await ApiService.instance.request(endPoint: ApiString.getChannelChat, method: Method.POST,reqBody: requestBody);
+     if(statusCode200Check(response)){
+       if(isFromMsgListen){
+         for (var newItem in (response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList()) {
+           int existingIndex = messageGroups.indexWhere((item) => item.id == newItem.id);
+           if (existingIndex != -1) {
+             messageGroups[existingIndex] = newItem;
+           } else {
+             messageGroups.add(newItem);
+           }
+         }
+       }else{
+         messageGroups.addAll((response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList());
+       }
+     }
+     totalPages = response['data']['totalPages'];
+     lastOpenedChannelId = channelId;
+   }catch (e){
+     print("error >>> $e");
+   }finally{
+     isChannelChatLoading = false;
+     notifyListeners();
+   }
   }
 
   MemberDetails? getUserById(String userId) {
@@ -218,7 +251,18 @@ class ChannelChatProvider extends ChangeNotifier{
     http.StreamedResponse response = await request.send();
 
     if (response.statusCode == 200) {
+      final responseString = await response.stream.bytesToString();
+      final responseData = json.decode(responseString);
+      log("Response data: $responseData");
+      Map<String, dynamic> passInSocket = {
+        "data": {
+          "senderId": signInModel.data!.user!.id,
+          "receiverId": userIds,
+          "channelId": channelId
+        }
+      };
       getChannelMembersList(channelId);
+      socketProvider.addMemberToChannel(response: passInSocket);
     }
     else {
       print(response.reasonPhrase);

@@ -44,7 +44,7 @@ class ApiString{
   static const getFileListingInChat = "messages/getFilesListing";
   static const getUser = "user/getUsers";
   static String pinMessage(String messageId, bool pinned) => "messages/message-pin/$messageId/$pinned";
-  // static const getRepliesMsg = "messages/get-replies";
+
   // Channel
   static getChannelMembersList(String channelId) => "channels/getChannelMembers/$channelId";
   static addMembersToChannel(String channelId) => "channels/addMember/$channelId";

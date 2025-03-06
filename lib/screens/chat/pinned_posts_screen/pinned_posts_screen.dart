@@ -194,7 +194,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                             children: [
                               Padding(
                                 padding: EdgeInsets.only(right: 10),
-                                child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data!.user!.avatarUrl ?? '',radius: 15,needToShowIcon: false),
+                                child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',radius: 15,needToShowIcon: false),
                               ),
                               Flexible(
                                 child: Column(
@@ -340,7 +340,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                             children: [
                                               Padding(
                                                 padding: EdgeInsets.only(right: 10),
-                                                child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data!.user!.avatarUrl ?? '',radius: 10,needToShowIcon: false),
+                                                child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',radius: 10,needToShowIcon: false),
                                               ),
                                               // 🖼️ Overlapping profile images
                                               // if (messageList.repliesSenderInfo != null && messageList.repliesSenderInfo!.isNotEmpty)

@@ -67,6 +67,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
 
   Widget dateHeaders() {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+
       return channelChatProvider.messageGroups.isEmpty? SizedBox.shrink() :
       channelChatProvider.channelPinnedMessageModel?.data?.messages!.length == 0 ?
       Expanded(
@@ -96,11 +97,10 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
             ),
           ],
         ),
-      )
-          :
+      ) :
       ListView.builder(
         shrinkWrap: true,
-        reverse: true,
+        reverse: false,
         physics: NeverScrollableScrollPhysics(),
         itemCount: channelChatProvider.channelPinnedMessageModel?.data?.messages?.length ?? 0,
         itemBuilder: (itemContext, index) {
@@ -166,31 +166,12 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
     bool showUserDetails = true,
   })  {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-      bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
       return Container(
         margin: EdgeInsets.only(top: 1),
-        color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
         padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 8.0),
         child: Column(
           children: [
-            Visibility(
-                visible: (messageList.isSeen == false && userId != signInModel.data?.user?.id),
-                child: newMessageDivider()),
-            Visibility(
-                visible: pinnedMsg,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40.0,vertical: 5),
-                  child: Row(
-                    children: [
-                      Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                        child: commonText(text: "Pinned",color: AppColor.blueColor),
-                      ),
-                    ],
-                  ),
-                )),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,
@@ -199,7 +180,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(userID: messageList.senderInfo?.sId ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? "",radius: 17),
+                    child: profileIconWithStatus(userID: messageList.senderInfo?.sId ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.thumbnailAvatarUrl ?? "",radius: 17),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -296,7 +277,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.senderOfForward?.sId ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl ?? ""),
+                                    profileIconWithStatus(userID: messageList.senderOfForward?.sId ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl ?? ""),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
@@ -429,7 +410,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                               status: "",
                                               needToShowIcon: false,
                                               radius: 12,
-                                              otherUserProfile: messageList.repliesSenderInfo?[0].avatarUrl ?? "",
+                                              otherUserProfile: messageList.repliesSenderInfo?[0].thumbnailAvatarUrl ?? "",
                                             ),
                                             if (messageList.repliesSenderInfo!.length > 1)
                                               Positioned(
@@ -439,7 +420,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                                   status: "",
                                                   needToShowIcon: false,
                                                   radius: 12,
-                                                  otherUserProfile: messageList.repliesSenderInfo?[1].avatarUrl ?? "",
+                                                  otherUserProfile: messageList.repliesSenderInfo?[1].thumbnailAvatarUrl ?? "",
                                                 ),
                                               ),
                                           ],

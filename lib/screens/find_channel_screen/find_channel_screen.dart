@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_connect/screens/channel/channel_chat_screen.dart';
 import 'package:e_connect/screens/chat/single_chat_message_screen.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
@@ -169,7 +170,6 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
       ),
       title: commonText(
         text: user?.username ?? "",
-        // color: Colors.black87,
         fontSize: 15,
         fontWeight: FontWeight.w500,
       ),
@@ -179,6 +179,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
 
   Widget _buildChannelTile(dynamic channel) {
     return ListTile(
+      onTap: () => pushReplacement(screen: ChannelChatScreen(channelId: channel.sId)),
       leading: Container(
         width: 40,
         height: 40,
