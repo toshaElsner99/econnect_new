@@ -48,11 +48,6 @@ void main() {
         }
       },
     );
-    String? fcmToken = "";
-    Future.delayed(const Duration(seconds: 2), () async {
-      fcmToken = await FirebaseMessaging.instance.getToken();
-      print("FCM_Token  ::::> $fcmToken");
-    });
     runApp(const MyApp());
   },);
 }

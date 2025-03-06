@@ -6,17 +6,18 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 // import '../general_exports.dart';
 class PushNotificationService {
+
   Future<void> setupInteractedMessage() async {
-// This function is called when ios app is opened, for android case `onDidReceiveNotificationResponse` function is called
+    // This function is called when ios app is opened, for android case `onDidReceiveNotificationResponse` function is called
     FirebaseMessaging.onMessageOpenedApp.listen(
           (RemoteMessage message) {
-
-        // notificationRedirect(message.data[keyTypeValue], message.data[keyType]);
+            // notificationRedirect(message.data[keyTypeValue], message.data[keyType]);
       },
     );
     enableIOSNotifications();
     await registerNotificationListeners();
   }
+
   Future<void> registerNotificationListeners() async {
     final AndroidNotificationChannel channel = androidNotificationChannel();
     FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -71,13 +72,6 @@ class PushNotificationService {
           notification.body,
           NotificationDetails(
             android: AndroidNotificationDetails(
-              // channel.id,
-              // channel.name,
-              // channelDescription: channel.description,
-              // priority: Priority.high,
-              // importance: Importance.high,
-              // styleInformation: BigTextStyleInformation(notification.body!,htmlFormatBigText: true,htmlFormatContent: true,htmlFormatContentTitle: true,htmlFormatSummaryText: true,htmlFormatTitle: true),
-              // icon: android.smallIcon,
               channel.id,
               channel.name,
               channelDescription: channel.description,
@@ -104,8 +98,8 @@ class PushNotificationService {
 
   AndroidNotificationChannel androidNotificationChannel() =>
       const AndroidNotificationChannel(
-        'com.havit.rewards', // id
-        'Domani', // title
+        'econnect', // id
+        'Econnect', // title
         showBadge: true,
         groupId: 'chat',
         importance: Importance.high,

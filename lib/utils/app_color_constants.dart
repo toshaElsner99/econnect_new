@@ -16,7 +16,7 @@ class AppColor {
   static const greenColor = Color(0xFF3DB887);
   static const orangeColor = Color(0xFFF5AB00);
   static const redColor = Color(0xFFD24B4E);
-  static const blueColor = Color(0xFF7A4FC3);
+  static const blueColor = Color(0xFF03497a);
   static const dialogBgColor = Color(0xFF191C1E);
   static const boxBgColor = Color(0xFF212326);
   static const selectedBoxColor = Color(0xFF1B2330);

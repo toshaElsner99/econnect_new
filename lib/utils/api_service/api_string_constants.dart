@@ -26,6 +26,7 @@ class ApiString{
   static const leaveChannel = "channels/leaveChannel/";
   static const userSuggestions = "user/user-suggestions";
   static const searchUser = "user/search-user";
+  static const deviceToken = "user/deviceToken";
   // Chat
 
   static const getMessages = "messages/get-message";
@@ -35,7 +36,7 @@ class ApiString{
   static const unMuteChannel = "user/unmute-channel";
   static const muteChannel = "user/mute-channel";
   static const addUserToChatList = "chatList/add";
-  static const sendMessage = "messages/send-message";
+  static const sendMessage = "push";
   static const sendChannelMessage = "messages/channel/send-message";
   static const deleteMessage = "messages/delete/";
   static const replayMsgSeen = "messages/reply-message-seen";

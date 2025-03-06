@@ -220,7 +220,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                         ],
                                       ),
                                     ),
-                                    commonHTMLText2(message: messages.content!),
+                                    commonHTMLText(message: messages.content!),
                                     Visibility(
                                         visible: messages.isForwarded ?? false,
                                         child: Container(

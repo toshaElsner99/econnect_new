@@ -1,9 +1,11 @@
 import 'package:e_connect/main.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/model/get_user_model.dart';
+import 'package:e_connect/providers/sign_in_provider.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../model/get_user_mention_model.dart';
@@ -47,6 +49,8 @@ class CommonProvider extends ChangeNotifier {
 
 
   Future<void> logOut() async {
+    var signInProvider = Provider.of<SignInProvider>(navigatorKey.currentState!.context,listen: false);
+    signInProvider.fcmTokenSendInAPI(true);
     await clearData();
     pushAndRemoveUntil(screen: SignInScreen());
   }
