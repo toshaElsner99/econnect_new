@@ -350,48 +350,46 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
 
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
-    // Show initial users (current user and recipient)
     final List<dynamic> initialUsers = [];
-    final currentUser = userCache[signInModel.data?.user?.id];
-    final recipientUser = userCache[widget.oppositeUserId];
+    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
 
+    // If no search query, show first two users from API response
     if (searchQuery?.isEmpty ?? true) {
-      if (currentUser?.data?.user != null) {
-        initialUsers.add(currentUser.data.user);
-      }
-      if (recipientUser?.data?.user != null && widget.oppositeUserId != signInModel.data?.user?.id) {
-        initialUsers.add(recipientUser.data.user);
+      // Add first two users if available
+      if (allUsers.isNotEmpty) {
+        initialUsers.add(allUsers[0]);
+        if (allUsers.length > 1) {
+          initialUsers.add(allUsers[1]);
+        }
       }
       return initialUsers;
     }
 
-    // Filter users from getUserMentionModel based on search
-    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
+    // Filter users based on search query
     final query = searchQuery!.toLowerCase();
 
-    // First add matching initial users
-    if (currentUser?.data?.user != null &&
-        ((currentUser.data.user.username?.toLowerCase().contains(query) ?? false) ||
-            (currentUser.data.user.fullName?.toLowerCase().contains(query) ?? false))) {
-      initialUsers.add(currentUser.data.user);
-    }
-    if (recipientUser?.data?.user != null &&
-        widget.oppositeUserId != signInModel.data?.user?.id &&
-        ((recipientUser.data.user.username?.toLowerCase().contains(query) ?? false) ||
-            (recipientUser.data.user.fullName?.toLowerCase().contains(query) ?? false))) {
-      initialUsers.add(recipientUser.data.user);
+    // First add first two users if they match the search
+    if (allUsers.isNotEmpty) {
+      if (((allUsers[0].username?.toLowerCase().contains(query) ?? false) ||
+          (allUsers[0].fullName?.toLowerCase().contains(query) ?? false))) {
+        initialUsers.add(allUsers[0]);
+      }
+      if (allUsers.length > 1 &&
+          ((allUsers[1].username?.toLowerCase().contains(query) ?? false) ||
+              (allUsers[1].fullName?.toLowerCase().contains(query) ?? false))) {
+        initialUsers.add(allUsers[1]);
+      }
     }
 
     // Then add other matching users
-    final otherUsers = allUsers.where((user) =>
+    final otherUsers = allUsers.skip(2).where((user) =>
     ((user.username?.toLowerCase().contains(query) ?? false) ||
-        (user.fullName?.toLowerCase().contains(query) ?? false)) &&
-        user.sId != signInModel.data?.user?.id &&
-        user.sId != widget.oppositeUserId
+        (user.fullName?.toLowerCase().contains(query) ?? false))
     ).toList();
 
     return [...initialUsers, ...otherUsers];
   }
+
   final ScrollController scrollController = ScrollController();
 
   void pagination({required String oppositeUserId}) {
@@ -640,6 +638,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     _messageController.dispose();
     _focusNode.dispose();
     _removeMentionOverlay();
+    Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
     super.dispose();
   }
 

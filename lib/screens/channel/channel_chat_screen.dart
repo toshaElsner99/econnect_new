@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../main.dart';
+import '../../model/channel_members_model.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/download_provider.dart';
 import '../../providers/file_service_provider.dart';
@@ -58,6 +59,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   _scrollController.dispose();
   _messageController.dispose();
   _focusNode.dispose();
+  Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
   }
   
   @override
@@ -400,9 +402,59 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   }
   Widget dateHeaders() {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+      final adminMembers = channelChatProvider.channelMembersList
+          .where((MemberDetails member) => member.isAdmin == true)
+          .toList();
+      final isCurrentUserAdmin = adminMembers.any((member) =>
+      member.isAdmin == true &&
+          member.sId == signInModel.data?.user?.id);
       List<MessageGroup>? sortedGroups = channelChatProvider.messageGroups..sort((a, b) => b.id!.compareTo(a.id!));
       // List<MessageGroup>? sortedGroups = channelChatProvider.channelChatModel?.data?.messages?..sort((a, b) => b.id!.compareTo(a.id!));
-      return channelChatProvider.messageGroups.isEmpty? SizedBox.shrink() : ListView.builder(
+      return channelChatProvider.messageGroups.isEmpty? Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
+            SizedBox(height: 10),
+            commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
+                fontSize: 14,height: 1.35),
+            Visibility(
+              visible: isCurrentUserAdmin,
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    // Action for adding members
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddPeopleToChannel(
+                          channelId: widget.channelId,
+                          channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                        ),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.person_add, color: Colors.white),
+                  label: Text(
+                    'Add members to this private channel',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[900], // Button color
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ) : ListView.builder(
         shrinkWrap: true,
         reverse: true,
         physics: NeverScrollableScrollPhysics(),
@@ -419,11 +471,44 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 18),
+                    commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
                     SizedBox(height: 10),
-                    commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",textAlign: TextAlign.center,
-                    height: 1.35),
+                    commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
+                    fontSize: 14,height: 1.35),
+                    Visibility(
+                      visible: isCurrentUserAdmin,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            // Action for adding members
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddPeopleToChannel(
+                                  channelId: widget.channelId,
+                                  channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                                ),
+                              ),
+                            );
+                          },
+                          icon: Icon(Icons.person_add, color: Colors.white),
+                          label: Text(
+                            'Add members to this private channel',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue[900], // Button color
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               );

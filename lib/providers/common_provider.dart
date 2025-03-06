@@ -140,19 +140,29 @@ class CommonProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> getAllUsers() async {
-    final requestBody = {"type": "message"};
-    final response = await ApiService.instance.request(
-      endPoint: ApiString.getUser,
-      method: Method.POST,
-      reqBody: requestBody
-    );
-    if (statusCode200Check(response)) {
-      getUserMentionModel = GetUserMentionModel.fromJson(response);
-      allUsers = getUserMentionModel?.data?.users;
-      notifyListeners();
-    }
-  }
+  // Future<void> getAllUsers() async {
+  //   try {
+  //     print("Fetching all users...");
+  //     final requestBody = {"type": "message"};
+  //     final response = await ApiService.instance.request(
+  //       endPoint: ApiString.getUser,
+  //       method: Method.POST,
+  //       reqBody: requestBody
+  //     );
+  //     if (statusCode200Check(response)) {
+  //       getUserMentionModel = GetUserMentionModel.fromJson(response);
+  //       allUsers = getUserMentionModel?.data?.users;
+  //       print("Users fetched successfully. Count: ${allUsers?.length ?? 0}");
+  //     } else {
+  //       print("Failed to fetch users. Status code: ${response['statusCode']}");
+  //     }
+  //   } catch (e) {
+  //     print("Error fetching users: $e");
+  //     allUsers = [];  // Initialize to empty list on error
+  //   } finally {
+  //     notifyListeners();
+  //   }
+  // }
 
 
   List<Users>? filterUsers(String? searchQuery) {
@@ -163,6 +173,25 @@ class CommonProvider extends ChangeNotifier {
       (user.username?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false) ||
       (user.fullName?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false)
     ).toList();
+  }
+
+  bool isUserInAllUsers(String username) {
+    // First check for special mentions
+    final specialMentions = ['here', 'channel', 'all'];
+    if (specialMentions.contains(username.toLowerCase())) {
+      return true;
+    }
+
+    if (getUserMentionModel == null) {
+      print("Warning: getUserMentionModel is null in isUserInAllUsers check");
+      return false;
+    }
+
+    print("Checking username/fullname: $username in ${getUserMentionModel?.data!.users!.length ?? 0} users");
+    return getUserMentionModel?.data!.users!.any((user) => 
+      user.username?.toLowerCase() == username.toLowerCase() || 
+      user.fullName?.toLowerCase() == username.toLowerCase()
+    ) ?? false;
   }
 
 }

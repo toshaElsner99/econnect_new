@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -246,7 +247,18 @@ class ChannelChatProvider extends ChangeNotifier{
     http.StreamedResponse response = await request.send();
 
     if (response.statusCode == 200) {
+      final responseString = await response.stream.bytesToString();
+      final responseData = json.decode(responseString);
+      log("Response data: $responseData");
+      Map<String, dynamic> passInSocket = {
+        "data": {
+          "senderId": signInModel.data!.user!.id,
+          "receiverId": userIds,
+          "channelId": channelId
+        }
+      };
       getChannelMembersList(channelId);
+      socketProvider.addMemberToChannel(response: passInSocket);
     }
     else {
       print(response.reasonPhrase);
