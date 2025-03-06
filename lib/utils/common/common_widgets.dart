@@ -683,6 +683,7 @@ Widget popMenu2(
       required VoidCallback onCopy,
       required VoidCallback onEdit,
       required VoidCallback onDelete,
+      required VoidCallback onReact,
       required String createdAt,  // Pass createdAt timestamp
       required String currentUserId, // Current user's ID
       required bool isForwarded,
@@ -741,17 +742,21 @@ Widget popMenu2(
           case 5:
             onDelete.call();
             break;
+          case 9:
+            onReact.call();
+            break;
         }
       },
       itemBuilder: (context) {
         List<PopupMenuEntry<int>> menuItems = [
 
+          _menuItem(9, Icons.emoji_emotions_outlined, "React"),
           _menuItem(1, Icons.reply, "Reply"),
           _menuItem(2, Icons.push_pin, isPinned ? "Unpin from Channel": "Pin to Channel"),
           _menuItem(3, Icons.copy, "Copy Text"),
         ];
         if(isForwarded == true){
-          menuItems.insert(0, _menuItem(0, Icons.forward, "Forward"));
+          menuItems.insert(1, _menuItem(0, Icons.forward, "Forward"));
         }
         // Show Edit option only if message is under 24 hours old
         if (isCurrentUser && isEditable) {

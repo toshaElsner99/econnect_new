@@ -234,4 +234,9 @@ class SocketIoProvider extends ChangeNotifier{
   void addMemberToChannel({required Map<String, dynamic> response}){
     socket.emit(addMember,response);
   }
+
+  reactMessagesSC({required Map<String, dynamic> response,bool? isForChannel = false}) {
+    print("emit>>>>> React Message $response");
+    socket.emit(messageReaction , response);
+  }
 }

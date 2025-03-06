@@ -1060,6 +1060,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       currentUserId: userId,
                       onOpened: () {},
                       onClosed: () {},
+                      onReact: (){
+
+                      },
                       isForwarded: messageList.isForwarded! ? false : true,
                       opened: false,
                       onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,)),

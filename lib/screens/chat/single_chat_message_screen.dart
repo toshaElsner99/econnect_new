@@ -1361,6 +1361,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     isPinned: pinnedMsg,
                     onOpened: () {},
                     onClosed: () {},
+                      onReact: (){
+
+                      },
                     isForwarded: messageList.isForwarded! ? false : true,
                     opened: /*index == _selectedIndex ? true : */false,
                     createdAt: messageList.createdAt!,
