@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "846703694175",
+    "project_id": "econnect-d2360",
+    "storage_bucket": "econnect-d2360.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846703694175:android:9d5f4e5e0a5073a6e126ea",
+        "android_client_info": {
+          "package_name": "com.elsner.econnect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjf7yu7oh_yKOHq_f3avgT3SjY50yT2io"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
