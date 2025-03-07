@@ -62,4 +62,5 @@ class ApiString{
   static const getFilesListingInChannelChat = "messages/channel/getFilesListingForChannel";
   static const getChannelPinnedMessage = "messages/channel/get-pinned-message-for-channel";
   static deleteMessageFromChannel (String messageId) => "messages/delete/$messageId";
+  static const String addChannelTO = "channels/add";
 }

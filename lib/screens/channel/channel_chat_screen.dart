@@ -75,7 +75,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       /// this for socket listen in channel chat for new message and delete //
       socketProvider.listenChannelChatScreen(channelId: widget.channelId);
       pagination(channelId: widget.channelId);
-      Provider.of<ChannelChatProvider>(context, listen: false).getChannelInfoApiCall(channelId: widget.channelId);
+      Provider.of<ChannelChatProvider>(context, listen: false).getChannelInfoApiCall(channelId: widget.channelId,callFroHome: true);
       Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
       Provider.of<ChannelChatProvider>(context, listen: false).getChannelChatApiCall(channelId: widget.channelId,pageNo: 1);
       Provider.of<ChannelChatProvider>(context, listen: false).getChannelMembersList(widget.channelId);
@@ -1280,7 +1280,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       opened: false,
                       onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,)),
                       onReply: () => pushScreen(screen: ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: widget.channelId,)),
-                      onPin: () => channelChatProvider.pinUnPinMessage(receiverId: widget.channelId, messageId: messageId, pinned: pinnedMsg = !pinnedMsg ),
+                      onPin: () => channelChatProvider.pinUnPinMessage(channelID: widget.channelId, messageId: messageId, pinned: pinnedMsg = !pinnedMsg ),
                       onCopy: () => copyToClipboard(context, message),
                       onEdit: () => setState(() {
                         _messageController.clear();
