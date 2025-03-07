@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/main.dart';
@@ -358,14 +359,37 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
     final List<dynamic> initialUsers = [];
     final allUsers = provider.getUserMentionModel?.data?.users ?? [];
+    final bool isSelfChat = widget.oppositeUserId == signInModel.data?.user?.id;
 
-    // If no search query, show first two users from API response
+    // If no search query, show prioritized users
     if (searchQuery?.isEmpty ?? true) {
-      // Add first two users if available
-      if (allUsers.isNotEmpty) {
-        initialUsers.add(allUsers[0]);
-        if (allUsers.length > 1) {
-          initialUsers.add(allUsers[1]);
+      if (isSelfChat) {
+        // For self chat, show first two users from API response
+        if (allUsers.isNotEmpty) {
+          initialUsers.add(allUsers[0]);
+          if (allUsers.length > 1) {
+            initialUsers.add(allUsers[1]);
+          }
+        }
+      } else {
+        // For chat with another user, show current user and opposite user first
+        try {
+          final currentUser = allUsers.firstWhere(
+            (user) => user.sId == signInModel.data?.user?.id,
+          );
+          final oppositeUser = allUsers.firstWhere(
+            (user) => user.sId == widget.oppositeUserId,
+          );
+          initialUsers.add(currentUser);
+          initialUsers.add(oppositeUser);
+        } catch (_) {
+          // If users not found, fallback to first two users
+          if (allUsers.isNotEmpty) {
+            initialUsers.add(allUsers[0]);
+            if (allUsers.length > 1) {
+              initialUsers.add(allUsers[1]);
+            }
+          }
         }
       }
       return initialUsers;
@@ -373,24 +397,46 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
     // Filter users based on search query
     final query = searchQuery!.toLowerCase();
+    
+    if (isSelfChat) {
+      // For self chat, prioritize first two matching users
+      final matchingUsers = allUsers.where((user) =>
+        ((user.username?.toLowerCase().contains(query) ?? false) ||
+        (user.fullName?.toLowerCase().contains(query) ?? false))
+      ).toList();
 
-    // First add first two users if they match the search
-    if (allUsers.isNotEmpty) {
-      if (((allUsers[0].username?.toLowerCase().contains(query) ?? false) ||
-          (allUsers[0].fullName?.toLowerCase().contains(query) ?? false))) {
-        initialUsers.add(allUsers[0]);
+      if (matchingUsers.isNotEmpty) {
+        initialUsers.add(matchingUsers[0]);
+        if (matchingUsers.length > 1) {
+          initialUsers.add(matchingUsers[1]);
+        }
       }
-      if (allUsers.length > 1 &&
-          ((allUsers[1].username?.toLowerCase().contains(query) ?? false) ||
-              (allUsers[1].fullName?.toLowerCase().contains(query) ?? false))) {
-        initialUsers.add(allUsers[1]);
-      }
+    } else {
+      // For chat with another user, prioritize current user and opposite user if they match
+      try {
+        final currentUser = allUsers.firstWhere(
+          (user) => user.sId == signInModel.data?.user?.id &&
+            ((user.username?.toLowerCase().contains(query) ?? false) ||
+            (user.fullName?.toLowerCase().contains(query) ?? false))
+        );
+        initialUsers.add(currentUser);
+      } catch (_) {}
+
+      try {
+        final oppositeUser = allUsers.firstWhere(
+          (user) => user.sId == widget.oppositeUserId &&
+            ((user.username?.toLowerCase().contains(query) ?? false) ||
+            (user.fullName?.toLowerCase().contains(query) ?? false))
+        );
+        initialUsers.add(oppositeUser);
+      } catch (_) {}
     }
 
-    // Then add other matching users
-    final otherUsers = allUsers.skip(2).where((user) =>
-    ((user.username?.toLowerCase().contains(query) ?? false) ||
-        (user.fullName?.toLowerCase().contains(query) ?? false))
+    // Add other matching users
+    final otherUsers = allUsers.where((user) =>
+      !initialUsers.contains(user) &&
+      ((user.username?.toLowerCase().contains(query) ?? false) ||
+      (user.fullName?.toLowerCase().contains(query) ?? false))
     ).toList();
 
     return [...initialUsers, ...otherUsers];
@@ -559,7 +605,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             children: [
               Flexible(
                 child: commonText(
-                  text: widget.userName,
+                  text: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "...." : widget.userName,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -618,7 +664,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               GestureDetector(
                 onTap: () => pushScreen(
                   screen: PinnedPostsScreen(
-                    userName: widget.userName,
+                    userName: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "...." : widget.userName,
                     oppositeUserId: widget.oppositeUserId,
                     userCache: userCache,
                   ),
@@ -642,8 +688,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               GestureDetector(
                 onTap: () => pushScreen(
                   screen: FilesListingScreen(
-                    userName: widget.userName,
-                    oppositeUserId: widget.oppositeUserId,
+                    userName: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "...." : widget.userName,
+                    oppositeUserId: widget.oppositeUserId
                   ),
                 ),
                 child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: Colors.white),
@@ -686,7 +732,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
         border: Border(
           top: BorderSide(
-            color: Colors.grey.shade800,
+            color: Colors.white,
             width: 0.5,
           ),
         ),
@@ -698,56 +744,67 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: CompositedTransformTarget(
-                    link: _layerLink,
-                    child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade900,
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      // color: Colors.grey.shade900,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: CompositedTransformTarget(
+                            link: _layerLink,
                             child: TextField(
-                              controller: _messageController,
-                              focusNode: _focusNode,
-                              style: TextStyle(color: AppColor.whiteColor),
                               maxLines: 5,
                               minLines: 1,
+                              controller: _messageController,
+                              focusNode: _focusNode,
                               keyboardType: TextInputType.multiline,
                               textInputAction: TextInputAction.newline,
-                              scrollPhysics: const BouncingScrollPhysics(),
+                              style: TextStyle(color: AppColor.whiteColor),
                               decoration: InputDecoration(
                                 hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
+                                hintMaxLines: 1,
                                 hintStyle: TextStyle(color: Colors.grey),
                                 border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                suffixIcon: _isTextFieldEmpty ? Row(
+                                suffixIcon: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
+                                    // const SizedBox(width: 8),
+                                    // Container(
+                                    //   width: 1,
+                                    //   height: 25,
+                                    //   color: Colors.white
+                                    // ),
+                                    const SizedBox(width: 8),
                                     GestureDetector(
                                       onTap: () => FileServiceProvider.instance.pickFiles(),
-                                      child: const Icon(Icons.attach_file, color: AppColor.whiteColor, size: 22),
+                                      child: const Icon(Icons.attach_file, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => FileServiceProvider.instance.pickImages(),
-                                      child: const Icon(Icons.image, color: AppColor.whiteColor, size: 22),
+                                      onTap: () =>  FileServiceProvider.instance.pickImages(),
+                                      child: const Icon(Icons.image, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => showCameraOptionsBottomSheet(context),
-                                      child: const Icon(Icons.camera_alt, color: AppColor.whiteColor, size: 22),
+                                      onTap: () =>  showCameraOptionsBottomSheet(context),
+                                      child: const Icon(Icons.camera_alt, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                   ],
-                                ) : null,
+                                ),
                               ),
+                              textCapitalization: TextCapitalization.sentences,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -768,7 +825,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         } else {
                           chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
                             currentUserMessageId = "";
-                          }));
+                          }),);
                         }
                         _clearInputAndDismissKeyboard();
                       }
@@ -778,6 +835,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               ],
             ),
           ),
+          if(Platform.isIOS)...{
+            SizedBox(height: 20)
+          },
           selectedFilesWidget(),
         ],
       ),

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/channel_chat_model.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
@@ -48,6 +50,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   String currentUserMessageId = "";
   final ScrollController _scrollController = ScrollController();
   final _textFieldKey = GlobalKey();
+  OverlayEntry? _overlayEntry;
+  bool _showMentionList = false;
+  int _mentionCursorPosition = 0;
+  bool _isTextFieldEmpty = true;
+
   void pagination({required String channelId}) {
     _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
@@ -56,20 +63,309 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-  _scrollController.dispose();
-  _messageController.dispose();
-  _focusNode.dispose();
-  // Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
+  void _onTextChanged() {
+    final text = _messageController.text;
+    final cursorPosition = _messageController.selection.baseOffset;
+    
+    // Update text field empty state
+    setState(() {
+      _isTextFieldEmpty = text.isEmpty;
+    });
+
+    if (cursorPosition > 0) {
+      // Check if @ was just typed
+      if (text[cursorPosition - 1] == '@') {
+        _mentionCursorPosition = cursorPosition;
+        _showMentionOverlay();
+      }
+      // Check if we should keep showing the mention list and filter based on input
+      else if (_showMentionList) {
+        // Find the last @ before cursor
+        int lastAtIndex = text.substring(0, cursorPosition).lastIndexOf('@');
+        if (lastAtIndex == -1) {
+          // No @ found before cursor, remove overlay
+          _removeMentionOverlay();
+        } else {
+          // Get the search query (text between @ and cursor)
+          String searchQuery = text.substring(lastAtIndex + 1, cursorPosition).toLowerCase();
+          _showMentionOverlay(searchQuery: searchQuery);
+        }
+      }
+    } else {
+      // Text is empty or cursor at start, remove overlay
+      _removeMentionOverlay();
+    }
   }
-  
+
+  void _showMentionOverlay({String? searchQuery}) {
+    _removeMentionOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        final screenSize = MediaQuery.of(context).size;
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        final maxHeight = (screenSize.height - keyboardHeight) * 0.4; // 40% of available height
+
+        return Positioned(
+          width: screenSize.width * 0.8, // 80% of screen width
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            targetAnchor: Alignment.topCenter,
+            followerAnchor: Alignment.bottomCenter,
+            offset: const Offset(0, -8),
+            child: Material(
+              elevation: 0,
+              color: Colors.transparent,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: maxHeight,
+                ),
+                margin: EdgeInsets.symmetric(horizontal: screenSize.width * 0.1),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade900,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade800),
+                ),
+                child: Consumer<ChannelChatProvider>(
+                  builder: (context, provider, child) {
+                    final usersToShow = _getFilteredUsers(searchQuery, provider);
+
+                    return SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Text(
+                              'CHANNEL MEMBERS',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (usersToShow.isEmpty && searchQuery?.isNotEmpty == true)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Text(
+                                'No matching members found',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              padding: EdgeInsets.zero,
+                              itemCount: usersToShow.length,
+                              itemBuilder: (context, index) {
+                                final user = usersToShow[index];
+                                return InkWell(
+                                  onTap: () => _onMentionSelected(user),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundImage: CachedNetworkImageProvider(
+                                            ApiString.profileBaseUrl + (user.avatarUrl ?? ''),
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                user.username ?? 'Unknown',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              if (user.fullName != null)
+                                                Text(
+                                                  user.fullName!,
+                                                  style: TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 12,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+
+                          // Special Mention Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            margin: EdgeInsets.only(top: 8),
+                            child: Text(
+                              'SPECIAL MENTION',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.group,
+                            label: '@here',
+                            onTap: () => _onMentionSelected({'username': 'here'}),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.people,
+                            label: '@channel',
+                            onTap: () => _onMentionSelected({'username': 'channel'}),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.people_outline,
+                            label: '@all',
+                            onTap: () => _onMentionSelected({'username': 'all'}),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _showMentionList = true);
+  }
+
+  Widget _buildSpecialMentionItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _removeMentionOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    setState(() => _showMentionList = false);
+  }
+
+  void _onMentionSelected(dynamic user) {
+    final text = _messageController.text;
+
+    // Find the last @ before cursor
+    int lastAtIndex = text.substring(0, _mentionCursorPosition).lastIndexOf('@');
+    if (lastAtIndex == -1) return;
+
+    // Extract the substring after '@' to find the partial mention
+    int endIndex = _mentionCursorPosition;
+    while (endIndex < text.length && text[endIndex] != ' ') {
+      endIndex++; // Move until space (end of mention)
+    }
+
+    // Get the text before @mention and after the partial mention
+    final beforeMention = text.substring(0, lastAtIndex); // Text before @
+    final afterMention = text.substring(endIndex); // Text after the partial mention
+
+    // Handle both MemberDetails object and special mention map
+    String mentionText;
+    if (user is MemberDetails) {
+      mentionText = '@${user.username} ';
+    } else if (user is Map<String, dynamic>) {
+      mentionText = '@${user['username']} ';
+    } else {
+      return; // Invalid user object
+    }
+
+    // Update the TextField with corrected mention text
+    _messageController.value = TextEditingValue(
+      text: beforeMention + mentionText + afterMention,
+      selection: TextSelection.collapsed(
+        offset: beforeMention.length + mentionText.length, // Move cursor after mention
+      ),
+    );
+
+    _removeMentionOverlay();
+  }
+
+  List<dynamic> _getFilteredUsers(String? searchQuery, ChannelChatProvider provider) {
+    final List<dynamic> initialUsers = [];
+    final allMembers = provider.channelMembersList;
+
+    // If no search query, show current user and first member
+    if (searchQuery?.isEmpty ?? true) {
+      // Add current user first
+      final currentUser = allMembers.firstWhere(
+        (member) => member.sId == signInModel.data?.user?.id,
+        orElse: () => allMembers.isNotEmpty ? allMembers[0] : MemberDetails(),
+      );
+      initialUsers.add(currentUser);
+
+      // Add first member who is not the current user
+      if (allMembers.length > 1) {
+        final otherMember = allMembers.firstWhere(
+          (member) => member.sId != signInModel.data?.user?.id,
+          orElse: () => allMembers[0],
+        );
+        if (otherMember.sId != currentUser.sId) {
+          initialUsers.add(otherMember);
+        }
+      }
+      return initialUsers;
+    }
+
+    // Filter members based on search query
+    final query = searchQuery!.toLowerCase();
+    final matchingMembers = allMembers.where((member) =>
+      ((member.username?.toLowerCase().contains(query) ?? false) ||
+      (member.fullName?.toLowerCase().contains(query) ?? false))
+    ).toList();
+
+    return matchingMembers;
+  }
+
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    _messageController.addListener(_onTextChanged);
     print("CHANNELID>>> ${widget.channelId}");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       /// this for socket listen in channel chat for new message and delete //
@@ -80,8 +376,19 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       Provider.of<ChannelChatProvider>(context, listen: false).getChannelChatApiCall(channelId: widget.channelId,pageNo: 1);
       Provider.of<ChannelChatProvider>(context, listen: false).getChannelMembersList(widget.channelId);
     },);
-   }
+  }
 
+  @override
+  void dispose() {
+    _messageController.removeListener(_onTextChanged);
+    _removeMentionOverlay();
+    super.dispose();
+    _scrollController.dispose();
+    _messageController.dispose();
+    _focusNode.dispose();
+    // Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
+  }
+  
   void _showRenameChannelDialog() {
     final channelChatProv = Provider.of<ChannelChatProvider>(context,listen: false);
     final TextEditingController _nameController = TextEditingController(text: channelChatProv.getChannelInfo?.data?.name ?? "");
@@ -212,62 +519,68 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: CompositedTransformTarget(
-                    link: _layerLink,
-                    child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade900,
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: CompositedTransformTarget(
-                              link: _layerLink,
-                              child: TextField(
-                                key: _textFieldKey,
-                                maxLines: 5,
-                                minLines: 1,
-                                controller: _messageController,
-                                focusNode: _focusNode,
-                                keyboardType: TextInputType.multiline,
-                                textInputAction: TextInputAction.newline,
-                                style: TextStyle(color: AppColor.whiteColor),
-                                decoration: InputDecoration(
-                                  hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
-                                  hintStyle: TextStyle(color: Colors.grey),
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  suffixIcon: _messageController.text.isEmpty
-                                      ? Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () => FileServiceProvider.instance.pickFiles(),
-                                        child: const Icon(Icons.attach_file, color: Colors.grey),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () =>  FileServiceProvider.instance.pickImages(),
-                                        child: const Icon(Icons.image, color: Colors.grey),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () =>  showCameraOptionsBottomSheet(context),
-                                        child: const Icon(Icons.camera_alt, color: Colors.grey),
-                                      ),
-                                      const SizedBox(width: 8),
-                                    ],
-                                  )
-                                      : null,
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      // color: Colors.grey.shade900,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: CompositedTransformTarget(
+                            link: _layerLink,
+                            child: TextField(
+                              key: _textFieldKey,
+                              maxLines: 5,
+                              minLines: 1,
+                              controller: _messageController,
+                              focusNode: _focusNode,
+                              keyboardType: TextInputType.multiline,
+                              textInputAction: TextInputAction.newline,
+                              style: TextStyle(color: AppColor.whiteColor),
+                              decoration: InputDecoration(
+                                hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
+                                hintMaxLines: 1,
+                                hintStyle: TextStyle(color: Colors.grey),
+                                border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // const SizedBox(width: 8),
+                                    // Container(
+                                    //   width: 1,
+                                    //   height: 25,
+                                    //   color: Colors.white
+                                    // ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => FileServiceProvider.instance.pickFiles(),
+                                      child: const Icon(Icons.attach_file, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () =>  FileServiceProvider.instance.pickImages(),
+                                      child: const Icon(Icons.image, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () =>  showCameraOptionsBottomSheet(context),
+                                      child: const Icon(Icons.camera_alt, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
                                 ),
-                                textCapitalization: TextCapitalization.sentences,
                               ),
+                              textCapitalization: TextCapitalization.sentences,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -298,32 +611,10 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               ],
             ),
           ),
+          if(Platform.isIOS)...{
+            SizedBox(height: 20)
+          },
           selectedFilesWidget(),
-          // Container(
-          //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          //   child: Row(
-          //     children: [
-          //       IconButton(
-          //         icon: const Icon(Icons.attach_file, color: AppColor.whiteColor, size: 22),
-          //         onPressed: () {
-          //           FileServiceProvider.instance.pickFiles();
-          //         },
-          //       ),
-          //       IconButton(
-          //         icon: const Icon(Icons.image, color: AppColor.whiteColor, size: 22),
-          //         onPressed: () {
-          //           FileServiceProvider.instance.pickImages();
-          //         },
-          //       ),
-          //       IconButton(
-          //         icon: const Icon(Icons.camera_alt, color: AppColor.whiteColor, size: 22),
-          //         onPressed: () {
-          //           showCameraOptionsBottomSheet(context);
-          //         },
-          //       )
-          //     ],
-          //   ),
-          // ),
         ],
       ),
     );
@@ -922,7 +1213,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                                           otherUserProfile: snapshot.data?.data?.user?.thumbnailAvatarUrl ?? "",
                                                         );
                                                       }
-                                                      
+
                                                       return Padding(
                                                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                                                         child: Row(

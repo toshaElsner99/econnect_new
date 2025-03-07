@@ -22,6 +22,7 @@ import '../../providers/common_provider.dart';
 import '../../socket_io/socket_io.dart';
 import '../../utils/app_preference_constants.dart';
 import '../../utils/common/common_function.dart';
+import '../../utils/common/prefrance_function.dart';
 import '../chat/single_chat_message_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -62,6 +63,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
     Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
     Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+    getFCM();
+  }
+
+  getFCM() async{
+   String fcmToken = await getData(AppPreferenceConstants.fcmToken);
+   print("fcmToken => $fcmToken");
   }
 
   @override

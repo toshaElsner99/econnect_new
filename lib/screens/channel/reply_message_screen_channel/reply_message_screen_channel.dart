@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:e_connect/model/channel_members_model.dart';
 
 import '../../../main.dart';
 import '../../../model/get_reply_message_channel_model.dart';
@@ -601,7 +604,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
         color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
         border: Border(
           top: BorderSide(
-            color: Colors.grey.shade800,
+            color: Colors.grey[800]!,
             width: 0.5,
           ),
         ),
@@ -613,54 +616,73 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
             child: Row(
               children: [
                 Expanded(
-                  child: CompositedTransformTarget(
-                    link: _layerLink,
-                    child: TextField(
-                      key: _textFieldKey,
-                      controller: _messageController,
-                      focusNode: _focusNode,
-                      maxLines: 5,
-                      minLines: 1,
-                      keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
-                      style: TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        hintStyle: TextStyle(color: Colors.grey),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        suffixIcon: _messageController.text.isEmpty
-                            ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            GestureDetector(
-                              onTap: () => FileServiceProvider.instance.pickFiles(),
-                              child: const Icon(Icons.attach_file, color: Colors.grey),
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      // color: Colors.grey.shade900,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: CompositedTransformTarget(
+                            link: _layerLink,
+                            child: TextField(
+                              key: _textFieldKey,
+                              maxLines: 5,
+                              minLines: 1,
+                              controller: _messageController,
+                              focusNode: _focusNode,
+                              keyboardType: TextInputType.multiline,
+                              textInputAction: TextInputAction.newline,
+                              style: TextStyle(color: AppColor.whiteColor),
+                              decoration: InputDecoration(
+                                hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
+                                hintMaxLines: 1,
+                                hintStyle: TextStyle(color: Colors.grey),
+                                border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // const SizedBox(width: 8),
+                                    // Container(
+                                    //   width: 1,
+                                    //   height: 25,
+                                    //   color: Colors.white
+                                    // ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => FileServiceProvider.instance.pickFiles(),
+                                      child: const Icon(Icons.attach_file, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () =>  FileServiceProvider.instance.pickImages(),
+                                      child: const Icon(Icons.image, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () =>  showCameraOptionsBottomSheet(context),
+                                      child: const Icon(Icons.camera_alt, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                ),
+                              ),
+                              textCapitalization: TextCapitalization.sentences,
                             ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () => _pickImage(ImageSource.gallery),
-                              child: const Icon(Icons.image, color: Colors.grey),
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () => _showCameraOptions(context),
-                              child: const Icon(Icons.camera_alt, color: Colors.grey),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                        )
-                            : null,
-                      ),
-                      onChanged: (value) {
-                        setState(() {});
-                        _onTextChanged();
-                      },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColor.blueColor,
                     borderRadius: BorderRadius.circular(8),
@@ -669,17 +691,15 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                     icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
                     onPressed: () async {
                       final plainText = _messageController.text.trim();
-                      if(plainText.isEmpty && fileServiceProvider.selectedFiles.isEmpty) return;
-
-                      try {
+                      if(plainText.isNotEmpty || fileServiceProvider.selectedFiles.isNotEmpty) {
                         if(fileServiceProvider.selectedFiles.isNotEmpty){
                           final filesOfList = await chatProvider.uploadFiles();
                           await channelChatProvider.sendMessage(
-                              content: plainText,
-                              channelId: widget.channelId,
-                              files: filesOfList,
-                              replyId: widget.msgID,
-                              isEditFromReply: true,
+                            content: plainText,
+                            channelId: widget.channelId,
+                            files: filesOfList,
+                            replyId: widget.msgID,
+                            isEditFromReply: true,
                           );
                         } else {
                           await channelChatProvider.sendMessage(
@@ -700,8 +720,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                         });
 
                         _clearInputAndDismissKeyboard();
-                      } catch (e) {
-                        print("Error sending message: $e");
                       }
                     },
                   ),
@@ -709,6 +727,9 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
               ],
             ),
           ),
+          if(Platform.isIOS)...{
+            SizedBox(height: 20)
+          },
           selectedFilesWidget(),
         ],
       ),
@@ -968,43 +989,38 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   }
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
     final List<dynamic> initialUsers = [];
-    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
+    final allMembers = Provider.of<ChannelChatProvider>(context, listen: false).channelMembersList;
 
-    // If no search query, show first two users from API response
+    // If no search query, show current user and first member
     if (searchQuery?.isEmpty ?? true) {
-      // Add first two users if available
-      if (allUsers.isNotEmpty) {
-        initialUsers.add(allUsers[0]);
-        if (allUsers.length > 1) {
-          initialUsers.add(allUsers[1]);
+      // Add current user first
+      final currentUser = allMembers.firstWhere(
+        (member) => member.sId == signInModel.data?.user?.id,
+        orElse: () => allMembers.isNotEmpty ? allMembers[0] : MemberDetails(),
+      );
+      initialUsers.add(currentUser);
+
+      // Add first member who is not the current user
+      if (allMembers.length > 1) {
+        final otherMember = allMembers.firstWhere(
+          (member) => member.sId != signInModel.data?.user?.id,
+          orElse: () => allMembers[0],
+        );
+        if (otherMember.sId != currentUser.sId) {
+          initialUsers.add(otherMember);
         }
       }
       return initialUsers;
     }
 
-    // Filter users based on search query
+    // Filter members based on search query
     final query = searchQuery!.toLowerCase();
-
-    // First add first two users if they match the search
-    if (allUsers.isNotEmpty) {
-      if (((allUsers[0].username?.toLowerCase().contains(query) ?? false) ||
-          (allUsers[0].fullName?.toLowerCase().contains(query) ?? false))) {
-        initialUsers.add(allUsers[0]);
-      }
-      if (allUsers.length > 1 &&
-          ((allUsers[1].username?.toLowerCase().contains(query) ?? false) ||
-              (allUsers[1].fullName?.toLowerCase().contains(query) ?? false))) {
-        initialUsers.add(allUsers[1]);
-      }
-    }
-
-    // Then add other matching users
-    final otherUsers = allUsers.skip(2).where((user) =>
-    ((user.username?.toLowerCase().contains(query) ?? false) ||
-        (user.fullName?.toLowerCase().contains(query) ?? false))
+    final matchingMembers = allMembers.where((member) =>
+      ((member.username?.toLowerCase().contains(query) ?? false) ||
+      (member.fullName?.toLowerCase().contains(query) ?? false))
     ).toList();
 
-    return [...initialUsers, ...otherUsers];
+    return matchingMembers;
   }
   void _onMentionSelected(dynamic user) {
     final text = _messageController.text;
@@ -1023,20 +1039,13 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
     final beforeMention = text.substring(0, lastAtIndex); // Text before @
     final afterMention = text.substring(endIndex); // Text after the partial mention
 
-    // Handle both Users object and special mention map
+    // Handle both MemberDetails object and special mention map
     String mentionText;
-    print("User type = ${user.runtimeType}");
-    if (user is Users) { // Users from user_mention_model.dart
-      print("user = ${user.username}");
-      mentionText = '@${user.username} ';
-    }else if (user is SecondUser) {
+    if (user is MemberDetails) {
       mentionText = '@${user.username} ';
     } else if (user is Map<String, dynamic>) {
       mentionText = '@${user['username']} ';
-    } else if (user is User) {
-      mentionText = '@${user.username} ';
     } else {
-      print("user = ${user.username}");
       return; // Invalid user object
     }
 
