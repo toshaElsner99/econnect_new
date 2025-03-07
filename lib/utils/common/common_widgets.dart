@@ -1006,6 +1006,7 @@ Widget profileIconWithStatus({
   double iconSize = 14.0,
   double containerSize = 10.0,
   bool needToShowIcon = true,
+  bool isMuted = false,
 }) {
   String imageUrl = signInModel.data?.user?.id == userID
       ? ApiString.profileBaseUrl + (signInModel.data!.user!.thumbnailAvatarUrl ?? '')
@@ -1048,6 +1049,8 @@ Widget profileIconWithStatus({
           backgroundColor: Colors.grey[200],
           child: ClipOval(
             child: CachedNetworkImage(
+              color: isMuted ? Colors.black26 : null,
+              colorBlendMode: isMuted ? BlendMode.srcOver : null,
               imageUrl: imageUrl,
               width: radius * 2,
               height: radius * 2,
@@ -1063,6 +1066,7 @@ Widget profileIconWithStatus({
           Stack(
             alignment: Alignment.center,
             children: [
+              /// background ///
               Container(
                 height: containerSize,
                 width: containerSize,
@@ -1071,7 +1075,20 @@ Widget profileIconWithStatus({
                   shape: BoxShape.circle,
                 ),
               ),
+              /// status Icon ///
               getCommonStatusIcons(status: status, size: iconSize, assetIcon: false),
+              /// mute overlay //
+              Visibility(
+                visible: isMuted,
+                child: Container(
+                  height: containerSize,
+                  width: containerSize,
+                  decoration: BoxDecoration(
+                    color: AppColor.borderColor.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
             ],
           ),
       ],
@@ -2016,7 +2033,7 @@ Widget commonHTMLText({required String message}) {
 //     enableCaching: true,
 //   );
 // }
-Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false, Color? color}){
+Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false, Color? color, bool isMuted = false}){
   return Container(
     width: 32,
     height: 32,
@@ -2029,7 +2046,7 @@ Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false,
         isPrivate == true ? AppImage.lockIcon : isShowPersons == true ? AppImage.persons : AppImage.globalIcon,
         width: 16,
         height: 16,
-        color: color ?? Colors.white,
+        color: isMuted  ? AppColor.borderColor : color ?? Colors.white,
       ),
     ),
   );

@@ -344,6 +344,8 @@ class DownloadFileProvider extends ChangeNotifier {
       Provider.of<LoadingProvider>(context, listen: false).stopLoading();
     }
   }
+
+
   downloadProgressDialog(BuildContext context) {
     return showDialog(
       context: context,
