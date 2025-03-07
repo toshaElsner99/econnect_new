@@ -40,6 +40,8 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	<key>UIApplicationSupportsRemoteNotifications</key>
+    <true/>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -61,5 +63,25 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+    <string>We need access to your photo library to pick images.</string>
+
+    <key>NSCameraUsageDescription</key>
+    <string>We need access to your camera to take pictures.</string>
+
+    <key>NSMicrophoneUsageDescription</key>
+    <string>We need access to your microphone for audio recording.</string>
+
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>We need permission to save images to your gallery.</string>
+
+    <key>NSDocumentsDirectoryUsageDescription</key>
+    <string>We need access to your documents directory for file storage.</string>
+
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
 </dict>
 </plist>
