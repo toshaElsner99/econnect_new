@@ -132,9 +132,9 @@ class SocketIoProvider extends ChangeNotifier{
     // }
   }
 
-  deleteMessagesSC({required Map<String, dynamic> response,bool? isForChannel = false}) {
+  deleteMessagesSC({required Map<String, dynamic> response}) {
     print("emit>>>>> Delete Message $response");
-    socket.emit(isForChannel == true ? deleteMessagesChannelEmit : deleteMessagesEmit , response);
+    socket.emit(deleteMessagesEmit , response);
   }
 
   deleteMessagesFromChannelSC({required Map<String, dynamic> response}) {
@@ -177,6 +177,7 @@ class SocketIoProvider extends ChangeNotifier{
       print("⚠️ Socket is not connected. Attempting to reconnect...");
       socket.connect();
     }
+    socket.off(deleteMessageChannelListen);
     socket.on((deleteMessageChannelListen), (data) {
       print("deleteMessageForListen >>> $data");
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId,pageNo: 1,isFromMsgListen: true);
@@ -185,10 +186,12 @@ class SocketIoProvider extends ChangeNotifier{
       print("listSingleChatScreen >>> $data");
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId,pageNo: 1,isFromMsgListen: true);
     });
+    socket.off(notificationForPinMessagesChannelListen);
     socket.on(notificationForPinMessagesChannelListen, (data) {
       print("listSingleChatScreen >>> $data");
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId,pageNo: 1,isFromMsgListen: true);
     });
+    socket.off(renameChannel);
     socket.on(renameChannel, (data) {
       print("listSingleChatScreen >>> $data");
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelInfoApiCall(channelId: channelId);
@@ -196,6 +199,22 @@ class SocketIoProvider extends ChangeNotifier{
   }
 
 
+
+  void listenDeleteMessageSocketForReply({required String msgId,bool isListenForChannel = false}){
+    if(!isListenForChannel){
+      socket.off(deleteMessageForListen);
+      socket.on((deleteMessageForListen), (data) {
+        print("deleteMessageForListen >>> $data");
+        Provider.of<ChatProvider>(navigatorKey.currentState!.context).getReplyMessageList(msgId: msgId, fromWhere: "SOCKET LISTEN FROM DELETED MESSAGE CHAT");
+      });
+    }else{
+      socket.off(deleteMessageChannelListen);
+      socket.on((deleteMessageChannelListen), (data) {
+        print("deleteMessageForListen >>> $data");
+        Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context).getReplyMessageListChannel(msgId: msgId, fromWhere: "SOCKET LISTEN FROM DELETED MESSAGE CHANNEL");
+      });
+    }
+  }
 
 /// single Chat //
 //   void socketListenPinMessage({required Function callFun , required String oppositeUserId,}){

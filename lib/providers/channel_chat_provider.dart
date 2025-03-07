@@ -100,7 +100,14 @@ class ChannelChatProvider extends ChangeNotifier{
       stopLoading();
     }
   }
-  Future<void> sendMessage({required dynamic content , required String channelId, List<String>? files,String? replyId , String? editMsgID,})async{
+  Future<void> sendMessage({
+    required dynamic content,
+    required String channelId,
+    List<String>? files,
+    String? replyId,
+    String? editMsgID,
+    bool isEditFromReply = false,
+  }) async {
     final requestBody = {
       "content": content,
       "channelId": channelId,
@@ -119,21 +126,36 @@ class ChannelChatProvider extends ChangeNotifier{
     if (files != null && files.isNotEmpty) {
       requestBody["files"] = files;
     }
+    
     final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST,reqBody: requestBody);
-    if(statusCode200Check(response)){
-      socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
+    final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST, reqBody: requestBody);
+    
+    if (statusCode200Check(response)) {
+      socketProvider.sendMessagesSC(response: response['data'], emitReplyMsg: replyId != null ? true : false);
+      print("editMessageId>> $editMsgID $isEditFromReply");
       if (editMsgID != null && editMsgID.isNotEmpty) {
-        int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.id == editMsgID));
-
-        if (editIndex != -1) {
-          msg.Message editedMessage = msg.Message.fromJson(response['data']);
-          editedMessage.isEdited = true;
-          messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.id == editMsgID)] = editedMessage;
+        if(isEditFromReply == true){
+          for (var message in getReplyMessageChannelModel!.data!.messagesList!) {
+            int groupMessageIndex = message.messagesGroupList!.indexWhere((msg) => msg.sId == editMsgID);
+            if (groupMessageIndex != -1) {
+              var groupMessage = message.messagesGroupList![groupMessageIndex];
+              groupMessage.content = content;
+              groupMessage.isEdited = true;
+              break;
+            }
+          }
+        } else {
+          int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.id == editMsgID));
+          if (editIndex != -1) {
+            msg.Message editedMessage = msg.Message.fromJson(response['data']);
+            editedMessage.isEdited = true;
+            messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.id == editMsgID)] = editedMessage;
+          }
         }
-      } else if(replyId != null && replyId != ""){
+      } else if (replyId != null && replyId.isNotEmpty) {
         getReplyMessageListChannel(msgId: replyId, fromWhere: "Reply Send Channel");
-      }else /*if(replyId == null && replyId == "")*/ {
+      } else {
+        // Existing logic for adding new messages
         int existingIndex = messageGroups.indexWhere((item) => item.id == todayDate);
         if (existingIndex != -1) {
           messageGroups[existingIndex].messages!.add(msg.Message.fromJson(response['data']));
@@ -145,13 +167,6 @@ class ChannelChatProvider extends ChangeNotifier{
             "count": 1,
           }));
         }
-      }
-      if(replyId != null){
-        // getMessagesList(oppositeUserId: receiverId);
-        print("I'm In sendMessage");
-        // getReplyMessageList(msgId: replyId,fromWhere: "SEND_REPLY_MESSAGE");
-      }else {
-        // getMessagesList(oppositeUserId: receiverId);
       }
     }
     notifyListeners();
@@ -400,11 +415,10 @@ class ChannelChatProvider extends ChangeNotifier{
     }
   }
 
-  Future<void> deleteMessageForReply({required String messageId, required firsMessageId})async{
+  Future<void> deleteMessageForReplyChannel({required String messageId, required firsMessageId})async{
     final response = await ApiService.instance.request(endPoint: ApiString.deleteMessageFromChannel(messageId), method: Method.DELETE);
     if(statusCode200Check(response)){
       deleteMessageFromReplyModel(messageId);
-      socketProvider.deleteMessagesSC(response: {"data": response['data']},isForChannel: true);
       socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
       if(firsMessageId == messageId) {
         pop();
@@ -414,9 +428,15 @@ class ChannelChatProvider extends ChangeNotifier{
   }
 
   /// Model Functionality ///
+  // void deleteMessageFromReplyModel(String messageId) {
+  //   for (var messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+  //     messageGroup.groupMessages?.removeWhere((message) => message.sId == messageId);
+  //   }
+  //   notifyListeners();
+  // }
   void deleteMessageFromReplyModel(String messageId) {
     for (var messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
-      messageGroup.groupMessages?.removeWhere((message) => message.sId == messageId);
+      messageGroup.messages?.removeWhere((message) => message.sId == messageId);
     }
     notifyListeners();
   }

@@ -990,15 +990,22 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                 // 🔴 Red dot circle
                                 Visibility(
                                   replacement: SizedBox.shrink(),
-                                  visible: true,
-                                  // visible: messageList.replies != null && messageList.replies!.isNotEmpty &&
-                                  //     messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false),
+                                  visible: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any(
+                                   (reply) => !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) && (reply.isSeen ?? false) == false,),
                                   child: Container(
                                     margin:EdgeInsets.only(right: 5),
-                                    width: 10,
-                                    height: 10,
-                                    // width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
-                                    // height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                    width: messageList.replies != null && messageList.replies!.isNotEmpty &&
+                                        messageList.replies!.any(
+                                              (reply) => !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) &&
+                                              (reply.isSeen ?? false) == false,
+                                        )
+                                        ? 10 : 0,
+                                    height: messageList.replies != null && messageList.replies!.isNotEmpty &&
+                                        messageList.replies!.any(
+                                              (reply) => !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) &&
+                                              (reply.isSeen ?? false) == false,
+                                        )
+                                        ? 10 : 0,
                                     decoration: const BoxDecoration(
                                       color: Colors.red,
                                       shape: BoxShape.circle,

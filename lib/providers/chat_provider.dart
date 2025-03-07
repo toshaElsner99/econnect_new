@@ -128,6 +128,7 @@ class ChatProvider extends  ChangeNotifier {
   void disposeReplyMSG(){
     socketProvider.socket.off("reply_notification");
   }
+
   void getReplyListUpdateSC(String mId) {
     try {
       // Remove any existing listener before adding a new one
@@ -262,17 +263,30 @@ class ChatProvider extends  ChangeNotifier {
       /// find where to add ///
       if (editMsgID != null && editMsgID.isNotEmpty) {
         if(isEditFromReply == true){
+          if (getReplyMessageModel != null && getReplyMessageModel!.data != null) {
+            // Search for the message in the getReplyMessageModel
+            for (var message in getReplyMessageModel!.data!.messages!) {
+              var groupMessage = message.groupMessages!.firstWhere(
+                    (msg) => msg.sId == editMsgID,
+                // orElse: () => ,
+              );
+              if (groupMessage != null) {
+                // Update the content of the found message
+                groupMessage.content = content; // Update content
+                groupMessage.isEdited = true; // Mark as edited
+                break; // Exit the loop once the message is found and updated
+              }
+            }
+          }
+        }else {
+          int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.sId == editMsgID));
 
+          if (editIndex != -1) {
+            msg.Messages editedMessage = msg.Messages.fromJson(response['data']);
+            editedMessage.isEdited = true; // Set isEdited to true
+            messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
+          }
         }
-        int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.sId == editMsgID));
-
-        if (editIndex != -1) {
-          // Update the existing message
-          msg.Messages editedMessage = msg.Messages.fromJson(response['data']);
-          editedMessage.isEdited = true; // Set isEdited to true
-          messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
-        }
-
       } else if(replyId != null && replyId != ""){
         // int existingIndex = getReplyMessageModel!.data!.messages!.indexWhere((item) => item.date == todayDate);
         // if (existingIndex != -1) {
@@ -309,6 +323,7 @@ class ChatProvider extends  ChangeNotifier {
     }
     notifyListeners();
   }
+
   Future<void> forwardMessage({required Map<String,dynamic> forwardBody})async{
     final response = await ApiService.instance.request(endPoint: forwardBody.keys.contains('channelId') ? ApiString.sendChannelMessage : ApiString.sendMessage, method: Method.POST,reqBody: forwardBody,needLoader: false);
     if(statusCode200Check(response)){

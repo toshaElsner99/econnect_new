@@ -66,6 +66,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       chatProvider.getReplyListUpdateSC(widget.messageId);
+      socketProvider.listenDeleteMessageSocketForReply(msgId: widget.messageId);
       socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
       _fetchAndCacheUserDetails();
       print("I'm In initState");
@@ -248,6 +249,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   })  {
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
       bool pinnedMsg = messageList.isPinned ?? false;
+      bool isEdited = messageList.isEdited ?? false;
       return Container(
         color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
         padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 8.0),
@@ -293,7 +295,57 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             ),
                           ],
                         ),
-                      commonHTMLText(message: message),
+                      Visibility(
+                        visible: message.isNotEmpty,
+                        child: Wrap(
+                          direction: Axis.horizontal,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                children: [
+                                  WidgetSpan(
+                                    alignment: PlaceholderAlignment.baseline,
+                                    baseline: TextBaseline.alphabetic,
+                                    child: commonHTMLText(message: message),
+                                  ),
+
+                                  if (isEdited)
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.baseline,
+                                      baseline: TextBaseline.alphabetic,
+                                      child: Padding(
+                                        padding:
+                                        const EdgeInsets.only(left: 4.0),
+                                        // Space between content & label
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          // Ensures compact fit
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 13,
+                                              color: AppColor.borderColor,
+                                            ),
+                                            const SizedBox(width: 2),
+                                            commonText(
+                                              text: "Edited",
+                                              fontSize: 10,
+                                              color: AppColor.borderColor,
+                                              fontStyle: FontStyle.italic,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(

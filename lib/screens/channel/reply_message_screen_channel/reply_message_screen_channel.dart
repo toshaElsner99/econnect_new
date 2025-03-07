@@ -1,6 +1,3 @@
-
-
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
@@ -62,10 +59,14 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
     super.initState();
     _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      /// socket listen messages list ///
       channelChatProvider.getReplyListUpdateSocketForChannel(widget.msgID);
+      /// socket listen messages list for deleted message ///
+      socketProvider.listenDeleteMessageSocketForReply(msgId: widget.msgID,isListenForChannel: true);
       // socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
       // _fetchAndCacheUserDetails();
       print("I'm In initState");
+      /// For the first time init ///
       channelChatProvider.getReplyMessageListChannel(msgId: widget.msgID,fromWhere: "SCREEN INIT");
       // Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.channelID);
       // Provider.of<CommonProvider>(context, listen: false).getUserApi(id :widget.receiverId);
@@ -181,6 +182,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   })  {
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
       bool pinnedMsg = messageList.isPinned ?? false;
+      bool isEdited = messageList.isEdited ?? false;
       return Container(
         color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
         padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 8.0),
@@ -226,7 +228,57 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                           ),
                         ],
                       ),
-                      commonHTMLText(message: message),
+                      Visibility(
+                        visible: message.isNotEmpty,
+                        child: Wrap(
+                          direction: Axis.horizontal,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                children: [
+                                  WidgetSpan(
+                                    alignment: PlaceholderAlignment.baseline,
+                                    baseline: TextBaseline.alphabetic,
+                                    child: commonHTMLText(message: message),
+                                  ),
+
+                                  if (isEdited)
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.baseline,
+                                      baseline: TextBaseline.alphabetic,
+                                      child: Padding(
+                                        padding:
+                                        const EdgeInsets.only(left: 4.0),
+                                        // Space between content & label
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          // Ensures compact fit
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 13,
+                                              color: AppColor.borderColor,
+                                            ),
+                                            const SizedBox(width: 2),
+                                            commonText(
+                                              text: "Edited",
+                                              fontSize: 10,
+                                              color: AppColor.borderColor,
+                                              fontStyle: FontStyle.italic,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(
@@ -298,7 +350,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
 
                           )
                       ),
-
                       Visibility(
                         visible: messageList.isMedia == true,
                         child: ListView.builder(
@@ -359,7 +410,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                     _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                   }),
                   onDelete: () {
-                    channelChatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.msgID);
+                    channelChatProvider.deleteMessageForReplyChannel(messageId: messageId.toString(),firsMessageId: widget.msgID);
                   },
                   createdAt:"${messageList.createdAt}",)
               ],
@@ -447,14 +498,16 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                         content: plainText,
                         channelId: widget.channelId,
                         files: filesOfList,
-                        replyId: widget.msgID
+                        replyId: widget.msgID,
+                        isEditFromReply: true,
                     );
                   } else {
                     await channelChatProvider.sendMessage(
                         content: plainText,
                         channelId: widget.channelId,
                         replyId: widget.msgID,
-                        editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId
+                        editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
+                        isEditFromReply: true,
                     );
                   }
 
