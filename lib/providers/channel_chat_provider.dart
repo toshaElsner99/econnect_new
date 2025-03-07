@@ -464,4 +464,164 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
     final response = await ApiService.instance.request(endPoint: ApiString.addChannelTO, method: Method.POST,reqBody: requestBody);
 }
 
+
+// Reaction of message
+  Future<void> reactMessage(
+      {required String messageId,
+        required String reactUrl,
+        required String channelId,
+        required String isFrom}) async {
+    Map<String, dynamic> reqBody = {
+      "messageId": messageId,
+      "reaction": reactUrl
+    };
+    print("RECAT URL + $reactUrl");
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.reactMessage,
+        method: Method.POST,
+        reqBody: reqBody);
+    if (statusCode200Check(response)) {
+      print("Reacted Successfully");
+      print("isFrom = $isFrom");
+      if (isFrom == "Channel") {
+        // Manually update the message model with the new reaction
+        for (var messageGroup in messageGroups) {
+          for (var message in messageGroup.messages ?? []) {
+            if (message.id == messageId) {
+              // Initialize reactions list if null
+              message.reactions ??= [];
+
+              // Check if user already reacted with this emoji
+              final existingReactionIndex = message.reactions!.indexWhere(
+                      (reaction) =>
+                  reaction.userId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+
+              if (existingReactionIndex != -1) {
+                // Remove existing reaction if found
+                message.reactions!.removeAt(existingReactionIndex);
+              } else {
+                // Add new reaction
+
+                message.reactions!.add(Reaction(
+                  emoji: reactUrl,
+                  userId: signInModel.data?.user?.id,
+                  username: signInModel.data?.user?.username,
+                  id: DateTime.now().toString(), // Temporary ID
+                ));
+
+
+              }
+
+              notifyListeners();
+              break;
+            }
+          }
+        }
+      } else if (isFrom == "ChannelReply") {
+        // Find the message in getReplyMessageModel and update its reactions
+        for (var messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+          for (var message in messageGroup.messagesGroupList ?? []) {
+            if (message.sId == messageId) {
+              // Initialize reactions list if null
+              message.reactions ??= [];
+
+              // Check if user already reacted with this emoji
+              final existingReactionIndex = message.reactions!.indexWhere(
+                      (reaction) =>
+                  reaction.userId?.sId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+
+              if (existingReactionIndex != -1) {
+                // Remove existing reaction if found
+                message.reactions!.removeAt(existingReactionIndex);
+              } else {
+                // Add new reaction
+                message.reactions!.add(Reactions(
+                  emoji: reactUrl,
+                  userId: UserId(
+                    sId: signInModel.data?.user?.id,
+                    username: signInModel.data?.user?.username,
+                  ),
+                  sId: DateTime.now().toString(), // Temporary ID
+                ));
+              }
+
+              notifyListeners();
+              break;
+            }
+          }
+        }
+      }
+      socketProvider.reactMessagesInChannelSC(response: {
+        "channelId": channelId, // Channel ID
+        "senderId": signInModel.data?.user?.id,
+      });
+
+    }
+  }
+
+  Future<void> reactionRemove(
+      {required String messageId,
+        required String reactUrl,
+        required String channelId,
+        required String isFrom}) async {
+    Map<String, dynamic> reqBody = {
+      "messageId": messageId,
+      "reaction": reactUrl
+    };
+    print("reactionRemove Fun");
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.removeReact, method: Method.POST, reqBody: reqBody);
+    if (statusCode200Check(response)) {
+      print("React removed Successfully");
+      print("isFrom = $isFrom");
+
+      if (isFrom == "Channel") {
+        // Remove reaction from chat message model
+        for (var messageGroup in messageGroups) {
+          for (var message in messageGroup.messages ?? []) {
+            if (message.id == messageId) {
+              // Find and remove the reaction
+              final existingReactionIndex = message.reactions!.indexWhere(
+                      (reaction) =>
+                  reaction.userId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+              if (existingReactionIndex != -1) {
+                message.reactions!.removeAt(existingReactionIndex);
+                notifyListeners();
+              }
+              break;
+            }
+          }
+        }
+      } else if (isFrom == "ChannelReply") {
+        // Remove reaction from reply message model
+        for (var messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+          for (var message in messageGroup.messagesGroupList ?? []) {
+            if (message.sId == messageId) {
+              // Find and remove the reaction
+              final existingReactionIndex = message.reactions!.indexWhere(
+                      (reaction) =>
+                  reaction.userId?.sId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+              if (existingReactionIndex != -1) {
+                message.reactions!.removeAt(existingReactionIndex);
+                notifyListeners();
+              }
+              break;
+            }
+          }
+        }
+      }
+
+      socketProvider.reactMessagesInChannelSC(response: {
+        "channelId": channelId,// Channel ID
+        "senderId": signInModel.data?.user?.id,
+      });
+
+    }
+  }
+
+
 }
