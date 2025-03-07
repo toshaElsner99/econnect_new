@@ -26,7 +26,8 @@ class ApiString{
   static const leaveChannel = "channels/leaveChannel/";
   static const userSuggestions = "user/user-suggestions";
   static const searchUser = "user/search-user";
-  static const deviceToken = "user/deviceToken";
+  static const addDeviceToken = "user/deviceToken";
+  static const removeDeviceToken = "user/removeDeviceToken";
   // Chat
 
   static const getMessages = "messages/get-message";

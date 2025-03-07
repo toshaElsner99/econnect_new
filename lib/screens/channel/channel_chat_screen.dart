@@ -16,6 +16,7 @@ import 'package:provider/provider.dart';
 import '../../main.dart';
 import '../../model/channel_members_model.dart';
 import '../../providers/channel_list_provider.dart';
+import '../../providers/chat_provider.dart';
 import '../../providers/download_provider.dart';
 import '../../providers/file_service_provider.dart';
 import '../../socket_io/socket_io.dart';
@@ -25,6 +26,7 @@ import '../../utils/app_preference_constants.dart';
 import '../chat/forward_message/forward_message_screen.dart';
 import '../chat/reply_message_screen/reply_message_screen.dart';
 import 'channel_info_screen/channel_info_screen.dart';
+import 'package:e_connect/model/get_user_model.dart';
 
 class ChannelChatScreen extends StatefulWidget {
   final String channelId;
@@ -45,6 +47,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   String currentUserMessageId = "";
   final ScrollController _scrollController = ScrollController();
+  final _textFieldKey = GlobalKey();
   void pagination({required String channelId}) {
     _scrollController.addListener(() {
       if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
@@ -60,7 +63,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   _scrollController.dispose();
   _messageController.dispose();
   _focusNode.dispose();
-  Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
+  // Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
   }
   
   @override
@@ -220,18 +223,47 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: TextField(
-                              controller: _messageController,
-                              focusNode: _focusNode,
-                              style: TextStyle(color: AppColor.whiteColor),
-                              decoration: InputDecoration(
-                                hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
-                                hintStyle: TextStyle(color: Colors.grey),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: CompositedTransformTarget(
+                              link: _layerLink,
+                              child: TextField(
+                                key: _textFieldKey,
+                                maxLines: 5,
+                                minLines: 1,
+                                controller: _messageController,
+                                focusNode: _focusNode,
+                                keyboardType: TextInputType.multiline,
+                                textInputAction: TextInputAction.newline,
+                                style: TextStyle(color: AppColor.whiteColor),
+                                decoration: InputDecoration(
+                                  hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
+                                  hintStyle: TextStyle(color: Colors.grey),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  suffixIcon: _messageController.text.isEmpty
+                                      ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () => FileServiceProvider.instance.pickFiles(),
+                                        child: const Icon(Icons.attach_file, color: Colors.grey),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () =>  FileServiceProvider.instance.pickImages(),
+                                        child: const Icon(Icons.image, color: Colors.grey),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () =>  showCameraOptionsBottomSheet(context),
+                                        child: const Icon(Icons.camera_alt, color: Colors.grey),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  )
+                                      : null,
+                                ),
+                                textCapitalization: TextCapitalization.sentences,
                               ),
-                              maxLines: null,
-                              textCapitalization: TextCapitalization.sentences,
                             ),
                           ),
                         ],
@@ -267,31 +299,31 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
             ),
           ),
           selectedFilesWidget(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.attach_file, color: AppColor.whiteColor, size: 22),
-                  onPressed: () {
-                    FileServiceProvider.instance.pickFiles();
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.image, color: AppColor.whiteColor, size: 22),
-                  onPressed: () {
-                    FileServiceProvider.instance.pickImages();
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.camera_alt, color: AppColor.whiteColor, size: 22),
-                  onPressed: () {
-                    showCameraOptionsBottomSheet(context);
-                  },
-                )
-              ],
-            ),
-          ),
+          // Container(
+          //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          //   child: Row(
+          //     children: [
+          //       IconButton(
+          //         icon: const Icon(Icons.attach_file, color: AppColor.whiteColor, size: 22),
+          //         onPressed: () {
+          //           FileServiceProvider.instance.pickFiles();
+          //         },
+          //       ),
+          //       IconButton(
+          //         icon: const Icon(Icons.image, color: AppColor.whiteColor, size: 22),
+          //         onPressed: () {
+          //           FileServiceProvider.instance.pickImages();
+          //         },
+          //       ),
+          //       IconButton(
+          //         icon: const Icon(Icons.camera_alt, color: AppColor.whiteColor, size: 22),
+          //         onPressed: () {
+          //           showCameraOptionsBottomSheet(context);
+          //         },
+          //       )
+          //     ],
+          //   ),
+          // ),
         ],
       ),
     );
@@ -820,6 +852,180 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           ],
                         ),
                       ),
+                      if (messageList.reactions?.isNotEmpty ?? false)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            // mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Reactions',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(height: 12),
+                                            ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: MediaQuery.of(context).size.height * 0.5,
+                                              ),
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: messageList.reactions?.length ?? 0,
+                                                itemBuilder: (context, index) {
+                                                  final reaction = messageList.reactions![index];
+                                                  final userDetails = Provider.of<CommonProvider>(context, listen: false).getUserByIDCallForSecondUser(userId: reaction.userId);
+                                                  return FutureBuilder<GetUserModelSecondUser?>(
+                                                    future: userDetails,
+                                                    builder: (context, snapshot) {
+                                                      Widget profileWidget;
+                                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                                        profileWidget = Container(
+                                                          width: 32,
+                                                          height: 32,
+                                                          decoration: BoxDecoration(
+                                                            shape: BoxShape.circle,
+                                                            color: Colors.grey[800],
+                                                          ),
+                                                          child: Center(
+                                                            child: SizedBox(
+                                                              width: 20,
+                                                              height: 20,
+                                                              child: CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[600]!),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      } else {
+                                                        profileWidget = profileIconWithStatus(
+                                                          userID: reaction.userId ?? "",
+                                                          status: "online",
+                                                          radius: 16,
+                                                          otherUserProfile: snapshot.data?.data?.user?.thumbnailAvatarUrl ?? "",
+                                                        );
+                                                      }
+                                                      
+                                                      return Padding(
+                                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                        child: Row(
+                                                          children: [
+                                                            profileWidget,
+                                                            SizedBox(width: 12),
+                                                            Expanded(
+                                                              child: Text(
+                                                                snapshot.data?.data?.user?.username ?? reaction.username ?? "Unknown",
+                                                                style: TextStyle(
+                                                                  color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            CachedNetworkImage(
+                                                              imageUrl: reaction.emoji ?? "",
+                                                              height: 24,
+                                                              width: 24,
+                                                              errorWidget: (context, url, error) => Icon(Icons.error, size: 24),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Icon(Icons.info_outline, size: 20),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                  ),
+                                  child: Wrap(
+                                    spacing: 4,
+                                    runSpacing: 4,
+                                    alignment: WrapAlignment.start,
+                                    children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                      bool hasUserReacted = messageList.reactions!.any((reaction) =>
+                                      reaction.userId == signInModel.data?.user?.id &&
+                                          reaction.emoji == entry.key);
+
+                                      return GestureDetector(
+                                        onTap: () {
+                                          if (hasUserReacted) {
+                                            context.read<ChannelChatProvider>().reactionRemove(
+                                                messageId: messageList.id!,
+                                                reactUrl: entry.key,
+                                                channelId: widget.channelId,
+                                                isFrom: "Channel"
+                                            );
+                                          } else {
+                                            context.read<ChannelChatProvider>().reactMessage(
+                                                messageId: messageList.id!,
+                                                reactUrl: entry.key,
+                                                channelId: widget.channelId,
+                                                isFrom: "Channel"
+                                            );
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              CachedNetworkImage(
+                                                imageUrl: entry.key,
+                                                height: 20,
+                                                width: 20,
+                                                errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                entry.value.toString(),
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: hasUserReacted ? Colors.blue : null,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(

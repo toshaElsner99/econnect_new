@@ -1,3 +1,5 @@
+import 'package:e_connect/model/message_model.dart';
+
 class ChannelChatModel {
   int? statusCode;
   int? status;
@@ -125,7 +127,7 @@ class Message {
   bool? isSeen;
   bool? isDeleted;
   List<dynamic>? taggedUsers;
-  List<dynamic>? reactions;
+  List<Reaction>? reactions;
   DateTime? createdAt;
   DateTime? updatedAt;
   int? v;
@@ -187,7 +189,9 @@ class Message {
       isSeen: json['is_seen'],
       isDeleted: json['isDeleted'],
       taggedUsers: json['tagged_users'] != null ? List<dynamic>.from(json['tagged_users']) : null,
-      reactions: json['reactions'] != null ? List<dynamic>.from(json['reactions']) : null,
+      reactions: json['reactions'] != null
+          ? List<Reaction>.from(json['reactions'].map((x) => Reaction.fromJson(x)))
+          : null,
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
       v: json['__v'],
@@ -237,6 +241,36 @@ class Message {
       'forwards': forwards?.toJson(),
       'senderOfForward': senderOfForward?.toJson(),
     };
+  }
+}
+
+class Reaction {
+  String? emoji;
+  String? userId;
+  String? id;
+  String? username;
+
+  Reaction({
+    this.emoji,
+    this.userId,
+    this.id,
+    this.username,
+  });
+
+  Reaction.fromJson(Map<String, dynamic> json) {
+    emoji = json['emoji'];
+    userId = json['userId'];
+    id = json['_id'];
+    username = json['username'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['emoji'] = emoji;
+    data['userId'] = userId;
+    data['_id'] = id;
+    data['username'] = username;
+    return data;
   }
 }
 

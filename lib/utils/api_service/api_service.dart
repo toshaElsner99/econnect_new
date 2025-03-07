@@ -54,7 +54,7 @@ class ApiService {
 
     try {
       if(needLoader == true) startLoading();
-      if(endPoint == ApiString.closeConversation || endPoint == ApiString.sendMessage || endPoint == ApiString.sendChannelMessage || endPoint == ApiString.deviceToken){
+      if(endPoint == ApiString.closeConversation || endPoint == ApiString.sendMessage || endPoint == ApiString.sendChannelMessage || endPoint == ApiString.addDeviceToken || endPoint == ApiString.removeDeviceToken){
         print("IN close");
         requestHeaders.clear();
         requestHeaders.addAll({

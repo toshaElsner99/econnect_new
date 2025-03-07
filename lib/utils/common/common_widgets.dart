@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import '../../model/message_model.dart';
+import '../../providers/channel_chat_provider.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/common_provider.dart';
 import '../../providers/file_service_provider.dart';
@@ -2926,13 +2927,24 @@ void showReactionBar(BuildContext context, String messageId, String receiverId, 
         child: reactionBar(
           context: context,
           onReactionSelected: (reactionUrl) {
-            final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-            chatProvider.reactMessage(
-              messageId: messageId,
-              reactUrl: reactionUrl,
-              receiverId: receiverId,
-              isFrom: isFrom
-            );
+            if(isFrom == "Chat" && isFrom == "Reply") {
+              final chatProvider =
+                  Provider.of<ChatProvider>(context, listen: false);
+              chatProvider.reactMessage(
+                  messageId: messageId,
+                  reactUrl: reactionUrl,
+                  receiverId: receiverId,
+                  isFrom: isFrom);
+            }else{
+              final channelChatProvider =
+              Provider.of<ChannelChatProvider>(context, listen: false);
+              channelChatProvider.reactMessage(
+                  messageId: messageId,
+                  reactUrl: reactionUrl,
+                  channelId: receiverId,
+                  isFrom: isFrom
+              );
+            }
             Navigator.pop(context);
             print("Selected reaction: $reactionUrl"); // Print the selected reaction URL
           },

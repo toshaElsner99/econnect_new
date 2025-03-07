@@ -45,7 +45,7 @@ class SignInProvider extends ChangeNotifier {
         reqBody: requestBody,
       );
       if (statusCode200Check(response)) {
-        fcmTokenSendInAPI(false);
+        fcmTokenSendInAPI();
         await setBool(AppPreferenceConstants.isLoginPrefs, true);
         signInModel = SignInModel.fromJson(response);
         signInModel.saveToPrefs();
@@ -59,23 +59,38 @@ class SignInProvider extends ChangeNotifier {
     }
   }
 
-  fcmTokenSendInAPI(bool isFromLogout) async {
+  fcmTokenSendInAPI() async {
     String? fcmToken = "";
-    if (!isFromLogout) {
-      fcmToken = await FirebaseMessaging.instance.getToken();
-      await setData(AppPreferenceConstants.fcmToken, fcmToken ?? "");
-    } else {
-      fcmToken = await getData(AppPreferenceConstants.fcmToken);
-    }
-    print("FCM_Token From logout : $isFromLogout ::::> $fcmToken");
+
+    fcmToken = await FirebaseMessaging.instance.getToken();
+    await setData(AppPreferenceConstants.fcmToken, fcmToken ?? "");
+
+    print("FCM_Token From login :::::> $fcmToken");
     if (fcmToken != null) {
       final requestBody = {"deviceToken": fcmToken};
       final response = await ApiService.instance.request(
-          endPoint: ApiString.deviceToken,
+          endPoint: ApiString.addDeviceToken,
           method: Method.POST,
           reqBody: requestBody);
       if (statusCode200Check(response)) {
         print("FCM Token Send Successfully");
+      }
+    }
+  }
+
+  fcmTokenRemoveInAPI() async {
+    String? fcmToken = "";
+    fcmToken = await getData(AppPreferenceConstants.fcmToken);
+
+    print("FCM_Token From logout :::::> $fcmToken");
+    if (fcmToken != null) {
+      final requestBody = {"deviceToken": fcmToken};
+      final response = await ApiService.instance.request(
+          endPoint: ApiString.removeDeviceToken,
+          method: Method.POST,
+          reqBody: requestBody);
+      if (statusCode200Check(response)) {
+        print("FCM Token Removed Successfully");
       }
     }
   }

@@ -205,6 +205,12 @@ class SocketIoProvider extends ChangeNotifier{
       print("listSingleChatScreen >>> $data");
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelInfoApiCall(channelId: channelId);
     });
+    socket.off(notificationForMessageReactionChannel);
+    socket.on(notificationForMessageReactionChannel, (data) {
+      print("socketListenReactMessageInChannelScreen >>> $data");
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId,pageNo: 1,isFromMsgListen: true);
+
+    });
   }
 
 
@@ -263,7 +269,7 @@ class SocketIoProvider extends ChangeNotifier{
     socket.emit(addMember,response);
   }
 
-  reactMessagesSC({required Map<String, dynamic> response,bool? isForChannel = false}) {
+  reactMessagesSC({required Map<String, dynamic> response}) {
     print("emit>>>>> React Message $response");
     socket.emit(messageReaction , response);
   }
@@ -272,6 +278,19 @@ class SocketIoProvider extends ChangeNotifier{
     socket.off(notificationForMessageReacting);
     socket.on(notificationForMessageReacting, (data) {
       print("notificationForMessageReacting >>> $data");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getReplyMessageList(msgId: msgId!, fromWhere: "PIN_MSG_SOCKET");
+    });
+  }
+
+  reactMessagesInChannelSC({required Map<String, dynamic> response}) {
+    print("emit>>>>> reactMessagesInChannelSC $response");
+    socket.emit(messageReactionToChannel , response);
+  }
+
+  void socketListenReactMessageInChannelReplyScreen({String? msgId }){
+    socket.off(notificationForMessageReactionChannel);
+    socket.on(notificationForMessageReactionChannel, (data) {
+      print("socketListenReactMessageInChannelReplyScreen  >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getReplyMessageList(msgId: msgId!, fromWhere: "PIN_MSG_SOCKET");
     });
   }

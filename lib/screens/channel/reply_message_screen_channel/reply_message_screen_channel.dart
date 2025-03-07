@@ -104,8 +104,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
             ),
           ),
           SizedBox(height: 20,),
-          inputTextFieldWithEditor(),
-          selectedFilesWidget(),
+          inputTextFieldWithEditor()
         ],
       ),
     );
@@ -279,6 +278,180 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                           ],
                         ),
                       ),
+                      if (messageList.reactions?.isNotEmpty ?? false)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            // mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Reactions',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(height: 12),
+                                            ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: MediaQuery.of(context).size.height * 0.5,
+                                              ),
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: messageList.reactions?.length ?? 0,
+                                                itemBuilder: (context, index) {
+                                                  final reaction = messageList.reactions![index];
+                                                  final userDetails = Provider.of<CommonProvider>(context, listen: false).getUserByIDCallForSecondUser(userId: reaction.userId!.sId  );
+                                                  return FutureBuilder<GetUserModelSecondUser?>(
+                                                    future: userDetails,
+                                                    builder: (context, snapshot) {
+                                                      Widget profileWidget;
+                                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                                        profileWidget = Container(
+                                                          width: 32,
+                                                          height: 32,
+                                                          decoration: BoxDecoration(
+                                                            shape: BoxShape.circle,
+                                                            color: Colors.grey[800],
+                                                          ),
+                                                          child: Center(
+                                                            child: SizedBox(
+                                                              width: 20,
+                                                              height: 20,
+                                                              child: CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[600]!),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      } else {
+                                                        profileWidget = profileIconWithStatus(
+                                                          userID: reaction.userId!.sId ?? "",
+                                                          status: "online",
+                                                          radius: 16,
+                                                          otherUserProfile: snapshot.data?.data?.user?.thumbnailAvatarUrl ?? "",
+                                                        );
+                                                      }
+
+                                                      return Padding(
+                                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                        child: Row(
+                                                          children: [
+                                                            profileWidget,
+                                                            SizedBox(width: 12),
+                                                            Expanded(
+                                                              child: Text(
+                                                                snapshot.data?.data?.user?.username ?? reaction.userId!.username ?? "Unknown",
+                                                                style: TextStyle(
+                                                                  color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            CachedNetworkImage(
+                                                              imageUrl: reaction.emoji ?? "",
+                                                              height: 24,
+                                                              width: 24,
+                                                              errorWidget: (context, url, error) => Icon(Icons.error, size: 24),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Icon(Icons.info_outline, size: 20),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                  ),
+                                  child: Wrap(
+                                    spacing: 4,
+                                    runSpacing: 4,
+                                    alignment: WrapAlignment.start,
+                                    children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                      bool hasUserReacted = messageList.reactions!.any((reaction) =>
+                                      reaction.userId!.sId == signInModel.data?.user?.id &&
+                                          reaction.emoji == entry.key);
+
+                                      return GestureDetector(
+                                        onTap: () {
+                                          if (hasUserReacted) {
+                                            context.read<ChannelChatProvider>().reactionRemove(
+                                                messageId: messageList.sId!,
+                                                reactUrl: entry.key,
+                                                channelId: widget.channelId,
+                                                isFrom: "ChannelReply"
+                                            );
+                                          } else {
+                                            context.read<ChannelChatProvider>().reactMessage(
+                                                messageId: messageList.sId!,
+                                                reactUrl: entry.key,
+                                                channelId: widget.channelId,
+                                                isFrom: "ChannelReply"
+                                            );
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              CachedNetworkImage(
+                                                imageUrl: entry.key,
+                                                height: 20,
+                                                width: 20,
+                                                errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                entry.value.toString(),
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: hasUserReacted ? Colors.blue : null,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(
@@ -428,107 +601,119 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
 
   Widget inputTextFieldWithEditor() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(24),
+        color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey.shade800,
+            width: 0.5,
+          ),
+        ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: CompositedTransformTarget(
-              link: _layerLink,
-              child: TextField(
-                key: _textFieldKey,
-                controller: _messageController,
-                focusNode: _focusNode,
-                maxLines: 5,
-                minLines: 1,
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.newline,
-                style: TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  suffixIcon: _messageController.text.isEmpty
-                      ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GestureDetector(
-                        onTap: () => FileServiceProvider.instance.pickFiles(),
-                        child: const Icon(Icons.attach_file, color: Colors.grey),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => _pickImage(ImageSource.gallery),
-                        child: const Icon(Icons.image, color: Colors.grey),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => _showCameraOptions(context),
-                        child: const Icon(Icons.camera_alt, color: Colors.grey),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  )
-                      : null,
-                ),
-                onChanged: (value) {
-                  setState(() {});
-                  _onTextChanged();
-                },
-              ),
-            ),
-          ),
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColor.blueColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: IconButton(
-              icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
-              onPressed: () async {
-                final plainText = _messageController.text.trim();
-                if(plainText.isEmpty && fileServiceProvider.selectedFiles.isEmpty) return;
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CompositedTransformTarget(
+                    link: _layerLink,
+                    child: TextField(
+                      key: _textFieldKey,
+                      controller: _messageController,
+                      focusNode: _focusNode,
+                      maxLines: 5,
+                      minLines: 1,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
+                      style: TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Type a message...',
+                        hintStyle: TextStyle(color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        suffixIcon: _messageController.text.isEmpty
+                            ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            GestureDetector(
+                              onTap: () => FileServiceProvider.instance.pickFiles(),
+                              child: const Icon(Icons.attach_file, color: Colors.grey),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => _pickImage(ImageSource.gallery),
+                              child: const Icon(Icons.image, color: Colors.grey),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => _showCameraOptions(context),
+                              child: const Icon(Icons.camera_alt, color: Colors.grey),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                        )
+                            : null,
+                      ),
+                      onChanged: (value) {
+                        setState(() {});
+                        _onTextChanged();
+                      },
+                    ),
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColor.blueColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
+                    onPressed: () async {
+                      final plainText = _messageController.text.trim();
+                      if(plainText.isEmpty && fileServiceProvider.selectedFiles.isEmpty) return;
 
-                try {
-                  if(fileServiceProvider.selectedFiles.isNotEmpty){
-                    final filesOfList = await chatProvider.uploadFiles();
-                    await channelChatProvider.sendMessage(
-                        content: plainText,
-                        channelId: widget.channelId,
-                        files: filesOfList,
-                        replyId: widget.msgID,
-                        isEditFromReply: true,
-                    );
-                  } else {
-                    await channelChatProvider.sendMessage(
-                        content: plainText,
-                        channelId: widget.channelId,
-                        replyId: widget.msgID,
-                        editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
-                        isEditFromReply: true,
-                    );
-                  }
+                      try {
+                        if(fileServiceProvider.selectedFiles.isNotEmpty){
+                          final filesOfList = await chatProvider.uploadFiles();
+                          await channelChatProvider.sendMessage(
+                              content: plainText,
+                              channelId: widget.channelId,
+                              files: filesOfList,
+                              replyId: widget.msgID,
+                              isEditFromReply: true,
+                          );
+                        } else {
+                          await channelChatProvider.sendMessage(
+                              content: plainText,
+                              channelId: widget.channelId,
+                              replyId: widget.msgID,
+                              editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
+                              isEditFromReply: true,
+                          );
+                        }
 
-                  // Update reply count in single chat screen
-                  ///////////////////////////////////////////////////////////
-                  // chatProvider.updateReplyCount(widget.messageId);
+                        // Update reply count in single chat screen
+                        ///////////////////////////////////////////////////////////
+                        // chatProvider.updateReplyCount(widget.messageId);
 
-                  setState(() {
-                    currentUserMessageId = "";
-                  });
+                        setState(() {
+                          currentUserMessageId = "";
+                        });
 
-                  _clearInputAndDismissKeyboard();
-                } catch (e) {
-                  print("Error sending message: $e");
-                }
-              },
+                        _clearInputAndDismissKeyboard();
+                      } catch (e) {
+                        print("Error sending message: $e");
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
+          selectedFilesWidget(),
         ],
       ),
     );

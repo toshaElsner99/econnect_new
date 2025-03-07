@@ -102,7 +102,7 @@ class MessagesGroupList {
   bool? isSeen;
   bool? isDeleted;
   List<dynamic>? taggedUsers; // Changed from List<Null> to List<dynamic>
-  List<dynamic>? reactions; // Changed from List<Null> to List<dynamic>
+  List<Reactions>? reactions; // Changed from List<Null> to List<dynamic>
   String? createdAt;
   String? updatedAt;
   int? iV;
@@ -165,9 +165,9 @@ class MessagesGroupList {
       });
     }
     if (json['reactions'] != null) {
-      reactions = <dynamic>[]; // Changed from List<Null> to List<dynamic>
+      reactions = <Reactions>[];
       json['reactions'].forEach((v) {
-        reactions!.add(v); // No need to create a Null object
+        reactions!.add(new Reactions.fromJson(v));
       });
     }
     createdAt = json['createdAt'];
@@ -296,6 +296,50 @@ class ForwardFrom {
     data['content'] = this.content;
     data['files'] = this.files;
     data['createdAt'] = this.createdAt;
+    return data;
+  }
+}
+
+class Reactions {
+  String? emoji;
+  UserId? userId;
+  String? sId;
+
+  Reactions({this.emoji, this.userId, this.sId});
+
+  Reactions.fromJson(Map<String, dynamic> json) {
+    emoji = json['emoji'];
+    userId =
+    json['userId'] != null ? new UserId.fromJson(json['userId']) : null;
+    sId = json['_id'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['emoji'] = this.emoji;
+    if (this.userId != null) {
+      data['userId'] = this.userId!.toJson();
+    }
+    data['_id'] = this.sId;
+    return data;
+  }
+}
+
+class UserId {
+  String? sId;
+  String? username;
+
+  UserId({this.sId, this.username});
+
+  UserId.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
+    username = json['username'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['_id'] = this.sId;
+    data['username'] = this.username;
     return data;
   }
 }

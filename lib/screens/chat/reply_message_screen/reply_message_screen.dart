@@ -173,7 +173,6 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
           ),
           SizedBox(height: 20,),
           inputTextFieldWithEditor(),
-          selectedFilesWidget(),
         ],
       ),
     );
@@ -347,7 +346,6 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                           ],
                         ),
                       ),
-                      commonHTMLText(message: message),
                       // Put Reacted emojis list here
                       if (messageList.reactions?.isNotEmpty ?? false)
                         Container(
@@ -643,106 +641,118 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
   Widget inputTextFieldWithEditor() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(24),
+        color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey.shade800,
+            width: 0.5,
+          ),
+        ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: CompositedTransformTarget(
-              link: _layerLink,
-              child: TextField(
-                key: _textFieldKey,
-                controller: _messageController,
-                focusNode: _focusNode,
-                maxLines: 5,
-                minLines: 1,
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.newline,
-                style: TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  suffixIcon: _messageController.text.isEmpty
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            GestureDetector(
-                              onTap: () => FileServiceProvider.instance.pickFiles(),
-                              child: const Icon(Icons.attach_file, color: Colors.grey),
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () => _pickImage(ImageSource.gallery),
-                              child: const Icon(Icons.image, color: Colors.grey),
-                            ),
-                            const SizedBox(width: 8),
-                            GestureDetector(
-                              onTap: () => _showCameraOptions(context),
-                              child: const Icon(Icons.camera_alt, color: Colors.grey),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                        )
-                      : null,
-                ),
-                onChanged: (value) {
-                  setState(() {});
-                  _onTextChanged();
-                },
-              ),
-            ),
-          ),
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColor.blueColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: IconButton(
-              icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
-              onPressed: () async {
-                final plainText = _messageController.text.trim();
-                if(plainText.isEmpty && fileServiceProvider.selectedFiles.isEmpty) return;
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CompositedTransformTarget(
+                    link: _layerLink,
+                    child: TextField(
+                      key: _textFieldKey,
+                      controller: _messageController,
+                      focusNode: _focusNode,
+                      maxLines: 5,
+                      minLines: 1,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
+                      style: TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: 'Type a message...',
+                        hintStyle: TextStyle(color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        suffixIcon: _messageController.text.isEmpty
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () => FileServiceProvider.instance.pickFiles(),
+                                    child: const Icon(Icons.attach_file, color: Colors.grey),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () => _pickImage(ImageSource.gallery),
+                                    child: const Icon(Icons.image, color: Colors.grey),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () => _showCameraOptions(context),
+                                    child: const Icon(Icons.camera_alt, color: Colors.grey),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                              )
+                            : null,
+                      ),
+                      onChanged: (value) {
+                        setState(() {});
+                        _onTextChanged();
+                      },
+                    ),
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColor.blueColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
+                    onPressed: () async {
+                      final plainText = _messageController.text.trim();
+                      if(plainText.isEmpty && fileServiceProvider.selectedFiles.isEmpty) return;
 
-                try {
-                  if(fileServiceProvider.selectedFiles.isNotEmpty){
-                    final filesOfList = await chatProvider.uploadFiles();
-                    await chatProvider.sendMessage(
-                      content: plainText,
-                      receiverId: widget.receiverId,
-                      files: filesOfList,
-                      replyId: widget.messageId,
-                      isEditFromReply: true,
-                    );
-                  } else {
-                    await chatProvider.sendMessage(
-                      content: plainText,
-                      receiverId: widget.receiverId,
-                      replyId: widget.messageId,
-                      editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
-                      isEditFromReply: true,
-                    );
-                  }
+                      try {
+                        if(fileServiceProvider.selectedFiles.isNotEmpty){
+                          final filesOfList = await chatProvider.uploadFiles();
+                          await chatProvider.sendMessage(
+                            content: plainText,
+                            receiverId: widget.receiverId,
+                            files: filesOfList,
+                            replyId: widget.messageId,
+                            isEditFromReply: true,
+                          );
+                        } else {
+                          await chatProvider.sendMessage(
+                            content: plainText,
+                            receiverId: widget.receiverId,
+                            replyId: widget.messageId,
+                            editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
+                            isEditFromReply: true,
+                          );
+                        }
 
-                  // Update reply count in single chat screen
-                  chatProvider.updateReplyCount(widget.messageId);
+                        // Update reply count in single chat screen
+                        chatProvider.updateReplyCount(widget.messageId);
 
-                  setState(() {
-                    currentUserMessageId = "";
-                  });
+                        setState(() {
+                          currentUserMessageId = "";
+                        });
 
-                  _clearInputAndDismissKeyboard();
-                } catch (e) {
-                  print("Error sending message: $e");
-                }
-              },
+                        _clearInputAndDismissKeyboard();
+                      } catch (e) {
+                        print("Error sending message: $e");
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
+          selectedFilesWidget(),
         ],
       ),
     );

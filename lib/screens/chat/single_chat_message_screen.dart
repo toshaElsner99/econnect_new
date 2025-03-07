@@ -1127,9 +1127,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         Container(
                           margin: const EdgeInsets.only(top: 4),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            // mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               GestureDetector(
-                                onTap: (){
+                                onTap: () {
                                   showDialog(
                                     context: context,
                                     builder: (context) => Dialog(
@@ -1197,73 +1199,71 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   );
                                 },
                                 child: Icon(Icons.info_outline, size: 20),
-                                // child: Container(
-                                //   width: 30,
-                                //   height: 30,
-                                //   child: Image.asset(
-                                //     AppImage.reactionIcon
-                                //   ),
-                                // ),
                               ),
-                              SizedBox(
-                                  width: 10
-                              ),
-                              Wrap(
-                                spacing: 4,
-                                runSpacing: 4,
-                                children: groupReactions(messageList.reactions!).entries.map((entry) {
-                                  bool hasUserReacted = messageList.reactions!.any((reaction) =>
-                                  reaction.userId == signInModel.data?.user?.id &&
-                                      reaction.emoji == entry.key);
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                  ),
+                                  child: Wrap(
+                                    spacing: 4,
+                                    runSpacing: 4,
+                                    alignment: WrapAlignment.start,
+                                    children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                      bool hasUserReacted = messageList.reactions!.any((reaction) =>
+                                        reaction.userId == signInModel.data?.user?.id &&
+                                        reaction.emoji == entry.key);
 
-                                  return GestureDetector(
-                                    onTap: () {
-                                      if (hasUserReacted) {
-                                        context.read<ChatProvider>().reactionRemove(
-                                            messageId: messageList.sId!,
-                                            reactUrl: entry.key,
-                                            receiverId: widget.oppositeUserId,
-                                            isFrom: "Chat"
-                                        );
-                                      } else {
-                                        context.read<ChatProvider>().reactMessage(
-                                            messageId: messageList.sId!,
-                                            reactUrl: entry.key,
-                                            receiverId: widget.oppositeUserId,
-                                            isFrom: "Chat"
-                                        );
-                                      }
-                                    },
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          CachedNetworkImage(
-                                            imageUrl: entry.key,
-                                            height: 20,
-                                            width: 20,
-                                            errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                      return GestureDetector(
+                                        onTap: () {
+                                          if (hasUserReacted) {
+                                            context.read<ChatProvider>().reactionRemove(
+                                              messageId: messageList.sId!,
+                                              reactUrl: entry.key,
+                                              receiverId: widget.oppositeUserId,
+                                              isFrom: "Chat"
+                                            );
+                                          } else {
+                                            context.read<ChatProvider>().reactMessage(
+                                              messageId: messageList.sId!,
+                                              reactUrl: entry.key,
+                                              receiverId: widget.oppositeUserId,
+                                              isFrom: "Chat"
+                                            );
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
                                           ),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            entry.value.toString(),
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: hasUserReacted ? Colors.blue : null,
-                                            ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              CachedNetworkImage(
+                                                imageUrl: entry.key,
+                                                height: 20,
+                                                width: 20,
+                                                errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                entry.value.toString(),
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: hasUserReacted ? Colors.blue : null,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
                               ),
-
                             ],
                           ),
                         ),

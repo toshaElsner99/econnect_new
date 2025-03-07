@@ -12,6 +12,7 @@ class PushNotificationService {
     FirebaseMessaging.onMessageOpenedApp.listen(
           (RemoteMessage message) {
             // notificationRedirect(message.data[keyTypeValue], message.data[keyType]);
+            print("onMessageOpenedApp :::> ${message.data}");
       },
     );
     enableIOSNotifications();
@@ -85,6 +86,7 @@ class PushNotificationService {
           ),
           payload: message.data.toString(),
         );
+        print("notification :::> ${message.data}");
       }
     });
   }

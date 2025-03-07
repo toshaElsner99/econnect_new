@@ -50,7 +50,7 @@ class CommonProvider extends ChangeNotifier {
 
   Future<void> logOut() async {
     var signInProvider = Provider.of<SignInProvider>(navigatorKey.currentState!.context,listen: false);
-    signInProvider.fcmTokenSendInAPI(true);
+    signInProvider.fcmTokenRemoveInAPI();
     await clearData();
     pushAndRemoveUntil(screen: SignInScreen());
   }
