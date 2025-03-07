@@ -417,7 +417,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       /// opposite user typing listen ///
       chatProvider.getTypingUpdate();
       /// THis Is Socket Listening Event ///
-      socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId);
+      socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId,getSecondUserCall: (){
+        fetchOppositeUserDetails();
+      });
       /// THis is Doing for update pin message and get Message List ///
       // socketProvider.socketListenPinMessage(oppositeUserId: widget.oppositeUserId,callFun: (){
       //   chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,currentPage: 1,isFromMsgListen: true);
@@ -533,113 +535,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     },);
   }
   AppBar buildAppBar(CommonProvider commonProvider, ChatProvider chatProvider) {
-    // return AppBar(
-    //   toolbarHeight: 60,
-    //   // leadingWidth: 35,
-    //   leading: Padding(
-    //     padding: const EdgeInsets.only(left: 15.0),
-    //     child: IconButton(icon: Icon(CupertinoIcons.back,color: Colors.white,),color: Colors.white, onPressed: () {
-    //       pop();
-    //       channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
-    //     },),
-    //   ),
-    //   titleSpacing: 0,
-    //   title:  Column(
-    //     crossAxisAlignment: CrossAxisAlignment.start,
-    //     children: [
-    //       Row(
-    //         mainAxisSize: MainAxisSize.min,
-    //         children: [
-    //           Flexible(
-    //             fit: FlexFit.loose,
-    //             child: commonText(
-    //               text: widget.userName,
-    //               fontSize: 16,
-    //               fontWeight: FontWeight.w600,
-    //               color: Colors.white,
-    //               maxLines: 1,
-    //               overflow: TextOverflow.ellipsis, // Prevent overflow
-    //             ),
-    //           ),
-    //           Visibility(
-    //             visible: userDetails?.data?.user?.isFavourite ?? false,
-    //             child: Icon(Icons.star_rate_rounded, color: Colors.yellow, size: 18),
-    //           ),
-    //         ],
-    //       ),
-    //       Padding(
-    //         padding: const EdgeInsets.only(top: 8.0),
-    //         child: Row(
-    //           children: [
-    //             getCommonStatusIcons(
-    //               size: 15,
-    //               status: userDetails?.data?.user?.status ?? "offline",
-    //               assetIcon: false,
-    //             ),
-    //             const SizedBox(width: 5),
-    //             Flexible(
-    //               child: commonText(
-    //                 text: (userDetails?.data!.user!.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1)
-    //                     ? "Typing..."
-    //                     : getLastOnlineStatus(
-    //                   userDetails?.data?.user?.status ?? ".....",
-    //                   userDetails?.data?.user!.lastActiveTime,
-    //                 ),
-    //                 height: 1,
-    //                 fontWeight: FontWeight.w400,
-    //                 fontSize: 15,
-    //                 maxLines: 1,
-    //                 overflow: TextOverflow.ellipsis,
-    //               ),
-    //             ),
-    //             const SizedBox(width: 5),
-    //             Visibility(
-    //               visible: userDetails?.data?.user?.customStatusEmoji != null && userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
-    //               child: Padding(
-    //                 padding: const EdgeInsets.only(right: 8.0),
-    //                 child: CachedNetworkImage(
-    //                   imageUrl: userDetails?.data?.user!.customStatusEmoji ?? "",
-    //                   height: 20,
-    //                   width: 20,
-    //                   errorWidget: (context, url, error) => Icon(Icons.error, size: 20), // Handle image errors
-    //                 ),
-    //               ),
-    //             ),
-    //             GestureDetector(
-    //               onTap: () => pushScreen(screen: PinnedPostsScreen(userName: widget.userName, oppositeUserId: widget.oppositeUserId,userCache: userCache,)),
-    //               child: Container(
-    //                 padding: EdgeInsets.symmetric(horizontal: 5),
-    //                 // color: Colors.red,
-    //                 child: Row(
-    //                   mainAxisSize: MainAxisSize.min,
-    //                   children: [
-    //                     commonText(
-    //                       text: "${userDetails?.data?.user!.pinnedMessageCount ?? 0}",
-    //                       fontSize: 16,
-    //                       fontWeight: FontWeight.w400,
-    //                     ),
-    //                     Image.asset(AppImage.pinIcon, height: 15, width: 18, color: Colors.white),
-    //                     SizedBox(width: 5,)
-    //                 ],),
-    //               ),
-    //             ),
-    //             GestureDetector(
-    //                 onTap: () => pushScreen(screen: FilesListingScreen(userName: widget.userName,oppositeUserId: widget.oppositeUserId,)),
-    //                 child: Image.asset(AppImage.fileIcon, height: 18, width: 16, color: Colors.white)),
-    //           ],
-    //         ),
-    //       ),
-    //     ],
-    //   ),
-    //   actions: [
-    //     IconButton(
-    //       icon: const Icon(Icons.more_vert, color: AppColor.whiteColor),
-    //       onPressed: () {
-    //         showChatSettingsBottomSheet(userId: widget.oppositeUserId);
-    //       },
-    //     ),
-    //   ],
-    // );
     return AppBar(
       toolbarHeight: 60,
       leading: Padding(

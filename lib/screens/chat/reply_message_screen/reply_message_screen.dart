@@ -347,8 +347,6 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                           ],
                         ),
                       ),
-                      commonHTMLText(message: message),
-                      // Put Reacted emojis list here
                       if (messageList.reactions?.isNotEmpty ?? false)
                         Container(
                           margin: const EdgeInsets.only(top: 4),

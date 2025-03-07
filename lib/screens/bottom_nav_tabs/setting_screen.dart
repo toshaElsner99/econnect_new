@@ -83,7 +83,6 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Widget _buildProfileHeader() {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.3,
       padding: const EdgeInsets.fromLTRB(24, 48, 24, 24),
       decoration: BoxDecoration(
         // color: AppColor.commonAppColor,

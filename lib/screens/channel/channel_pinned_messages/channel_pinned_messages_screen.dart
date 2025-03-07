@@ -59,7 +59,9 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
       body: Column(
         children: [
           Divider(color: Colors.grey.shade800, height: 1,),
-          dateHeaders(),
+          Expanded(child: ListView(children: [
+            dateHeaders(),
+          ],))
         ],
       ),
     );

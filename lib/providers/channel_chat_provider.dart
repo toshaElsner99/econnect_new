@@ -36,21 +36,35 @@ class ChannelChatProvider extends ChangeNotifier{
   int currentPage = 1;
   int totalPages = 0;
 
-  Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned})async{
+  Future<void> pinUnPinMessage({required String channelID,required String messageId,required bool pinned,bool isCalledForReply = false})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
-      for (var messageGroup in messageGroups) {
-        for (var message in messageGroup.messages ?? []) {
-          if (message.id == messageId) {
-            message.isPinned = pinned;
-            notifyListeners();
-            break;
+      socketProvider.pinUnPinMessageEventChannelChat(senderId: signInModel.data?.user?.id ?? "", channelId: channelID);
+      if(isCalledForReply == true){
+        for (MessagesList messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+          for (var message in messageGroup.messagesGroupList ?? []) {
+            if (message.sId == messageId) {
+              message.isPinned = pinned;
+              notifyListeners();
+              return;
+            }
+          }
+        }
+      }else {
+        for (var messageGroup in messageGroups) {
+          for (var message in messageGroup.messages ?? []) {
+            if (message.id == messageId) {
+              message.isPinned = pinned;
+              notifyListeners();
+              break;
+            }
           }
         }
       }
-      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId,isEmitForChannel: true);
     }
   }
+
+
 
 
   Future<List<String>> uploadFiles() async {
@@ -172,11 +186,6 @@ class ChannelChatProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  // void pagination({required String channelId}) {
-  //       currentPage++;
-  //       getChannelChatApiCall(channelId: channelId,pageNo: currentPage);
-  //   notifyListeners();
-  // }
   void paginationAPICall({required String channelId}) {
     if(currentPage < totalPages) {
       currentPage++;
@@ -287,10 +296,13 @@ class ChannelChatProvider extends ChangeNotifier{
       print(response.reasonPhrase);
     }}
 
-  Future<void> getChannelInfoApiCall({required String channelId})async{
+  Future<void> getChannelInfoApiCall({required String channelId,required bool callFroHome})async{
     final response  = await ApiService.instance.request(endPoint: ApiString.getChannelInfo(channelId), method: Method.GET,);
     if(statusCode200Check(response)){
       getChannelInfo = GetChannelInfo.fromJson(response);
+      if(callFroHome == true && getChannelInfo != null){
+        addChannelApiCall(channelName: getChannelInfo?.data?.name ?? "", isPrivate: getChannelInfo?.data?.isPrivate ?? false, description: getChannelInfo?.data?.description ?? "");
+      }
       notifyListeners();
     }
   }
@@ -305,8 +317,6 @@ class ChannelChatProvider extends ChangeNotifier{
     }
     notifyListeners();
   }
-
-
 
 
 
@@ -332,11 +342,6 @@ class ChannelChatProvider extends ChangeNotifier{
   }
 
 
-  // socket.on((deleteMessageChannelListen), (data) {
-  // print("deleteMessageForListen >>> $data");
-  // Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId,pageNo: 1,isFromMsgListen: true);
-  // });
-  // ******* delete listen is pending
 
   void getReplyListUpdateSocketForChannel(String mId,) {
     try {
@@ -354,9 +359,9 @@ class ChannelChatProvider extends ChangeNotifier{
           print("I'm In socketProvider for msgId: $mId");
             getReplyMessageListChannel(msgId: mId, fromWhere: "SOCKET INIT For Channel Reply List");
 
-            for (var messageGroup in messageGroups) {
-              for (var message in messageGroup.messages ?? []) {
-                if (message.sId == mId) {
+            for (msg.MessageGroup messageGroup in messageGroups) {
+              for (msg.Message message in messageGroup.messages ?? []) {
+                if (message.id == mId) {
                   message.replyCount = (message.replyCount ?? 0) + 1;
                   notifyListeners();
                   return;
@@ -374,16 +379,7 @@ class ChannelChatProvider extends ChangeNotifier{
   }
 
 
-  void deleteMessageFromModelChannelChat(String messageId) {
-    for (var messageGroup in messageGroups) {
-      messageGroup.messages?.removeWhere((message) => message.id == messageId);
-      if (messageGroup.messages?.isEmpty ?? true) {
-        messageGroups.remove(messageGroup);
-        break;
-      }
-    }
-    notifyListeners();
-  }
+
   // void addMessageToList(String messageId) {
   //   for (var messageGroup in messageGroups) {
   //     messageGroup.messages?.removeWhere((message) => message.id == messageId);
@@ -395,7 +391,7 @@ class ChannelChatProvider extends ChangeNotifier{
   //   notifyListeners();
   // }
 
-
+  /// API ///
   Future<void> deleteMessageFromChannel({required String messageId,}) async {
     try {
       final response = await ApiService.instance.request(
@@ -414,36 +410,30 @@ class ChannelChatProvider extends ChangeNotifier{
       print("catch = ${e.toString()}");
     }
   }
-
+  /// API ///
   Future<void> deleteMessageForReplyChannel({required String messageId, required firsMessageId})async{
     final response = await ApiService.instance.request(endPoint: ApiString.deleteMessageFromChannel(messageId), method: Method.DELETE);
     if(statusCode200Check(response)){
-      deleteMessageFromReplyModel(messageId);
       socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
+      deleteMessageFromReplyModel(messageId);
       if(firsMessageId == messageId) {
         pop();
-        deleteMessageFromModelChannelChat(messageId);
+        removeMessageFromModelList(messageId);
       }
     }
   }
 
   /// Model Functionality ///
-  // void deleteMessageFromReplyModel(String messageId) {
-  //   for (var messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
-  //     messageGroup.groupMessages?.removeWhere((message) => message.sId == messageId);
-  //   }
-  //   notifyListeners();
-  // }
   void deleteMessageFromReplyModel(String messageId) {
-    for (var messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
-      messageGroup.messages?.removeWhere((message) => message.sId == messageId);
+    for (MessagesList messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+      messageGroup.messagesGroupList?.removeWhere((message) => message.sId == messageId);
     }
     notifyListeners();
   }
 
   /// Channel Chat ///
   void removeMessageFromModelList(String messageId) {
-    for (var messageGroup in messageGroups) {
+    for (msg.MessageGroup messageGroup in messageGroups) {
       messageGroup.messages?.removeWhere((message) => message.id == messageId);
       if (messageGroup.messages?.isEmpty ?? true) {
         messageGroups.remove(messageGroup);
@@ -452,4 +442,25 @@ class ChannelChatProvider extends ChangeNotifier{
     }
     notifyListeners();
   }
+
+  // void removeMessageFromReplyModelList(String messageId) {
+  //   for (var msgGrp in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+  //     msgGrp.messagesGroupList?.removeWhere((message) => message.sId == messageId);
+  //     if (msgGrp.messagesGroupList?.isEmpty ?? true) {
+  //       messageGroups.remove(msgGrp);
+  //       break;
+  //     }
+  //   }
+  //   notifyListeners();
+  // }
+
+addChannelApiCall({required String channelName,required bool isPrivate,required String description})async{
+    final requestBody = {
+      "name": channelName,
+      "isPrivate": isPrivate,
+      "description": description,
+    };
+    final response = await ApiService.instance.request(endPoint: ApiString.addChannelTO, method: Method.POST,reqBody: requestBody);
+}
+
 }

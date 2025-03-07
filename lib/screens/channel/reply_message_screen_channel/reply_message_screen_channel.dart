@@ -62,13 +62,13 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
       /// socket listen messages list ///
       channelChatProvider.getReplyListUpdateSocketForChannel(widget.msgID);
       /// socket listen messages list for deleted message ///
-      socketProvider.listenDeleteMessageSocketForReply(msgId: widget.msgID,isListenForChannel: true);
-      // socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
+      socketProvider.listenDeleteMessageSocketForChannelReply(msgId: widget.msgID);
+      socketProvider.socketListenPinMessageInChannelReplyScreen(msgId: widget.channelId);
       // _fetchAndCacheUserDetails();
       print("I'm In initState");
       /// For the first time init ///
       channelChatProvider.getReplyMessageListChannel(msgId: widget.msgID,fromWhere: "SCREEN INIT");
-      // Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.channelID);
+      Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.channelId);
       // Provider.of<CommonProvider>(context, listen: false).getUserApi(id :widget.receiverId);
     });
   }
@@ -400,9 +400,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                   opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
                   onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.username ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
-                  onPin: () {
-                    // chatProvider.pinUnPinMessageForReply(receiverId: widget.receiverId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg )
-                  },
+                  onPin: () => channelChatProvider.pinUnPinMessage(messageId: messageId,pinned: pinnedMsg,channelID: widget.channelId,isCalledForReply: true),
                   onCopy: () => copyToClipboard(context, message),
                   onEdit: () => setState(() {
                     _messageController.clear();
@@ -412,9 +410,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                     print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                     _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                   }),
-                  onDelete: () {
-                    channelChatProvider.deleteMessageForReplyChannel(messageId: messageId.toString(),firsMessageId: widget.msgID);
-                  },
+                  onDelete: () => channelChatProvider.deleteMessageForReplyChannel(messageId: messageId.toString(),firsMessageId: widget.msgID),
                   createdAt:"${messageList.createdAt}",)
               ],
             ),
