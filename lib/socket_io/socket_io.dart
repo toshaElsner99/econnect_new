@@ -133,12 +133,10 @@ class SocketIoProvider extends ChangeNotifier{
 
   sendMessagesSC({required Map<String, dynamic> response,bool emitReplyMsg = false}) {
     print("emit>>>>> Send Message $response");
-    socket.emit(  emitReplyMsg ? sendReplyMessage : sendMessage, response);
-    socket.on(  emitReplyMsg ? sendReplyMessage : sendMessage, (data) {
-      print("sendReplyMessage>>>>>DD $data");
-    },);
-    // if(emitReplyMsg == true){
-    // }
+    socket.emit(emitReplyMsg ? sendReplyMessage : sendMessage, response);
+    // socket.on(  emitReplyMsg ? sendReplyMessage : sendMessage, (data) {
+    //   print("sendReplyMessage>>>>>DD $data");
+    // },);
   }
 
   deleteMessagesSC({required Map<String, dynamic> response}) {

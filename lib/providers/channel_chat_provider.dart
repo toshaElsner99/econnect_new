@@ -146,9 +146,12 @@ class ChannelChatProvider extends ChangeNotifier{
     final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST, reqBody: requestBody);
     
     if (statusCode200Check(response)) {
+      /// Socket Emit ///
       socketProvider.sendMessagesSC(response: response['data'], emitReplyMsg: replyId != null ? true : false);
-      print("editMessageId>> $editMsgID $isEditFromReply");
+
+      /// find where to add ///
       if (editMsgID != null && editMsgID.isNotEmpty) {
+        print("editMessageId>> $editMsgID $isEditFromReply");
         if(isEditFromReply == true){
           for (var message in getReplyMessageChannelModel!.data!.messagesList!) {
             int groupMessageIndex = message.messagesGroupList!.indexWhere((msg) => msg.sId == editMsgID);
@@ -183,6 +186,7 @@ class ChannelChatProvider extends ChangeNotifier{
           }));
         }
       }
+
     }
     notifyListeners();
   }
@@ -458,7 +462,7 @@ class ChannelChatProvider extends ChangeNotifier{
 addChannelApiCall({required String channelName,required bool isPrivate,required String description})async{
     final requestBody = {
       "name": channelName,
-      "isPrivate": isPrivate,
+      "isPrivate": isPrivate.toString(),
       "description": description,
     };
     final response = await ApiService.instance.request(endPoint: ApiString.addChannelTO, method: Method.POST,reqBody: requestBody);

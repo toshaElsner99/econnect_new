@@ -240,21 +240,19 @@ class ChatProvider extends  ChangeNotifier {
       "receiverId": receiverId,
       "senderId": signInModel.data?.user?.id,
     };
-
     if (replyId != null && replyId.isNotEmpty) {
       requestBody['isReply'] = true;
       requestBody['replyTo'] = replyId;
     }
-
     if (editMsgID != null && editMsgID.isNotEmpty) {
       requestBody["isEdit"] = true;
       requestBody["editMessageId"] = editMsgID;
     }
-
     if (files != null && files.isNotEmpty) {
       requestBody["files"] = files;
     }
     final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
     print("Send Message requestBody -= $requestBody");
     if(statusCode200Check(response)){
