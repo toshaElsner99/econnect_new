@@ -1187,7 +1187,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                       children: [
                                         commonText(text: "${messageList.senderOfForward?.username}"),
                                         SizedBox(height: 3),
-                                        commonText(text: formatDateString("${messageList.senderOfForward?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                        commonText(text: formatDateString("${messageList.forwardInfo?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                       ],
                                     ),
                                   ),

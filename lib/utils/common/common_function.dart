@@ -66,7 +66,7 @@ String formatDateString(String? dateString) {
   }
 
   try {
-    DateTime dateTime = DateTime.parse(dateString);
+    DateTime dateTime = DateTime.parse(dateString).toLocal();
     String formattedDate = DateFormat('dd-MM-yyyy hh:mm a').format(dateTime);
     return formattedDate;
   } catch (e) {
