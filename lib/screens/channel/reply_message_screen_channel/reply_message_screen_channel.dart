@@ -342,6 +342,9 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                   isPinned: pinnedMsg,
                   onOpened: () {}  ,
                   onClosed: () {} ,
+                  onReact: () {
+                    showReactionBar(context, messageId.toString(), userId, "ChannelReply");
+                  },
                   opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
                   onForward: () {},

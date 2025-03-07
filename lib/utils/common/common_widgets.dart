@@ -12,6 +12,7 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import '../../model/message_model.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/common_provider.dart';
 import '../../providers/file_service_provider.dart';
@@ -21,6 +22,7 @@ import '../app_color_constants.dart';
 import '../app_fonts_constants.dart';
 import '../app_string_constants.dart';
 import 'common_function.dart';
+import 'package:e_connect/providers/chat_provider.dart';
 
 
 
@@ -703,14 +705,13 @@ Widget popMenu2(
   final isCurrentUser = currentUserId == signInModel.data?.user?.id; // Check if message belongs to the user
 
   return Container(
-    // color: Colors.red,
     alignment: Alignment.topCenter,
     height: 22,
     width: 20,
     child: PopupMenuButton<int>(
-      padding: EdgeInsets.zero, // Remove padding
-      iconSize: 25, // Reduce icon size
-      constraints: const BoxConstraints(minWidth: 120), // Limit menu width
+      padding: EdgeInsets.zero,
+      iconSize: 25,
+      constraints: const BoxConstraints(minWidth: 120),
       color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
       position: openAbove ? PopupMenuPosition.over : PopupMenuPosition.under,
       offset: const Offset(-15, 0),
@@ -742,15 +743,14 @@ Widget popMenu2(
           case 5:
             onDelete.call();
             break;
-          case 9:
+          case 6:
             onReact.call();
             break;
         }
       },
       itemBuilder: (context) {
         List<PopupMenuEntry<int>> menuItems = [
-
-          _menuItem(9, Icons.emoji_emotions_outlined, "React"),
+          _menuItem(6, Icons.emoji_emotions_outlined, "React"),
           _menuItem(1, Icons.reply, "Reply"),
           _menuItem(2, Icons.push_pin, isPinned ? "Unpin from Channel": "Pin to Channel"),
           _menuItem(3, Icons.copy, "Copy Text"),
@@ -787,9 +787,11 @@ Widget popMenuForReply2(
       required VoidCallback onCopy,
       required VoidCallback onEdit,
       required VoidCallback onDelete,
+      required VoidCallback onReact,
       required String createdAt,
       required String currentUserId,
     }) {
+
   final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
   final double screenHeight = MediaQuery.of(context).size.height;
   final double buttonPositionY = overlay.localToGlobal(Offset.zero).dy;
@@ -804,19 +806,18 @@ Widget popMenuForReply2(
   final isCurrentUser = currentUserId == signInModel.data?.user?.id;
 
   return Container(
-    // color: Colors.red,
     alignment: Alignment.topCenter,
     height: 22,
     width: 20,
     child: PopupMenuButton<int>(
-      padding: EdgeInsets.zero, // Remove padding
-      iconSize: 25, // Reduce icon size
-      constraints: const BoxConstraints(minWidth: 120), // Limit menu width
+      padding: EdgeInsets.zero,
+      iconSize: 25,
+      constraints: const BoxConstraints(minWidth: 120),
       color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
       position: openAbove ? PopupMenuPosition.over : PopupMenuPosition.under,
       offset: const Offset(-15, 0),
-      // onOpened: ()=> onOpened(),
-      // onCanceled: ()=> onClosed(),
+      onOpened: ()=> onOpened(),
+      onCanceled: ()=> onClosed(),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: AppPreferenceConstants.themeModeBoolValueGet
@@ -840,29 +841,26 @@ Widget popMenuForReply2(
           case 4:
             onDelete.call();
             break;
+          case 5:
+            onReact.call();
+            break;
         }
       },
       itemBuilder: (context) {
         List<PopupMenuEntry<int>> menuItems = [
+          _menuItem(5, Icons.emoji_emotions_outlined, "React"),
           _menuItem(0, Icons.forward, "Forward"),
           _menuItem(1, Icons.push_pin, isPinned ? "Unpin from Channel" : "Pin to Channel"),
-
         ];
 
         menuItems.add(const PopupMenuDivider());
-        menuItems.add(_menuItem(2, Icons.copy, "Copy Text"),);
-          if(isCurrentUser && isEditable){
-            menuItems.add(_menuItem(3, Icons.edit, "Edit"),);
-          }
+        menuItems.add(_menuItem(2, Icons.copy, "Copy Text"));
+        if(isCurrentUser && isEditable){
+          menuItems.add(_menuItem(3, Icons.edit, "Edit"));
+        }
         if(isCurrentUser){
           menuItems.add(_menuItem(4, Icons.delete, "Delete"));
         }
-
-
-        // Show Delete option only if the message belongs to the current user
-        // if (isCurrentUser) {
-        //   menuItems.add(_menuItem(5, Icons.delete, "Delete", color: Colors.red));
-        // }
 
         return menuItems;
       },
@@ -2829,4 +2827,159 @@ void showUserProfilePopup(BuildContext context, {
       ),
     ),
   );
+}
+
+Widget reactionBar({
+  required BuildContext context,
+  required Function(String) onReactionSelected,
+}) {
+  final reactions = [
+    {
+      'url': 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f44d.png',
+      'name': 'Thumb'
+    },
+    {
+      'url': 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/2764-fe0f.png',
+      'name': 'Heart'
+    },
+    {
+      'url': 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f603.png',
+      'name': 'Smile'
+    },
+    {
+      'url': 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f622.png',
+      'name': 'Sad'
+    },
+    {
+      'url': 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f64f.png',
+      'name': 'Hands'
+    },
+  ];
+
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[800]! : Colors.grey[300]!,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: reactions.map((reaction) {
+        return GestureDetector(
+          onTap: () => onReactionSelected(reaction['url']!),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: CachedNetworkImage(
+              imageUrl: reaction['url']!,
+              width: 24,
+              height: 24,
+              placeholder: (context, url) => SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              errorWidget: (context, url, error) => Icon(Icons.error),
+            ),
+          ),
+        );
+      }).toList(),
+    ),
+  );
+}
+
+void showReactionBar(BuildContext context, String messageId, String receiverId, String isFrom) {
+  final RenderBox? button = context.findRenderObject() as RenderBox?;
+  if (button == null) return;
+
+  final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+  final buttonPos = button.localToGlobal(Offset.zero, ancestor: overlay);
+  final buttonSize = button.size;
+  
+  // Position the reaction bar to the right of the message
+  final position = RelativeRect.fromLTRB(
+    buttonPos.dx + buttonSize.width - 180, // Align right edge, adjust 180 based on reaction bar width
+    buttonPos.dy - 40, // Show above the message
+    buttonPos.dx + buttonSize.width,
+    buttonPos.dy,
+  );
+
+  showMenu(
+    context: context,
+    position: position,
+    elevation: 8,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    color: Colors.transparent,
+    items: [
+      PopupMenuItem(
+        enabled: false,
+        padding: EdgeInsets.zero,
+        child: reactionBar(
+          context: context,
+          onReactionSelected: (reactionUrl) {
+            final chatProvider = Provider.of<ChatProvider>(context, listen: false);
+            chatProvider.reactMessage(
+              messageId: messageId,
+              reactUrl: reactionUrl,
+              receiverId: receiverId,
+              isFrom: isFrom
+            );
+            Navigator.pop(context);
+            print("Selected reaction: $reactionUrl"); // Print the selected reaction URL
+          },
+        ),
+      ),
+    ],
+  );
+}
+
+Widget messageReactions({
+  required List<String> reactions,
+  double size = 16,
+}) {
+  return Wrap(
+    spacing: 4,
+    children: reactions.map((reactionUrl) {
+      return Container(
+        padding: EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[800]! : Colors.grey[300]!,
+          ),
+        ),
+        child: CachedNetworkImage(
+          imageUrl: reactionUrl,
+          width: size,
+          height: size,
+          placeholder: (context, url) => SizedBox(
+            width: size,
+            height: size,
+            child: CircularProgressIndicator(strokeWidth: 1),
+          ),
+          errorWidget: (context, url, error) => Icon(Icons.error, size: size),
+        ),
+      );
+    }).toList(),
+  );
+}
+
+Map<String, int> groupReactions(List<dynamic> reactions) {
+  final Map<String, int> groupedReactions = {};
+  for (var reaction in reactions) {
+    if (reaction.emoji != null) {
+      groupedReactions[reaction.emoji!] = (groupedReactions[reaction.emoji!] ?? 0) + 1;
+    }
+  }
+  return groupedReactions;
 }

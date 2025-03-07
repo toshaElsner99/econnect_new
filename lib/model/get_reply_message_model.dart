@@ -85,7 +85,7 @@ class GroupMessages {
   bool? isSeen;
   bool? isDeleted;
   List<dynamic>? taggedUsers;
-  List<dynamic>? reactions;
+  List<Reactions>? reactions;
   String? createdAt;
   String? updatedAt;
   int? iV;
@@ -133,7 +133,12 @@ class GroupMessages {
     isSeen = json['is_seen'];
     isDeleted = json['isDeleted'];
     taggedUsers = json['tagged_users'] != null ? List<dynamic>.from(json['tagged_users']) : null;
-    reactions = json['reactions'] != null ? List<dynamic>.from(json['reactions']) : null;
+    if (json['reactions'] != null) {
+      reactions = <Reactions>[];
+      json['reactions'].forEach((v) {
+        reactions!.add(new Reactions.fromJson(v));
+      });
+    }
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
@@ -170,6 +175,50 @@ class GroupMessages {
     return data;
   }
 }
+class Reactions {
+  String? emoji;
+  UserId? userId;
+  String? sId;
+
+  Reactions({this.emoji, this.userId, this.sId});
+
+  Reactions.fromJson(Map<String, dynamic> json) {
+    emoji = json['emoji'];
+    userId =
+    json['userId'] != null ? new UserId.fromJson(json['userId']) : null;
+    sId = json['_id'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['emoji'] = this.emoji;
+    if (this.userId != null) {
+      data['userId'] = this.userId!.toJson();
+    }
+    data['_id'] = this.sId;
+    return data;
+  }
+}
+
+class UserId {
+  String? sId;
+  String? username;
+
+  UserId({this.sId, this.username});
+
+  UserId.fromJson(Map<String, dynamic> json) {
+    sId = json['_id'];
+    username = json['username'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['_id'] = this.sId;
+    data['username'] = this.username;
+    return data;
+  }
+}
+
 
 
 // class SenderId {

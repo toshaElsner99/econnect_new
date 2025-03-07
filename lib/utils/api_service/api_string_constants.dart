@@ -46,6 +46,7 @@ class ApiString{
   static const getUser = "user/getUsers";
   static String pinMessage(String messageId, bool pinned) => "messages/message-pin/$messageId/$pinned";
   static String reactMessage = "messages/message-reaction";
+  static String removeReact = "messages/message-reaction-remove";
 
   // Channel
   static getChannelMembersList(String channelId) => "channels/getChannelMembers/$channelId";

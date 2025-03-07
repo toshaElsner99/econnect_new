@@ -37,6 +37,7 @@ class AppImage{
   static const copyIcon = "$path/copy.png";
   static const editIcon = "$path/edit.png";
   static const deleteIcon = "$path/delete.png";
+  static const reactionIcon = "$path/reactions.png";
 
 
 

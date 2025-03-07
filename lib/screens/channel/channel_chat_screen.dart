@@ -1060,8 +1060,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       currentUserId: userId,
                       onOpened: () {},
                       onClosed: () {},
-                      onReact: (){
-
+                      onReact: () {
+                        showReactionBar(context, messageId, widget.channelId, "Channel");
                       },
                       isForwarded: messageList.isForwarded! ? false : true,
                       opened: false,
