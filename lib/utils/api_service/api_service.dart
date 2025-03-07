@@ -67,7 +67,7 @@ class ApiService {
       _logResponse(response);
 
       final responseData = json.decode(response.body);
-      _handleToastMessage(responseData);
+      // _handleToastMessage(responseData);
 
       if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403) {
         return json.decode(response.body);

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/get_reply_message_model.dart';
 import 'package:e_connect/utils/common/common_function.dart';
@@ -102,14 +104,37 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
     final List<dynamic> initialUsers = [];
     final allUsers = provider.getUserMentionModel?.data?.users ?? [];
+    final bool isSelfChat = widget.receiverId == signInModel.data?.user?.id;
 
-    // If no search query, show first two users from API response
+    // If no search query, show prioritized users
     if (searchQuery?.isEmpty ?? true) {
-      // Add first two users if available
-      if (allUsers.isNotEmpty) {
-        initialUsers.add(allUsers[0]);
-        if (allUsers.length > 1) {
-          initialUsers.add(allUsers[1]);
+      if (isSelfChat) {
+        // For self chat, show first two users from API response
+        if (allUsers.isNotEmpty) {
+          initialUsers.add(allUsers[0]);
+          if (allUsers.length > 1) {
+            initialUsers.add(allUsers[1]);
+          }
+        }
+      } else {
+        // For chat with another user, show current user and opposite user first
+        try {
+          final currentUser = allUsers.firstWhere(
+                (user) => user.sId == signInModel.data?.user?.id,
+          );
+          final oppositeUser = allUsers.firstWhere(
+                (user) => user.sId == widget.receiverId,
+          );
+          initialUsers.add(currentUser);
+          initialUsers.add(oppositeUser);
+        } catch (_) {
+          // If users not found, fallback to first two users
+          if (allUsers.isNotEmpty) {
+            initialUsers.add(allUsers[0]);
+            if (allUsers.length > 1) {
+              initialUsers.add(allUsers[1]);
+            }
+          }
         }
       }
       return initialUsers;
@@ -118,21 +143,43 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     // Filter users based on search query
     final query = searchQuery!.toLowerCase();
 
-    // First add first two users if they match the search
-    if (allUsers.isNotEmpty) {
-      if (((allUsers[0].username?.toLowerCase().contains(query) ?? false) ||
-          (allUsers[0].fullName?.toLowerCase().contains(query) ?? false))) {
-        initialUsers.add(allUsers[0]);
+    if (isSelfChat) {
+      // For self chat, prioritize first two matching users
+      final matchingUsers = allUsers.where((user) =>
+      ((user.username?.toLowerCase().contains(query) ?? false) ||
+          (user.fullName?.toLowerCase().contains(query) ?? false))
+      ).toList();
+
+      if (matchingUsers.isNotEmpty) {
+        initialUsers.add(matchingUsers[0]);
+        if (matchingUsers.length > 1) {
+          initialUsers.add(matchingUsers[1]);
+        }
       }
-      if (allUsers.length > 1 &&
-          ((allUsers[1].username?.toLowerCase().contains(query) ?? false) ||
-          (allUsers[1].fullName?.toLowerCase().contains(query) ?? false))) {
-        initialUsers.add(allUsers[1]);
-      }
+    } else {
+      // For chat with another user, prioritize current user and opposite user if they match
+      try {
+        final currentUser = allUsers.firstWhere(
+                (user) => user.sId == signInModel.data?.user?.id &&
+                ((user.username?.toLowerCase().contains(query) ?? false) ||
+                    (user.fullName?.toLowerCase().contains(query) ?? false))
+        );
+        initialUsers.add(currentUser);
+      } catch (_) {}
+
+      try {
+        final oppositeUser = allUsers.firstWhere(
+                (user) => user.sId == widget.receiverId &&
+                ((user.username?.toLowerCase().contains(query) ?? false) ||
+                    (user.fullName?.toLowerCase().contains(query) ?? false))
+        );
+        initialUsers.add(oppositeUser);
+      } catch (_) {}
     }
 
-    // Then add other matching users
-    final otherUsers = allUsers.skip(2).where((user) =>
+    // Add other matching users
+    final otherUsers = allUsers.where((user) =>
+    !initialUsers.contains(user) &&
         ((user.username?.toLowerCase().contains(query) ?? false) ||
             (user.fullName?.toLowerCase().contains(query) ?? false))
     ).toList();
@@ -645,7 +692,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
         color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
         border: Border(
           top: BorderSide(
-            color: Colors.grey.shade800,
+            color: Colors.white,
             width: 0.5,
           ),
         ),
@@ -657,54 +704,72 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: CompositedTransformTarget(
-                    link: _layerLink,
-                    child: TextField(
-                      key: _textFieldKey,
-                      controller: _messageController,
-                      focusNode: _focusNode,
-                      maxLines: 5,
-                      minLines: 1,
-                      keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
-                      style: TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        hintStyle: TextStyle(color: Colors.grey),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        suffixIcon: _messageController.text.isEmpty
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () => FileServiceProvider.instance.pickFiles(),
-                                    child: const Icon(Icons.attach_file, color: Colors.grey),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  GestureDetector(
-                                    onTap: () => _pickImage(ImageSource.gallery),
-                                    child: const Icon(Icons.image, color: Colors.grey),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  GestureDetector(
-                                    onTap: () => _showCameraOptions(context),
-                                    child: const Icon(Icons.camera_alt, color: Colors.grey),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
-                              )
-                            : null,
-                      ),
-                      onChanged: (value) {
-                        setState(() {});
-                        _onTextChanged();
-                      },
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      // color: Colors.grey.shade900,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: CompositedTransformTarget(
+                            link: _layerLink,
+                            child: TextField(
+                              maxLines: 5,
+                              minLines: 1,
+                              controller: _messageController,
+                              focusNode: _focusNode,
+                              keyboardType: TextInputType.multiline,
+                              textInputAction: TextInputAction.newline,
+                              style: TextStyle(color: AppColor.whiteColor),
+                              decoration: InputDecoration(
+                                hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
+                                hintMaxLines: 1,
+                                hintStyle: TextStyle(color: Colors.grey),
+                                border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // const SizedBox(width: 8),
+                                    // Container(
+                                    //   width: 1,
+                                    //   height: 25,
+                                    //   color: Colors.white
+                                    // ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => FileServiceProvider.instance.pickFiles(),
+                                      child: const Icon(Icons.attach_file, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () =>  FileServiceProvider.instance.pickImages(),
+                                      child: const Icon(Icons.image, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () =>  showCameraOptionsBottomSheet(context),
+                                      child: const Icon(Icons.camera_alt, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                ),
+                              ),
+                              textCapitalization: TextCapitalization.sentences,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                   decoration: BoxDecoration(
                     color: AppColor.blueColor,
                     borderRadius: BorderRadius.circular(8),
@@ -713,38 +778,16 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                     icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
                     onPressed: () async {
                       final plainText = _messageController.text.trim();
-                      if(plainText.isEmpty && fileServiceProvider.selectedFiles.isEmpty) return;
-
-                      try {
+                      if(plainText.isNotEmpty || fileServiceProvider.selectedFiles.isNotEmpty) {
                         if(fileServiceProvider.selectedFiles.isNotEmpty){
                           final filesOfList = await chatProvider.uploadFiles();
-                          await chatProvider.sendMessage(
-                            content: plainText,
-                            receiverId: widget.receiverId,
-                            files: filesOfList,
-                            replyId: widget.messageId,
-                            isEditFromReply: true,
-                          );
+                          chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId, files: filesOfList);
                         } else {
-                          await chatProvider.sendMessage(
-                            content: plainText,
-                            receiverId: widget.receiverId,
-                            replyId: widget.messageId,
-                            editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
-                            isEditFromReply: true,
-                          );
+                          chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId, editMsgID: currentUserMessageId).then((value) => setState(() {
+                            currentUserMessageId = "";
+                          }),);
                         }
-
-                        // Update reply count in single chat screen
-                        chatProvider.updateReplyCount(widget.messageId);
-
-                        setState(() {
-                          currentUserMessageId = "";
-                        });
-
                         _clearInputAndDismissKeyboard();
-                      } catch (e) {
-                        print("Error sending message: $e");
                       }
                     },
                   ),
@@ -752,6 +795,9 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
               ],
             ),
           ),
+          if(Platform.isIOS)...{
+            SizedBox(height: 20)
+          },
           selectedFilesWidget(),
         ],
       ),
