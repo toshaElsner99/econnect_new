@@ -394,6 +394,9 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                   isPinned: pinnedMsg,
                   onOpened: () {}  ,
                   onClosed: () {} ,
+                  onReact: () {
+                    showReactionBar(context, messageId.toString(), userId, "ChannelReply");
+                  },
                   opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
                   onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.username ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),

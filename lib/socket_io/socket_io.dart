@@ -158,19 +158,28 @@ class SocketIoProvider extends ChangeNotifier{
       print("⚠️ Socket is not connected. Attempting to reconnect...");
       socket.connect();
     }
+    socket.off(deleteMessageForListen);
     socket.on((deleteMessageForListen), (data) {
       print("deleteMessageForListen >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1, isFromMsgListen: true);
     });
+    socket.off(notification);
     socket.on(notification, (data) {
       print("listSingleChatScreen >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
     });
+    socket.off(notificationForPinMessagesListen);
     socket.on(notificationForPinMessagesListen, (data) {
       print("listSingleChatScreen >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
     });
+    socket.off(notificationForMessageReacting);
+    socket.on(notificationForMessageReacting, (data) {
+      print("messageReaction >>> $data");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
+    });
   }
+
   void listenChannelChatScreen({required String channelId,}) {
     socket.off(notification);
     if (!socket.connected) {
@@ -252,5 +261,18 @@ class SocketIoProvider extends ChangeNotifier{
 
   void addMemberToChannel({required Map<String, dynamic> response}){
     socket.emit(addMember,response);
+  }
+
+  reactMessagesSC({required Map<String, dynamic> response,bool? isForChannel = false}) {
+    print("emit>>>>> React Message $response");
+    socket.emit(messageReaction , response);
+  }
+
+  void socketListenReactMessageInReplyScreen({String? msgId }){
+    socket.off(notificationForMessageReacting);
+    socket.on(notificationForMessageReacting, (data) {
+      print("notificationForMessageReacting >>> $data");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getReplyMessageList(msgId: msgId!, fromWhere: "PIN_MSG_SOCKET");
+    });
   }
 }

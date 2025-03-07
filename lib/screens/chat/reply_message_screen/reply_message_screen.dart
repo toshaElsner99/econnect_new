@@ -68,6 +68,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
       chatProvider.getReplyListUpdateSC(widget.messageId);
       socketProvider.listenDeleteMessageSocketForReply(msgId: widget.messageId);
       socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
+      socketProvider.socketListenReactMessageInReplyScreen(msgId: widget.messageId);
       _fetchAndCacheUserDetails();
       print("I'm In initState");
       Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: widget.messageId,fromWhere: "SCREEN INIT");
@@ -346,6 +347,155 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                           ],
                         ),
                       ),
+                      commonHTMLText(message: message),
+                      // Put Reacted emojis list here
+                      if (messageList.reactions?.isNotEmpty ?? false)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          child: Row(
+                            children: [
+                              GestureDetector(
+                                onTap: (){
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Reactions',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(height: 12),
+                                            ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: MediaQuery.of(context).size.height * 0.5,
+                                              ),
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: messageList.reactions?.length ?? 0,
+                                                itemBuilder: (context, index) {
+                                                  final reaction = messageList.reactions![index];
+                                                  return Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                    child: Row(
+                                                      children: [
+                                                        profileIconWithStatus(
+                                                          userID: reaction.userId!.sId ?? '',
+                                                          status: "online",
+                                                          radius: 16,
+                                                          otherUserProfile: userCache[reaction.userId!.sId]?.data?.user?.thumbnailAvatarUrl,
+                                                        ),
+                                                        SizedBox(width: 12),
+                                                        Expanded(
+                                                          child: Text(
+                                                            reaction.userId!.username ?? "Unknown",
+                                                            style: TextStyle(
+                                                              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        CachedNetworkImage(
+                                                          imageUrl: reaction.emoji ?? "",
+                                                          height: 24,
+                                                          width: 24,
+                                                          errorWidget: (context, url, error) => Icon(Icons.error, size: 24),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Icon(Icons.info_outline, size: 20),
+                                // child: Container(
+                                //   width: 30,
+                                //   height: 30,
+                                //   child: Image.asset(
+                                //     AppImage.reactionIcon
+                                //   ),
+                                // ),
+                              ),
+                              SizedBox(
+                                  width: 10
+                              ),
+                              Wrap(
+                                spacing: 4,
+                                runSpacing: 4,
+                                children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                  bool hasUserReacted = messageList.reactions!.any((reaction) =>
+                                  reaction.userId!.sId == signInModel.data?.user?.id &&
+                                      reaction.emoji == entry.key);
+                                  return GestureDetector(
+                                    onTap: (){
+                                      if (hasUserReacted) {
+                                        context.read<ChatProvider>().reactionRemove(
+                                            messageId: messageList.sId!,
+                                            reactUrl: entry.key,
+                                            receiverId: widget.receiverId,
+                                            isFrom: "Reply"
+                                        );
+                                      } else {
+                                        context.read<ChatProvider>().reactMessage(
+                                            messageId: messageList.sId!,
+                                            reactUrl: entry.key,
+                                            receiverId: widget.receiverId,
+                                            isFrom: "Reply"
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: AppPreferenceConstants.themeModeBoolValueGet
+                                            ? Colors.grey[800]
+                                            : Colors.grey[200],
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          CachedNetworkImage(
+                                            imageUrl: entry.key,
+                                            width: 16,
+                                            height: 16,
+                                            errorWidget: (context, url, error) =>
+                                                Icon(Icons.error, size: 16),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            entry.value.toString(),
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: AppPreferenceConstants.themeModeBoolValueGet
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+                        ),
                       Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(
@@ -462,6 +612,9 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   isPinned: pinnedMsg,
                   onOpened: () {}  ,
                   onClosed: () {} ,
+                  onReact: () {
+                    showReactionBar(context, messageId.toString(), userId, "Reply");
+                  },
                   opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
                   onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
