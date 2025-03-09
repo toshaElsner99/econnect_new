@@ -4,6 +4,7 @@ import 'package:e_connect/screens/chat/single_chat_message_screen.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -299,7 +300,7 @@ ToastFuture commonShowToast(String msg, [Color? bgColor]) {
       margin: const EdgeInsets.only(bottom: 25, left: 20, right: 20),
       child: commonText(
         text: msg,
-        color: bgColor == null ? Colors.black : Colors.white,
+        color:  AppPreferenceConstants.themeModeBoolValueGet ? Colors.black : Colors.white,
         fontSize: 16,
         textAlign: TextAlign.center,
         fontWeight: FontWeight.w600,
@@ -2559,18 +2560,164 @@ void showChatSettingsBottomSheet({required String userId}) {
 
 
 // File selected to send
-Widget selectedFilesWidget() {
+// Widget selectedFilesWidget() {
+//   return Consumer<FileServiceProvider>(
+//     builder: (context, provider, _) {
+//       return Visibility(
+//         visible: provider.selectedFiles.isNotEmpty,
+//         child: SizedBox(
+//           height: 80,
+//           child: ListView.builder(
+//             scrollDirection: Axis.horizontal,
+//             itemCount: provider.selectedFiles.length,
+//             itemBuilder: (context, index) {
+//               print("FILES>>>> ${provider.selectedFiles[index].path}");
+//               return Stack(
+//                 children: [
+//                   GestureDetector(
+//                     onTap: () {
+//                       Navigator.push(
+//                         context,
+//                         MaterialPageRoute(
+//                           builder: (context) => MediaPreviewScreen(
+//                             files: provider.selectedFiles,
+//                             initialIndex: index,
+//                           ),
+//                         ),
+//                       );
+//                     },
+//                     child: Padding(
+//                       padding: const EdgeInsets.all(8.0),
+//                       child: Container(
+//                         width: 60,
+//                         height: 60,
+//                         color: AppColor.commonAppColor,
+//                         child: getFileIcon(
+//                           provider.selectedFiles[index].extension!,
+//                           provider.selectedFiles[index].path,
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                   Positioned(
+//                     right: 0,
+//                     top: 0,
+//                     child: GestureDetector(
+//                       onTap: () {
+//                         provider.removeFile(index);
+//                       },
+//                       child: CircleAvatar(
+//                         radius: 12,
+//                         backgroundColor: AppColor.blackColor,
+//                         child: CircleAvatar(
+//                           radius: 10,
+//                           backgroundColor: AppColor.borderColor,
+//                           child: Icon(
+//                             Icons.close,
+//                             color: AppColor.blackColor,
+//                             size: 15,
+//                           ),
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                 ],
+//               );
+//             },
+//           ),
+//         ),
+//       );
+//     },
+//   );
+// }
+
+Future<dynamic> deleteMessageDialog(BuildContext context,Function deleteMsgFun) {
+  return showDialog(context: context, builder: (context) {
+    return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
+      return AlertDialog(
+        contentPadding: EdgeInsets.zero,
+        insetPadding: EdgeInsets.zero,
+        content: Container(
+          color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.black : Colors.white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                color: AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.commonAppColor,
+                alignment: Alignment.centerLeft,
+                padding: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    commonText(text: "Confirm Message Delete",color: Colors.white),
+                    GestureDetector(
+                        onTap: () => pop(),
+                        child: Icon(Icons.close,color: Colors.white,)),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20.0,horizontal: 20),
+                child: commonText(text: "Are you sure you want to delete this Message?"),
+              ),
+              Divider(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0,horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                      onTap: () => pop(),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: Colors.grey.withOpacity(0.1)
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+                        child: commonText(text: "Cancel"),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        pop();
+                        deleteMsgFun.call();
+                      },
+                      child: Container(
+                        margin: EdgeInsets.only(left: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: AppColor.redColor,
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+                        child: commonText(text: "Delete",color: Colors.white),
+                      ),
+                    ),
+                  ],),
+              )
+            ],
+
+          ),
+        ),
+      );
+    },);
+  },);
+}
+
+
+Widget selectedFilesWidget({required String screenName}) {
   return Consumer<FileServiceProvider>(
     builder: (context, provider, _) {
+      List<PlatformFile> selectedFiles = provider.getFilesForScreen(screenName);
+
       return Visibility(
-        visible: provider.selectedFiles.isNotEmpty,
+        visible: selectedFiles.isNotEmpty,
         child: SizedBox(
           height: 80,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: provider.selectedFiles.length,
+            itemCount: selectedFiles.length,
             itemBuilder: (context, index) {
-              print("FILES>>>> ${provider.selectedFiles[index].path}");
+              print("FILES>>>> ${selectedFiles[index].path}");
               return Stack(
                 children: [
                   GestureDetector(
@@ -2579,7 +2726,7 @@ Widget selectedFilesWidget() {
                         context,
                         MaterialPageRoute(
                           builder: (context) => MediaPreviewScreen(
-                            files: provider.selectedFiles,
+                            files: selectedFiles,
                             initialIndex: index,
                           ),
                         ),
@@ -2592,8 +2739,8 @@ Widget selectedFilesWidget() {
                         height: 60,
                         color: AppColor.commonAppColor,
                         child: getFileIcon(
-                          provider.selectedFiles[index].extension!,
-                          provider.selectedFiles[index].path,
+                          selectedFiles[index].extension!,
+                          selectedFiles[index].path,
                         ),
                       ),
                     ),
@@ -2603,7 +2750,7 @@ Widget selectedFilesWidget() {
                     top: 0,
                     child: GestureDetector(
                       onTap: () {
-                        provider.removeFile(index);
+                        provider.removeFile(screenName, index);
                       },
                       child: CircleAvatar(
                         radius: 12,
@@ -2630,7 +2777,7 @@ Widget selectedFilesWidget() {
   );
 }
 
-void showCameraOptionsBottomSheet(BuildContext context) {
+void showCameraOptionsBottomSheet(BuildContext context,String screenName) {
   showModalBottomSheet(
     context: context,
     backgroundColor: AppColor.appBarColor,
@@ -2659,7 +2806,7 @@ void showCameraOptionsBottomSheet(BuildContext context) {
               ),
               onTap: () {
                 Navigator.pop(context);
-                FileServiceProvider.instance.captureMedia(isVideo: false);
+                FileServiceProvider.instance.captureMedia(isVideo: false,screenName: screenName);
               },
             ),
             ListTile(
@@ -2670,7 +2817,7 @@ void showCameraOptionsBottomSheet(BuildContext context) {
               ),
               onTap: () {
                 Navigator.pop(context);
-                FileServiceProvider.instance.captureMedia(isVideo: true);
+                FileServiceProvider.instance.captureMedia(isVideo: true,screenName: screenName);
               },
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -72,15 +73,17 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
 
       return channelChatProvider.messageGroups.isEmpty? SizedBox.shrink() :
       channelChatProvider.channelPinnedMessageModel?.data?.messages!.length == 0 ?
-      Expanded(
+      Container(
+        margin: EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.25),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
               AppImage.pinIcon,
               height: 60,
               width: 60,
-              color: AppColor.blackColor,
+              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.appBarColor,
             ),
             const SizedBox(height: 16),
             commonText(
@@ -144,7 +147,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                   return chatBubble(
                     index: index,
                     messageList: message,
-                    showUserDetails: showUserDetails,
+                    showUserDetails: true,
                     userId: message.senderId ?? "",
                     messageId: pinnedMessageList!.messagesDetails![index].sId.toString(),
                     message: message.content ?? "",
@@ -168,7 +171,6 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
     bool showUserDetails = true,
   })  {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-      bool isEdited = messageList.isEdited ?? false;
       return Container(
         margin: EdgeInsets.only(top: 1),
         padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 8.0),
@@ -210,62 +212,43 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                             Padding(padding: const EdgeInsets.only(left: 5.0),
                               child: commonText(height: 1.2, text: formatTime(time), color: Colors.grey, fontSize: 12),
                             ),
-                          ],
-                        ),
-                      SizedBox(height: 5),
-                      Visibility(
-                        visible: message.isNotEmpty,
-                        child: Wrap(
-                          direction: Axis.horizontal,
-                          children: [
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  WidgetSpan(
-                                    alignment: PlaceholderAlignment.baseline,
-                                    baseline: TextBaseline.alphabetic,
-                                    child: commonHTMLText(message: message),
-                                  ),
-                                  if (isEdited)
-                                    WidgetSpan(
-                                      alignment: PlaceholderAlignment.baseline,
-                                      baseline: TextBaseline.alphabetic,
-                                      child: Padding(
-                                        padding:
-                                        const EdgeInsets.only(left: 4.0),
-                                        // Space between content & label
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          // Ensures compact fit
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.edit_outlined,
-                                              size: 13,
-                                              color: AppColor.borderColor,
-                                            ),
-                                            const SizedBox(width: 2),
-                                            commonText(
-                                              text: "Edited",
-                                              fontSize: 10,
-                                              color: AppColor.borderColor,
-                                              fontStyle: FontStyle.italic,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                            Spacer(),
+                            Container(
+                              height: 35,
+                              child: PopupMenuButton<String>(
+                                color: AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.appBarColor,
+                                offset: Offset(-20, 10),
+                                onSelected: (value) {
+                                  if (value == 'unpin') {
+                                    channelChatProvider.unPinOnlyFromPinnedMessages(channelID: widget.channelId, messageId: messageId);
+                                    // chatProvider.pinUnPinMessage(receiverId: widget.oppositeUser Id, messageId: messageId, pinned: false, callForUnpinPostOnly: true);
+                                  }
+                                },
+                                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                                  PopupMenuItem<String>(
+                                    value: 'unpin',
+                                    height: 30,
+                                    child: Row(
+                                      children: [
+                                        Image.asset(AppImage.pinTiltIcon, height: 20, width: 20, color: Colors.white),
+                                        SizedBox(width: 10),
+                                        commonText(text: 'Unpin from Channel', color: Colors.white),
+                                      ],
                                     ),
+                                  ),
                                 ],
+                                icon: Icon(Icons.more_vert),
                               ),
                             ),
                           ],
                         ),
-                      ),
+                      Visibility(
+                          visible: message.isNotEmpty,
+                          child: commonHTMLText(message: message)),
                       Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(
+                            margin: EdgeInsets.only(top: 5),
                             padding: EdgeInsets.symmetric(vertical: 16,horizontal: 20),
                             decoration: BoxDecoration(
                               border: Border.all(color: AppColor.borderColor,width: 0.6),
@@ -287,7 +270,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                         children: [
                                           commonText(text: messageList.senderOfForward?.username ?? "unknown"),
                                           SizedBox(height: 3),
-                                          commonText(text: formatDateString("${messageList.senderOfForward?.createdAt ?? ""}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          commonText(text: formatDateString(messageList.forwards?.createdAt ?? ""),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),

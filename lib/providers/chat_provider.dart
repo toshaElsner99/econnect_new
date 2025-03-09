@@ -14,6 +14,7 @@ import '../main.dart';
 import '../model/files_listening_in_chat_model.dart';
 import '../model/get_reply_message_model.dart' as reply;
 import '../model/message_model.dart' as msg;
+import 'common_provider.dart';
 import 'file_service_provider.dart';
 import '../utils/api_service/api_service.dart';
 import '../utils/api_service/api_string_constants.dart';
@@ -24,6 +25,7 @@ import 'package:http/http.dart' as http;
 
 class ChatProvider extends  ChangeNotifier {
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
+  final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
   List<msg.MessageGroups> messageGroups = [];
   String? lastOpenedUserId;
   String? lastOpenedUserMSGId;
@@ -187,10 +189,10 @@ class ChatProvider extends  ChangeNotifier {
     };
     final response = await ApiService.instance.request(endPoint: ApiString.replayMsgSeen, method: Method.POST,reqBody: requestBody);
   }
-  Future<List<String>> uploadFiles() async {
+  Future<List<String>> uploadFiles(String screenName) async {
    try {
      startLoading();
-     List<PlatformFile> selectedFiles = FileServiceProvider.instance.selectedFiles;
+     List<PlatformFile> selectedFiles = FileServiceProvider.instance.getFilesForScreen(screenName);
      List<File> filesToUpload = selectedFiles.map((platformFile) {
        return File(platformFile.path!);
      }).toList();
@@ -347,15 +349,20 @@ class ChatProvider extends  ChangeNotifier {
         }
     }
   }
-  Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned})async{
+  Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned, bool callForUnpinPostOnly = false})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
-      // getMessagesList(oppositeUserId: receiverId);
-      togglePinModel(messageId);
+      if(callForUnpinPostOnly){
+        getMessagesList(oppositeUserId: receiverId,currentPage: 1);
+        commonProvider.getUserByIDCallForSecondUser(userId: receiverId);
+      }else {
+        togglePinModel(messageId);
+      }
       // _updatePinnedStatus(messageId, pinned);
       socketProvider.pinUnPinMessageEventSingleChat(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
     }
   }
+
   Future<void> pinUnPinMessageForReply({required String receiverId,required String messageId,required bool pinned})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){

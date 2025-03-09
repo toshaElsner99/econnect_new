@@ -9,6 +9,7 @@ import 'package:e_connect/screens/channel/channel_pinned_messages/channel_pinned
 import 'package:e_connect/screens/channel/files_listing_channel/files_listing_in_channel_screen.dart';
 import 'package:e_connect/screens/channel/reply_message_screen_channel/reply_message_screen_channel.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
+import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
@@ -377,7 +378,12 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       Provider.of<ChannelChatProvider>(context, listen: false).getChannelMembersList(widget.channelId);
     },);
   }
-
+  late FileServiceProvider _fileServiceProvider;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
+  }
   @override
   void dispose() {
     _messageController.removeListener(_onTextChanged);
@@ -386,7 +392,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     _scrollController.dispose();
     _messageController.dispose();
     _focusNode.dispose();
-    // Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
+    _fileServiceProvider.clearFilesForScreen(AppString.channelChat);
   }
   
   void _showRenameChannelDialog() {
@@ -559,17 +565,17 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                     // ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => FileServiceProvider.instance.pickFiles(),
+                                      onTap: () => FileServiceProvider.instance.pickFiles(AppString.channelChat),
                                       child: const Icon(Icons.attach_file, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  FileServiceProvider.instance.pickImages(),
+                                      onTap: () =>  FileServiceProvider.instance.pickImages(AppString.channelChat),
                                       child: const Icon(Icons.image, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  showCameraOptionsBottomSheet(context),
+                                      onTap: () =>  showCameraOptionsBottomSheet(context,AppString.channelChat),
                                       child: const Icon(Icons.camera_alt, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
@@ -594,9 +600,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
                     onPressed: () async {
                       final plainText = _messageController.text.trim();
-                      if(plainText.isNotEmpty || fileServiceProvider.selectedFiles.isNotEmpty) {
-                        if(fileServiceProvider.selectedFiles.isNotEmpty){
-                          final filesOfList = await channelChatProvider.uploadFiles();
+                      if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty) {
+                        if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
+                          final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
                           channelChatProvider.sendMessage(content: plainText, channelId: widget.channelId, files: filesOfList);
                         } else {
                           channelChatProvider.sendMessage(content: plainText, channelId: widget.channelId,editMsgID: currentUserMessageId).then((value) => setState(() {
@@ -614,7 +620,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
           if(Platform.isIOS)...{
             SizedBox(height: 20)
           },
-          selectedFilesWidget(),
+          selectedFilesWidget(screenName: AppString.channelChat),
         ],
       ),
     );
@@ -1341,7 +1347,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                         children: [
                                           commonText(text: messageList.senderOfForward?.username ?? "unknown"),
                                           SizedBox(height: 3),
-                                          commonText(text: formatDateString("${messageList.senderOfForward?.createdAt ?? ""}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          commonText(text: formatDateString("${messageList.forwards?.createdAt ?? ""}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),
@@ -1581,7 +1587,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                         _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                       }),
-                      onDelete: () => Provider.of<ChannelChatProvider>(context,listen: false).deleteMessageFromChannel(messageId: messageId,)
+                      onDelete: () => deleteMessageDialog(context, ()=> Provider.of<ChannelChatProvider>(context,listen: false).deleteMessageFromChannel(messageId: messageId,))
                   ),
                 )
               ],

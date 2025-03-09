@@ -535,12 +535,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                       contentPadding: EdgeInsets.zero,
                                       insetPadding: EdgeInsets.zero,
                                       content: Container(
-                                        color: Colors.white,
+                                        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.black : Colors.white,
                                         child: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Container(
-                                              color: AppColor.commonAppColor,
+                                              color: AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.commonAppColor,
                                               alignment: Alignment.centerLeft,
                                               padding: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
                                               child: Row(
@@ -599,6 +599,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                   },);
                                 },);
   }
+
 
 
 

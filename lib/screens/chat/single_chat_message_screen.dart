@@ -16,11 +16,13 @@ import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
+import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 
 import 'package:provider/provider.dart';
 
@@ -68,6 +70,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   int _mentionCursorPosition = 0;
   final TextEditingController _messageController = TextEditingController();
   bool _isTextFieldEmpty = true;
+  late FileServiceProvider _fileServiceProvider;
+
 
   // clearSelectedIndex({required Function call}){
   //   setState(() {
@@ -715,14 +719,19 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     _messageController.clear();
     FocusScope.of(context).unfocus();
   }
-
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Initialize provider here so it can be safely accessed in dispose()
+    _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
+  }
   @override
   void dispose() {
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _focusNode.dispose();
-    _removeMentionOverlay();
-    Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
+    // _removeMentionOverlay();
+    _fileServiceProvider.clearFilesForScreen(AppString.singleChat);
     super.dispose();
   }
 
@@ -783,17 +792,17 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                     // ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => FileServiceProvider.instance.pickFiles(),
+                                      onTap: () => FileServiceProvider.instance.pickFiles(AppString.singleChat),
                                       child: const Icon(Icons.attach_file, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  FileServiceProvider.instance.pickImages(),
+                                      onTap: () =>  FileServiceProvider.instance.pickImages(AppString.singleChat),
                                       child: const Icon(Icons.image, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  showCameraOptionsBottomSheet(context),
+                                      onTap: () =>  showCameraOptionsBottomSheet(context,AppString.singleChat),
                                       child: const Icon(Icons.camera_alt, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
@@ -818,9 +827,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
                     onPressed: () async {
                       final plainText = _messageController.text.trim();
-                      if(plainText.isNotEmpty || fileServiceProvider.selectedFiles.isNotEmpty) {
-                        if(fileServiceProvider.selectedFiles.isNotEmpty){
-                          final filesOfList = await chatProvider.uploadFiles();
+                      if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
+                        if(fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty){
+                          final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
                           chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, files: filesOfList);
                         } else {
                           chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
@@ -838,7 +847,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           if(Platform.isIOS)...{
             SizedBox(height: 20)
           },
-          selectedFilesWidget(),
+          selectedFilesWidget(screenName: AppString.singleChat),
         ],
       ),
     );
@@ -1478,7 +1487,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                       _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                     }),
-                    onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId))),
+                    // onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId))),
+                    onDelete: () => deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)))),
                     // onForward: ()=> clearSelectedIndex(call: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,))),
                     // onReply: () => clearSelectedIndex(call: ()=>  pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,))),
                     // onPin: () => clearSelectedIndex(call:()=> chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg )),

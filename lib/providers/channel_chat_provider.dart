@@ -37,6 +37,15 @@ class ChannelChatProvider extends ChangeNotifier{
   int currentPage = 1;
   int totalPages = 0;
 
+  unPinOnlyFromPinnedMessages({required String channelID,required String messageId,}) async {
+    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, false), method: Method.PUT);
+    if(statusCode200Check(response)){
+      getChannelChatApiCall(channelId: channelID, pageNo: 1);
+      getChannelPinnedMessage(channelID: channelID,needLoader: false);
+      getChannelInfoApiCall(channelId: channelID, callFroHome: false);
+    }
+  }
+
   Future<void> pinUnPinMessage({required String channelID,required String messageId,required bool pinned,bool isCalledForReply = false})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
@@ -68,10 +77,10 @@ class ChannelChatProvider extends ChangeNotifier{
 
 
 
-  Future<List<String>> uploadFiles() async {
+  Future<List<String>> uploadFiles(String screenName) async {
     try {
       startLoading();
-      List<PlatformFile> selectedFiles = FileServiceProvider.instance.selectedFiles;
+      List<PlatformFile> selectedFiles = FileServiceProvider.instance.getFilesForScreen(screenName);
       List<File> filesToUpload = selectedFiles.map((platformFile) {
         return File(platformFile.path!);
       }).toList();
@@ -186,7 +195,6 @@ class ChannelChatProvider extends ChangeNotifier{
           }));
         }
       }
-
     }
     notifyListeners();
   }
@@ -199,9 +207,9 @@ class ChannelChatProvider extends ChangeNotifier{
     }
   }
 
-  Future<void> getChannelPinnedMessage({required String channelID})async{
+  Future<void> getChannelPinnedMessage({required String channelID,bool needLoader = true})async{
     final requestBody = {"channelId": channelID};
-    final response = await ApiService.instance.request(endPoint: ApiString.getChannelPinnedMessage, method: Method.POST,reqBody: requestBody,needLoader: true);
+    final response = await ApiService.instance.request(endPoint: ApiString.getChannelPinnedMessage, method: Method.POST,reqBody: requestBody,needLoader: needLoader);
     if(statusCode200Check(response)){
       channelPinnedMessageModel = ChannelPinnedMessageModel.fromJson(response);
       notifyListeners();

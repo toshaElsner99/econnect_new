@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/get_reply_message_model.dart';
+import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
@@ -91,14 +92,19 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.username}");
     print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.sId}");
   }
-
+  late FileServiceProvider _fileServiceProvider;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
+  }
   @override
   void dispose() {
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _focusNode.dispose();
     _removeMentionOverlay();
-    Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
+    _fileServiceProvider.clearFilesForScreen(AppString.singleChatReply);
     super.dispose();
   }
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
@@ -673,9 +679,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                     print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                     _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                   }),
-                  onDelete: () {
-                    chatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.messageId);
-                  },
+                  onDelete: () => deleteMessageDialog(context, ()=> chatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.messageId)),
                   createdAt:"${messageList.createdAt}",)
               ],
             ),
@@ -743,17 +747,17 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                     // ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => FileServiceProvider.instance.pickFiles(),
+                                      onTap: () => FileServiceProvider.instance.pickFiles(AppString.singleChatReply),
                                       child: const Icon(Icons.attach_file, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  FileServiceProvider.instance.pickImages(),
+                                      onTap: () =>  FileServiceProvider.instance.pickImages(AppString.singleChatReply),
                                       child: const Icon(Icons.image, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  showCameraOptionsBottomSheet(context),
+                                      onTap: () =>  showCameraOptionsBottomSheet(context,AppString.singleChatReply),
                                       child: const Icon(Icons.camera_alt, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
@@ -778,9 +782,9 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                     icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
                     onPressed: () async {
                       final plainText = _messageController.text.trim();
-                      if(plainText.isNotEmpty || fileServiceProvider.selectedFiles.isNotEmpty) {
-                        if(fileServiceProvider.selectedFiles.isNotEmpty){
-                          final filesOfList = await chatProvider.uploadFiles();
+                      if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty) {
+                        if(fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty){
+                          final filesOfList = await chatProvider.uploadFiles(AppString.singleChatReply);
                           chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId, files: filesOfList);
                         } else {
                           chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId, editMsgID: currentUserMessageId).then((value) => setState(() {
@@ -798,7 +802,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
           if(Platform.isIOS)...{
             SizedBox(height: 20)
           },
-          selectedFilesWidget(),
+          selectedFilesWidget(screenName: AppString.singleChatReply),
         ],
       ),
     );
@@ -822,7 +826,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                 title: const Text('Document'),
                 onTap: () {
                   Navigator.pop(context);
-                  FileServiceProvider.instance.pickFiles();
+                  FileServiceProvider.instance.pickFiles(AppString.singleChatReply);
                 },
               ),
               ListTile(
@@ -849,44 +853,44 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   }
 
   void _pickImage(ImageSource source) {
-    FileServiceProvider.instance.pickImages();
+    FileServiceProvider.instance.pickImages(AppString.singleChatReply);
   }
 
-  void _showCameraOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Capture Photo'),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.captureMedia(isVideo: false);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.videocam),
-                title: const Text('Record Video'),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.captureMedia(isVideo: true);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  // void _showCameraOptions(BuildContext context) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     backgroundColor: Colors.white,
+  //     shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  //     ),
+  //     builder: (context) {
+  //       return Padding(
+  //         padding: const EdgeInsets.symmetric(vertical: 20),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             ListTile(
+  //               leading: const Icon(Icons.camera_alt),
+  //               title: const Text('Capture Photo'),
+  //               onTap: () {
+  //                 Navigator.pop(context);
+  //                 FileServiceProvider.instance.captureMedia(isVideo: false);
+  //               },
+  //             ),
+  //             ListTile(
+  //               leading: const Icon(Icons.videocam),
+  //               title: const Text('Record Video'),
+  //               onTap: () {
+  //                 Navigator.pop(context);
+  //                 FileServiceProvider.instance.captureMedia(isVideo: true);
+  //               },
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   void _clearInputAndDismissKeyboard() {
     _focusNode.unfocus();

@@ -16,7 +16,9 @@ import 'package:intl/intl.dart';
 import '../../main.dart';
 import '../../providers/file_service_provider.dart';
 
+clearSelectedFiles(){
 
+}
 
 String formatDateString1(String dateString) {
   DateTime dateTime = DateTime.parse(dateString);
@@ -170,7 +172,9 @@ Widget getFileIconInChat({required String fileType, String? pngUrl}) {
       iconPath = AppImage.textFile;
       break;
     case 'png':
-      iconPath = pngUrl;
+    case 'jpg':
+    case 'jpeg':
+      iconPath = ApiString.profileBaseUrl + pngUrl!;
       break;
     default:
       iconPath = AppImage.commonFile;

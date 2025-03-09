@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
+import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -76,6 +77,24 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
     });
   }
 
+  late FileServiceProvider _fileServiceProvider;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
+  }
+
+  @override
+  void dispose() {
+    _messageController.removeListener(_onTextChanged);
+    _removeMentionOverlay();
+    super.dispose();
+    // _scrollController.dispose();
+    _messageController.dispose();
+    _focusNode.dispose();
+    _fileServiceProvider.clearFilesForScreen(AppString.channelChatReply);
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -586,7 +605,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                     print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                     _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                   }),
-                  onDelete: () => channelChatProvider.deleteMessageForReplyChannel(messageId: messageId.toString(),firsMessageId: widget.msgID),
+                  onDelete: () => deleteMessageDialog(context, ()=> channelChatProvider.deleteMessageForReplyChannel(messageId: messageId.toString(),firsMessageId: widget.msgID)),
                   createdAt:"${messageList.createdAt}",)
               ],
             ),
@@ -656,17 +675,17 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                     // ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => FileServiceProvider.instance.pickFiles(),
+                                      onTap: () => FileServiceProvider.instance.pickFiles(AppString.channelChatReply),
                                       child: const Icon(Icons.attach_file, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  FileServiceProvider.instance.pickImages(),
+                                      onTap: () =>  FileServiceProvider.instance.pickImages(AppString.channelChatReply),
                                       child: const Icon(Icons.image, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  showCameraOptionsBottomSheet(context),
+                                      onTap: () =>  showCameraOptionsBottomSheet(context,AppString.channelChatReply),
                                       child: const Icon(Icons.camera_alt, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
@@ -691,9 +710,9 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                     icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
                     onPressed: () async {
                       final plainText = _messageController.text.trim();
-                      if(plainText.isNotEmpty || fileServiceProvider.selectedFiles.isNotEmpty) {
-                        if(fileServiceProvider.selectedFiles.isNotEmpty){
-                          final filesOfList = await chatProvider.uploadFiles();
+                      if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty) {
+                        if(fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty){
+                          final filesOfList = await chatProvider.uploadFiles(AppString.channelChatReply);
                           await channelChatProvider.sendMessage(
                             content: plainText,
                             channelId: widget.channelId,
@@ -730,7 +749,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
           if(Platform.isIOS)...{
             SizedBox(height: 20)
           },
-          selectedFilesWidget(),
+          selectedFilesWidget(screenName: AppString.channelChatReply),
         ],
       ),
     );
@@ -741,45 +760,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
     FocusScope.of(context).unfocus();
   }
 
-  void _pickImage(ImageSource source) {
-    FileServiceProvider.instance.pickImages();
-  }
-
-  void _showCameraOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Capture Photo'),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.captureMedia(isVideo: false);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.videocam),
-                title: const Text('Record Video'),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.captureMedia(isVideo: true);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
   void _onTextChanged() {
     final text = _messageController.text;
     final cursorPosition = _messageController.selection.baseOffset;
