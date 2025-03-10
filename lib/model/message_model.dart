@@ -122,11 +122,11 @@ class Messages {
   bool? isLog;
   bool? isForwarded;
   bool? isEdited;
-  List<Null>? readBy ;
+  List<Null>? readBy;
   bool? isSeen;
   bool? isDeleted;
   List<Null>? taggedUsers;
-  List<Null>? reactions;
+  List<Reaction>? reactions;
   String? createdAt;
   String? updatedAt;
   int? iV;
@@ -177,9 +177,6 @@ class Messages {
       isForwarded = json['isForwarded'];
       isEdited = json['isEdited'];
 
-      // Debugging: Print the JSON being processed
-      print("Processing JSON: $json");
-
       if (json['readBy'] != null) {
         readBy = <Null>[];
         json['readBy'].forEach((v) {
@@ -198,9 +195,9 @@ class Messages {
       }
 
       if (json['reactions'] != null) {
-        reactions = <Null>[];
+        reactions = <Reaction>[];
         json['reactions'].forEach((v) {
-          // reactions!.add(new Null.fromJson(v));
+          reactions!.add(Reaction.fromJson(v));
         });
       }
 
@@ -211,7 +208,7 @@ class Messages {
       if (json['replies'] != null) {
         replies = <Replies>[];
         json['replies'].forEach((v) {
-          replies!.add(new Replies.fromJson(v));
+          replies!.add(Replies.fromJson(v));
         });
       }
 
@@ -219,29 +216,22 @@ class Messages {
       if (json['repliesSenderInfo'] != null) {
         repliesSenderInfo = <RepliesSenderInfo>[];
         json['repliesSenderInfo'].forEach((v) {
-          repliesSenderInfo!.add(new RepliesSenderInfo.fromJson(v));
+          repliesSenderInfo!.add(RepliesSenderInfo.fromJson(v));
         });
       }
 
       isMedia = json['isMedia'];
       isPinned = json['isPinned'];
 
-      // Deserialize forwardInfo if the key exists
       if (json['forwards'] != null) {
         forwardInfo = Forward.fromJson(json['forwards']);
-      } else {
-        forwardInfo = null; // Ensure it's null if not present
       }
+      
       if (json['senderOfForward'] != null) {
         senderOfForward = SenderOfForward.fromJson(json['senderOfForward']);
-      } else {
-        senderOfForward = null; // Ensure it's null if not present
       }
-
-      // Debugging: Print the forwardInfo
-      print("Forward Info: ${forwardInfo?.toJson()}");
     } catch (e) {
-      print("Error processing JSON: $e");
+      print("Error parsing Messages: $e");
     }
   }
 
@@ -300,6 +290,37 @@ class Messages {
     return data;
   }
 }
+
+class Reaction {
+  String? emoji;
+  String? userId;
+  String? id;
+  String? username;
+
+  Reaction({
+    this.emoji,
+    this.userId,
+    this.id,
+    this.username,
+  });
+
+  Reaction.fromJson(Map<String, dynamic> json) {
+    emoji = json['emoji'];
+    userId = json['userId'];
+    id = json['_id'];
+    username = json['username'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['emoji'] = emoji;
+    data['userId'] = userId;
+    data['_id'] = id;
+    data['username'] = username;
+    return data;
+  }
+}
+
 class Replies {
   String? sId;
   String? senderId;

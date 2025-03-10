@@ -22,6 +22,7 @@ import '../../providers/common_provider.dart';
 import '../../socket_io/socket_io.dart';
 import '../../utils/app_preference_constants.dart';
 import '../../utils/common/common_function.dart';
+import '../../utils/common/prefrance_function.dart';
 import '../chat/single_chat_message_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -62,6 +63,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
     Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
     Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+    getFCM();
+  }
+
+  getFCM() async{
+   String fcmToken = await getData(AppPreferenceConstants.fcmToken);
+   print("fcmToken => $fcmToken");
   }
 
   @override
@@ -528,12 +535,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                       contentPadding: EdgeInsets.zero,
                                       insetPadding: EdgeInsets.zero,
                                       content: Container(
-                                        color: Colors.white,
+                                        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.black : Colors.white,
                                         child: Column(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             Container(
-                                              color: AppColor.commonAppColor,
+                                              color: AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.commonAppColor,
                                               alignment: Alignment.centerLeft,
                                               padding: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
                                               child: Row(
@@ -592,6 +599,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                   },);
                                 },);
   }
+
 
 
 
@@ -735,7 +743,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
      margin: const EdgeInsets.symmetric(vertical: 6),
      child: InkWell(
        onTap: () => pushScreen(screen: SingleChatMessageScreen(userName: username, oppositeUserId: userId,calledForFavorite: true,)),
-       // onTap: () => pushScreen(screen: ChatScreen(userName: username, oppositeUserId: userId,calledForFavorite: true,)),
        borderRadius: BorderRadius.circular(8),
        child: Padding(
          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -745,13 +752,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             userID: userId,
             otherUserProfile: imageUrl,
             status: status,
+            isMuted: muteConversation,
           ),
              const SizedBox(width: 12),
              ConstrainedBox(
                constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
                child: commonText(
                  text: username,
-                 color: Colors.white.withOpacity(0.9),
+                 color: muteConversation ? AppColor.borderColor : Colors.white.withOpacity(0.9),
                  fontSize: 14,
                  fontWeight: FontWeight.w500,
                ),
@@ -760,7 +768,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                  visible: userId == signInModel.data?.user?.id,
                  child: Padding(
                    padding: const EdgeInsets.only(left: 5.0),
-                   child: commonText(text: "(you)",color: Colors.white),
+                   child: commonText(text: "(you)",color: muteConversation ? AppColor.borderColor : Colors.white),
                  )),
              Visibility(
                  visible: customStatusEmoji != "",
@@ -768,11 +776,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                    padding: const EdgeInsets.only(left: 8.0),
                    child: CachedNetworkImage(imageUrl: customStatusEmoji!,height: 20,width: 20,),
                  )),
-             countMsgContainer(unSeenMsgCount ?? 0),
+             countMsgContainer(count : unSeenMsgCount ?? 0,isMuted: muteConversation),
              Spacer(),
              Visibility(
                  visible: muteConversation,
-                 child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: Colors.white,)),
+                 child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteConversation ? AppColor.borderColor : Colors.white,)),
              ...?children,
            ],
          ),
@@ -783,8 +791,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Widget _buildChannelRow(ChannelList channel) {
     print("channelID _buildChannelRow >>> ${channel.sId}");
+    final muteChannel = signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false;
     return Container(
-      color: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false ? AppColor.borderColor.withOpacity(0.05) : null,
+      color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
       margin: const EdgeInsets.symmetric(vertical: 6),
       child: InkWell(
         onTap: () {
@@ -796,24 +805,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
         children: [
-          commonChannelIcon(isPrivate: channel.isPrivate == true ? true : false),
+          commonChannelIcon(isPrivate: channel.isPrivate == true ? true : false,isMuted: muteChannel),
               const SizedBox(width: 12),
               ConstrainedBox(
                 constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
             child: commonText(
               text: channel.name ?? "",
-                  color: Colors.white.withOpacity(0.9),
+                  color: muteChannel ? AppColor.borderColor : Colors.white.withOpacity(0.9),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          countMsgContainer(channel.unreadCount ?? 0),
+          countMsgContainer(count : channel.unreadCount ?? 0,isMuted: muteChannel),
               Spacer(),
               Visibility(
                   visible: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false,
-                  child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: Colors.white,)),
+                  child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteChannel ? AppColor.borderColor : Colors.white,)),
               _buildPopupMenuForChannel(channelListModel: channel,),
             ],
           ),
@@ -822,12 +831,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Visibility countMsgContainer(int count) {
+  Visibility countMsgContainer({required int count, bool isMuted = false}) {
     return Visibility(
             visible: count != 0,
             child: Container(
               decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isMuted ? Colors.white.withOpacity(0.8) : Colors.white,
                   borderRadius: BorderRadius.circular(5)
               ),
               padding: EdgeInsets.symmetric(vertical: 3,horizontal: 7),
@@ -913,11 +922,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final isPrivate = channel.isPrivate;
     final name = channel.name;
     final unSeenCount = channel.unseenMessagesCount;
-    // final muteChannel = ;
+    final muteChannel = signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
-      color: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false ? AppColor.borderColor.withOpacity(0.05) : null,
+      color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
       child: InkWell(
         onTap: ()=> pushScreen(screen: ChannelChatScreen(channelId: channel.sId!, /*channelName: channel.name!*/)),
         borderRadius: BorderRadius.circular(8),
@@ -925,25 +934,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: Row(
             children: [
-              commonChannelIcon(isPrivate: isPrivate!),
+              commonChannelIcon(isPrivate: isPrivate!,isMuted: muteChannel),
               const SizedBox(width: 12),
               ConstrainedBox(
                 constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
                 child: commonText(
                   text: name!,
-                  color: Colors.white.withOpacity(0.9),
+                  color: muteChannel  ? AppColor.borderColor : Colors.white.withOpacity(0.9),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              countMsgContainer(unSeenCount ?? 0),
+              countMsgContainer(count : unSeenCount ?? 0,isMuted: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false),
 
               Spacer(),
               Visibility(
                   visible: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false,
-                  child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: Colors.white,)),
+                  child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteChannel  ? AppColor.borderColor : Colors.white,)),
               ...children,
             ],
           ),

@@ -33,6 +33,11 @@ class AppString {
   static const String workingFromHome = "Working from home";
   static const String onVacation = "On a vacation";
 
+  static const String singleChat = "singleChat";
+  static const String channelChat = "channelChat";
+  static const String singleChatReply = "singleChatReply";
+  static const String channelChatReply = "channelChatReply";
+
 }
 
 

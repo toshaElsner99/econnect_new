@@ -12,6 +12,7 @@ import 'package:mime/mime.dart';
 
 import '../main.dart';
 import '../model/channel_chat_model.dart' as msg;
+import '../model/channel_chat_model.dart';
 import '../model/channel_members_model.dart';
 import '../model/channel_pinned_message_model.dart';
 import '../model/files_listing_in_channel_chat_model.dart';
@@ -35,28 +36,183 @@ class ChannelChatProvider extends ChangeNotifier{
   List<msg.MessageGroup> messageGroups = [];
   int currentPage = 1;
   int totalPages = 0;
+  // getTypingUpdate() {
+  //   try {
+  //     socketProvider.socket.onAny((event, data) {
+  //       print("Event: $event >>> Data: $data");
+  //       if (data['type'] == "userTyping" && data['data'] is List) {
+  //         var typingData = data['data'];
+  //         if (typingData.isNotEmpty) {
+  //           msgLength = data['msgLength'] ?? 0;
+  //           oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
+  //           notifyListeners();
+  //           print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength");
+  //         } else {
+  //           msgLength = 0;
+  //           oppUserIdForTyping = "";
+  //           notifyListeners();
+  //           print("Data array is empty.");
+  //         }
+  //       } else {
+  //         print("Received data is not of the expected structure.");
+  //       }
+  //     });
+  //   } catch (e) {
+  //     print("Error processing the socket event: $e");
+  //   } finally {
+  //     notifyListeners();
+  //   }
+  // }
+  int msgLength = 0;
+  List<Map<String, dynamic>> typingUsers = [];
+  // getTypingUpdate() {
+  //   try {
+  //     socketProvider.socket.onAny((event, data) {
+  //       print("Event: $event >>> Data: $data");
+  //       if (data['type'] == "userTyping" && data['data'] is List) {
+  //         var typingData = data['data'];
+  //         if (typingData.isNotEmpty) {
+  //           msgLength = data['msgLength'] ?? 0;
+  //           String senderId = typingData[0]['sender'];
+  //           String username = data['userData']['username'];
+  //
+  //           if (msgLength > 0) {
+  //             // Check if the user already exists in the list
+  //             bool alreadyExists = typingUsers.any((user) => user['sender'] == senderId);
+  //
+  //             if (!alreadyExists) {
+  //               // Add the user to the list
+  //               typingUsers.add({
+  //                 'sender': senderId,
+  //                 'username': username,
+  //               });
+  //             }
+  //           } else {
+  //             // Remove user from the list if typing stops
+  //             typingUsers.removeWhere((user) => user['sender'] == senderId);
+  //           }
+  //
+  //           notifyListeners();
+  //           print("Currently Typing Users: $typingUsers");
+  //         } else {
+  //           // Clear the list if no user is typing
+  //           typingUsers.clear();
+  //           notifyListeners();
+  //         }
+  //       } else {
+  //         print("Received data is not of the expected structure.");
+  //       }
+  //     });
+  //   } catch (e) {
+  //     print("Error processing the socket event: $e");
+  //   } finally {
+  //     notifyListeners();
+  //   }
+  // }
+  getTypingUpdate() {
+    try {
+      socketProvider.socket.onAny((event, data) {
+        print("Event: $event >>> Data: $data");
+        if (data['type'] == "userTyping" && data['data'] is List) {
+          var typingData = data['data'];
+          if (typingData.isNotEmpty) {
+            msgLength = data['msgLength'] ?? 0;
+            String userId = data['userData']['user_id']; // Use user_id instead of sender
+            String username = data['userData']['username'];
+            String routeId = data['routeId'];
 
-  Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned})async{
-    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
-    if(statusCode200Check(response)){
-      for (var messageGroup in messageGroups) {
-        for (var message in messageGroup.messages ?? []) {
-          if (message.id == messageId) {
-            message.isPinned = pinned;
+            print("userId >>> $userId");
+            print("routeId >>> $routeId"); // Print the routeId for debugging
+
+            // Prevent adding your own user in the list
+            if (userId.toString() == signInModel.data?.user?.id.toString()) {
+              // Also, make sure you remove yourself if already added (just in case)
+              typingUsers.removeWhere((user) => user['user_id'] == signInModel.data?.user?.id.toString());
+              notifyListeners();
+              return; // Exit early if it's the signed-in user
+            }
+
+            if (msgLength > 0) {
+              // Check if the user already exists in the list
+              bool alreadyExists = typingUsers.any((user) => user['sender'] == userId);
+
+              if (!alreadyExists) {
+                // Add the user to the list
+                typingUsers.add({
+                  'sender': userId,
+                  'username': username,
+                  'routeId': routeId, // Optionally store routeId if needed
+                });
+              }
+            } else {
+              // Remove user from the list if typing stops
+              typingUsers.removeWhere((user) => user['sender'] == userId);
+            }
+
             notifyListeners();
-            break;
+            print("Currently Typing Users: $typingUsers");
+          } else {
+            // Clear the list if no user is typing
+            typingUsers.clear();
+            notifyListeners();
           }
+        } else {
+          print("Received data is not of the expected structure.");
         }
-      }
-      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId,isEmitForChannel: true);
+      });
+    } catch (e) {
+      print("Error processing the socket event: $e");
+    } finally {
+      notifyListeners();
     }
   }
 
 
-  Future<List<String>> uploadFiles() async {
+  unPinOnlyFromPinnedMessages({required String channelID,required String messageId,}) async {
+    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, false), method: Method.PUT);
+    if(statusCode200Check(response)){
+      getChannelChatApiCall(channelId: channelID, pageNo: 1);
+      getChannelPinnedMessage(channelID: channelID,needLoader: false);
+      getChannelInfoApiCall(channelId: channelID, callFroHome: false);
+    }
+  }
+
+  Future<void> pinUnPinMessage({required String channelID,required String messageId,required bool pinned,bool isCalledForReply = false})async{
+    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
+    if(statusCode200Check(response)){
+      socketProvider.pinUnPinMessageEventChannelChat(senderId: signInModel.data?.user?.id ?? "", channelId: channelID);
+      if(isCalledForReply == true){
+        print("isCalledForReply>>>>>>>. $isCalledForReply");
+        for (MessagesList messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+          for (MessagesGroupList message in messageGroup.messagesGroupList ?? []) {
+            if (message.sId == messageId) {
+              message.isPinned = pinned;
+              notifyListeners();
+              return;
+            }
+          }
+        }
+      }else {
+        for (var messageGroup in messageGroups) {
+          for (var message in messageGroup.messages ?? []) {
+            if (message.id == messageId) {
+              message.isPinned = pinned;
+              notifyListeners();
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+
+
+  Future<List<String>> uploadFiles(String screenName) async {
     try {
       startLoading();
-      List<PlatformFile> selectedFiles = FileServiceProvider.instance.selectedFiles;
+      List<PlatformFile> selectedFiles = FileServiceProvider.instance.getFilesForScreen(screenName);
       List<File> filesToUpload = selectedFiles.map((platformFile) {
         return File(platformFile.path!);
       }).toList();
@@ -100,7 +256,14 @@ class ChannelChatProvider extends ChangeNotifier{
       stopLoading();
     }
   }
-  Future<void> sendMessage({required dynamic content , required String channelId, List<String>? files,String? replyId , String? editMsgID,})async{
+  Future<void> sendMessage({
+    required dynamic content,
+    required String channelId,
+    List<String>? files,
+    String? replyId,
+    String? editMsgID,
+    bool isEditFromReply = false,
+  }) async {
     final requestBody = {
       "content": content,
       "channelId": channelId,
@@ -119,21 +282,39 @@ class ChannelChatProvider extends ChangeNotifier{
     if (files != null && files.isNotEmpty) {
       requestBody["files"] = files;
     }
+    
     final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST,reqBody: requestBody);
-    if(statusCode200Check(response)){
-      socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
-      if (editMsgID != null && editMsgID.isNotEmpty) {
-        int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.id == editMsgID));
+    final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST, reqBody: requestBody);
+    
+    if (statusCode200Check(response)) {
+      /// Socket Emit ///
+      socketProvider.sendMessagesSC(response: response['data'], emitReplyMsg: replyId != null ? true : false);
 
-        if (editIndex != -1) {
-          msg.Message editedMessage = msg.Message.fromJson(response['data']);
-          editedMessage.isEdited = true;
-          messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.id == editMsgID)] = editedMessage;
+      /// find where to add ///
+      if (editMsgID != null && editMsgID.isNotEmpty) {
+        print("editMessageId>> $editMsgID $isEditFromReply");
+        if(isEditFromReply == true){
+          for (var message in getReplyMessageChannelModel!.data!.messagesList!) {
+            int groupMessageIndex = message.messagesGroupList!.indexWhere((msg) => msg.sId == editMsgID);
+            if (groupMessageIndex != -1) {
+              var groupMessage = message.messagesGroupList![groupMessageIndex];
+              groupMessage.content = content;
+              groupMessage.isEdited = true;
+              break;
+            }
+          }
+        } else {
+          int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.id == editMsgID));
+          if (editIndex != -1) {
+            msg.Message editedMessage = msg.Message.fromJson(response['data']);
+            editedMessage.isEdited = true;
+            messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.id == editMsgID)] = editedMessage;
+          }
         }
-      } else if(replyId != null && replyId != ""){
+      } else if (replyId != null && replyId.isNotEmpty) {
         getReplyMessageListChannel(msgId: replyId, fromWhere: "Reply Send Channel");
-      }else /*if(replyId == null && replyId == "")*/ {
+      } else {
+        // Existing logic for adding new messages
         int existingIndex = messageGroups.indexWhere((item) => item.id == todayDate);
         if (existingIndex != -1) {
           messageGroups[existingIndex].messages!.add(msg.Message.fromJson(response['data']));
@@ -146,22 +327,10 @@ class ChannelChatProvider extends ChangeNotifier{
           }));
         }
       }
-      if(replyId != null){
-        // getMessagesList(oppositeUserId: receiverId);
-        print("I'm In sendMessage");
-        // getReplyMessageList(msgId: replyId,fromWhere: "SEND_REPLY_MESSAGE");
-      }else {
-        // getMessagesList(oppositeUserId: receiverId);
-      }
     }
     notifyListeners();
   }
 
-  // void pagination({required String channelId}) {
-  //       currentPage++;
-  //       getChannelChatApiCall(channelId: channelId,pageNo: currentPage);
-  //   notifyListeners();
-  // }
   void paginationAPICall({required String channelId}) {
     if(currentPage < totalPages) {
       currentPage++;
@@ -170,9 +339,9 @@ class ChannelChatProvider extends ChangeNotifier{
     }
   }
 
-  Future<void> getChannelPinnedMessage({required String channelID})async{
+  Future<void> getChannelPinnedMessage({required String channelID,bool needLoader = true})async{
     final requestBody = {"channelId": channelID};
-    final response = await ApiService.instance.request(endPoint: ApiString.getChannelPinnedMessage, method: Method.POST,reqBody: requestBody,needLoader: true);
+    final response = await ApiService.instance.request(endPoint: ApiString.getChannelPinnedMessage, method: Method.POST,reqBody: requestBody,needLoader: needLoader);
     if(statusCode200Check(response)){
       channelPinnedMessageModel = ChannelPinnedMessageModel.fromJson(response);
       notifyListeners();
@@ -272,10 +441,13 @@ class ChannelChatProvider extends ChangeNotifier{
       print(response.reasonPhrase);
     }}
 
-  Future<void> getChannelInfoApiCall({required String channelId})async{
+  Future<void> getChannelInfoApiCall({required String channelId,required bool callFroHome})async{
     final response  = await ApiService.instance.request(endPoint: ApiString.getChannelInfo(channelId), method: Method.GET,);
     if(statusCode200Check(response)){
       getChannelInfo = GetChannelInfo.fromJson(response);
+      if(callFroHome == true && getChannelInfo != null){
+        addChannelApiCall(channelName: getChannelInfo?.data?.name ?? "", isPrivate: getChannelInfo?.data?.isPrivate ?? false, description: getChannelInfo?.data?.description ?? "");
+      }
       notifyListeners();
     }
   }
@@ -290,8 +462,6 @@ class ChannelChatProvider extends ChangeNotifier{
     }
     notifyListeners();
   }
-
-
 
 
 
@@ -317,11 +487,6 @@ class ChannelChatProvider extends ChangeNotifier{
   }
 
 
-  // socket.on((deleteMessageChannelListen), (data) {
-  // print("deleteMessageForListen >>> $data");
-  // Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId,pageNo: 1,isFromMsgListen: true);
-  // });
-  // ******* delete listen is pending
 
   void getReplyListUpdateSocketForChannel(String mId,) {
     try {
@@ -339,9 +504,9 @@ class ChannelChatProvider extends ChangeNotifier{
           print("I'm In socketProvider for msgId: $mId");
             getReplyMessageListChannel(msgId: mId, fromWhere: "SOCKET INIT For Channel Reply List");
 
-            for (var messageGroup in messageGroups) {
-              for (var message in messageGroup.messages ?? []) {
-                if (message.sId == mId) {
+            for (msg.MessageGroup messageGroup in messageGroups) {
+              for (msg.Message message in messageGroup.messages ?? []) {
+                if (message.id == mId) {
                   message.replyCount = (message.replyCount ?? 0) + 1;
                   notifyListeners();
                   return;
@@ -359,16 +524,7 @@ class ChannelChatProvider extends ChangeNotifier{
   }
 
 
-  void deleteMessageFromModelChannelChat(String messageId) {
-    for (var messageGroup in messageGroups) {
-      messageGroup.messages?.removeWhere((message) => message.id == messageId);
-      if (messageGroup.messages?.isEmpty ?? true) {
-        messageGroups.remove(messageGroup);
-        break;
-      }
-    }
-    notifyListeners();
-  }
+
   // void addMessageToList(String messageId) {
   //   for (var messageGroup in messageGroups) {
   //     messageGroup.messages?.removeWhere((message) => message.id == messageId);
@@ -380,7 +536,7 @@ class ChannelChatProvider extends ChangeNotifier{
   //   notifyListeners();
   // }
 
-
+  /// API ///
   Future<void> deleteMessageFromChannel({required String messageId,}) async {
     try {
       final response = await ApiService.instance.request(
@@ -399,31 +555,30 @@ class ChannelChatProvider extends ChangeNotifier{
       print("catch = ${e.toString()}");
     }
   }
-
-  Future<void> deleteMessageForReply({required String messageId, required firsMessageId})async{
+  /// API ///
+  Future<void> deleteMessageForReplyChannel({required String messageId, required firsMessageId})async{
     final response = await ApiService.instance.request(endPoint: ApiString.deleteMessageFromChannel(messageId), method: Method.DELETE);
     if(statusCode200Check(response)){
-      deleteMessageFromReplyModel(messageId);
-      socketProvider.deleteMessagesSC(response: {"data": response['data']},isForChannel: true);
       socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
+      deleteMessageFromReplyModel(messageId);
       if(firsMessageId == messageId) {
         pop();
-        deleteMessageFromModelChannelChat(messageId);
+        removeMessageFromModelList(messageId);
       }
     }
   }
 
   /// Model Functionality ///
   void deleteMessageFromReplyModel(String messageId) {
-    for (var messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
-      messageGroup.groupMessages?.removeWhere((message) => message.sId == messageId);
+    for (MessagesList messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+      messageGroup.messagesGroupList?.removeWhere((message) => message.sId == messageId);
     }
     notifyListeners();
   }
 
   /// Channel Chat ///
   void removeMessageFromModelList(String messageId) {
-    for (var messageGroup in messageGroups) {
+    for (msg.MessageGroup messageGroup in messageGroups) {
       messageGroup.messages?.removeWhere((message) => message.id == messageId);
       if (messageGroup.messages?.isEmpty ?? true) {
         messageGroups.remove(messageGroup);
@@ -432,4 +587,185 @@ class ChannelChatProvider extends ChangeNotifier{
     }
     notifyListeners();
   }
+
+  // void removeMessageFromReplyModelList(String messageId) {
+  //   for (var msgGrp in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+  //     msgGrp.messagesGroupList?.removeWhere((message) => message.sId == messageId);
+  //     if (msgGrp.messagesGroupList?.isEmpty ?? true) {
+  //       messageGroups.remove(msgGrp);
+  //       break;
+  //     }
+  //   }
+  //   notifyListeners();
+  // }
+
+addChannelApiCall({required String channelName,required bool isPrivate,required String description})async{
+    final requestBody = {
+      "name": channelName,
+      "isPrivate": isPrivate.toString(),
+      "description": description,
+    };
+    final response = await ApiService.instance.request(endPoint: ApiString.addChannelTO, method: Method.POST,reqBody: requestBody);
+}
+
+
+// Reaction of message
+  Future<void> reactMessage(
+      {required String messageId,
+        required String reactUrl,
+        required String channelId,
+        required String isFrom}) async {
+    Map<String, dynamic> reqBody = {
+      "messageId": messageId,
+      "reaction": reactUrl
+    };
+    print("RECAT URL + $reactUrl");
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.reactMessage,
+        method: Method.POST,
+        reqBody: reqBody);
+    if (statusCode200Check(response)) {
+      print("Reacted Successfully");
+      print("isFrom = $isFrom");
+      if (isFrom == "Channel") {
+        // Manually update the message model with the new reaction
+        for (var messageGroup in messageGroups) {
+          for (var message in messageGroup.messages ?? []) {
+            if (message.id == messageId) {
+              // Initialize reactions list if null
+              message.reactions ??= [];
+
+              // Check if user already reacted with this emoji
+              final existingReactionIndex = message.reactions!.indexWhere(
+                      (reaction) =>
+                  reaction.userId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+
+              if (existingReactionIndex != -1) {
+                // Remove existing reaction if found
+                message.reactions!.removeAt(existingReactionIndex);
+              } else {
+                // Add new reaction
+
+                message.reactions!.add(Reaction(
+                  emoji: reactUrl,
+                  userId: signInModel.data?.user?.id,
+                  username: signInModel.data?.user?.username,
+                  id: DateTime.now().toString(), // Temporary ID
+                ));
+
+
+              }
+
+              notifyListeners();
+              break;
+            }
+          }
+        }
+      } else if (isFrom == "ChannelReply") {
+        // Find the message in getReplyMessageModel and update its reactions
+        for (var messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+          for (var message in messageGroup.messagesGroupList ?? []) {
+            if (message.sId == messageId) {
+              // Initialize reactions list if null
+              message.reactions ??= [];
+
+              // Check if user already reacted with this emoji
+              final existingReactionIndex = message.reactions!.indexWhere(
+                      (reaction) =>
+                  reaction.userId?.sId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+
+              if (existingReactionIndex != -1) {
+                // Remove existing reaction if found
+                message.reactions!.removeAt(existingReactionIndex);
+              } else {
+                // Add new reaction
+                message.reactions!.add(Reactions(
+                  emoji: reactUrl,
+                  userId: UserId(
+                    sId: signInModel.data?.user?.id,
+                    username: signInModel.data?.user?.username,
+                  ),
+                  sId: DateTime.now().toString(), // Temporary ID
+                ));
+              }
+
+              notifyListeners();
+              break;
+            }
+          }
+        }
+      }
+      socketProvider.reactMessagesInChannelSC(response: {
+        "channelId": channelId, // Channel ID
+        "senderId": signInModel.data?.user?.id,
+      });
+
+    }
+  }
+
+  Future<void> reactionRemove(
+      {required String messageId,
+        required String reactUrl,
+        required String channelId,
+        required String isFrom}) async {
+    Map<String, dynamic> reqBody = {
+      "messageId": messageId,
+      "reaction": reactUrl
+    };
+    print("reactionRemove Fun");
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.removeReact, method: Method.POST, reqBody: reqBody);
+    if (statusCode200Check(response)) {
+      print("React removed Successfully");
+      print("isFrom = $isFrom");
+
+      if (isFrom == "Channel") {
+        // Remove reaction from chat message model
+        for (var messageGroup in messageGroups) {
+          for (var message in messageGroup.messages ?? []) {
+            if (message.id == messageId) {
+              // Find and remove the reaction
+              final existingReactionIndex = message.reactions!.indexWhere(
+                      (reaction) =>
+                  reaction.userId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+              if (existingReactionIndex != -1) {
+                message.reactions!.removeAt(existingReactionIndex);
+                notifyListeners();
+              }
+              break;
+            }
+          }
+        }
+      } else if (isFrom == "ChannelReply") {
+        // Remove reaction from reply message model
+        for (var messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
+          for (var message in messageGroup.messagesGroupList ?? []) {
+            if (message.sId == messageId) {
+              // Find and remove the reaction
+              final existingReactionIndex = message.reactions!.indexWhere(
+                      (reaction) =>
+                  reaction.userId?.sId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+              if (existingReactionIndex != -1) {
+                message.reactions!.removeAt(existingReactionIndex);
+                notifyListeners();
+              }
+              break;
+            }
+          }
+        }
+      }
+
+      socketProvider.reactMessagesInChannelSC(response: {
+        "channelId": channelId,// Channel ID
+        "senderId": signInModel.data?.user?.id,
+      });
+
+    }
+  }
+
+
 }

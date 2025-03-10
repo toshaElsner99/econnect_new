@@ -4,6 +4,7 @@ import 'package:e_connect/screens/chat/single_chat_message_screen.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,8 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import '../../model/message_model.dart';
+import '../../providers/channel_chat_provider.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/common_provider.dart';
 import '../../providers/file_service_provider.dart';
@@ -21,6 +24,7 @@ import '../app_color_constants.dart';
 import '../app_fonts_constants.dart';
 import '../app_string_constants.dart';
 import 'common_function.dart';
+import 'package:e_connect/providers/chat_provider.dart';
 
 
 
@@ -296,7 +300,7 @@ ToastFuture commonShowToast(String msg, [Color? bgColor]) {
       margin: const EdgeInsets.only(bottom: 25, left: 20, right: 20),
       child: commonText(
         text: msg,
-        color: bgColor == null ? Colors.black : Colors.white,
+        color:  AppPreferenceConstants.themeModeBoolValueGet ? Colors.black : Colors.white,
         fontSize: 16,
         textAlign: TextAlign.center,
         fontWeight: FontWeight.w600,
@@ -683,6 +687,7 @@ Widget popMenu2(
       required VoidCallback onCopy,
       required VoidCallback onEdit,
       required VoidCallback onDelete,
+      required VoidCallback onReact,
       required String createdAt,  // Pass createdAt timestamp
       required String currentUserId, // Current user's ID
       required bool isForwarded,
@@ -702,14 +707,13 @@ Widget popMenu2(
   final isCurrentUser = currentUserId == signInModel.data?.user?.id; // Check if message belongs to the user
 
   return Container(
-    // color: Colors.red,
     alignment: Alignment.topCenter,
     height: 22,
     width: 20,
     child: PopupMenuButton<int>(
-      padding: EdgeInsets.zero, // Remove padding
-      iconSize: 25, // Reduce icon size
-      constraints: const BoxConstraints(minWidth: 120), // Limit menu width
+      padding: EdgeInsets.zero,
+      iconSize: 25,
+      constraints: const BoxConstraints(minWidth: 120),
       color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
       position: openAbove ? PopupMenuPosition.over : PopupMenuPosition.under,
       offset: const Offset(-15, 0),
@@ -741,17 +745,20 @@ Widget popMenu2(
           case 5:
             onDelete.call();
             break;
+          case 6:
+            onReact.call();
+            break;
         }
       },
       itemBuilder: (context) {
         List<PopupMenuEntry<int>> menuItems = [
-
+          _menuItem(6, Icons.emoji_emotions_outlined, "React"),
           _menuItem(1, Icons.reply, "Reply"),
           _menuItem(2, Icons.push_pin, isPinned ? "Unpin from Channel": "Pin to Channel"),
           _menuItem(3, Icons.copy, "Copy Text"),
         ];
         if(isForwarded == true){
-          menuItems.insert(0, _menuItem(0, Icons.forward, "Forward"));
+          menuItems.insert(1, _menuItem(0, Icons.forward, "Forward"));
         }
         // Show Edit option only if message is under 24 hours old
         if (isCurrentUser && isEditable) {
@@ -782,9 +789,11 @@ Widget popMenuForReply2(
       required VoidCallback onCopy,
       required VoidCallback onEdit,
       required VoidCallback onDelete,
+      required VoidCallback onReact,
       required String createdAt,
       required String currentUserId,
     }) {
+
   final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
   final double screenHeight = MediaQuery.of(context).size.height;
   final double buttonPositionY = overlay.localToGlobal(Offset.zero).dy;
@@ -799,19 +808,18 @@ Widget popMenuForReply2(
   final isCurrentUser = currentUserId == signInModel.data?.user?.id;
 
   return Container(
-    // color: Colors.red,
     alignment: Alignment.topCenter,
     height: 22,
     width: 20,
     child: PopupMenuButton<int>(
-      padding: EdgeInsets.zero, // Remove padding
-      iconSize: 25, // Reduce icon size
-      constraints: const BoxConstraints(minWidth: 120), // Limit menu width
+      padding: EdgeInsets.zero,
+      iconSize: 25,
+      constraints: const BoxConstraints(minWidth: 120),
       color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
       position: openAbove ? PopupMenuPosition.over : PopupMenuPosition.under,
       offset: const Offset(-15, 0),
-      // onOpened: ()=> onOpened(),
-      // onCanceled: ()=> onClosed(),
+      onOpened: ()=> onOpened(),
+      onCanceled: ()=> onClosed(),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: AppPreferenceConstants.themeModeBoolValueGet
@@ -835,29 +843,26 @@ Widget popMenuForReply2(
           case 4:
             onDelete.call();
             break;
+          case 5:
+            onReact.call();
+            break;
         }
       },
       itemBuilder: (context) {
         List<PopupMenuEntry<int>> menuItems = [
+          _menuItem(5, Icons.emoji_emotions_outlined, "React"),
           _menuItem(0, Icons.forward, "Forward"),
           _menuItem(1, Icons.push_pin, isPinned ? "Unpin from Channel" : "Pin to Channel"),
-
         ];
 
         menuItems.add(const PopupMenuDivider());
-        menuItems.add(_menuItem(2, Icons.copy, "Copy Text"),);
-          if(isCurrentUser && isEditable){
-            menuItems.add(_menuItem(3, Icons.edit, "Edit"),);
-          }
+        menuItems.add(_menuItem(2, Icons.copy, "Copy Text"));
+        if(isCurrentUser && isEditable){
+          menuItems.add(_menuItem(3, Icons.edit, "Edit"));
+        }
         if(isCurrentUser){
           menuItems.add(_menuItem(4, Icons.delete, "Delete"));
         }
-
-
-        // Show Delete option only if the message belongs to the current user
-        // if (isCurrentUser) {
-        //   menuItems.add(_menuItem(5, Icons.delete, "Delete", color: Colors.red));
-        // }
 
         return menuItems;
       },
@@ -1002,6 +1007,7 @@ Widget profileIconWithStatus({
   double iconSize = 14.0,
   double containerSize = 10.0,
   bool needToShowIcon = true,
+  bool isMuted = false,
 }) {
   String imageUrl = signInModel.data?.user?.id == userID
       ? ApiString.profileBaseUrl + (signInModel.data!.user!.thumbnailAvatarUrl ?? '')
@@ -1044,6 +1050,8 @@ Widget profileIconWithStatus({
           backgroundColor: Colors.grey[200],
           child: ClipOval(
             child: CachedNetworkImage(
+              color: isMuted ? Colors.black26 : null,
+              colorBlendMode: isMuted ? BlendMode.srcOver : null,
               imageUrl: imageUrl,
               width: radius * 2,
               height: radius * 2,
@@ -1059,6 +1067,7 @@ Widget profileIconWithStatus({
           Stack(
             alignment: Alignment.center,
             children: [
+              /// background ///
               Container(
                 height: containerSize,
                 width: containerSize,
@@ -1067,7 +1076,20 @@ Widget profileIconWithStatus({
                   shape: BoxShape.circle,
                 ),
               ),
+              /// status Icon ///
               getCommonStatusIcons(status: status, size: iconSize, assetIcon: false),
+              /// mute overlay //
+              Visibility(
+                visible: isMuted,
+                child: Container(
+                  height: containerSize,
+                  width: containerSize,
+                  decoration: BoxDecoration(
+                    color: AppColor.borderColor.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
             ],
           ),
       ],
@@ -1630,63 +1652,6 @@ Widget commonText({
   );
 }
 
-// Widget commonHTMLText({required String message}){
-//   return HtmlWidget(
-//     message.replaceAllMapped(
-//       RegExp(r'<ul class="renderer_bulleted">.*?</ul>', dotAll: true),
-//           (match) {
-//         return match.group(0)!.replaceAll('<li>', '• ').replaceAll('</li>', '\n');
-//       },
-//     ),
-//     textStyle: TextStyle(
-//       height: 1.2,
-//       fontFamily: AppFonts.interFamily,
-//       color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
-//       fontSize: 16,
-//     ),
-//     customStylesBuilder: (element) {
-//       // Base styles for all text
-//       Map<String, String> styles = {
-//         'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
-//       };
-//
-//       // Add additional styles for special formatting
-//       if (element.classes.contains('renderer_bold')) {
-//         styles['font-weight'] = 'bold';
-//       }
-//       if (element.classes.contains('renderer_italic')) {
-//         styles['font-style'] = 'italic';
-//       }
-//       if (element.classes.contains('renderer_strikethrough')) {
-//         styles['text-decoration'] = 'line-through';
-//       }
-//       if (element.classes.contains('renderer_link')) {
-//         styles['color'] = '#2196F3';
-//       }
-//       if (element.classes.contains('renderer_emoji')) {
-//         styles['display'] = 'inline-block';
-//         styles['vertical-align'] = 'middle';
-//       }
-//
-//       return styles;
-//     },
-//     customWidgetBuilder: (element) {
-//       if (element.classes.contains('renderer_emoji')) {
-//         final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
-//         if (imageUrl != null) {
-//           return CachedNetworkImage(
-//             imageUrl: imageUrl,
-//             width: 21,
-//             height: 21,
-//             fit: BoxFit.contain,
-//           );
-//         }
-//       }
-//       return null;
-//     },
-//     enableCaching: true,
-//   );
-// }
 Widget commonHTMLText({required String message}) {
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
 
@@ -1702,28 +1667,31 @@ Widget commonHTMLText({required String message}) {
   if (commonProvider.getUserMentionModel?.data?.users != null) {
     for (var user in commonProvider.getUserMentionModel!.data!.users!) {
       if (user.username != null) {
-        processedMessage = processedMessage.replaceAllMapped(
-          RegExp(r'\b' + RegExp.escape(user.username!) + r'\b', caseSensitive: false),
-          (match) {
-            // Don't wrap if it's already wrapped in username span
-            if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
-              return match.group(0)!;
-            }
-            return '<span class="username">${match.group(0)}</span>';
-          },
-        );
-      }
-      if (user.fullName != null) {
-        processedMessage = processedMessage.replaceAllMapped(
-          RegExp(r'\b' + RegExp.escape(user.fullName!) + r'\b', caseSensitive: false),
-          (match) {
-            // Don't wrap if it's already wrapped in username span
-            if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
-              return match.group(0)!;
-            }
-            return '<span class="username">${match.group(0)}</span>';
-          },
-        );
+        if(processedMessage.startsWith("<")) {
+          processedMessage = processedMessage.replaceAllMapped(
+            RegExp(r'\b' + RegExp.escape(user.username!) + r'\b', caseSensitive: false),
+                (match) {
+              // Don't wrap if it's already wrapped in username span
+              if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
+                return match.group(0)!;
+              }
+              return '<span class="username">${match.group(0)}</span>';
+            },
+          );
+
+        }
+        if (user.fullName != null) {
+          processedMessage = processedMessage.replaceAllMapped(
+            RegExp(r'\b' + RegExp.escape(user.fullName!) + r'\b', caseSensitive: false),
+                (match) {
+              // Don't wrap if it's already wrapped in username span
+              if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
+                return match.group(0)!;
+              }
+              return '<span class="username">${match.group(0)}</span>';
+            },
+          );
+        }
       }
     }
   }
@@ -2012,7 +1980,7 @@ Widget commonHTMLText({required String message}) {
 //     enableCaching: true,
 //   );
 // }
-Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false, Color? color}){
+Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false, Color? color, bool isMuted = false}){
   return Container(
     width: 32,
     height: 32,
@@ -2025,7 +1993,7 @@ Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false,
         isPrivate == true ? AppImage.lockIcon : isShowPersons == true ? AppImage.persons : AppImage.globalIcon,
         width: 16,
         height: 16,
-        color: color ?? Colors.white,
+        color: isMuted  ? AppColor.borderColor : color ?? Colors.white,
       ),
     ),
   );
@@ -2538,18 +2506,164 @@ void showChatSettingsBottomSheet({required String userId}) {
 
 
 // File selected to send
-Widget selectedFilesWidget() {
+// Widget selectedFilesWidget() {
+//   return Consumer<FileServiceProvider>(
+//     builder: (context, provider, _) {
+//       return Visibility(
+//         visible: provider.selectedFiles.isNotEmpty,
+//         child: SizedBox(
+//           height: 80,
+//           child: ListView.builder(
+//             scrollDirection: Axis.horizontal,
+//             itemCount: provider.selectedFiles.length,
+//             itemBuilder: (context, index) {
+//               print("FILES>>>> ${provider.selectedFiles[index].path}");
+//               return Stack(
+//                 children: [
+//                   GestureDetector(
+//                     onTap: () {
+//                       Navigator.push(
+//                         context,
+//                         MaterialPageRoute(
+//                           builder: (context) => MediaPreviewScreen(
+//                             files: provider.selectedFiles,
+//                             initialIndex: index,
+//                           ),
+//                         ),
+//                       );
+//                     },
+//                     child: Padding(
+//                       padding: const EdgeInsets.all(8.0),
+//                       child: Container(
+//                         width: 60,
+//                         height: 60,
+//                         color: AppColor.commonAppColor,
+//                         child: getFileIcon(
+//                           provider.selectedFiles[index].extension!,
+//                           provider.selectedFiles[index].path,
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                   Positioned(
+//                     right: 0,
+//                     top: 0,
+//                     child: GestureDetector(
+//                       onTap: () {
+//                         provider.removeFile(index);
+//                       },
+//                       child: CircleAvatar(
+//                         radius: 12,
+//                         backgroundColor: AppColor.blackColor,
+//                         child: CircleAvatar(
+//                           radius: 10,
+//                           backgroundColor: AppColor.borderColor,
+//                           child: Icon(
+//                             Icons.close,
+//                             color: AppColor.blackColor,
+//                             size: 15,
+//                           ),
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                 ],
+//               );
+//             },
+//           ),
+//         ),
+//       );
+//     },
+//   );
+// }
+
+Future<dynamic> deleteMessageDialog(BuildContext context,Function deleteMsgFun) {
+  return showDialog(context: context, builder: (context) {
+    return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
+      return AlertDialog(
+        contentPadding: EdgeInsets.zero,
+        insetPadding: EdgeInsets.zero,
+        content: Container(
+          color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.black : Colors.white,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                color: AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.commonAppColor,
+                alignment: Alignment.centerLeft,
+                padding: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    commonText(text: "Confirm Message Delete",color: Colors.white),
+                    GestureDetector(
+                        onTap: () => pop(),
+                        child: Icon(Icons.close,color: Colors.white,)),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20.0,horizontal: 20),
+                child: commonText(text: "Are you sure you want to delete this Message?"),
+              ),
+              Divider(),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0,horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                      onTap: () => pop(),
+                      child: Container(
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: Colors.grey.withOpacity(0.1)
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+                        child: commonText(text: "Cancel"),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        pop();
+                        deleteMsgFun.call();
+                      },
+                      child: Container(
+                        margin: EdgeInsets.only(left: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                          color: AppColor.redColor,
+                        ),
+                        padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
+                        child: commonText(text: "Delete",color: Colors.white),
+                      ),
+                    ),
+                  ],),
+              )
+            ],
+
+          ),
+        ),
+      );
+    },);
+  },);
+}
+
+
+Widget selectedFilesWidget({required String screenName}) {
   return Consumer<FileServiceProvider>(
     builder: (context, provider, _) {
+      List<PlatformFile> selectedFiles = provider.getFilesForScreen(screenName);
+
       return Visibility(
-        visible: provider.selectedFiles.isNotEmpty,
+        visible: selectedFiles.isNotEmpty,
         child: SizedBox(
           height: 80,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: provider.selectedFiles.length,
+            itemCount: selectedFiles.length,
             itemBuilder: (context, index) {
-              print("FILES>>>> ${provider.selectedFiles[index].path}");
+              print("FILES>>>> ${selectedFiles[index].path}");
               return Stack(
                 children: [
                   GestureDetector(
@@ -2558,7 +2672,7 @@ Widget selectedFilesWidget() {
                         context,
                         MaterialPageRoute(
                           builder: (context) => MediaPreviewScreen(
-                            files: provider.selectedFiles,
+                            files: selectedFiles,
                             initialIndex: index,
                           ),
                         ),
@@ -2571,8 +2685,8 @@ Widget selectedFilesWidget() {
                         height: 60,
                         color: AppColor.commonAppColor,
                         child: getFileIcon(
-                          provider.selectedFiles[index].extension!,
-                          provider.selectedFiles[index].path,
+                          selectedFiles[index].extension!,
+                          selectedFiles[index].path,
                         ),
                       ),
                     ),
@@ -2582,7 +2696,7 @@ Widget selectedFilesWidget() {
                     top: 0,
                     child: GestureDetector(
                       onTap: () {
-                        provider.removeFile(index);
+                        provider.removeFile(screenName, index);
                       },
                       child: CircleAvatar(
                         radius: 12,
@@ -2609,7 +2723,7 @@ Widget selectedFilesWidget() {
   );
 }
 
-void showCameraOptionsBottomSheet(BuildContext context) {
+void showCameraOptionsBottomSheet(BuildContext context,String screenName) {
   showModalBottomSheet(
     context: context,
     backgroundColor: AppColor.appBarColor,
@@ -2638,7 +2752,7 @@ void showCameraOptionsBottomSheet(BuildContext context) {
               ),
               onTap: () {
                 Navigator.pop(context);
-                FileServiceProvider.instance.captureMedia(isVideo: false);
+                FileServiceProvider.instance.captureMedia(isVideo: false,screenName: screenName);
               },
             ),
             ListTile(
@@ -2649,7 +2763,7 @@ void showCameraOptionsBottomSheet(BuildContext context) {
               ),
               onTap: () {
                 Navigator.pop(context);
-                FileServiceProvider.instance.captureMedia(isVideo: true);
+                FileServiceProvider.instance.captureMedia(isVideo: true,screenName: screenName);
               },
             ),
           ],
@@ -2824,4 +2938,170 @@ void showUserProfilePopup(BuildContext context, {
       ),
     ),
   );
+}
+
+Widget reactionBar({
+  required BuildContext context,
+  required Function(String) onReactionSelected,
+}) {
+  final reactions = [
+    {
+      'url': 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f44d.png',
+      'name': 'Thumb'
+    },
+    {
+      'url': 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/2764-fe0f.png',
+      'name': 'Heart'
+    },
+    {
+      'url': 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f603.png',
+      'name': 'Smile'
+    },
+    {
+      'url': 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f622.png',
+      'name': 'Sad'
+    },
+    {
+      'url': 'https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f64f.png',
+      'name': 'Hands'
+    },
+  ];
+
+  return Container(
+    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(
+        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[800]! : Colors.grey[300]!,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 10,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: reactions.map((reaction) {
+        return GestureDetector(
+          onTap: () => onReactionSelected(reaction['url']!),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: CachedNetworkImage(
+              imageUrl: reaction['url']!,
+              width: 24,
+              height: 24,
+              placeholder: (context, url) => SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              errorWidget: (context, url, error) => Icon(Icons.error),
+            ),
+          ),
+        );
+      }).toList(),
+    ),
+  );
+}
+
+void showReactionBar(BuildContext context, String messageId, String receiverId, String isFrom) {
+  final RenderBox? button = context.findRenderObject() as RenderBox?;
+  if (button == null) return;
+
+  final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+  final buttonPos = button.localToGlobal(Offset.zero, ancestor: overlay);
+  final buttonSize = button.size;
+  
+  // Position the reaction bar to the right of the message
+  final position = RelativeRect.fromLTRB(
+    buttonPos.dx + buttonSize.width - 180, // Align right edge, adjust 180 based on reaction bar width
+    buttonPos.dy - 40, // Show above the message
+    buttonPos.dx + buttonSize.width,
+    buttonPos.dy,
+  );
+
+  showMenu(
+    context: context,
+    position: position,
+    elevation: 8,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    color: Colors.transparent,
+    items: [
+      PopupMenuItem(
+        enabled: false,
+        padding: EdgeInsets.zero,
+        child: reactionBar(
+          context: context,
+          onReactionSelected: (reactionUrl) {
+            if(isFrom == "Chat" && isFrom == "Reply") {
+              final chatProvider =
+                  Provider.of<ChatProvider>(context, listen: false);
+              chatProvider.reactMessage(
+                  messageId: messageId,
+                  reactUrl: reactionUrl,
+                  receiverId: receiverId,
+                  isFrom: isFrom);
+            }else{
+              final channelChatProvider =
+              Provider.of<ChannelChatProvider>(context, listen: false);
+              channelChatProvider.reactMessage(
+                  messageId: messageId,
+                  reactUrl: reactionUrl,
+                  channelId: receiverId,
+                  isFrom: isFrom
+              );
+            }
+            Navigator.pop(context);
+            print("Selected reaction: $reactionUrl"); // Print the selected reaction URL
+          },
+        ),
+      ),
+    ],
+  );
+}
+
+Widget messageReactions({
+  required List<String> reactions,
+  double size = 16,
+}) {
+  return Wrap(
+    spacing: 4,
+    children: reactions.map((reactionUrl) {
+      return Container(
+        padding: EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[800]! : Colors.grey[300]!,
+          ),
+        ),
+        child: CachedNetworkImage(
+          imageUrl: reactionUrl,
+          width: size,
+          height: size,
+          placeholder: (context, url) => SizedBox(
+            width: size,
+            height: size,
+            child: CircularProgressIndicator(strokeWidth: 1),
+          ),
+          errorWidget: (context, url, error) => Icon(Icons.error, size: size),
+        ),
+      );
+    }).toList(),
+  );
+}
+
+Map<String, int> groupReactions(List<dynamic> reactions) {
+  final Map<String, int> groupedReactions = {};
+  for (var reaction in reactions) {
+    if (reaction.emoji != null) {
+      groupedReactions[reaction.emoji!] = (groupedReactions[reaction.emoji!] ?? 0) + 1;
+    }
+  }
+  return groupedReactions;
 }

@@ -26,7 +26,8 @@ class ApiString{
   static const leaveChannel = "channels/leaveChannel/";
   static const userSuggestions = "user/user-suggestions";
   static const searchUser = "user/search-user";
-  static const deviceToken = "user/deviceToken";
+  static const addDeviceToken = "user/deviceToken";
+  static const removeDeviceToken = "user/removeDeviceToken";
   // Chat
 
   static const getMessages = "messages/get-message";
@@ -36,7 +37,7 @@ class ApiString{
   static const unMuteChannel = "user/unmute-channel";
   static const muteChannel = "user/mute-channel";
   static const addUserToChatList = "chatList/add";
-  static const sendMessage = "push";
+  static const sendMessage = "messages/send-message";
   static const sendChannelMessage = "messages/channel/send-message";
   static const deleteMessage = "messages/delete/";
   static const replayMsgSeen = "messages/reply-message-seen";
@@ -45,6 +46,8 @@ class ApiString{
   static const getFileListingInChat = "messages/getFilesListing";
   static const getUser = "user/getUsers";
   static String pinMessage(String messageId, bool pinned) => "messages/message-pin/$messageId/$pinned";
+  static String reactMessage = "messages/message-reaction";
+  static String removeReact = "messages/message-reaction-remove";
 
   // Channel
   static getChannelMembersList(String channelId) => "channels/getChannelMembers/$channelId";
@@ -59,4 +62,5 @@ class ApiString{
   static const getFilesListingInChannelChat = "messages/channel/getFilesListingForChannel";
   static const getChannelPinnedMessage = "messages/channel/get-pinned-message-for-channel";
   static deleteMessageFromChannel (String messageId) => "messages/delete/$messageId";
+  static const String addChannelTO = "channels/add";
 }

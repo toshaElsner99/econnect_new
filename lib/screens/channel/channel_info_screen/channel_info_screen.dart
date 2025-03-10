@@ -55,8 +55,7 @@ class ChannelInfoScreen extends StatelessWidget {
                       icon:
                       channelChatProvider.getChannelInfo?.data?.isFavourite == true
                           ? Icons.star
-                          :
-                      Icons.star_border,
+                          : Icons.star_border,
                       label:  channelChatProvider.getChannelInfo?.data?.isFavourite == true ? 'Favorited':'Favorite',
                       onTap: () {
                         context.read<ChannelListProvider>().addChannelToFavorite(

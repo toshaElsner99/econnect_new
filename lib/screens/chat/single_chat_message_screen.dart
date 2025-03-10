@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/main.dart';
@@ -15,11 +16,13 @@ import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
+import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 
 import 'package:provider/provider.dart';
 
@@ -32,7 +35,6 @@ import '../../screens/chat/media_preview_screen.dart';
 import '../../widgets/chat_profile_header.dart';
 
 
-/// ///
 
 
 class SingleChatMessageScreen extends StatefulWidget {
@@ -40,7 +42,6 @@ class SingleChatMessageScreen extends StatefulWidget {
   final String oppositeUserId;
   final bool? calledForFavorite;
   final bool? needToCallAddMessage;
-  // final bool callForReadMsg;
 
   const SingleChatMessageScreen({super.key, required this.userName, required this.oppositeUserId, this.calledForFavorite, this.needToCallAddMessage});
 
@@ -60,355 +61,23 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final Map<String, dynamic> userCache = {};
   GetUserModelSecondUser? userDetails;
   String currentUserMessageId = "";
-  // int? _selectedIndex;
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   bool _showMentionList = false;
   int _mentionCursorPosition = 0;
   final TextEditingController _messageController = TextEditingController();
   bool _isTextFieldEmpty = true;
-
-  // clearSelectedIndex({required Function call}){
-  //   setState(() {
-  //     _selectedIndex = null;
-  //   });
-  //   call.call();
-  // }
-
-  void _onTextChanged() {
-    final text = _messageController.text;
-    final cursorPosition = _messageController.selection.baseOffset;
-    
-    // Update text field empty state
-    setState(() {
-      _isTextFieldEmpty = text.isEmpty;
-    });
-
-    if (cursorPosition > 0) {
-      // Check if @ was just typed
-      if (text[cursorPosition - 1] == '@') {
-        _mentionCursorPosition = cursorPosition;
-        _showMentionOverlay();
-      }
-      // Check if we should keep showing the mention list and filter based on input
-      else if (_showMentionList) {
-        // Find the last @ before cursor
-        int lastAtIndex = text.substring(0, cursorPosition).lastIndexOf('@');
-        if (lastAtIndex == -1) {
-          // No @ found before cursor, remove overlay
-          _removeMentionOverlay();
-        } else {
-          // Get the search query (text between @ and cursor)
-          String searchQuery = text.substring(lastAtIndex + 1, cursorPosition).toLowerCase();
-          _showMentionOverlay(searchQuery: searchQuery);
-        }
-      }
-    } else {
-      // Text is empty or cursor at start, remove overlay
-      _removeMentionOverlay();
-    }
-
-    // Keep existing typing event
-    socketProvider.userTypingEvent(
-      oppositeUserId: widget.oppositeUserId,
-      isReplyMsg: false,
-      isTyping: text.trim().length > 1 ? 1 : 0
-    );
-  }
-
-  void _showMentionOverlay({String? searchQuery}) {
-    _removeMentionOverlay();
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) {
-        final screenSize = MediaQuery.of(context).size;
-        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-        final maxHeight = (screenSize.height - keyboardHeight) * 0.4; // 40% of available height
-
-        return Positioned(
-          width: screenSize.width * 0.8, // 80% of screen width
-          child: CompositedTransformFollower(
-            link: _layerLink,
-            showWhenUnlinked: false,
-            targetAnchor: Alignment.topCenter,
-            followerAnchor: Alignment.bottomCenter,
-            offset: const Offset(0, -8),
-            child: Material(
-              elevation: 0, // Remove shadow
-              color: Colors.transparent,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: maxHeight,
-                ),
-                margin: EdgeInsets.symmetric(horizontal: screenSize.width * 0.1), // Center horizontally
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade900,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade800),
-                ),
-                child: Consumer<CommonProvider>(
-                  builder: (context, provider, child) {
-                    final usersToShow = _getFilteredUsers(searchQuery, provider);
-
-                    return SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Channel Members Section
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: Text(
-                              'CHANNEL MEMBERS',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          if (usersToShow.isEmpty && searchQuery?.isNotEmpty == true)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              child: Text(
-                                'No matching users found',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            )
-                          else
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              padding: EdgeInsets.zero,
-                              itemCount: usersToShow.length,
-                              itemBuilder: (context, index) {
-                                final user = usersToShow[index];
-                                return InkWell(
-                                  onTap: () => _onMentionSelected(user),
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    child: Row(
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 16,
-                                          backgroundImage: CachedNetworkImageProvider(
-                                            ApiString.profileBaseUrl + (user?.thumbnailAvatarUrl ?? ''),
-                                          ),
-                                        ),
-                                        SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                user?.username ?? 'Unknown',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              if (user?.fullName != null)
-                                                Text(
-                                                  user.fullName!,
-                                                  style: TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 12,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-
-                          // Special Mention Section
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            margin: EdgeInsets.only(top: 8),
-                            child: Text(
-                              'SPECIAL MENTION',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          // Special mention items
-                          _buildSpecialMentionItem(
-                            icon: Icons.group,
-                            label: '@here',
-                            onTap: () => _onMentionSelected({'username': 'here'}),
-                          ),
-                          _buildSpecialMentionItem(
-                            icon: Icons.people,
-                            label: '@channel',
-                            onTap: () => _onMentionSelected({'username': 'channel'}),
-                          ),
-                          _buildSpecialMentionItem(
-                            icon: Icons.people_outline,
-                            label: '@all',
-                            onTap: () => _onMentionSelected({'username': 'all'}),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-
-    Overlay.of(context).insert(_overlayEntry!);
-    setState(() => _showMentionList = true);
-  }
-
-  Widget _buildSpecialMentionItem({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.white, size: 24),
-            SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _removeMentionOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    setState(() => _showMentionList = false);
-  }
-
-  void _onMentionSelected(dynamic user) {
-    final text = _messageController.text;
-
-    // Find the last @ before cursor
-    int lastAtIndex = text.substring(0, _mentionCursorPosition).lastIndexOf('@');
-    if (lastAtIndex == -1) return;
-
-    // Extract the substring after '@' to find the partial mention
-    int endIndex = _mentionCursorPosition;
-    while (endIndex < text.length && text[endIndex] != ' ') {
-      endIndex++; // Move until space (end of mention)
-    }
-
-    // Get the text before @mention and after the partial mention
-    final beforeMention = text.substring(0, lastAtIndex); // Text before @
-    final afterMention = text.substring(endIndex); // Text after the partial mention
-
-    // Handle both Users object and special mention map
-    String mentionText;
-    print("User type = ${user.runtimeType}");
-    if (user is Users) { // Users from user_mention_model.dart
-      print("user = ${user.username}");
-      mentionText = '@${user.username} ';
-    }else if (user is SecondUser) {
-      mentionText = '@${user.username} ';
-    } else if (user is Map<String, dynamic>) {
-      mentionText = '@${user['username']} ';
-    } else if (user is User) {
-      mentionText = '@${user.username} ';
-    } else {
-      print("user = ${user.username}");
-      return; // Invalid user object
-    }
-
-    // Update the TextField with corrected mention text
-    _messageController.value = TextEditingValue(
-      text: beforeMention + mentionText + afterMention,
-      selection: TextSelection.collapsed(
-        offset: beforeMention.length + mentionText.length, // Move cursor after mention
-      ),
-    );
-
-    _removeMentionOverlay();
-  }
-
-
-  List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
-    final List<dynamic> initialUsers = [];
-    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
-
-    // If no search query, show first two users from API response
-    if (searchQuery?.isEmpty ?? true) {
-      // Add first two users if available
-      if (allUsers.isNotEmpty) {
-        initialUsers.add(allUsers[0]);
-        if (allUsers.length > 1) {
-          initialUsers.add(allUsers[1]);
-        }
-      }
-      return initialUsers;
-    }
-
-    // Filter users based on search query
-    final query = searchQuery!.toLowerCase();
-
-    // First add first two users if they match the search
-    if (allUsers.isNotEmpty) {
-      if (((allUsers[0].username?.toLowerCase().contains(query) ?? false) ||
-          (allUsers[0].fullName?.toLowerCase().contains(query) ?? false))) {
-        initialUsers.add(allUsers[0]);
-      }
-      if (allUsers.length > 1 &&
-          ((allUsers[1].username?.toLowerCase().contains(query) ?? false) ||
-              (allUsers[1].fullName?.toLowerCase().contains(query) ?? false))) {
-        initialUsers.add(allUsers[1]);
-      }
-    }
-
-    // Then add other matching users
-    final otherUsers = allUsers.skip(2).where((user) =>
-    ((user.username?.toLowerCase().contains(query) ?? false) ||
-        (user.fullName?.toLowerCase().contains(query) ?? false))
-    ).toList();
-
-    return [...initialUsers, ...otherUsers];
-  }
-
+  late FileServiceProvider _fileServiceProvider;
   final ScrollController scrollController = ScrollController();
+  double? _savedScrollPosition;
 
-  void pagination({required String oppositeUserId}) {
-    scrollController.addListener(() {
-      if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
-        Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
-      }
-    });
-  }
 
   @override
   void initState() {
     super.initState();
+    scrollController.addListener(() {
+      _saveScrollPosition();
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       print("oppositeUserId in init==> ${widget.oppositeUserId}");
       /// this is for pagination ///
@@ -417,7 +86,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       /// opposite user typing listen ///
       chatProvider.getTypingUpdate();
       /// THis Is Socket Listening Event ///
-      socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId);
+      // socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId,getSecondUserCall: (){
+      //   fetchOppositeUserDetails();
+      // });
+      socketProvider.commonListenForChats(id: widget.oppositeUserId, isSingleChat: true,getSecondUserCall: ()=> fetchOppositeUserDetails());
       /// THis is Doing for update pin message and get Message List ///
       // socketProvider.socketListenPinMessage(oppositeUserId: widget.oppositeUserId,callFun: (){
       //   chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,currentPage: 1,isFromMsgListen: true);
@@ -439,21 +111,58 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     },);
     _messageController.addListener(_onTextChanged);
   }
-
   void fetchOppositeUserDetails()async{
     userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.oppositeUserId);
   }
   void _fetchAndCacheUserDetails() async {
     userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.oppositeUserId);
-    // await commonProvider.getUserByIDCallForSecondUser(userId: signInModel.data!.user!.id);
     setState(()  {
       userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
       userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
     });
-    print("user>>>>>> ${userCache}");
-    print("user>>>>>> ${userDetails?.data!.user!.username}");
-    print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.username}");
-    print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.sId}");
+  }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _restoreScrollPosition();
+    _removeMentionOverlay();
+    _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
+  }
+  @override
+  void dispose() {
+    _messageController.removeListener(_onTextChanged);
+    _messageController.dispose();
+    _focusNode.dispose();
+    _fileServiceProvider.clearFilesForScreen(AppString.singleChat);
+    super.dispose();
+  }
+  void _clearInputAndDismissKeyboard() {
+    _focusNode.unfocus();
+    _messageController.clear();
+    _messageController.clear();
+    FocusScope.of(context).unfocus();
+  }
+  void _removeMentionOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    setState(() => _showMentionList = false);
+  }
+  void pagination({required String oppositeUserId}) {
+    scrollController.addListener(() {
+      if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
+        Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
+      }
+    });
+  }
+  void _saveScrollPosition() => setState(() {
+    _savedScrollPosition = scrollController.position.pixels;
+  });
+  void _restoreScrollPosition() {
+    if (_savedScrollPosition != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        scrollController.jumpTo(_savedScrollPosition!);
+      });
+    }
   }
 
   @override
@@ -533,113 +242,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     },);
   }
   AppBar buildAppBar(CommonProvider commonProvider, ChatProvider chatProvider) {
-    // return AppBar(
-    //   toolbarHeight: 60,
-    //   // leadingWidth: 35,
-    //   leading: Padding(
-    //     padding: const EdgeInsets.only(left: 15.0),
-    //     child: IconButton(icon: Icon(CupertinoIcons.back,color: Colors.white,),color: Colors.white, onPressed: () {
-    //       pop();
-    //       channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
-    //     },),
-    //   ),
-    //   titleSpacing: 0,
-    //   title:  Column(
-    //     crossAxisAlignment: CrossAxisAlignment.start,
-    //     children: [
-    //       Row(
-    //         mainAxisSize: MainAxisSize.min,
-    //         children: [
-    //           Flexible(
-    //             fit: FlexFit.loose,
-    //             child: commonText(
-    //               text: widget.userName,
-    //               fontSize: 16,
-    //               fontWeight: FontWeight.w600,
-    //               color: Colors.white,
-    //               maxLines: 1,
-    //               overflow: TextOverflow.ellipsis, // Prevent overflow
-    //             ),
-    //           ),
-    //           Visibility(
-    //             visible: userDetails?.data?.user?.isFavourite ?? false,
-    //             child: Icon(Icons.star_rate_rounded, color: Colors.yellow, size: 18),
-    //           ),
-    //         ],
-    //       ),
-    //       Padding(
-    //         padding: const EdgeInsets.only(top: 8.0),
-    //         child: Row(
-    //           children: [
-    //             getCommonStatusIcons(
-    //               size: 15,
-    //               status: userDetails?.data?.user?.status ?? "offline",
-    //               assetIcon: false,
-    //             ),
-    //             const SizedBox(width: 5),
-    //             Flexible(
-    //               child: commonText(
-    //                 text: (userDetails?.data!.user!.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1)
-    //                     ? "Typing..."
-    //                     : getLastOnlineStatus(
-    //                   userDetails?.data?.user?.status ?? ".....",
-    //                   userDetails?.data?.user!.lastActiveTime,
-    //                 ),
-    //                 height: 1,
-    //                 fontWeight: FontWeight.w400,
-    //                 fontSize: 15,
-    //                 maxLines: 1,
-    //                 overflow: TextOverflow.ellipsis,
-    //               ),
-    //             ),
-    //             const SizedBox(width: 5),
-    //             Visibility(
-    //               visible: userDetails?.data?.user?.customStatusEmoji != null && userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
-    //               child: Padding(
-    //                 padding: const EdgeInsets.only(right: 8.0),
-    //                 child: CachedNetworkImage(
-    //                   imageUrl: userDetails?.data?.user!.customStatusEmoji ?? "",
-    //                   height: 20,
-    //                   width: 20,
-    //                   errorWidget: (context, url, error) => Icon(Icons.error, size: 20), // Handle image errors
-    //                 ),
-    //               ),
-    //             ),
-    //             GestureDetector(
-    //               onTap: () => pushScreen(screen: PinnedPostsScreen(userName: widget.userName, oppositeUserId: widget.oppositeUserId,userCache: userCache,)),
-    //               child: Container(
-    //                 padding: EdgeInsets.symmetric(horizontal: 5),
-    //                 // color: Colors.red,
-    //                 child: Row(
-    //                   mainAxisSize: MainAxisSize.min,
-    //                   children: [
-    //                     commonText(
-    //                       text: "${userDetails?.data?.user!.pinnedMessageCount ?? 0}",
-    //                       fontSize: 16,
-    //                       fontWeight: FontWeight.w400,
-    //                     ),
-    //                     Image.asset(AppImage.pinIcon, height: 15, width: 18, color: Colors.white),
-    //                     SizedBox(width: 5,)
-    //                 ],),
-    //               ),
-    //             ),
-    //             GestureDetector(
-    //                 onTap: () => pushScreen(screen: FilesListingScreen(userName: widget.userName,oppositeUserId: widget.oppositeUserId,)),
-    //                 child: Image.asset(AppImage.fileIcon, height: 18, width: 16, color: Colors.white)),
-    //           ],
-    //         ),
-    //       ),
-    //     ],
-    //   ),
-    //   actions: [
-    //     IconButton(
-    //       icon: const Icon(Icons.more_vert, color: AppColor.whiteColor),
-    //       onPressed: () {
-    //         showChatSettingsBottomSheet(userId: widget.oppositeUserId);
-    //       },
-    //     ),
-    //   ],
-    // );
     return AppBar(
       toolbarHeight: 60,
       leading: Padding(
@@ -664,7 +266,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             children: [
               Flexible(
                 child: commonText(
-                  text: widget.userName,
+                  text: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "Loading..." : widget.userName,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -723,7 +325,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               GestureDetector(
                 onTap: () => pushScreen(
                   screen: PinnedPostsScreen(
-                    userName: widget.userName,
+                    userName: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "Loading..." : widget.userName,
                     oppositeUserId: widget.oppositeUserId,
                     userCache: userCache,
                   ),
@@ -747,8 +349,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               GestureDetector(
                 onTap: () => pushScreen(
                   screen: FilesListingScreen(
-                    userName: widget.userName,
-                    oppositeUserId: widget.oppositeUserId,
+                    userName: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "Loading..." : widget.userName,
+                    oppositeUserId: widget.oppositeUserId
                   ),
                 ),
                 child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: Colors.white),
@@ -768,22 +370,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     );
   }
 
-  void _clearInputAndDismissKeyboard() {
-    _focusNode.unfocus();
-    _messageController.clear();
-    _messageController.clear();
-    FocusScope.of(context).unfocus();
-  }
 
-  @override
-  void dispose() {
-    _messageController.removeListener(_onTextChanged);
-    _messageController.dispose();
-    _focusNode.dispose();
-    _removeMentionOverlay();
-    Provider.of<FileServiceProvider>(context, listen: false).clearFiles();
-    super.dispose();
-  }
 
   Widget inputTextFieldWithEditor() {
     return Container(
@@ -791,7 +378,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
         border: Border(
           top: BorderSide(
-            color: Colors.grey.shade800,
+            color: Colors.white,
             width: 0.5,
           ),
         ),
@@ -803,56 +390,67 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             child: Row(
               children: [
                 Expanded(
-                  child: CompositedTransformTarget(
-                    link: _layerLink,
-                    child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade900,
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      // color: Colors.grey.shade900,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: CompositedTransformTarget(
+                            link: _layerLink,
                             child: TextField(
-                              controller: _messageController,
-                              focusNode: _focusNode,
-                              style: TextStyle(color: AppColor.whiteColor),
                               maxLines: 5,
                               minLines: 1,
+                              controller: _messageController,
+                              focusNode: _focusNode,
                               keyboardType: TextInputType.multiline,
                               textInputAction: TextInputAction.newline,
-                              scrollPhysics: const BouncingScrollPhysics(),
+                              style: TextStyle(color: AppColor.whiteColor),
                               decoration: InputDecoration(
                                 hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
+                                hintMaxLines: 1,
                                 hintStyle: TextStyle(color: Colors.grey),
                                 border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
                                 contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                suffixIcon: _isTextFieldEmpty ? Row(
+                                suffixIcon: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
+                                    // const SizedBox(width: 8),
+                                    // Container(
+                                    //   width: 1,
+                                    //   height: 25,
+                                    //   color: Colors.white
+                                    // ),
+                                    const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => FileServiceProvider.instance.pickFiles(),
-                                      child: const Icon(Icons.attach_file, color: AppColor.whiteColor, size: 22),
+                                      onTap: () => FileServiceProvider.instance.pickFiles(AppString.singleChat),
+                                      child: const Icon(Icons.attach_file, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => FileServiceProvider.instance.pickImages(),
-                                      child: const Icon(Icons.image, color: AppColor.whiteColor, size: 22),
+                                      onTap: () =>  FileServiceProvider.instance.pickImages(AppString.singleChat),
+                                      child: const Icon(Icons.image, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => showCameraOptionsBottomSheet(context),
-                                      child: const Icon(Icons.camera_alt, color: AppColor.whiteColor, size: 22),
+                                      onTap: () =>  showCameraOptionsBottomSheet(context,AppString.singleChat),
+                                      child: const Icon(Icons.camera_alt, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                   ],
-                                ) : null,
+                                ),
                               ),
+                              textCapitalization: TextCapitalization.sentences,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -866,14 +464,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
                     onPressed: () async {
                       final plainText = _messageController.text.trim();
-                      if(plainText.isNotEmpty || fileServiceProvider.selectedFiles.isNotEmpty) {
-                        if(fileServiceProvider.selectedFiles.isNotEmpty){
-                          final filesOfList = await chatProvider.uploadFiles();
+                      if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
+                        if(fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty){
+                          final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
                           chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, files: filesOfList);
                         } else {
                           chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
                             currentUserMessageId = "";
-                          }));
+                          }),);
                         }
                         _clearInputAndDismissKeyboard();
                       }
@@ -883,7 +481,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               ],
             ),
           ),
-          selectedFilesWidget(),
+          if(Platform.isIOS)...{
+            SizedBox(height: 20)
+          },
+          selectedFilesWidget(screenName: AppString.singleChat),
         ],
       ),
     );
@@ -1094,10 +695,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                         child: Padding(
                                           padding:
                                               const EdgeInsets.only(left: 4.0),
-                                          // Space between content & label
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
-                                            // Ensures compact fit
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.center,
                                             children: [
@@ -1119,6 +718,151 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                         ),
                                       ),
                                   ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Put Reacted emojis list here
+                      if (messageList.reactions?.isNotEmpty ?? false)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            // mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Reactions',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(height: 12),
+                                            ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: MediaQuery.of(context).size.height * 0.5,
+                                              ),
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: messageList.reactions?.length ?? 0,
+                                                itemBuilder: (context, index) {
+                                                  final reaction = messageList.reactions![index];
+                                                  return Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                    child: Row(
+                                                      children: [
+                                                        profileIconWithStatus(
+                                                          userID: reaction.userId ?? "",
+                                                          status: "online",
+                                                          radius: 16,
+                                                          otherUserProfile: userCache[reaction.userId]?.data?.user?.thumbnailAvatarUrl,
+                                                        ),
+                                                        SizedBox(width: 12),
+                                                        Expanded(
+                                                          child: Text(
+                                                            reaction.username ?? "Unknown",
+                                                            style: TextStyle(
+                                                              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        CachedNetworkImage(
+                                                          imageUrl: reaction.emoji ?? "",
+                                                          height: 24,
+                                                          width: 24,
+                                                          errorWidget: (context, url, error) => Icon(Icons.error, size: 24),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Icon(Icons.info_outline, size: 20),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                  ),
+                                  child: Wrap(
+                                    spacing: 4,
+                                    runSpacing: 4,
+                                    alignment: WrapAlignment.start,
+                                    children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                      bool hasUserReacted = messageList.reactions!.any((reaction) =>
+                                        reaction.userId == signInModel.data?.user?.id &&
+                                        reaction.emoji == entry.key);
+
+                                      return GestureDetector(
+                                        onTap: () {
+                                          if (hasUserReacted) {
+                                            context.read<ChatProvider>().reactionRemove(
+                                              messageId: messageList.sId!,
+                                              reactUrl: entry.key,
+                                              receiverId: widget.oppositeUserId,
+                                              isFrom: "Chat"
+                                            );
+                                          } else {
+                                            context.read<ChatProvider>().reactMessage(
+                                              messageId: messageList.sId!,
+                                              reactUrl: entry.key,
+                                              receiverId: widget.oppositeUserId,
+                                              isFrom: "Chat"
+                                            );
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              CachedNetworkImage(
+                                                imageUrl: entry.key,
+                                                height: 20,
+                                                width: 20,
+                                                errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                entry.value.toString(),
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: hasUserReacted ? Colors.blue : null,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
                                 ),
                               ),
                             ],
@@ -1149,7 +893,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                       children: [
                                         commonText(text: "${messageList.senderOfForward?.username}"),
                                         SizedBox(height: 3),
-                                        commonText(text: formatDateString("${messageList.senderOfForward?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                        commonText(text: formatDateString("${messageList.forwardInfo?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                       ],
                                     ),
                                   ),
@@ -1361,35 +1105,26 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     isPinned: pinnedMsg,
                     onOpened: () {},
                     onClosed: () {},
+                    onReact: () {
+                      showReactionBar(context, messageId.toString(), widget.oppositeUserId, "Chat");
+                    },
                     isForwarded: messageList.isForwarded! ? false : true,
-                    opened: /*index == _selectedIndex ? true : */false,
+                    opened: false,
                     createdAt: messageList.createdAt!,
                     currentUserId: userId,
                     onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,)),
                     onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,)),
                     onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
                     onCopy: () => copyToClipboard(context, message),
-                    onEdit: () {
-                        _messageController.clear();
-                        FocusScope.of(context).requestFocus(_focusNode);
-                        int position = _messageController.text.length;
-                        currentUserMessageId = messageId;
-                        print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
-                        _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);},
-                    onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId))),
-                    // onForward: ()=> clearSelectedIndex(call: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,))),
-                    // onReply: () => clearSelectedIndex(call: ()=>  pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,))),
-                    // onPin: () => clearSelectedIndex(call:()=> chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg )),
-                    // onCopy: () => clearSelectedIndex(call: ()=> copyToClipboard(context, message)),
-                    // onEdit: () => clearSelectedIndex(call: (){
-                    //     _messageController.clear();
-                    //     FocusScope.of(context).requestFocus(_focusNode);
-                    //     int position = _messageController.text.length;
-                    //     currentUserMessageId = messageId;
-                    //     print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
-                    //     _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
-                    //   }),
-                    // onDelete: () => clearSelectedIndex(call: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)))),
+                    onEdit: () => setState(() {
+                      _messageController.clear();
+                      FocusScope.of(context).requestFocus(_focusNode);
+                      int position = _messageController.text.length;
+                      currentUserMessageId = messageId;
+                      print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
+                      _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
+                    }),
+                    onDelete: () => deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)))),
               ],
             ),
           ],
@@ -1397,6 +1132,367 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       );
     },
     );
+  }
+
+  void _onTextChanged() {
+    final text = _messageController.text;
+    final cursorPosition = _messageController.selection.baseOffset;
+
+    // Update text field empty state
+    setState(() {
+      _isTextFieldEmpty = text.isEmpty;
+    });
+
+    if (cursorPosition > 0) {
+      // Check if @ was just typed
+      if (text[cursorPosition - 1] == '@') {
+        _mentionCursorPosition = cursorPosition;
+        _showMentionOverlay();
+      }
+      // Check if we should keep showing the mention list and filter based on input
+      else if (_showMentionList) {
+        // Find the last @ before cursor
+        int lastAtIndex = text.substring(0, cursorPosition).lastIndexOf('@');
+        if (lastAtIndex == -1) {
+          // No @ found before cursor, remove overlay
+          _removeMentionOverlay();
+        } else {
+          // Get the search query (text between @ and cursor)
+          String searchQuery = text.substring(lastAtIndex + 1, cursorPosition).toLowerCase();
+          _showMentionOverlay(searchQuery: searchQuery);
+        }
+      }
+    } else {
+      // Text is empty or cursor at start, remove overlay
+      _removeMentionOverlay();
+    }
+
+    // Keep existing typing event
+    socketProvider.userTypingEvent(
+        oppositeUserId: widget.oppositeUserId,
+        isReplyMsg: false,
+        isTyping: text.trim().length > 1 ? 1 : 0
+    );
+  }
+
+  void _showMentionOverlay({String? searchQuery}) {
+    _removeMentionOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        final screenSize = MediaQuery.of(context).size;
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        final maxHeight = (screenSize.height - keyboardHeight) * 0.4; // 40% of available height
+
+        return Positioned(
+          width: screenSize.width * 0.8, // 80% of screen width
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            targetAnchor: Alignment.topCenter,
+            followerAnchor: Alignment.bottomCenter,
+            offset: const Offset(0, -8),
+            child: Material(
+              elevation: 0, // Remove shadow
+              color: Colors.transparent,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: maxHeight,
+                ),
+                margin: EdgeInsets.symmetric(horizontal: screenSize.width * 0.1), // Center horizontally
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade900,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade800),
+                ),
+                child: Consumer<CommonProvider>(
+                  builder: (context, provider, child) {
+                    final usersToShow = _getFilteredUsers(searchQuery, provider);
+
+                    return SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Channel Members Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Text(
+                              'CHANNEL MEMBERS',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (usersToShow.isEmpty && searchQuery?.isNotEmpty == true)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Text(
+                                'No matching users found',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              padding: EdgeInsets.zero,
+                              itemCount: usersToShow.length,
+                              itemBuilder: (context, index) {
+                                final user = usersToShow[index];
+                                return InkWell(
+                                  onTap: () => _onMentionSelected(user),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundImage: CachedNetworkImageProvider(
+                                            ApiString.profileBaseUrl + (user?.thumbnailAvatarUrl ?? ''),
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                user?.username ?? 'Unknown',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              if (user?.fullName != null)
+                                                Text(
+                                                  user.fullName!,
+                                                  style: TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 12,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+
+                          // Special Mention Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            margin: EdgeInsets.only(top: 8),
+                            child: Text(
+                              'SPECIAL MENTION',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          // Special mention items
+                          _buildSpecialMentionItem(
+                            icon: Icons.group,
+                            label: '@here',
+                            onTap: () => _onMentionSelected({'username': 'here'}),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.people,
+                            label: '@channel',
+                            onTap: () => _onMentionSelected({'username': 'channel'}),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.people_outline,
+                            label: '@all',
+                            onTap: () => _onMentionSelected({'username': 'all'}),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _showMentionList = true);
+  }
+
+  Widget _buildSpecialMentionItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  void _onMentionSelected(dynamic user) {
+    final text = _messageController.text;
+
+    // Find the last @ before cursor
+    int lastAtIndex = text.substring(0, _mentionCursorPosition).lastIndexOf('@');
+    if (lastAtIndex == -1) return;
+
+    // Extract the substring after '@' to find the partial mention
+    int endIndex = _mentionCursorPosition;
+    while (endIndex < text.length && text[endIndex] != ' ') {
+      endIndex++; // Move until space (end of mention)
+    }
+
+    // Get the text before @mention and after the partial mention
+    final beforeMention = text.substring(0, lastAtIndex); // Text before @
+    final afterMention = text.substring(endIndex); // Text after the partial mention
+
+    // Handle both Users object and special mention map
+    String mentionText;
+    print("User type = ${user.runtimeType}");
+    if (user is Users) { // Users from user_mention_model.dart
+      print("user = ${user.username}");
+      mentionText = '@${user.username} ';
+    }else if (user is SecondUser) {
+      mentionText = '@${user.username} ';
+    } else if (user is Map<String, dynamic>) {
+      mentionText = '@${user['username']} ';
+    } else if (user is User) {
+      mentionText = '@${user.username} ';
+    } else {
+      print("user = ${user.username}");
+      return; // Invalid user object
+    }
+
+    // Update the TextField with corrected mention text
+    _messageController.value = TextEditingValue(
+      text: beforeMention + mentionText + afterMention,
+      selection: TextSelection.collapsed(
+        offset: beforeMention.length + mentionText.length, // Move cursor after mention
+      ),
+    );
+
+    _removeMentionOverlay();
+  }
+
+
+  List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
+    final List<dynamic> initialUsers = [];
+    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
+    final bool isSelfChat = widget.oppositeUserId == signInModel.data?.user?.id;
+
+    // If no search query, show prioritized users
+    if (searchQuery?.isEmpty ?? true) {
+      if (isSelfChat) {
+        // For self chat, show first two users from API response
+        if (allUsers.isNotEmpty) {
+          initialUsers.add(allUsers[0]);
+          if (allUsers.length > 1) {
+            initialUsers.add(allUsers[1]);
+          }
+        }
+      } else {
+        // For chat with another user, show current user and opposite user first
+        try {
+          final currentUser = allUsers.firstWhere(
+                (user) => user.sId == signInModel.data?.user?.id,
+          );
+          final oppositeUser = allUsers.firstWhere(
+                (user) => user.sId == widget.oppositeUserId,
+          );
+          initialUsers.add(currentUser);
+          initialUsers.add(oppositeUser);
+        } catch (_) {
+          // If users not found, fallback to first two users
+          if (allUsers.isNotEmpty) {
+            initialUsers.add(allUsers[0]);
+            if (allUsers.length > 1) {
+              initialUsers.add(allUsers[1]);
+            }
+          }
+        }
+      }
+      return initialUsers;
+    }
+
+    // Filter users based on search query
+    final query = searchQuery!.toLowerCase();
+
+    if (isSelfChat) {
+      // For self chat, prioritize first two matching users
+      final matchingUsers = allUsers.where((user) =>
+      ((user.username?.toLowerCase().contains(query) ?? false) ||
+          (user.fullName?.toLowerCase().contains(query) ?? false))
+      ).toList();
+
+      if (matchingUsers.isNotEmpty) {
+        initialUsers.add(matchingUsers[0]);
+        if (matchingUsers.length > 1) {
+          initialUsers.add(matchingUsers[1]);
+        }
+      }
+    } else {
+      // For chat with another user, prioritize current user and opposite user if they match
+      try {
+        final currentUser = allUsers.firstWhere(
+                (user) => user.sId == signInModel.data?.user?.id &&
+                ((user.username?.toLowerCase().contains(query) ?? false) ||
+                    (user.fullName?.toLowerCase().contains(query) ?? false))
+        );
+        initialUsers.add(currentUser);
+      } catch (_) {}
+
+      try {
+        final oppositeUser = allUsers.firstWhere(
+                (user) => user.sId == widget.oppositeUserId &&
+                ((user.username?.toLowerCase().contains(query) ?? false) ||
+                    (user.fullName?.toLowerCase().contains(query) ?? false))
+        );
+        initialUsers.add(oppositeUser);
+      } catch (_) {}
+    }
+
+    // Add other matching users
+    final otherUsers = allUsers.where((user) =>
+    !initialUsers.contains(user) &&
+        ((user.username?.toLowerCase().contains(query) ?? false) ||
+            (user.fullName?.toLowerCase().contains(query) ?? false))
+    ).toList();
+
+    return [...initialUsers, ...otherUsers];
   }
 
 }

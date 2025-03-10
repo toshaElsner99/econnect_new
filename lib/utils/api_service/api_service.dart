@@ -54,7 +54,7 @@ class ApiService {
 
     try {
       if(needLoader == true) startLoading();
-      if(endPoint == ApiString.closeConversation || endPoint == ApiString.sendMessage || endPoint == ApiString.sendChannelMessage || endPoint == ApiString.deviceToken){
+      if(endPoint == ApiString.closeConversation || endPoint == ApiString.sendMessage || endPoint == ApiString.sendChannelMessage || endPoint == ApiString.addDeviceToken || endPoint == ApiString.removeDeviceToken){
         print("IN close");
         requestHeaders.clear();
         requestHeaders.addAll({
@@ -66,10 +66,12 @@ class ApiService {
       response = await _makeRequest(method, uri, reqBody, requestHeaders);
       _logResponse(response);
 
-      final responseData = json.decode(response.body);
-      _handleToastMessage(responseData);
+      if(endPoint.contains(AppString.signIN)){
+        final responseData = json.decode(response.body);
+        _handleToastMessage(responseData);
+      }
 
-      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403) {
+      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403 || response.statusCode == 404 ) {
         return json.decode(response.body);
       } else if (response.statusCode == 500) {
         throw Exception("Server Error");
@@ -77,13 +79,13 @@ class ApiService {
         throw Exception("Something Went Wrong");
       }
     } on SocketException {
-      commonShowToast("No Internet Connection", Colors.red);
+      // commonShowToast("No Internet Connection", Colors.red);
       throw Exception("No Internet Connection");
     } on FormatException {
-      commonShowToast("Bad Response Format!", Colors.red);
+      // commonShowToast("Bad Response Format!", Colors.red);
       throw Exception("Bad Response Format!");
     } catch (e) {
-      commonShowToast("Something Went Wrong $e", Colors.red);
+      // commonShowToast("Something Went Wrong $e", Colors.red);
       throw Exception("Something Went Wrong ${e.toString()}");
     } finally {
       stopLoading();

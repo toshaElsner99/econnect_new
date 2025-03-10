@@ -4,14 +4,45 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
+import '../main.dart';
+import '../screens/chat/single_chat_message_screen.dart';
+import '../screens/channel/channel_chat_screen.dart';
+import '../utils/common/common_function.dart';
 // import '../general_exports.dart';
 class PushNotificationService {
+
+  void handleNotificationRedirect(Map<String, dynamic> data) {
+    print("data => ${data}");
+    if (data['type'] == 'message') {
+      // Handle single chat notification
+      final senderId = data['senderId'];
+      pushScreen(
+        screen: SingleChatMessageScreen(
+          userName: "",
+          oppositeUserId: senderId,
+          needToCallAddMessage: false
+        ),
+      );
+    } else if (data['type'] == 'channel') {
+      print("IN CHANNEL TAP => ${data}");
+      // Handle channel notification
+      final channelId = data['senderId'];
+      pushScreen(
+        screen: ChannelChatScreen(
+          channelId: channelId,
+          isFromNotification: true
+        ),
+      );
+    }
+  }
 
   Future<void> setupInteractedMessage() async {
     // This function is called when ios app is opened, for android case `onDidReceiveNotificationResponse` function is called
     FirebaseMessaging.onMessageOpenedApp.listen(
           (RemoteMessage message) {
             // notificationRedirect(message.data[keyTypeValue], message.data[keyType]);
+            print("onMessageOpenedApp :::> ${message.data}");
+            handleNotificationRedirect(message.data);
       },
     );
     enableIOSNotifications();
@@ -27,20 +58,22 @@ class PushNotificationService {
     AndroidInitializationSettings('mipmap/ic_launcher');
     const DarwinInitializationSettings iOSSettings =
     DarwinInitializationSettings(
-      requestSoundPermission: false,
-      requestBadgePermission: false,
-      requestAlertPermission: false,
+      requestSoundPermission: true,
+      requestBadgePermission: true,
+      requestAlertPermission: true,
     );
     const InitializationSettings initSettings =
     InitializationSettings(android: androidSettings, iOS: iOSSettings);
     flutterLocalNotificationsPlugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (NotificationResponse details) {
-// We're receiving the payload as string that looks like this
-// {buttontext: Button Text, subtitle: Subtitle, imageurl: , typevalue: 14, type: course_details}
-// So the code below is used to convert string to map and read whatever property you want
-
-        // notificationRedirect(result[keyTypeValue], result[keyType]);
+        // Convert payload string to map
+        if (details.payload != null) {
+          final Map<String, dynamic> payloadData = Map<String, dynamic>.from(
+            json.decode(details.payload!.replaceAll("'", '"'))
+          );
+          handleNotificationRedirect(payloadData);
+        }
       },
     );
     // _fcmToken = (await FirebaseMessaging.instance.getToken())!;
@@ -83,8 +116,9 @@ class PushNotificationService {
               icon: android.smallIcon,
             ),
           ),
-          payload: message.data.toString(),
+          payload: json.encode(message.data), // Store the data as JSON string
         );
+        print("notification :::> ${message.data}");
       }
     });
   }

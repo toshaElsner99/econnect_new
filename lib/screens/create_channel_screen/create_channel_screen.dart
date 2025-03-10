@@ -47,7 +47,6 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              pushReplacement(screen: HomeScreen());
               if(_nameController.text.trim().isNotEmpty){
                 context.read<ChannelListProvider>().createNewChannelCall(
                   channelName: _nameController.text.trim(),

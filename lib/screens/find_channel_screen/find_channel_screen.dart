@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../model/browse_and_search_channel_model.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../utils/app_color_constants.dart';
 import '../../utils/app_image_assets.dart';
@@ -106,8 +107,8 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: channelListProvider.browseAndSearchChannelModel?.data?.users?.length ?? 0,
                           itemBuilder: (context, index) {
-                            final user = channelListProvider.browseAndSearchChannelModel?.data?.users?[index];
-                            return _buildUserTile(user);
+                            Users? user = channelListProvider.browseAndSearchChannelModel?.data?.users?[index];
+                            return _buildUserTile(user!);
                           },
                         ),
 
@@ -145,8 +146,8 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: channelListProvider.browseAndSearchChannelModel?.data?.channels?.length ?? 0,
                           itemBuilder: (context, index) {
-                            final channel = channelListProvider.browseAndSearchChannelModel?.data?.channels?[index];
-                            return _buildChannelTile(channel);
+                            Channels? channel = channelListProvider.browseAndSearchChannelModel?.data?.channels?[index];
+                            return _buildChannelTile(channel!);
                           },
                         ),
                     ],
@@ -160,16 +161,16 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
     );
   }
 
-  Widget _buildUserTile(dynamic user) {
+  Widget _buildUserTile(Users user) {
     return ListTile(
-      onTap: () => pushReplacement(screen: SingleChatMessageScreen(userName: user?.username ?? "", oppositeUserId: user?.userId ?? "",needToCallAddMessage: true,)),
+      onTap: () => pushReplacement(screen: SingleChatMessageScreen(userName: user.username ?? "", oppositeUserId: user.userId ?? "",needToCallAddMessage: true,)),
       leading: CircleAvatar(
         backgroundImage: CachedNetworkImageProvider(
-          ApiString.profileBaseUrl + (user?.avatarUrl ?? ""),
+          ApiString.profileBaseUrl + (user.thumbnailAvatarUrl ?? ""),
         ),
       ),
       title: commonText(
-        text: user?.username ?? "",
+        text: user.username ?? "",
         fontSize: 15,
         fontWeight: FontWeight.w500,
       ),
@@ -177,9 +178,9 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
     );
   }
 
-  Widget _buildChannelTile(dynamic channel) {
+  Widget _buildChannelTile(Channels channel) {
     return ListTile(
-      onTap: () => pushReplacement(screen: ChannelChatScreen(channelId: channel.sId)),
+      onTap: () => pushReplacement(screen: ChannelChatScreen(channelId: channel.sId.toString())),
       leading: Container(
         width: 40,
         height: 40,
@@ -189,7 +190,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
         ),
         child: Center(
           child: Image.asset(
-            channel?.isPrivate == true ? AppImage.lockIcon : AppImage.globalIcon,
+            channel.isPrivate == true ? AppImage.lockIcon : AppImage.globalIcon,
             width: 20,
             height: 20,
             color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.grey[700],
@@ -197,28 +198,28 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
         ),
       ),
       title: commonText(
-        text: channel?.name ?? "",
+        text: channel.name ?? "",
         // color: Colors.black87,
         fontSize: 15,
         fontWeight: FontWeight.w500,
       ),
-      subtitle: Row(
-        children: [
-          SizedBox(height: 10,),
-          Image.asset(
-            AppImage.person,
-            height: 12,
-            width: 12,
-            color: Colors.grey[600],
-          ),
-          const SizedBox(width: 4),
-          commonText(
-            text: "${channel?.members?.length ?? 0}",
-            color: Colors.grey[600],
-            fontSize: 12,
-          ),
-        ],
-      ),
+      // subtitle: Row(
+      //   children: [
+      //     SizedBox(height: 10,),
+      //     Image.asset(
+      //       AppImage.person,
+      //       height: 12,
+      //       width: 12,
+      //       color: Colors.grey[600],
+      //     ),
+      //     const SizedBox(width: 4),
+      //     commonText(
+      //       text: "${channel.members?.length ?? 0}",
+      //       color: Colors.grey[600],
+      //       fontSize: 12,
+      //     ),
+      //   ],
+      // ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }

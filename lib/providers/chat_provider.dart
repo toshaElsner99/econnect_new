@@ -12,8 +12,9 @@ import 'package:provider/provider.dart';
 
 import '../main.dart';
 import '../model/files_listening_in_chat_model.dart';
-import '../model/get_reply_message_model.dart';
+import '../model/get_reply_message_model.dart' as reply;
 import '../model/message_model.dart' as msg;
+import 'common_provider.dart';
 import 'file_service_provider.dart';
 import '../utils/api_service/api_service.dart';
 import '../utils/api_service/api_string_constants.dart';
@@ -24,6 +25,7 @@ import 'package:http/http.dart' as http;
 
 class ChatProvider extends  ChangeNotifier {
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
+  final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
   List<msg.MessageGroups> messageGroups = [];
   String? lastOpenedUserId;
   String? lastOpenedUserMSGId;
@@ -32,7 +34,7 @@ class ChatProvider extends  ChangeNotifier {
   bool idChatListLoading = false;
   int currentPagea = 1;
   int totalPages = 0;
-  GetReplyMessageModel? getReplyMessageModel;
+  reply.GetReplyMessageModel? getReplyMessageModel;
   FilesListingInChatModel? filesListingInChatModel;
   bool isGettingListFalse = false;
 
@@ -98,6 +100,7 @@ class ChatProvider extends  ChangeNotifier {
       notifyListeners();
     }
   }
+
   getTypingUpdate() {
     try {
       socketProvider.socket.onAny((event, data) {
@@ -169,12 +172,13 @@ class ChatProvider extends  ChangeNotifier {
       print("lastOpenedUserMSGId => $lastOpenedUserMSGId => msgId = $msgId");
       getReplyMessageModel = null;
     }
-    final requestBody = {
-      "messageId": msgId
-    };
-    final response = await ApiService.instance.request(endPoint: ApiString.getRepliesMsg, method: Method.POST,reqBody: requestBody);
-    if(statusCode200Check(response)){
-      getReplyMessageModel = GetReplyMessageModel.fromJson(response);
+    final requestBody = {"messageId": msgId};
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.getRepliesMsg,
+        method: Method.POST,
+        reqBody: requestBody);
+    if (statusCode200Check(response)) {
+      getReplyMessageModel = reply.GetReplyMessageModel.fromJson(response);
       lastOpenedUserMSGId = msgId;
       print("lastOpenedUserMSGId store=> $lastOpenedUserMSGId");
       notifyListeners();
@@ -186,10 +190,10 @@ class ChatProvider extends  ChangeNotifier {
     };
     final response = await ApiService.instance.request(endPoint: ApiString.replayMsgSeen, method: Method.POST,reqBody: requestBody);
   }
-  Future<List<String>> uploadFiles() async {
+  Future<List<String>> uploadFiles(String screenName) async {
    try {
      startLoading();
-     List<PlatformFile> selectedFiles = FileServiceProvider.instance.selectedFiles;
+     List<PlatformFile> selectedFiles = FileServiceProvider.instance.getFilesForScreen(screenName);
      List<File> filesToUpload = selectedFiles.map((platformFile) {
        return File(platformFile.path!);
      }).toList();
@@ -233,27 +237,25 @@ class ChatProvider extends  ChangeNotifier {
      stopLoading();
    }
   }
-  Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID,})async{
+  Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID,bool? isEditFromReply = false})async{
     final requestBody = {
       "content": content,
       "receiverId": receiverId,
       "senderId": signInModel.data?.user?.id,
     };
-
     if (replyId != null && replyId.isNotEmpty) {
       requestBody['isReply'] = true;
       requestBody['replyTo'] = replyId;
     }
-
     if (editMsgID != null && editMsgID.isNotEmpty) {
       requestBody["isEdit"] = true;
       requestBody["editMessageId"] = editMsgID;
     }
-
     if (files != null && files.isNotEmpty) {
       requestBody["files"] = files;
     }
     final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
     print("Send Message requestBody -= $requestBody");
     if(statusCode200Check(response)){
@@ -261,13 +263,30 @@ class ChatProvider extends  ChangeNotifier {
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
       /// find where to add ///
       if (editMsgID != null && editMsgID.isNotEmpty) {
-        int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.sId == editMsgID));
+        if(isEditFromReply == true){
+          if (getReplyMessageModel != null && getReplyMessageModel!.data != null) {
+            // Search for the message in the getReplyMessageModel
+            for (var message in getReplyMessageModel!.data!.messages!) {
+              var groupMessage = message.groupMessages!.firstWhere(
+                    (msg) => msg.sId == editMsgID,
+                // orElse: () => ,
+              );
+              if (groupMessage != null) {
+                // Update the content of the found message
+                groupMessage.content = content; // Update content
+                groupMessage.isEdited = true; // Mark as edited
+                break; // Exit the loop once the message is found and updated
+              }
+            }
+          }
+        }else {
+          int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.sId == editMsgID));
 
-        if (editIndex != -1) {
-          // Update the existing message
-          msg.Messages editedMessage = msg.Messages.fromJson(response['data']);
-          editedMessage.isEdited = true; // Set isEdited to true
-          messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
+          if (editIndex != -1) {
+            msg.Messages editedMessage = msg.Messages.fromJson(response['data']);
+            editedMessage.isEdited = true; // Set isEdited to true
+            messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.sId == editMsgID)] = editedMessage;
+          }
         }
       } else if(replyId != null && replyId != ""){
         // int existingIndex = getReplyMessageModel!.data!.messages!.indexWhere((item) => item.date == todayDate);
@@ -295,16 +314,10 @@ class ChatProvider extends  ChangeNotifier {
           }));
         }
       }
-
-      // if(replyId != null){
-      //
-      //
-      // }else {
-      //   // getMessagesList(oppositeUserId: receiverId);
-      // }
     }
     notifyListeners();
   }
+
   Future<void> forwardMessage({required Map<String,dynamic> forwardBody})async{
     final response = await ApiService.instance.request(endPoint: forwardBody.keys.contains('channelId') ? ApiString.sendChannelMessage : ApiString.sendMessage, method: Method.POST,reqBody: forwardBody,needLoader: false);
     if(statusCode200Check(response)){
@@ -330,20 +343,25 @@ class ChatProvider extends  ChangeNotifier {
         }
     }
   }
-  Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned})async{
+  Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned, bool callForUnpinPostOnly = false})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
-      // getMessagesList(oppositeUserId: receiverId);
-      togglePinModel(messageId);
+      if(callForUnpinPostOnly){
+        getMessagesList(oppositeUserId: receiverId,currentPage: 1);
+        commonProvider.getUserByIDCallForSecondUser(userId: receiverId);
+      }else {
+        togglePinModel(messageId);
+      }
       // _updatePinnedStatus(messageId, pinned);
-      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId,isEmitForChannel: false);
+      socketProvider.pinUnPinMessageEventSingleChat(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
     }
   }
+
   Future<void> pinUnPinMessageForReply({required String receiverId,required String messageId,required bool pinned})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
       _updatePinnedStatus(messageId, pinned);
-      socketProvider.pinUnPinMessageEvent(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId,isEmitForChannel: false);
+      socketProvider.pinUnPinMessageEventSingleChat(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
     }
   }
   void _updatePinnedStatus(String messageId, bool pinned) {
@@ -409,6 +427,163 @@ class ChatProvider extends  ChangeNotifier {
           return;
         }
       }
+    }
+  }
+
+  // Reaction of message
+  Future<void> reactMessage(
+      {required String messageId,
+      required String reactUrl,
+      required String receiverId,
+      required String isFrom}) async {
+    Map<String, dynamic> reqBody = {
+      "messageId": messageId,
+      "reaction": reactUrl
+    };
+    print("RECAT URL + $reactUrl");
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.reactMessage,
+        method: Method.POST,
+        reqBody: reqBody);
+    if (statusCode200Check(response)) {
+      print("Reacted Successfully");
+      print("isFrom = $isFrom");
+      if (isFrom == "Chat") {
+        // Manually update the message model with the new reaction
+        for (var messageGroup in messageGroups) {
+          for (var message in messageGroup.messages ?? []) {
+            if (message.sId == messageId) {
+              // Initialize reactions list if null
+              message.reactions ??= [];
+
+              // Check if user already reacted with this emoji
+              final existingReactionIndex = message.reactions!.indexWhere(
+                  (reaction) =>
+                      reaction.userId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+
+              if (existingReactionIndex != -1) {
+                // Remove existing reaction if found
+                message.reactions!.removeAt(existingReactionIndex);
+              } else {
+                // Add new reaction
+
+                message.reactions!.add(msg.Reaction(
+                  emoji: reactUrl,
+                  userId: signInModel.data?.user?.id,
+                  username: signInModel.data?.user?.username,
+                  id: DateTime.now().toString(), // Temporary ID
+                ));
+
+
+              }
+
+              notifyListeners();
+              break;
+            }
+          }
+        }
+      } else if (isFrom == "Reply") {
+        // Find the message in getReplyMessageModel and update its reactions
+        for (var messageGroup in getReplyMessageModel?.data?.messages ?? []) {
+          for (var message in messageGroup.groupMessages ?? []) {
+            if (message.sId == messageId) {
+              // Initialize reactions list if null
+              message.reactions ??= [];
+
+              // Check if user already reacted with this emoji
+              final existingReactionIndex = message.reactions!.indexWhere(
+                  (reaction) =>
+                      reaction.userId?.sId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+
+              if (existingReactionIndex != -1) {
+                // Remove existing reaction if found
+                message.reactions!.removeAt(existingReactionIndex);
+              } else {
+                // Add new reaction
+                message.reactions!.add(reply.Reactions(
+                  emoji: reactUrl,
+                  userId: reply.UserId(
+                    sId: signInModel.data?.user?.id,
+                    username: signInModel.data?.user?.username,
+                  ),
+                  sId: DateTime.now().toString(), // Temporary ID
+                ));
+              }
+
+              notifyListeners();
+              break;
+            }
+          }
+        }
+      }
+
+      socketProvider.reactMessagesSC(response: {
+        "receiverId": receiverId,
+        "senderId": signInModel.data?.user?.id,
+      });
+    }
+  }
+
+  Future<void> reactionRemove(
+      {required String messageId,
+      required String reactUrl,
+      required String receiverId,
+      required String isFrom}) async {
+    Map<String, dynamic> reqBody = {
+      "messageId": messageId,
+      "reaction": reactUrl
+    };
+    print("reactionRemove Fun");
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.removeReact, method: Method.POST, reqBody: reqBody);
+    if (statusCode200Check(response)) {
+      print("React removed Successfully");
+      print("isFrom = $isFrom");
+
+      if (isFrom == "Chat") {
+        // Remove reaction from chat message model
+        for (var messageGroup in messageGroups) {
+          for (var message in messageGroup.messages ?? []) {
+            if (message.sId == messageId) {
+              // Find and remove the reaction
+              final existingReactionIndex = message.reactions!.indexWhere(
+                  (reaction) =>
+                      reaction.userId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+              if (existingReactionIndex != -1) {
+                message.reactions!.removeAt(existingReactionIndex);
+                notifyListeners();
+              }
+              break;
+            }
+          }
+        }
+      } else if (isFrom == "Reply") {
+        // Remove reaction from reply message model
+        for (var messageGroup in getReplyMessageModel?.data?.messages ?? []) {
+          for (var message in messageGroup.groupMessages ?? []) {
+            if (message.sId == messageId) {
+              // Find and remove the reaction
+              final existingReactionIndex = message.reactions!.indexWhere(
+                  (reaction) =>
+                      reaction.userId?.sId == signInModel.data?.user?.id &&
+                      reaction.emoji == reactUrl);
+              if (existingReactionIndex != -1) {
+                message.reactions!.removeAt(existingReactionIndex);
+                notifyListeners();
+              }
+              break;
+            }
+          }
+        }
+      }
+
+      socketProvider.reactMessagesSC(response: {
+        "receiverId": receiverId,
+        "senderId": signInModel.data?.user?.id,
+      });
     }
   }
 }

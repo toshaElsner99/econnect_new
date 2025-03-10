@@ -1,75 +1,7 @@
-// import 'package:e_connect/providers/common_provider.dart';
-// import 'package:flutter/cupertino.dart';
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-//
-// import '../../../utils/app_color_constants.dart';
-// import '../../../utils/common/common_widgets.dart';
-//
-// class PinnedPostsScreen extends StatefulWidget {
-//   final String userName;
-//   final String oppositeUserId;
-//
-//   const PinnedPostsScreen(
-//       {super.key, required this.userName, required this.oppositeUserId});
-//
-//   @override
-//   State<PinnedPostsScreen> createState() => _PinnedPostsScreenState();
-// }
-//
-// class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
-//
-//   @override
-//   void initState() {
-//     // TODO: implement initState
-//     super.initState();
-//     Provider.of<CommonProvider>(context,listen: false).getUserByIDCallForSecondUser(userId: widget.oppositeUserId);
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         leading: IconButton(
-//           onPressed: () => Navigator.pop(context),
-//           icon: Icon(CupertinoIcons.back, color: Colors.white),
-//         ),
-//         bottom: PreferredSize(
-//           preferredSize: Size.zero,
-//           child: Divider(color: Colors.grey.shade800, height: 1),
-//         ),
-//         titleSpacing: 0,
-//         title: Row(
-//           children: [
-//             commonText(text: "Pinned Posts", fontSize: 16),
-//             Padding(
-//               padding: const EdgeInsets.only(left: 5),
-//               child: commonText(
-//                 text: " | ${widget.userName}",
-//                 fontSize: 12,
-//                 fontWeight: FontWeight.w400,
-//                 color: AppColor.borderColor,
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//       body: Consumer<CommonProvider>(builder: (context, commonProvider, child) {
-//         return Column(
-//           children: [
-//             Divider(color: Colors.grey.shade800, height: 1,),
-//             ListView.builder(
-//               itemCount: commonProvider.getUserModelSecondUser?.data?.user?.pinmessage?.length ?? 0,
-//               itemBuilder: (context, index) {
-//                 return Column();
-//               },
-//             )
-//           ],
-//         );
-//       },),
-//     );
-//   }
-// }
+
+
+
+import 'package:e_connect/providers/chat_provider.dart';
 import 'package:e_connect/providers/common_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -105,7 +37,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
     Provider.of<CommonProvider>(context, listen: false).getUserByIDCallForSecondUser (userId: widget.oppositeUserId);
   }
 
-    Map<String, List<PinmessageSecondUser >> _groupMessagesByDate(List<PinmessageSecondUser > messages) {
+  Map<String, List<PinmessageSecondUser >> _groupMessagesByDate(List<PinmessageSecondUser > messages) {
     Map<String, List<PinmessageSecondUser >> groupedMessages = {};
 
     for (var message in messages) {
@@ -150,8 +82,8 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
           ],
         ),
       ),
-      body: Consumer<CommonProvider>(
-        builder: (context, commonProvider, child) {
+      body: Consumer2<CommonProvider,ChatProvider>(
+        builder: (context, commonProvider,chatProvider, child) {
           final messages = commonProvider.getUserModelSecondUser ?.data?.user?.pinmessage ?? [];
           final groupedMessages = _groupMessagesByDate(messages);
 
@@ -171,8 +103,8 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                         Container(
                           padding: EdgeInsets.symmetric(horizontal: 10,vertical: 6),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(color: Colors.grey.shade600)
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: Colors.grey.shade600)
                           ),
                           child: commonText(text : date, fontWeight: FontWeight.w600, fontSize: 14,),
                         ),
@@ -204,6 +136,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                     Padding(
                                       padding: const EdgeInsets.symmetric(vertical: 2.0),
                                       child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
                                           commonText(
@@ -217,6 +150,31 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                                 text: formatTime(messages.createdAt.toString()), color: Colors.grey, fontSize: 12
                                             ),
                                           ),
+                                          Spacer(),
+                                          Container(
+                                            height: 30,
+                                            child: PopupMenuButton<String>(
+                                              color: AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.appBarColor,
+                                              offset: Offset(-20, 0),
+                                              onSelected: (value) {
+                                                chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messages.id ?? "", pinned: false,callForUnpinPostOnly: true);
+                                              },
+                                              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                                                PopupMenuItem<String>(
+                                                  value: 'unpin',
+                                                  height: 30,
+                                                  child: Row(
+                                                    children: [
+                                                      Image.asset(AppImage.pinTiltIcon,height: 20,width: 20,color: Colors.white,),
+                                                      SizedBox(width: 10,),
+                                                      commonText(text: 'Unpin from Channel',color: Colors.white),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                              icon: Icon(Icons.more_vert),
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -224,6 +182,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                     Visibility(
                                         visible: messages.isForwarded ?? false,
                                         child: Container(
+                                          margin: EdgeInsets.only(top: 5),
                                           padding: EdgeInsets.symmetric(vertical: 16,horizontal: 20),
                                           decoration: BoxDecoration(
                                             border: Border.all(color: AppColor.borderColor,width: 0.6),
@@ -332,7 +291,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                     Visibility(
                                       visible:messages.replyCount != 0,
                                       child: GestureDetector(
-                                        onTap: () =>  pushReplacement(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messages.id!, receiverId: widget.oppositeUserId,),),
+                                        onTap: () =>  pushReplacement(screen: ReplyMessageScreen(userName: user?.data?.user?.fullName ?? user?.data?.user?.username ?? 'Unknown', messageId: messages.id ?? "", receiverId: widget.oppositeUserId,),),
                                         child: Container(
                                           // color: Colors.red,
                                           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -417,8 +376,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                           ),
                                         ),
                                       ),
-                                    )
-
+                                    ),
                                   ],
                                 ),
                               ),
@@ -437,3 +395,6 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
     );
   }
 }
+
+
+

@@ -1,13 +1,14 @@
-
-
+import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
+import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:e_connect/model/channel_members_model.dart';
 
 import '../../../main.dart';
 import '../../../model/get_reply_message_channel_model.dart';
@@ -23,6 +24,7 @@ import '../../../utils/app_image_assets.dart';
 import '../../../utils/app_preference_constants.dart';
 import '../../../utils/common/common_function.dart';
 import '../../../utils/common/common_widgets.dart';
+import '../../chat/forward_message/forward_message_screen.dart';
 
 class ReplyMessageScreenChannel extends StatefulWidget {
   final String channelName;
@@ -38,8 +40,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   final scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
   final chatProvider = Provider.of<ChatProvider>(navigatorKey.currentState!.context,listen: false);
-  // final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
-  // final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   final channelChatProvider = Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false);
@@ -50,7 +50,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   final _textFieldKey = GlobalKey();
   int _mentionCursorPosition = 0;
   final Map<String, dynamic> userCache = {};
-  // GetUserModelSecondUser? userDetails;
   bool _isTextFieldEmpty = true;
 
 
@@ -61,22 +60,46 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
     super.initState();
     _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      /// socket listen messages list ///
       channelChatProvider.getReplyListUpdateSocketForChannel(widget.msgID);
-      // socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
-      // _fetchAndCacheUserDetails();
+      /// socket listen messages list for deleted message ///
+      socketProvider.listenDeleteMessageSocketForChannelReply(msgId: widget.msgID);
+      socketProvider.socketListenPinMessageInChannelReplyScreen(msgId: widget.channelId);
       print("I'm In initState");
+      /// For the first time init ///
       channelChatProvider.getReplyMessageListChannel(msgId: widget.msgID,fromWhere: "SCREEN INIT");
-      // Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.channelID);
+      Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.channelId);
       // Provider.of<CommonProvider>(context, listen: false).getUserApi(id :widget.receiverId);
     });
   }
 
+  late FileServiceProvider _fileServiceProvider;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _removeMentionOverlay();
+    _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
+  }
+
+  @override
+  void dispose() {
+    _messageController.removeListener(_onTextChanged);
+    super.dispose();
+    scrollController.dispose();
+    _messageController.dispose();
+    _focusNode.dispose();
+    _fileServiceProvider.clearFilesForScreen(AppString.channelChatReply);
+
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: ()=> pop(popValue: true), icon: Icon(CupertinoIcons.back,color: Colors.white,)),
+        leading: IconButton(onPressed: () {
+          pop(popValue: true);
+          channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
+        } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
         bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
         titleSpacing: 0,
         title: Column(
@@ -102,8 +125,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
             ),
           ),
           SizedBox(height: 20,),
-          inputTextFieldWithEditor(),
-          selectedFilesWidget(),
+          inputTextFieldWithEditor()
         ],
       ),
     );
@@ -180,6 +202,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   })  {
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
       bool pinnedMsg = messageList.isPinned ?? false;
+      bool isEdited = messageList.isEdited ?? false;
       return Container(
         color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
         padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 8.0),
@@ -225,7 +248,231 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                           ),
                         ],
                       ),
-                      commonHTMLText(message: message),
+                      Visibility(
+                        visible: message.isNotEmpty,
+                        child: Wrap(
+                          direction: Axis.horizontal,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                children: [
+                                  WidgetSpan(
+                                    alignment: PlaceholderAlignment.baseline,
+                                    baseline: TextBaseline.alphabetic,
+                                    child: commonHTMLText(message: message),
+                                  ),
+
+                                  if (isEdited)
+                                    WidgetSpan(
+                                      alignment: PlaceholderAlignment.baseline,
+                                      baseline: TextBaseline.alphabetic,
+                                      child: Padding(
+                                        padding:
+                                        const EdgeInsets.only(left: 4.0),
+                                        // Space between content & label
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          // Ensures compact fit
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 13,
+                                              color: AppColor.borderColor,
+                                            ),
+                                            const SizedBox(width: 2),
+                                            commonText(
+                                              text: "Edited",
+                                              fontSize: 10,
+                                              color: AppColor.borderColor,
+                                              fontStyle: FontStyle.italic,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (messageList.reactions?.isNotEmpty ?? false)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            // mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Reactions',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                              ),
+                                            ),
+                                            SizedBox(height: 12),
+                                            ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: MediaQuery.of(context).size.height * 0.5,
+                                              ),
+                                              child: ListView.builder(
+                                                shrinkWrap: true,
+                                                itemCount: messageList.reactions?.length ?? 0,
+                                                itemBuilder: (context, index) {
+                                                  final reaction = messageList.reactions![index];
+                                                  final userDetails = Provider.of<CommonProvider>(context, listen: false).getUserByIDCallForSecondUser(userId: reaction.userId!.sId  );
+                                                  return FutureBuilder<GetUserModelSecondUser?>(
+                                                    future: userDetails,
+                                                    builder: (context, snapshot) {
+                                                      Widget profileWidget;
+                                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                                        profileWidget = Container(
+                                                          width: 32,
+                                                          height: 32,
+                                                          decoration: BoxDecoration(
+                                                            shape: BoxShape.circle,
+                                                            color: Colors.grey[800],
+                                                          ),
+                                                          child: Center(
+                                                            child: SizedBox(
+                                                              width: 20,
+                                                              height: 20,
+                                                              child: CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[600]!),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      } else {
+                                                        profileWidget = profileIconWithStatus(
+                                                          userID: reaction.userId!.sId ?? "",
+                                                          status: "online",
+                                                          radius: 16,
+                                                          otherUserProfile: snapshot.data?.data?.user?.thumbnailAvatarUrl ?? "",
+                                                        );
+                                                      }
+
+                                                      return Padding(
+                                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                                        child: Row(
+                                                          children: [
+                                                            profileWidget,
+                                                            SizedBox(width: 12),
+                                                            Expanded(
+                                                              child: Text(
+                                                                snapshot.data?.data?.user?.username ?? reaction.userId!.username ?? "Unknown",
+                                                                style: TextStyle(
+                                                                  color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            CachedNetworkImage(
+                                                              imageUrl: reaction.emoji ?? "",
+                                                              height: 24,
+                                                              width: 24,
+                                                              errorWidget: (context, url, error) => Icon(Icons.error, size: 24),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Icon(Icons.info_outline, size: 20),
+                              ),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                  ),
+                                  child: Wrap(
+                                    spacing: 4,
+                                    runSpacing: 4,
+                                    alignment: WrapAlignment.start,
+                                    children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                      bool hasUserReacted = messageList.reactions!.any((reaction) =>
+                                      reaction.userId!.sId == signInModel.data?.user?.id &&
+                                          reaction.emoji == entry.key);
+
+                                      return GestureDetector(
+                                        onTap: () {
+                                          if (hasUserReacted) {
+                                            context.read<ChannelChatProvider>().reactionRemove(
+                                                messageId: messageList.sId!,
+                                                reactUrl: entry.key,
+                                                channelId: widget.channelId,
+                                                isFrom: "ChannelReply"
+                                            );
+                                          } else {
+                                            context.read<ChannelChatProvider>().reactMessage(
+                                                messageId: messageList.sId!,
+                                                reactUrl: entry.key,
+                                                channelId: widget.channelId,
+                                                isFrom: "ChannelReply"
+                                            );
+                                          }
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              CachedNetworkImage(
+                                                imageUrl: entry.key,
+                                                height: 20,
+                                                width: 20,
+                                                errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                entry.value.toString(),
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: hasUserReacted ? Colors.blue : null,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(
@@ -297,7 +544,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
 
                           )
                       ),
-
                       Visibility(
                         visible: messageList.isMedia == true,
                         child: ListView.builder(
@@ -342,23 +588,23 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                   isPinned: pinnedMsg,
                   onOpened: () {}  ,
                   onClosed: () {} ,
+                  onReact: () {
+                    showReactionBar(context, messageId.toString(), userId, "ChannelReply");
+                  },
                   opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
-                  onForward: () {},
-      // pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,))
-                  onPin: () {
-                    // chatProvider.pinUnPinMessageForReply(receiverId: widget.receiverId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg )
-                  },
+                  onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.username ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
+                  onPin: () => channelChatProvider.pinUnPinMessage(messageId: messageId,pinned: pinnedMsg,channelID: widget.channelId,isCalledForReply: true),
                   onCopy: () => copyToClipboard(context, message),
                   onEdit: () => setState(() {
+                    _messageController.clear();
+                    FocusScope.of(context).requestFocus(_focusNode);
                     int position = _messageController.text.length;
                     currentUserMessageId = messageId;
-                    print("currentMessageId>>>>> $currentUserMessageId && 67b6d585d75f40cdb09398f5");
-                    _messageController.text = message;
+                    print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
+                    _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                   }),
-                  onDelete: () {
-                    channelChatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.msgID);
-                  },
+                  onDelete: () => deleteMessageDialog(context, ()=> channelChatProvider.deleteMessageForReplyChannel(messageId: messageId.toString(),firsMessageId: widget.msgID)),
                   createdAt:"${messageList.createdAt}",)
               ],
             ),
@@ -372,105 +618,138 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
 
   Widget inputTextFieldWithEditor() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(24),
+        color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey[800]!,
+            width: 0.5,
+          ),
+        ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: CompositedTransformTarget(
-              link: _layerLink,
-              child: TextField(
-                key: _textFieldKey,
-                controller: _messageController,
-                focusNode: _focusNode,
-                maxLines: 5,
-                minLines: 1,
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.newline,
-                style: TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  suffixIcon: _messageController.text.isEmpty
-                      ? Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GestureDetector(
-                        onTap: () => FileServiceProvider.instance.pickFiles(),
-                        child: const Icon(Icons.attach_file, color: Colors.grey),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => _pickImage(ImageSource.gallery),
-                        child: const Icon(Icons.image, color: Colors.grey),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => _showCameraOptions(context),
-                        child: const Icon(Icons.camera_alt, color: Colors.grey),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  )
-                      : null,
-                ),
-                onChanged: (value) {
-                  setState(() {});
-                  _onTextChanged();
-                },
-              ),
-            ),
-          ),
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColor.blueColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: IconButton(
-              icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
-              onPressed: () async {
-                final plainText = _messageController.text.trim();
-                if(plainText.isEmpty && fileServiceProvider.selectedFiles.isEmpty) return;
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    margin: EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      // color: Colors.grey.shade900,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: CompositedTransformTarget(
+                            link: _layerLink,
+                            child: TextField(
+                              key: _textFieldKey,
+                              maxLines: 5,
+                              minLines: 1,
+                              controller: _messageController,
+                              focusNode: _focusNode,
+                              keyboardType: TextInputType.multiline,
+                              textInputAction: TextInputAction.newline,
+                              style: TextStyle(color: AppColor.whiteColor),
+                              decoration: InputDecoration(
+                                hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
+                                hintMaxLines: 1,
+                                hintStyle: TextStyle(color: Colors.grey),
+                                border: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // const SizedBox(width: 8),
+                                    // Container(
+                                    //   width: 1,
+                                    //   height: 25,
+                                    //   color: Colors.white
+                                    // ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () => FileServiceProvider.instance.pickFiles(AppString.channelChatReply),
+                                      child: const Icon(Icons.attach_file, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () =>  FileServiceProvider.instance.pickImages(AppString.channelChatReply),
+                                      child: const Icon(Icons.image, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () =>  showCameraOptionsBottomSheet(context,AppString.channelChatReply),
+                                      child: const Icon(Icons.camera_alt, color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                ),
+                              ),
+                              textCapitalization: TextCapitalization.sentences,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Container(
+                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColor.blueColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
+                    onPressed: () async {
+                      final plainText = _messageController.text.trim();
+                      if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty) {
+                        if(fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty){
+                          final filesOfList = await chatProvider.uploadFiles(AppString.channelChatReply);
+                          await channelChatProvider.sendMessage(
+                            content: plainText,
+                            channelId: widget.channelId,
+                            files: filesOfList,
+                            replyId: widget.msgID,
+                            editMsgID: currentUserMessageId,
+                            isEditFromReply: true,
+                          );
+                        } else {
+                          await channelChatProvider.sendMessage(
+                              content: plainText,
+                              channelId: widget.channelId,
+                              replyId: widget.msgID,
+                              editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
+                              isEditFromReply: true,
+                          );
+                        }
 
-                try {
-                  if(fileServiceProvider.selectedFiles.isNotEmpty){
-                    final filesOfList = await chatProvider.uploadFiles();
-                    await channelChatProvider.sendMessage(
-                        content: plainText,
-                        channelId: widget.channelId,
-                        files: filesOfList,
-                        replyId: widget.msgID
-                    );
-                  } else {
-                    await channelChatProvider.sendMessage(
-                        content: plainText,
-                        channelId: widget.channelId,
-                        replyId: widget.msgID,
-                        editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId
-                    );
-                  }
+                        // Update reply count in single chat screen
+                        ///////////////////////////////////////////////////////////
+                        // chatProvider.updateReplyCount(widget.messageId);
 
-                  // Update reply count in single chat screen
-                  ///////////////////////////////////////////////////////////
-                  // chatProvider.updateReplyCount(widget.messageId);
+                        setState(() {
+                          currentUserMessageId = "";
+                        });
 
-                  setState(() {
-                    currentUserMessageId = "";
-                  });
-
-                  _clearInputAndDismissKeyboard();
-                } catch (e) {
-                  print("Error sending message: $e");
-                }
-              },
+                        _clearInputAndDismissKeyboard();
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
+          if(Platform.isIOS)...{
+            SizedBox(height: 20)
+          },
+          selectedFilesWidget(screenName: AppString.channelChatReply),
         ],
       ),
     );
@@ -481,45 +760,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
     FocusScope.of(context).unfocus();
   }
 
-  void _pickImage(ImageSource source) {
-    FileServiceProvider.instance.pickImages();
-  }
-
-  void _showCameraOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Capture Photo'),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.captureMedia(isVideo: false);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.videocam),
-                title: const Text('Record Video'),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.captureMedia(isVideo: true);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
   void _onTextChanged() {
     final text = _messageController.text;
     final cursorPosition = _messageController.selection.baseOffset;
@@ -729,43 +969,38 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   }
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
     final List<dynamic> initialUsers = [];
-    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
+    final allMembers = Provider.of<ChannelChatProvider>(context, listen: false).channelMembersList;
 
-    // If no search query, show first two users from API response
+    // If no search query, show current user and first member
     if (searchQuery?.isEmpty ?? true) {
-      // Add first two users if available
-      if (allUsers.isNotEmpty) {
-        initialUsers.add(allUsers[0]);
-        if (allUsers.length > 1) {
-          initialUsers.add(allUsers[1]);
+      // Add current user first
+      final currentUser = allMembers.firstWhere(
+        (member) => member.sId == signInModel.data?.user?.id,
+        orElse: () => allMembers.isNotEmpty ? allMembers[0] : MemberDetails(),
+      );
+      initialUsers.add(currentUser);
+
+      // Add first member who is not the current user
+      if (allMembers.length > 1) {
+        final otherMember = allMembers.firstWhere(
+          (member) => member.sId != signInModel.data?.user?.id,
+          orElse: () => allMembers[0],
+        );
+        if (otherMember.sId != currentUser.sId) {
+          initialUsers.add(otherMember);
         }
       }
       return initialUsers;
     }
 
-    // Filter users based on search query
+    // Filter members based on search query
     final query = searchQuery!.toLowerCase();
-
-    // First add first two users if they match the search
-    if (allUsers.isNotEmpty) {
-      if (((allUsers[0].username?.toLowerCase().contains(query) ?? false) ||
-          (allUsers[0].fullName?.toLowerCase().contains(query) ?? false))) {
-        initialUsers.add(allUsers[0]);
-      }
-      if (allUsers.length > 1 &&
-          ((allUsers[1].username?.toLowerCase().contains(query) ?? false) ||
-              (allUsers[1].fullName?.toLowerCase().contains(query) ?? false))) {
-        initialUsers.add(allUsers[1]);
-      }
-    }
-
-    // Then add other matching users
-    final otherUsers = allUsers.skip(2).where((user) =>
-    ((user.username?.toLowerCase().contains(query) ?? false) ||
-        (user.fullName?.toLowerCase().contains(query) ?? false))
+    final matchingMembers = allMembers.where((member) =>
+      ((member.username?.toLowerCase().contains(query) ?? false) ||
+      (member.fullName?.toLowerCase().contains(query) ?? false))
     ).toList();
 
-    return [...initialUsers, ...otherUsers];
+    return matchingMembers;
   }
   void _onMentionSelected(dynamic user) {
     final text = _messageController.text;
@@ -784,20 +1019,13 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
     final beforeMention = text.substring(0, lastAtIndex); // Text before @
     final afterMention = text.substring(endIndex); // Text after the partial mention
 
-    // Handle both Users object and special mention map
+    // Handle both MemberDetails object and special mention map
     String mentionText;
-    print("User type = ${user.runtimeType}");
-    if (user is Users) { // Users from user_mention_model.dart
-      print("user = ${user.username}");
-      mentionText = '@${user.username} ';
-    }else if (user is SecondUser) {
+    if (user is MemberDetails) {
       mentionText = '@${user.username} ';
     } else if (user is Map<String, dynamic>) {
       mentionText = '@${user['username']} ';
-    } else if (user is User) {
-      mentionText = '@${user.username} ';
     } else {
-      print("user = ${user.username}");
       return; // Invalid user object
     }
 
