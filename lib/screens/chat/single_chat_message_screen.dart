@@ -610,7 +610,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             children: [
               Flexible(
                 child: commonText(
-                  text: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "...." : widget.userName,
+                  text: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "Loading..." : widget.userName,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -669,7 +669,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               GestureDetector(
                 onTap: () => pushScreen(
                   screen: PinnedPostsScreen(
-                    userName: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "...." : widget.userName,
+                    userName: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "Loading..." : widget.userName,
                     oppositeUserId: widget.oppositeUserId,
                     userCache: userCache,
                   ),
@@ -693,7 +693,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               GestureDetector(
                 onTap: () => pushScreen(
                   screen: FilesListingScreen(
-                    userName: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "...." : widget.userName,
+                    userName: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "Loading..." : widget.userName,
                     oppositeUserId: widget.oppositeUserId
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -21,7 +22,7 @@ class DownloadFileProvider extends ChangeNotifier {
   }
 
   Future<void> initializeNotifications() async {
-    const androidInitialize = AndroidInitializationSettings('app_icon');
+    const androidInitialize = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iOSInitialize = DarwinInitializationSettings();
     const initializationSettings = InitializationSettings(
       android: androidInitialize,
@@ -30,11 +31,14 @@ class DownloadFileProvider extends ChangeNotifier {
 
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
         final String? payload = response.payload;
-        if (payload != null) {
-          // Open the file when notification is tapped
-          openDownloadedFile(payload);
+        if (payload != null && payload.isNotEmpty) {
+          if (await requestStoragePermission()) {
+            openDownloadedFile(payload); // Proceed with file opening
+          } else {
+            print("Storage permission denied.");
+          }
         }
       },
     );
@@ -49,38 +53,56 @@ class DownloadFileProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> showProgressNotification({
-    required int progress,
+  Future<void> showDownloadNotification({
     required String fileName,
     required String filePath,
     required int notificationId,
+    required bool isCompleted,
   }) async {
-    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    // Android Notification Details
+    AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'download_channel',
       'File Download',
       channelDescription: 'Shows file download progress',
-      importance: Importance.low,
+      importance: Importance.high,
       priority: Priority.high,
-      showProgress: true,
-      maxProgress: 100,
-      progress: progress,
-      ongoing: progress < 100,
-      autoCancel: progress >= 100,
+      ongoing: !isCompleted, // Ongoing for active downloads
+      autoCancel: false, // Prevent auto-cancel to avoid overlapping
     );
 
-    final NotificationDetails platformChannelSpecifics = NotificationDetails(
+    // iOS Notification Details
+    DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+      // Customize for iOS if needed
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidDetails,
-      iOS: const DarwinNotificationDetails(),
+      iOS: iOSDetails,
     );
 
+    String notificationTitle = isCompleted ? 'Download Complete' : 'Downloading...';
+    String notificationBody = isCompleted ? 'Tap to open $fileName' : 'Downloading $fileName...';
+
+    // Show/Update Notification
     await flutterLocalNotificationsPlugin.show(
-      notificationId,
-      'Downloading $fileName',
-      progress < 100 ? 'Download in progress: $progress%' : 'Download complete',
+      notificationId, // Use the same notification ID to update
+      notificationTitle,
+      notificationBody,
       platformChannelSpecifics,
-      payload: filePath,
+      payload: isCompleted ? filePath : null, // Attach file path only on completion
     );
+
+    // // If the download is complete, cancel the notification or auto-remove it
+    // if (isCompleted) {
+    //   await flutterLocalNotificationsPlugin.cancel(notificationId); // Optionally cancel when done
+    // }
   }
+
+
+
 
   Future<void> downloadFile({
     required String fileUrl,
@@ -95,13 +117,14 @@ class DownloadFileProvider extends ChangeNotifier {
       // Show loading indicator
       Provider.of<LoadingProvider>(context, listen: false).startLoading();
 
+      String filePath;
       if (Platform.isAndroid) {
         int deviceSdk = await getDeviceSdkForAndroid();
 
         if (deviceSdk > 31 || await requestPermission(Permission.storage)) {
           const downloadPath = '/storage/emulated/0/Download';
           final directory = await Directory(downloadPath).create(recursive: true);
-          final filePath = '${directory.path}/$uniqueFileName';
+          filePath = '${directory.path}/$uniqueFileName';
           File file = File(filePath);
 
           final request = http.Request('GET', Uri.parse(fileUrl));
@@ -111,48 +134,52 @@ class DownloadFileProvider extends ChangeNotifier {
             int totalBytes = response.contentLength ?? 0;
             int receivedBytes = 0;
 
-            // Show initial notification
-            await showProgressNotification(
-              progress: 0,
+            // ✅ Show single notification when download starts
+            await showDownloadNotification(
               fileName: fileName,
               filePath: filePath,
               notificationId: notificationId,
+              isCompleted: false, // Downloading...
             );
 
-            // Listen to download stream and write to file
-            response.stream.listen((data) {
+            // Create the file and write to it in chunks
+            await response.stream.listen((data) async{
               receivedBytes += data.length;
               progress = (receivedBytes / totalBytes) * 100;
 
-              // Update notification with current progress
-              showProgressNotification(
-                progress: progress.round(),
+              // Silent progress update (No extra notifications)
+              if(progress == 100){
+                await flutterLocalNotificationsPlugin.cancel(notificationId); // Optionally cancel when done
+                await showDownloadNotification(
                 fileName: fileName,
                 filePath: filePath,
                 notificationId: notificationId,
-              );
+                isCompleted: true, // Download completed
+                );
+              }
 
               // Write data to file
               file.writeAsBytesSync(data, mode: FileMode.append);
             }, onDone: () async {
               print("File downloaded to: $filePath");
-              // Show final notification indicating download is complete
-              await showProgressNotification(
-                progress: 100, // Set progress to 100 to indicate completion
+
+              // ✅ Update the same notification when the download is complete
+              await showDownloadNotification(
                 fileName: fileName,
                 filePath: filePath,
                 notificationId: notificationId,
+                isCompleted: true, // Download completed
               );
             }, onError: (error) {
               print("Download error: $error");
-            }, cancelOnError: true);
+            }, cancelOnError: true).asFuture(); // Convert Stream to Future
           } else {
             print("Error downloading file: ${response.statusCode}");
           }
         }
       } else if (Platform.isIOS) {
         final directory = await getApplicationDocumentsDirectory();
-        final filePath = '${directory.path}/$uniqueFileName';
+        filePath = '${directory.path}/$uniqueFileName';
         File file = File(filePath);
 
         final request = http.Request('GET', Uri.parse(fileUrl));
@@ -162,40 +189,46 @@ class DownloadFileProvider extends ChangeNotifier {
           int totalBytes = response.contentLength ?? 0;
           int receivedBytes = 0;
 
-          // Show initial notification
-          await showProgressNotification(
-            progress: 0,
+          // ✅ Show single notification when download starts
+          await showDownloadNotification(
             fileName: fileName,
             filePath: filePath,
             notificationId: notificationId,
+            isCompleted: false, // Downloading...
           );
 
-          response.stream.listen((data) {
+          // Create the file and write to it in chunks
+          await response.stream.listen((data) async{
             receivedBytes += data.length;
             progress = (receivedBytes / totalBytes) * 100;
 
-            // Update notification with current progress
-            showProgressNotification(
-              progress: progress.round(),
-              fileName: fileName,
-              filePath: filePath,
-              notificationId: notificationId,
-            );
+            // Silent progress update (No extra notifications)
+            if(progress == 100){
+              await flutterLocalNotificationsPlugin.cancel(notificationId); // Optionally cancel when done
+              await showDownloadNotification(
+                fileName: fileName,
+                filePath: filePath,
+                notificationId: notificationId,
+                isCompleted: true, // Download completed
+              );
+            }
+
 
             // Write data to file
             file.writeAsBytesSync(data, mode: FileMode.append);
           }, onDone: () async {
             print("File downloaded to: $filePath");
-            // Show final notification indicating download is complete
-            await showProgressNotification(
-              progress: 100, // Set progress to 100 to indicate completion
+
+            // ✅ Update the same notification when the download is complete
+            await showDownloadNotification(
               fileName: fileName,
               filePath: filePath,
               notificationId: notificationId,
+              isCompleted: true, // Download completed
             );
           }, onError: (error) {
             print("Download error: $error");
-          }, cancelOnError: true);
+          }, cancelOnError: true).asFuture(); // Convert Stream to Future
         } else {
           print("Error downloading file: ${response.statusCode}");
         }
@@ -207,52 +240,51 @@ class DownloadFileProvider extends ChangeNotifier {
     }
   }
 
-  // Future<void> openDownloadedFile(String filePath) async {
-  //   try {
-  //     if (Platform.isAndroid) {
-  //       // Attempt to open the file
-  //       final result = await OpenFile.open(filePath);
-  //       if (result.type != ResultType.done) {
-  //         // If opening the file fails, open the Downloads folder
-  //         final uri = Uri.parse('content://downloads');
-  //         await launchUrl(uri);
-  //       }
-  //     } else if (Platform.isIOS) {
-  //       // For iOS, directly open the file
-  //       await OpenFile.open(filePath);
-  //     }
-  //   } catch (e) {
-  //     print("Error opening file: $e");
-  //   }
-  // }
+
   Future<void> openDownloadedFile(String filePath) async {
     try {
-      final file = File(filePath);
+      if (await requestStoragePermission()) {
+        final file = File(filePath);
 
-      // Check if the file exists
-      if (await file.exists()) {
-        if (Platform.isAndroid) {
-          // Attempt to open the file
+        if (await file.exists()) {
           final result = await OpenFile.open(filePath);
           if (result.type != ResultType.done) {
-            // If opening the file fails, open the Downloads folder
-            final uri = Uri.parse('content://com.android.providers.downloads.documents');
-            await launchUrl(uri);
+            if (Platform.isAndroid) {
+              await launchUrl(Uri.parse("content://com.android.externalstorage.documents/document/primary:Download"));
+            } else if (Platform.isIOS) {
+              // Show alert if the file couldn't be opened
+              print("Could not open file on iOS: ${result.message}");
+            }
           }
-        } else if (Platform.isIOS) {
-          // For iOS, directly open the file
-          final result = await OpenFile.open(filePath);
-          if (result.type != ResultType.done) {
-            // Handle the case where the file could not be opened
-            print("Could not open file on iOS: ${result.message}");
-          }
+        } else {
+          print("File does not exist: $filePath");
         }
       } else {
-        print("File does not exist: $filePath");
-        // Optionally, show a message to the user
+        print("Storage permission denied.");
       }
     } catch (e) {
       print("Error opening file: $e");
     }
   }
+
+
+  Future<bool> requestStoragePermission() async {
+    if (Platform.isAndroid) {
+      int sdkInt = await getDeviceSdkForAndroid();
+
+      if (sdkInt >= 30) {
+        if (await Permission.manageExternalStorage.isGranted) {
+          return true;
+        } else {
+          PermissionStatus status = await Permission.manageExternalStorage.request();
+          return status == PermissionStatus.granted;
+        }
+      } else {
+        PermissionStatus status = await Permission.storage.request();
+        return status == PermissionStatus.granted;
+      }
+    }
+    return true;
+  }
+
 }
