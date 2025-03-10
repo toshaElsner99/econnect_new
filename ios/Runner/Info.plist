@@ -76,7 +76,7 @@
     <string>We need permission to save images to your gallery.</string>
 
     <key>NSDocumentsDirectoryUsageDescription</key>
-    <string>We need access to your documents directory for file storage.</string>
+    <string>We need access to save and open downloaded files.</string>
 
     <key>NSAppTransportSecurity</key>
     <dict>

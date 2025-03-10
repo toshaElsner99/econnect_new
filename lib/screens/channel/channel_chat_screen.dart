@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/channel_chat_model.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
 import 'package:e_connect/providers/common_provider.dart';
+import 'package:e_connect/screens/bottom_nav_tabs/home_screen.dart';
 import 'package:e_connect/screens/channel/channel_member_info_screen/channel_members_info.dart';
 import 'package:e_connect/screens/channel/channel_pinned_messages/channel_pinned_messages_screen.dart';
 import 'package:e_connect/screens/channel/files_listing_channel/files_listing_in_channel_screen.dart';
@@ -33,8 +34,9 @@ import 'package:e_connect/model/get_user_model.dart';
 
 class ChannelChatScreen extends StatefulWidget {
   final String channelId;
+  final bool? isFromNotification;
   // final String channelName;
-  const ChannelChatScreen({super.key,required this.channelId,/*required this.channelName*/});
+  const ChannelChatScreen({super.key,required this.channelId, this.isFromNotification/*required this.channelName*/});
 
   @override
   State<ChannelChatScreen> createState() => _ChannelChatScreenState();
@@ -639,7 +641,12 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         appBar: AppBar(
           toolbarHeight: 60,
           titleSpacing: 0,
-          leading: commonBackButton(),
+          leading:
+          (widget.isFromNotification ?? false) ?
+          IconButton(
+            icon: const Icon(CupertinoIcons.back,color: Colors.white,),
+            color: Colors.white,
+            onPressed: () => pushAndRemoveUntil(screen: HomeScreen())) : commonBackButton(),
           title: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

@@ -12,6 +12,7 @@ import '../utils/common/common_function.dart';
 class PushNotificationService {
 
   void handleNotificationRedirect(Map<String, dynamic> data) {
+    print("data => ${data}");
     if (data['type'] == 'message') {
       // Handle single chat notification
       final senderId = data['senderId'];
@@ -22,16 +23,17 @@ class PushNotificationService {
           needToCallAddMessage: false
         ),
       );
+    } else if (data['type'] == 'channel') {
+      print("IN CHANNEL TAP => ${data}");
+      // Handle channel notification
+      final channelId = data['senderId'];
+      pushScreen(
+        screen: ChannelChatScreen(
+          channelId: channelId,
+          isFromNotification: true
+        ),
+      );
     }
-    // else if (data['type'] == 'channel') {
-    //   // Handle channel notification
-    //   final channelId = data['senderId'];
-    //   pushScreen(
-    //     screen: ChannelChatScreen(
-    //       channelId: channelId,
-    //     ),
-    //   );
-    // }
   }
 
   Future<void> setupInteractedMessage() async {

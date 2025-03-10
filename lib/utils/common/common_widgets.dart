@@ -1667,28 +1667,31 @@ Widget commonHTMLText({required String message}) {
   if (commonProvider.getUserMentionModel?.data?.users != null) {
     for (var user in commonProvider.getUserMentionModel!.data!.users!) {
       if (user.username != null) {
-        processedMessage = processedMessage.replaceAllMapped(
-          RegExp(r'\b' + RegExp.escape(user.username!) + r'\b', caseSensitive: false),
-          (match) {
-            // Don't wrap if it's already wrapped in username span
-            if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
-              return match.group(0)!;
-            }
-            return '<span class="username">${match.group(0)}</span>';
-          },
-        );
-      }
-      if (user.fullName != null) {
-        processedMessage = processedMessage.replaceAllMapped(
-          RegExp(r'\b' + RegExp.escape(user.fullName!) + r'\b', caseSensitive: false),
-          (match) {
-            // Don't wrap if it's already wrapped in username span
-            if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
-              return match.group(0)!;
-            }
-            return '<span class="username">${match.group(0)}</span>';
-          },
-        );
+        if(processedMessage.startsWith("<")) {
+          processedMessage = processedMessage.replaceAllMapped(
+            RegExp(r'\b' + RegExp.escape(user.username!) + r'\b', caseSensitive: false),
+                (match) {
+              // Don't wrap if it's already wrapped in username span
+              if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
+                return match.group(0)!;
+              }
+              return '<span class="username">${match.group(0)}</span>';
+            },
+          );
+
+        }
+        if (user.fullName != null) {
+          processedMessage = processedMessage.replaceAllMapped(
+            RegExp(r'\b' + RegExp.escape(user.fullName!) + r'\b', caseSensitive: false),
+                (match) {
+              // Don't wrap if it's already wrapped in username span
+              if (match.input.substring(match.start - 20, match.start).contains('class="username"')) {
+                return match.group(0)!;
+              }
+              return '<span class="username">${match.group(0)}</span>';
+            },
+          );
+        }
       }
     }
   }
