@@ -62,6 +62,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   GetUserModelSecondUser? userDetails;
   bool _isTextFieldEmpty = true;
 
+
   @override
   void initState() {
     print("msgIDD>>>> ${widget.messageId}");
@@ -101,6 +102,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   }
   @override
   void dispose() {
+    scrollController.dispose();
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _focusNode.dispose();
@@ -197,7 +199,10 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: ()=> pop(popValue: true),
+        leading: IconButton(onPressed: (){
+          pop();
+          chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
+        },
         icon: Icon(CupertinoIcons.back,color: Colors.white,)),
         bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
         titleSpacing: 0,
@@ -785,11 +790,33 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                       if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty) {
                         if(fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty){
                           final filesOfList = await chatProvider.uploadFiles(AppString.singleChatReply);
-                          chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId, files: filesOfList);
+                          chatProvider.sendMessage(
+                                content: plainText,
+                                receiverId: widget.receiverId,
+                                files: filesOfList,
+                                replyId: widget.messageId,
+                                editMsgID: currentUserMessageId,
+                                isEditFromReply: true,
+                              )
+                              .then(
+                                (value) => setState(() {
+                                  currentUserMessageId = "";
+                                }),
+                              );
                         } else {
-                          chatProvider.sendMessage(content: plainText, receiverId: widget.receiverId, editMsgID: currentUserMessageId).then((value) => setState(() {
-                            currentUserMessageId = "";
-                          }),);
+                          chatProvider
+                              .sendMessage(
+                                content: plainText,
+                                receiverId: widget.receiverId,
+                                editMsgID: currentUserMessageId,
+                                replyId: widget.messageId,
+                                isEditFromReply: true,
+                              )
+                              .then(
+                                (value) => setState(() {
+                                  currentUserMessageId = "";
+                                }),
+                              );
                         }
                         _clearInputAndDismissKeyboard();
                       }

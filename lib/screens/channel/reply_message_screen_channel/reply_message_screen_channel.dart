@@ -40,8 +40,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   final scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
   final chatProvider = Provider.of<ChatProvider>(navigatorKey.currentState!.context,listen: false);
-  // final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
-  // final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   final channelChatProvider = Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false);
@@ -52,7 +50,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   final _textFieldKey = GlobalKey();
   int _mentionCursorPosition = 0;
   final Map<String, dynamic> userCache = {};
-  // GetUserModelSecondUser? userDetails;
   bool _isTextFieldEmpty = true;
 
 
@@ -68,7 +65,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
       /// socket listen messages list for deleted message ///
       socketProvider.listenDeleteMessageSocketForChannelReply(msgId: widget.msgID);
       socketProvider.socketListenPinMessageInChannelReplyScreen(msgId: widget.channelId);
-      // _fetchAndCacheUserDetails();
       print("I'm In initState");
       /// For the first time init ///
       channelChatProvider.getReplyMessageListChannel(msgId: widget.msgID,fromWhere: "SCREEN INIT");
@@ -89,7 +85,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   void dispose() {
     _messageController.removeListener(_onTextChanged);
     super.dispose();
-    // _scrollController.dispose();
+    scrollController.dispose();
     _messageController.dispose();
     _focusNode.dispose();
     _fileServiceProvider.clearFilesForScreen(AppString.channelChatReply);
@@ -100,7 +96,10 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: ()=> pop(popValue: true), icon: Icon(CupertinoIcons.back,color: Colors.white,)),
+        leading: IconButton(onPressed: () {
+          pop(popValue: true);
+          channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
+        } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
         bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
         titleSpacing: 0,
         title: Column(
@@ -718,6 +717,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                             channelId: widget.channelId,
                             files: filesOfList,
                             replyId: widget.msgID,
+                            editMsgID: currentUserMessageId,
                             isEditFromReply: true,
                           );
                         } else {

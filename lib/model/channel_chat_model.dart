@@ -1,4 +1,3 @@
-import 'package:e_connect/model/message_model.dart';
 
 class ChannelChatModel {
   int? statusCode;

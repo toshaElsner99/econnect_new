@@ -131,6 +131,11 @@ class SocketIoProvider extends ChangeNotifier{
     socket.emit(userTyping,{"senderId": signInModel.data?.user?.id ?? "","receiverId": oppositeUserId,"inputValue":isTyping,"isReply":isReplyMsg});
   }
 
+  userTypingEventChannel({required String channelId,required int isTyping, required bool isReplyMsg,}){
+    print("CALLLED_userTypingEventChannel>>>>>>> ");
+    socket.emit(userTyping,{"senderId": signInModel.data?.user?.id ?? "","channelId": channelId,"inputValue":isTyping,"username": signInModel.data?.user?.username ?? "","userId": signInModel.data?.user?.id ?? "","isReply":isReplyMsg});
+  }
+
   sendMessagesSC({required Map<String, dynamic> response,bool emitReplyMsg = false}) {
     print("emit>>>>> Send Message $response");
     socket.emit(emitReplyMsg ? sendReplyMessage : sendMessage, response);

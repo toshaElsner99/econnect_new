@@ -36,6 +36,137 @@ class ChannelChatProvider extends ChangeNotifier{
   List<msg.MessageGroup> messageGroups = [];
   int currentPage = 1;
   int totalPages = 0;
+  // getTypingUpdate() {
+  //   try {
+  //     socketProvider.socket.onAny((event, data) {
+  //       print("Event: $event >>> Data: $data");
+  //       if (data['type'] == "userTyping" && data['data'] is List) {
+  //         var typingData = data['data'];
+  //         if (typingData.isNotEmpty) {
+  //           msgLength = data['msgLength'] ?? 0;
+  //           oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
+  //           notifyListeners();
+  //           print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength");
+  //         } else {
+  //           msgLength = 0;
+  //           oppUserIdForTyping = "";
+  //           notifyListeners();
+  //           print("Data array is empty.");
+  //         }
+  //       } else {
+  //         print("Received data is not of the expected structure.");
+  //       }
+  //     });
+  //   } catch (e) {
+  //     print("Error processing the socket event: $e");
+  //   } finally {
+  //     notifyListeners();
+  //   }
+  // }
+  int msgLength = 0;
+  List<Map<String, dynamic>> typingUsers = [];
+  // getTypingUpdate() {
+  //   try {
+  //     socketProvider.socket.onAny((event, data) {
+  //       print("Event: $event >>> Data: $data");
+  //       if (data['type'] == "userTyping" && data['data'] is List) {
+  //         var typingData = data['data'];
+  //         if (typingData.isNotEmpty) {
+  //           msgLength = data['msgLength'] ?? 0;
+  //           String senderId = typingData[0]['sender'];
+  //           String username = data['userData']['username'];
+  //
+  //           if (msgLength > 0) {
+  //             // Check if the user already exists in the list
+  //             bool alreadyExists = typingUsers.any((user) => user['sender'] == senderId);
+  //
+  //             if (!alreadyExists) {
+  //               // Add the user to the list
+  //               typingUsers.add({
+  //                 'sender': senderId,
+  //                 'username': username,
+  //               });
+  //             }
+  //           } else {
+  //             // Remove user from the list if typing stops
+  //             typingUsers.removeWhere((user) => user['sender'] == senderId);
+  //           }
+  //
+  //           notifyListeners();
+  //           print("Currently Typing Users: $typingUsers");
+  //         } else {
+  //           // Clear the list if no user is typing
+  //           typingUsers.clear();
+  //           notifyListeners();
+  //         }
+  //       } else {
+  //         print("Received data is not of the expected structure.");
+  //       }
+  //     });
+  //   } catch (e) {
+  //     print("Error processing the socket event: $e");
+  //   } finally {
+  //     notifyListeners();
+  //   }
+  // }
+  getTypingUpdate() {
+    try {
+      socketProvider.socket.onAny((event, data) {
+        print("Event: $event >>> Data: $data");
+        if (data['type'] == "userTyping" && data['data'] is List) {
+          var typingData = data['data'];
+          if (typingData.isNotEmpty) {
+            msgLength = data['msgLength'] ?? 0;
+            String userId = data['userData']['user_id']; // Use user_id instead of sender
+            String username = data['userData']['username'];
+            String routeId = data['routeId'];
+
+            print("userId >>> $userId");
+            print("routeId >>> $routeId"); // Print the routeId for debugging
+
+            // Prevent adding your own user in the list
+            if (userId.toString() == signInModel.data?.user?.id.toString()) {
+              // Also, make sure you remove yourself if already added (just in case)
+              typingUsers.removeWhere((user) => user['user_id'] == signInModel.data?.user?.id.toString());
+              notifyListeners();
+              return; // Exit early if it's the signed-in user
+            }
+
+            if (msgLength > 0) {
+              // Check if the user already exists in the list
+              bool alreadyExists = typingUsers.any((user) => user['sender'] == userId);
+
+              if (!alreadyExists) {
+                // Add the user to the list
+                typingUsers.add({
+                  'sender': userId,
+                  'username': username,
+                  'routeId': routeId, // Optionally store routeId if needed
+                });
+              }
+            } else {
+              // Remove user from the list if typing stops
+              typingUsers.removeWhere((user) => user['sender'] == userId);
+            }
+
+            notifyListeners();
+            print("Currently Typing Users: $typingUsers");
+          } else {
+            // Clear the list if no user is typing
+            typingUsers.clear();
+            notifyListeners();
+          }
+        } else {
+          print("Received data is not of the expected structure.");
+        }
+      });
+    } catch (e) {
+      print("Error processing the socket event: $e");
+    } finally {
+      notifyListeners();
+    }
+  }
+
 
   unPinOnlyFromPinnedMessages({required String channelID,required String messageId,}) async {
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, false), method: Method.PUT);
@@ -51,8 +182,9 @@ class ChannelChatProvider extends ChangeNotifier{
     if(statusCode200Check(response)){
       socketProvider.pinUnPinMessageEventChannelChat(senderId: signInModel.data?.user?.id ?? "", channelId: channelID);
       if(isCalledForReply == true){
+        print("isCalledForReply>>>>>>>. $isCalledForReply");
         for (MessagesList messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
-          for (var message in messageGroup.messagesGroupList ?? []) {
+          for (MessagesGroupList message in messageGroup.messagesGroupList ?? []) {
             if (message.sId == messageId) {
               message.isPinned = pinned;
               notifyListeners();

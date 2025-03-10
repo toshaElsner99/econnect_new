@@ -100,6 +100,7 @@ class ChatProvider extends  ChangeNotifier {
       notifyListeners();
     }
   }
+
   getTypingUpdate() {
     try {
       socketProvider.socket.onAny((event, data) {
@@ -313,13 +314,6 @@ class ChatProvider extends  ChangeNotifier {
           }));
         }
       }
-
-      // if(replyId != null){
-      //
-      //
-      // }else {
-      //   // getMessagesList(oppositeUserId: receiverId);
-      // }
     }
     notifyListeners();
   }

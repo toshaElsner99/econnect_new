@@ -1652,63 +1652,6 @@ Widget commonText({
   );
 }
 
-// Widget commonHTMLText({required String message}){
-//   return HtmlWidget(
-//     message.replaceAllMapped(
-//       RegExp(r'<ul class="renderer_bulleted">.*?</ul>', dotAll: true),
-//           (match) {
-//         return match.group(0)!.replaceAll('<li>', '• ').replaceAll('</li>', '\n');
-//       },
-//     ),
-//     textStyle: TextStyle(
-//       height: 1.2,
-//       fontFamily: AppFonts.interFamily,
-//       color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
-//       fontSize: 16,
-//     ),
-//     customStylesBuilder: (element) {
-//       // Base styles for all text
-//       Map<String, String> styles = {
-//         'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
-//       };
-//
-//       // Add additional styles for special formatting
-//       if (element.classes.contains('renderer_bold')) {
-//         styles['font-weight'] = 'bold';
-//       }
-//       if (element.classes.contains('renderer_italic')) {
-//         styles['font-style'] = 'italic';
-//       }
-//       if (element.classes.contains('renderer_strikethrough')) {
-//         styles['text-decoration'] = 'line-through';
-//       }
-//       if (element.classes.contains('renderer_link')) {
-//         styles['color'] = '#2196F3';
-//       }
-//       if (element.classes.contains('renderer_emoji')) {
-//         styles['display'] = 'inline-block';
-//         styles['vertical-align'] = 'middle';
-//       }
-//
-//       return styles;
-//     },
-//     customWidgetBuilder: (element) {
-//       if (element.classes.contains('renderer_emoji')) {
-//         final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
-//         if (imageUrl != null) {
-//           return CachedNetworkImage(
-//             imageUrl: imageUrl,
-//             width: 21,
-//             height: 21,
-//             fit: BoxFit.contain,
-//           );
-//         }
-//       }
-//       return null;
-//     },
-//     enableCaching: true,
-//   );
-// }
 Widget commonHTMLText({required String message}) {
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
 

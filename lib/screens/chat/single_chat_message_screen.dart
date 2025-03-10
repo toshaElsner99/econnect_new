@@ -35,7 +35,6 @@ import '../../screens/chat/media_preview_screen.dart';
 import '../../widgets/chat_profile_header.dart';
 
 
-/// ///
 
 
 class SingleChatMessageScreen extends StatefulWidget {
@@ -43,7 +42,6 @@ class SingleChatMessageScreen extends StatefulWidget {
   final String oppositeUserId;
   final bool? calledForFavorite;
   final bool? needToCallAddMessage;
-  // final bool callForReadMsg;
 
   const SingleChatMessageScreen({super.key, required this.userName, required this.oppositeUserId, this.calledForFavorite, this.needToCallAddMessage});
 
@@ -63,7 +61,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final Map<String, dynamic> userCache = {};
   GetUserModelSecondUser? userDetails;
   String currentUserMessageId = "";
-  // int? _selectedIndex;
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   bool _showMentionList = false;
@@ -71,394 +68,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final TextEditingController _messageController = TextEditingController();
   bool _isTextFieldEmpty = true;
   late FileServiceProvider _fileServiceProvider;
-
-
-  // clearSelectedIndex({required Function call}){
-  //   setState(() {
-  //     _selectedIndex = null;
-  //   });
-  //   call.call();
-  // }
-
-  void _onTextChanged() {
-    final text = _messageController.text;
-    final cursorPosition = _messageController.selection.baseOffset;
-    
-    // Update text field empty state
-    setState(() {
-      _isTextFieldEmpty = text.isEmpty;
-    });
-
-    if (cursorPosition > 0) {
-      // Check if @ was just typed
-      if (text[cursorPosition - 1] == '@') {
-        _mentionCursorPosition = cursorPosition;
-        _showMentionOverlay();
-      }
-      // Check if we should keep showing the mention list and filter based on input
-      else if (_showMentionList) {
-        // Find the last @ before cursor
-        int lastAtIndex = text.substring(0, cursorPosition).lastIndexOf('@');
-        if (lastAtIndex == -1) {
-          // No @ found before cursor, remove overlay
-          _removeMentionOverlay();
-        } else {
-          // Get the search query (text between @ and cursor)
-          String searchQuery = text.substring(lastAtIndex + 1, cursorPosition).toLowerCase();
-          _showMentionOverlay(searchQuery: searchQuery);
-        }
-      }
-    } else {
-      // Text is empty or cursor at start, remove overlay
-      _removeMentionOverlay();
-    }
-
-    // Keep existing typing event
-    socketProvider.userTypingEvent(
-      oppositeUserId: widget.oppositeUserId,
-      isReplyMsg: false,
-      isTyping: text.trim().length > 1 ? 1 : 0
-    );
-  }
-
-  void _showMentionOverlay({String? searchQuery}) {
-    _removeMentionOverlay();
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) {
-        final screenSize = MediaQuery.of(context).size;
-        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-        final maxHeight = (screenSize.height - keyboardHeight) * 0.4; // 40% of available height
-
-        return Positioned(
-          width: screenSize.width * 0.8, // 80% of screen width
-          child: CompositedTransformFollower(
-            link: _layerLink,
-            showWhenUnlinked: false,
-            targetAnchor: Alignment.topCenter,
-            followerAnchor: Alignment.bottomCenter,
-            offset: const Offset(0, -8),
-            child: Material(
-              elevation: 0, // Remove shadow
-              color: Colors.transparent,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: maxHeight,
-                ),
-                margin: EdgeInsets.symmetric(horizontal: screenSize.width * 0.1), // Center horizontally
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade900,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade800),
-                ),
-                child: Consumer<CommonProvider>(
-                  builder: (context, provider, child) {
-                    final usersToShow = _getFilteredUsers(searchQuery, provider);
-
-                    return SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Channel Members Section
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: Text(
-                              'CHANNEL MEMBERS',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          if (usersToShow.isEmpty && searchQuery?.isNotEmpty == true)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              child: Text(
-                                'No matching users found',
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            )
-                          else
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              padding: EdgeInsets.zero,
-                              itemCount: usersToShow.length,
-                              itemBuilder: (context, index) {
-                                final user = usersToShow[index];
-                                return InkWell(
-                                  onTap: () => _onMentionSelected(user),
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    child: Row(
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 16,
-                                          backgroundImage: CachedNetworkImageProvider(
-                                            ApiString.profileBaseUrl + (user?.thumbnailAvatarUrl ?? ''),
-                                          ),
-                                        ),
-                                        SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                user?.username ?? 'Unknown',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 14,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              if (user?.fullName != null)
-                                                Text(
-                                                  user.fullName!,
-                                                  style: TextStyle(
-                                                    color: Colors.grey,
-                                                    fontSize: 12,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-
-                          // Special Mention Section
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            margin: EdgeInsets.only(top: 8),
-                            child: Text(
-                              'SPECIAL MENTION',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          // Special mention items
-                          _buildSpecialMentionItem(
-                            icon: Icons.group,
-                            label: '@here',
-                            onTap: () => _onMentionSelected({'username': 'here'}),
-                          ),
-                          _buildSpecialMentionItem(
-                            icon: Icons.people,
-                            label: '@channel',
-                            onTap: () => _onMentionSelected({'username': 'channel'}),
-                          ),
-                          _buildSpecialMentionItem(
-                            icon: Icons.people_outline,
-                            label: '@all',
-                            onTap: () => _onMentionSelected({'username': 'all'}),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-
-    Overlay.of(context).insert(_overlayEntry!);
-    setState(() => _showMentionList = true);
-  }
-
-  Widget _buildSpecialMentionItem({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.white, size: 24),
-            SizedBox(width: 12),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _removeMentionOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    setState(() => _showMentionList = false);
-  }
-
-  void _onMentionSelected(dynamic user) {
-    final text = _messageController.text;
-
-    // Find the last @ before cursor
-    int lastAtIndex = text.substring(0, _mentionCursorPosition).lastIndexOf('@');
-    if (lastAtIndex == -1) return;
-
-    // Extract the substring after '@' to find the partial mention
-    int endIndex = _mentionCursorPosition;
-    while (endIndex < text.length && text[endIndex] != ' ') {
-      endIndex++; // Move until space (end of mention)
-    }
-
-    // Get the text before @mention and after the partial mention
-    final beforeMention = text.substring(0, lastAtIndex); // Text before @
-    final afterMention = text.substring(endIndex); // Text after the partial mention
-
-    // Handle both Users object and special mention map
-    String mentionText;
-    print("User type = ${user.runtimeType}");
-    if (user is Users) { // Users from user_mention_model.dart
-      print("user = ${user.username}");
-      mentionText = '@${user.username} ';
-    }else if (user is SecondUser) {
-      mentionText = '@${user.username} ';
-    } else if (user is Map<String, dynamic>) {
-      mentionText = '@${user['username']} ';
-    } else if (user is User) {
-      mentionText = '@${user.username} ';
-    } else {
-      print("user = ${user.username}");
-      return; // Invalid user object
-    }
-
-    // Update the TextField with corrected mention text
-    _messageController.value = TextEditingValue(
-      text: beforeMention + mentionText + afterMention,
-      selection: TextSelection.collapsed(
-        offset: beforeMention.length + mentionText.length, // Move cursor after mention
-      ),
-    );
-
-    _removeMentionOverlay();
-  }
-
-
-  List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
-    final List<dynamic> initialUsers = [];
-    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
-    final bool isSelfChat = widget.oppositeUserId == signInModel.data?.user?.id;
-
-    // If no search query, show prioritized users
-    if (searchQuery?.isEmpty ?? true) {
-      if (isSelfChat) {
-        // For self chat, show first two users from API response
-        if (allUsers.isNotEmpty) {
-          initialUsers.add(allUsers[0]);
-          if (allUsers.length > 1) {
-            initialUsers.add(allUsers[1]);
-          }
-        }
-      } else {
-        // For chat with another user, show current user and opposite user first
-        try {
-          final currentUser = allUsers.firstWhere(
-            (user) => user.sId == signInModel.data?.user?.id,
-          );
-          final oppositeUser = allUsers.firstWhere(
-            (user) => user.sId == widget.oppositeUserId,
-          );
-          initialUsers.add(currentUser);
-          initialUsers.add(oppositeUser);
-        } catch (_) {
-          // If users not found, fallback to first two users
-          if (allUsers.isNotEmpty) {
-            initialUsers.add(allUsers[0]);
-            if (allUsers.length > 1) {
-              initialUsers.add(allUsers[1]);
-            }
-          }
-        }
-      }
-      return initialUsers;
-    }
-
-    // Filter users based on search query
-    final query = searchQuery!.toLowerCase();
-    
-    if (isSelfChat) {
-      // For self chat, prioritize first two matching users
-      final matchingUsers = allUsers.where((user) =>
-        ((user.username?.toLowerCase().contains(query) ?? false) ||
-        (user.fullName?.toLowerCase().contains(query) ?? false))
-      ).toList();
-
-      if (matchingUsers.isNotEmpty) {
-        initialUsers.add(matchingUsers[0]);
-        if (matchingUsers.length > 1) {
-          initialUsers.add(matchingUsers[1]);
-        }
-      }
-    } else {
-      // For chat with another user, prioritize current user and opposite user if they match
-      try {
-        final currentUser = allUsers.firstWhere(
-          (user) => user.sId == signInModel.data?.user?.id &&
-            ((user.username?.toLowerCase().contains(query) ?? false) ||
-            (user.fullName?.toLowerCase().contains(query) ?? false))
-        );
-        initialUsers.add(currentUser);
-      } catch (_) {}
-
-      try {
-        final oppositeUser = allUsers.firstWhere(
-          (user) => user.sId == widget.oppositeUserId &&
-            ((user.username?.toLowerCase().contains(query) ?? false) ||
-            (user.fullName?.toLowerCase().contains(query) ?? false))
-        );
-        initialUsers.add(oppositeUser);
-      } catch (_) {}
-    }
-
-    // Add other matching users
-    final otherUsers = allUsers.where((user) =>
-      !initialUsers.contains(user) &&
-      ((user.username?.toLowerCase().contains(query) ?? false) ||
-      (user.fullName?.toLowerCase().contains(query) ?? false))
-    ).toList();
-
-    return [...initialUsers, ...otherUsers];
-  }
-
   final ScrollController scrollController = ScrollController();
+  double? _savedScrollPosition;
 
-  void pagination({required String oppositeUserId}) {
-    scrollController.addListener(() {
-      if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
-        Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
-      }
-    });
-  }
 
   @override
   void initState() {
     super.initState();
+    scrollController.addListener(() {
+      _saveScrollPosition();
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       print("oppositeUserId in init==> ${widget.oppositeUserId}");
       /// this is for pagination ///
@@ -492,21 +111,58 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     },);
     _messageController.addListener(_onTextChanged);
   }
-
   void fetchOppositeUserDetails()async{
     userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.oppositeUserId);
   }
   void _fetchAndCacheUserDetails() async {
     userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.oppositeUserId);
-    // await commonProvider.getUserByIDCallForSecondUser(userId: signInModel.data!.user!.id);
     setState(()  {
       userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
       userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
     });
-    print("user>>>>>> ${userCache}");
-    print("user>>>>>> ${userDetails?.data!.user!.username}");
-    print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.username}");
-    print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.sId}");
+  }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _restoreScrollPosition();
+    _removeMentionOverlay();
+    _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
+  }
+  @override
+  void dispose() {
+    _messageController.removeListener(_onTextChanged);
+    _messageController.dispose();
+    _focusNode.dispose();
+    _fileServiceProvider.clearFilesForScreen(AppString.singleChat);
+    super.dispose();
+  }
+  void _clearInputAndDismissKeyboard() {
+    _focusNode.unfocus();
+    _messageController.clear();
+    _messageController.clear();
+    FocusScope.of(context).unfocus();
+  }
+  void _removeMentionOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    setState(() => _showMentionList = false);
+  }
+  void pagination({required String oppositeUserId}) {
+    scrollController.addListener(() {
+      if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
+        Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
+      }
+    });
+  }
+  void _saveScrollPosition() => setState(() {
+    _savedScrollPosition = scrollController.position.pixels;
+  });
+  void _restoreScrollPosition() {
+    if (_savedScrollPosition != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        scrollController.jumpTo(_savedScrollPosition!);
+      });
+    }
   }
 
   @override
@@ -714,26 +370,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     );
   }
 
-  void _clearInputAndDismissKeyboard() {
-    _focusNode.unfocus();
-    _messageController.clear();
-    _messageController.clear();
-    FocusScope.of(context).unfocus();
-  }
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-      _removeMentionOverlay();
-    _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
-  }
-  @override
-  void dispose() {
-    _messageController.removeListener(_onTextChanged);
-    _messageController.dispose();
-    _focusNode.dispose();
-    _fileServiceProvider.clearFilesForScreen(AppString.singleChat);
-    super.dispose();
-  }
+
 
   Widget inputTextFieldWithEditor() {
     return Container(
@@ -1472,7 +1109,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       showReactionBar(context, messageId.toString(), widget.oppositeUserId, "Chat");
                     },
                     isForwarded: messageList.isForwarded! ? false : true,
-                    opened: /*index == _selectedIndex ? true : */false,
+                    opened: false,
                     createdAt: messageList.createdAt!,
                     currentUserId: userId,
                     onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,)),
@@ -1487,21 +1124,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                       _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                     }),
-                    // onDelete: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId))),
                     onDelete: () => deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)))),
-                    // onForward: ()=> clearSelectedIndex(call: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,))),
-                    // onReply: () => clearSelectedIndex(call: ()=>  pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,))),
-                    // onPin: () => clearSelectedIndex(call:()=> chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg )),
-                    // onCopy: () => clearSelectedIndex(call: ()=> copyToClipboard(context, message)),
-                    // onEdit: () => clearSelectedIndex(call: (){
-                    //     _messageController.clear();
-                    //     FocusScope.of(context).requestFocus(_focusNode);
-                    //     int position = _messageController.text.length;
-                    //     currentUserMessageId = messageId;
-                    //     print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
-                    //     _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
-                    //   }),
-                    // onDelete: () => clearSelectedIndex(call: () => chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)))),
               ],
             ),
           ],
@@ -1511,7 +1134,366 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     );
   }
 
+  void _onTextChanged() {
+    final text = _messageController.text;
+    final cursorPosition = _messageController.selection.baseOffset;
 
+    // Update text field empty state
+    setState(() {
+      _isTextFieldEmpty = text.isEmpty;
+    });
+
+    if (cursorPosition > 0) {
+      // Check if @ was just typed
+      if (text[cursorPosition - 1] == '@') {
+        _mentionCursorPosition = cursorPosition;
+        _showMentionOverlay();
+      }
+      // Check if we should keep showing the mention list and filter based on input
+      else if (_showMentionList) {
+        // Find the last @ before cursor
+        int lastAtIndex = text.substring(0, cursorPosition).lastIndexOf('@');
+        if (lastAtIndex == -1) {
+          // No @ found before cursor, remove overlay
+          _removeMentionOverlay();
+        } else {
+          // Get the search query (text between @ and cursor)
+          String searchQuery = text.substring(lastAtIndex + 1, cursorPosition).toLowerCase();
+          _showMentionOverlay(searchQuery: searchQuery);
+        }
+      }
+    } else {
+      // Text is empty or cursor at start, remove overlay
+      _removeMentionOverlay();
+    }
+
+    // Keep existing typing event
+    socketProvider.userTypingEvent(
+        oppositeUserId: widget.oppositeUserId,
+        isReplyMsg: false,
+        isTyping: text.trim().length > 1 ? 1 : 0
+    );
+  }
+
+  void _showMentionOverlay({String? searchQuery}) {
+    _removeMentionOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) {
+        final screenSize = MediaQuery.of(context).size;
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        final maxHeight = (screenSize.height - keyboardHeight) * 0.4; // 40% of available height
+
+        return Positioned(
+          width: screenSize.width * 0.8, // 80% of screen width
+          child: CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            targetAnchor: Alignment.topCenter,
+            followerAnchor: Alignment.bottomCenter,
+            offset: const Offset(0, -8),
+            child: Material(
+              elevation: 0, // Remove shadow
+              color: Colors.transparent,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: maxHeight,
+                ),
+                margin: EdgeInsets.symmetric(horizontal: screenSize.width * 0.1), // Center horizontally
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade900,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade800),
+                ),
+                child: Consumer<CommonProvider>(
+                  builder: (context, provider, child) {
+                    final usersToShow = _getFilteredUsers(searchQuery, provider);
+
+                    return SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Channel Members Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Text(
+                              'CHANNEL MEMBERS',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (usersToShow.isEmpty && searchQuery?.isNotEmpty == true)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Text(
+                                'No matching users found',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            )
+                          else
+                            ListView.builder(
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
+                              padding: EdgeInsets.zero,
+                              itemCount: usersToShow.length,
+                              itemBuilder: (context, index) {
+                                final user = usersToShow[index];
+                                return InkWell(
+                                  onTap: () => _onMentionSelected(user),
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 16,
+                                          backgroundImage: CachedNetworkImageProvider(
+                                            ApiString.profileBaseUrl + (user?.thumbnailAvatarUrl ?? ''),
+                                          ),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                user?.username ?? 'Unknown',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              if (user?.fullName != null)
+                                                Text(
+                                                  user.fullName!,
+                                                  style: TextStyle(
+                                                    color: Colors.grey,
+                                                    fontSize: 12,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+
+                          // Special Mention Section
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            margin: EdgeInsets.only(top: 8),
+                            child: Text(
+                              'SPECIAL MENTION',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          // Special mention items
+                          _buildSpecialMentionItem(
+                            icon: Icons.group,
+                            label: '@here',
+                            onTap: () => _onMentionSelected({'username': 'here'}),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.people,
+                            label: '@channel',
+                            onTap: () => _onMentionSelected({'username': 'channel'}),
+                          ),
+                          _buildSpecialMentionItem(
+                            icon: Icons.people_outline,
+                            label: '@all',
+                            onTap: () => _onMentionSelected({'username': 'all'}),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _showMentionList = true);
+  }
+
+  Widget _buildSpecialMentionItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  void _onMentionSelected(dynamic user) {
+    final text = _messageController.text;
+
+    // Find the last @ before cursor
+    int lastAtIndex = text.substring(0, _mentionCursorPosition).lastIndexOf('@');
+    if (lastAtIndex == -1) return;
+
+    // Extract the substring after '@' to find the partial mention
+    int endIndex = _mentionCursorPosition;
+    while (endIndex < text.length && text[endIndex] != ' ') {
+      endIndex++; // Move until space (end of mention)
+    }
+
+    // Get the text before @mention and after the partial mention
+    final beforeMention = text.substring(0, lastAtIndex); // Text before @
+    final afterMention = text.substring(endIndex); // Text after the partial mention
+
+    // Handle both Users object and special mention map
+    String mentionText;
+    print("User type = ${user.runtimeType}");
+    if (user is Users) { // Users from user_mention_model.dart
+      print("user = ${user.username}");
+      mentionText = '@${user.username} ';
+    }else if (user is SecondUser) {
+      mentionText = '@${user.username} ';
+    } else if (user is Map<String, dynamic>) {
+      mentionText = '@${user['username']} ';
+    } else if (user is User) {
+      mentionText = '@${user.username} ';
+    } else {
+      print("user = ${user.username}");
+      return; // Invalid user object
+    }
+
+    // Update the TextField with corrected mention text
+    _messageController.value = TextEditingValue(
+      text: beforeMention + mentionText + afterMention,
+      selection: TextSelection.collapsed(
+        offset: beforeMention.length + mentionText.length, // Move cursor after mention
+      ),
+    );
+
+    _removeMentionOverlay();
+  }
+
+
+  List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
+    final List<dynamic> initialUsers = [];
+    final allUsers = provider.getUserMentionModel?.data?.users ?? [];
+    final bool isSelfChat = widget.oppositeUserId == signInModel.data?.user?.id;
+
+    // If no search query, show prioritized users
+    if (searchQuery?.isEmpty ?? true) {
+      if (isSelfChat) {
+        // For self chat, show first two users from API response
+        if (allUsers.isNotEmpty) {
+          initialUsers.add(allUsers[0]);
+          if (allUsers.length > 1) {
+            initialUsers.add(allUsers[1]);
+          }
+        }
+      } else {
+        // For chat with another user, show current user and opposite user first
+        try {
+          final currentUser = allUsers.firstWhere(
+                (user) => user.sId == signInModel.data?.user?.id,
+          );
+          final oppositeUser = allUsers.firstWhere(
+                (user) => user.sId == widget.oppositeUserId,
+          );
+          initialUsers.add(currentUser);
+          initialUsers.add(oppositeUser);
+        } catch (_) {
+          // If users not found, fallback to first two users
+          if (allUsers.isNotEmpty) {
+            initialUsers.add(allUsers[0]);
+            if (allUsers.length > 1) {
+              initialUsers.add(allUsers[1]);
+            }
+          }
+        }
+      }
+      return initialUsers;
+    }
+
+    // Filter users based on search query
+    final query = searchQuery!.toLowerCase();
+
+    if (isSelfChat) {
+      // For self chat, prioritize first two matching users
+      final matchingUsers = allUsers.where((user) =>
+      ((user.username?.toLowerCase().contains(query) ?? false) ||
+          (user.fullName?.toLowerCase().contains(query) ?? false))
+      ).toList();
+
+      if (matchingUsers.isNotEmpty) {
+        initialUsers.add(matchingUsers[0]);
+        if (matchingUsers.length > 1) {
+          initialUsers.add(matchingUsers[1]);
+        }
+      }
+    } else {
+      // For chat with another user, prioritize current user and opposite user if they match
+      try {
+        final currentUser = allUsers.firstWhere(
+                (user) => user.sId == signInModel.data?.user?.id &&
+                ((user.username?.toLowerCase().contains(query) ?? false) ||
+                    (user.fullName?.toLowerCase().contains(query) ?? false))
+        );
+        initialUsers.add(currentUser);
+      } catch (_) {}
+
+      try {
+        final oppositeUser = allUsers.firstWhere(
+                (user) => user.sId == widget.oppositeUserId &&
+                ((user.username?.toLowerCase().contains(query) ?? false) ||
+                    (user.fullName?.toLowerCase().contains(query) ?? false))
+        );
+        initialUsers.add(oppositeUser);
+      } catch (_) {}
+    }
+
+    // Add other matching users
+    final otherUsers = allUsers.where((user) =>
+    !initialUsers.contains(user) &&
+        ((user.username?.toLowerCase().contains(query) ?? false) ||
+            (user.fullName?.toLowerCase().contains(query) ?? false))
+    ).toList();
+
+    return [...initialUsers, ...otherUsers];
+  }
 
 }
 
