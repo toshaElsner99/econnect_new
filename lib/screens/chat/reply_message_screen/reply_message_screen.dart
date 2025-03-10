@@ -96,6 +96,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _removeMentionOverlay();
     _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
   }
   @override
@@ -103,7 +104,6 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _focusNode.dispose();
-    _removeMentionOverlay();
     _fileServiceProvider.clearFilesForScreen(AppString.singleChatReply);
     super.dispose();
   }

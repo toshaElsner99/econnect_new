@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
+import 'package:e_connect/screens/channel/reply_message_screen_channel/reply_message_screen_channel.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -358,23 +359,19 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                         child: GestureDetector(
                           onTap: () {
                             print("Simple Passing = ${messageId.toString()}");
-                            /*  pushScreenWithTransition(
-                              ReplyMessageScreen(
-                                userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
-                                messageId: messageId.toString(),
-                                receiverId: widget.oppositeUserId,
-                              ),
+                              pushScreenWithTransition(
+                              ReplyMessageScreenChannel(channelId: widget.channelId, channelName: widget.channelName, msgID: messageId,),
                             ).then((value) {
                               print("value>>> $value");
-                              if (messageList.replies != null && messageList.replies!.isNotEmpty) {
-                                for (var reply in messageList.replies!) {
-                                  if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
-                                    setState(() =>
-                                    reply.isSeen = true);
-                                  }
-                                }
-                              }
-                            });*/},
+                              // if (messageList.replies != null && messageList.replies!.isNotEmpty) {
+                              //   for (var reply in messageList.replies!) {
+                              //     if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
+                              //       setState(() =>
+                              //       reply.isSeen = true);
+                              //     }
+                              //   }
+                              // }
+                            });},
                           child: Container(
                             // color: Colors.red,
                             margin: const EdgeInsets.symmetric(vertical: 4),
@@ -416,23 +413,23 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
 
 
                                 // 🔴 Red dot circle
-                                Visibility(
-                                  replacement: SizedBox.shrink(),
-                                  visible: true,
-                                  // visible: messageList.replies != null && messageList.replies!.isNotEmpty &&
-                                  //     messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false),
-                                  child: Container(
-                                    margin:EdgeInsets.only(right: 5),
-                                    width: 10,
-                                    height: 10,
-                                    // width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
-                                    // height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
+                                // Visibility(
+                                //   replacement: SizedBox.shrink(),
+                                //   visible: true,
+                                //   // visible: messageList.replies != null && messageList.replies!.isNotEmpty &&
+                                //   //     messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false),
+                                //   child: Container(
+                                //     margin:EdgeInsets.only(right: 5),
+                                //     width: 10,
+                                //     height: 10,
+                                //     // width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                //     // height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                //     decoration: const BoxDecoration(
+                                //       color: Colors.red,
+                                //       shape: BoxShape.circle,
+                                //     ),
+                                //   ),
+                                // ),
 
                                 // 🔄 Reply icon and text
                                 Padding(

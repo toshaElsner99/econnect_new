@@ -286,8 +286,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   void _removeMentionOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
-    setState(() => _showMentionList = false);
+     setState(() => _showMentionList = false);
   }
+
 
   void _onMentionSelected(dynamic user) {
     final text = _messageController.text;
@@ -370,7 +371,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     print("CHANNELID>>> ${widget.channelId}");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       /// this for socket listen in channel chat for new message and delete //
-      socketProvider.listenChannelChatScreen(channelId: widget.channelId);
+      // socketProvider.listenChannelChatScreen(channelId: widget.channelId);
+      socketProvider.commonListenForChats(id: widget.channelId, isSingleChat: false,);
       pagination(channelId: widget.channelId);
       Provider.of<ChannelChatProvider>(context, listen: false).getChannelInfoApiCall(channelId: widget.channelId,callFroHome: true);
       Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
@@ -381,13 +383,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   late FileServiceProvider _fileServiceProvider;
   @override
   void didChangeDependencies() {
+    _removeMentionOverlay();
     super.didChangeDependencies();
     _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
   }
   @override
   void dispose() {
     _messageController.removeListener(_onTextChanged);
-    _removeMentionOverlay();
     super.dispose();
     _scrollController.dispose();
     _messageController.dispose();

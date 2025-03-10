@@ -291,7 +291,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                     Visibility(
                                       visible:messages.replyCount != 0,
                                       child: GestureDetector(
-                                        onTap: () =>  pushReplacement(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messages.id!, receiverId: widget.oppositeUserId,),),
+                                        onTap: () =>  pushReplacement(screen: ReplyMessageScreen(userName: user?.data?.user?.fullName ?? user?.data?.user?.username ?? 'Unknown', messageId: messages.id ?? "", receiverId: widget.oppositeUserId,),),
                                         child: Container(
                                           // color: Colors.red,
                                           margin: const EdgeInsets.symmetric(vertical: 4),

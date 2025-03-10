@@ -467,9 +467,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       /// opposite user typing listen ///
       chatProvider.getTypingUpdate();
       /// THis Is Socket Listening Event ///
-      socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId,getSecondUserCall: (){
-        fetchOppositeUserDetails();
-      });
+      // socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId,getSecondUserCall: (){
+      //   fetchOppositeUserDetails();
+      // });
+      socketProvider.commonListenForChats(id: widget.oppositeUserId, isSingleChat: true,getSecondUserCall: ()=> fetchOppositeUserDetails());
       /// THis is Doing for update pin message and get Message List ///
       // socketProvider.socketListenPinMessage(oppositeUserId: widget.oppositeUserId,callFun: (){
       //   chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,currentPage: 1,isFromMsgListen: true);
@@ -722,7 +723,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Initialize provider here so it can be safely accessed in dispose()
+      _removeMentionOverlay();
     _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
   }
   @override
@@ -730,7 +731,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _focusNode.dispose();
-    // _removeMentionOverlay();
     _fileServiceProvider.clearFilesForScreen(AppString.singleChat);
     super.dispose();
   }

@@ -81,13 +81,13 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _removeMentionOverlay();
     _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
   }
 
   @override
   void dispose() {
     _messageController.removeListener(_onTextChanged);
-    _removeMentionOverlay();
     super.dispose();
     // _scrollController.dispose();
     _messageController.dispose();

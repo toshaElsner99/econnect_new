@@ -194,10 +194,10 @@ class SocketIoProvider extends ChangeNotifier{
   }
 
   void listenChannelChatScreen({required String channelId,}) {
-    // socket.off(notification);
-    // socket.off(deleteMessageChannelListen);
-    // socket.off(notificationForPinMessagesChannelListen);
-    // socket.off(renameChannel);
+    socket.off(notification);
+    socket.off(deleteMessageChannelListen);
+    socket.off(notificationForPinMessagesChannelListen);
+    socket.off(renameChannel);
     if (!socket.connected) {
       print("⚠️ Socket is not connected. Attempting to reconnect...");
       socket.connect();
@@ -220,12 +220,77 @@ class SocketIoProvider extends ChangeNotifier{
       print("listSingleChatScreen >>> $data");
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelInfoApiCall(channelId: channelId,callFroHome: false);
     });
+
+    socket.off(replyNotification);
+    socket.on(replyNotification, (data) {
+      print("listSingleChatScreen >>> $data");
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId,pageNo: 1,isFromMsgListen: true);
+    });
+
     socket.off(notificationForMessageReactionChannel);
     socket.on(notificationForMessageReactionChannel, (data) {
       print("socketListenReactMessageInChannelScreen >>> $data");
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId,pageNo: 1,isFromMsgListen: true);
 
     });
+  }
+  void commonListenForChats({
+    required String id,
+    required bool isSingleChat,
+    Function? getSecondUserCall,
+  }) {
+    if (!socket.connected) {
+      print("⚠️ Socket is not connected. Attempting to reconnect...");
+      socket.connect();
+    }
+
+    // Common socket events
+    Map<String, Function(dynamic)> eventHandlers = {
+      deleteMessageForListen: (data) {
+        print("deleteMessageForListen >>> $data");
+        _getChatMessages(id, isSingleChat);
+      },
+      notification: (data) {
+        print("listChatScreen >>> $data");
+        _getChatMessages(id, isSingleChat);
+      },
+      notificationForPinMessagesListen: (data) {
+        print("listChatScreen >>> $data");
+        _getChatMessages(id, isSingleChat);
+        getSecondUserCall?.call();
+      },
+      replyNotification: (data) {
+        print("listChatScreen >>> $data");
+        _getChatMessages(id, isSingleChat);
+      },
+      notificationForMessageReacting: (data) {
+        print("messageReaction >>> $data");
+        _getChatMessages(id, isSingleChat);
+      },
+      renameChannel: (data) {
+        if (!isSingleChat) {
+          print("renameChannel >>> $data");
+          Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false)
+              .getChannelInfoApiCall(channelId: id, callFroHome: false);
+        }
+      }
+    };
+
+    // Off and On for each event
+    eventHandlers.forEach((event, handler) {
+      socket.off(event);
+      socket.on(event, handler);
+    });
+  }
+
+  void _getChatMessages(String id, bool isSingleChat) {
+    if (isSingleChat) {
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false)
+          .getMessagesList(oppositeUserId: id, currentPage: 1, isFromMsgListen: true);
+    } else {
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false)
+          .getChannelChatApiCall(channelId: id, pageNo: 1, isFromMsgListen: true);
+    }
   }
 
 
