@@ -29,6 +29,8 @@ import '../../utils/app_color_constants.dart';
 import '../../utils/app_preference_constants.dart';
 import '../chat/forward_message/forward_message_screen.dart';
 import '../chat/reply_message_screen/reply_message_screen.dart';
+import '../chat/single_chat_message_screen.dart';
+import '../find_message_screen/find_message_screen.dart';
 import 'channel_info_screen/channel_info_screen.dart';
 import 'package:e_connect/model/get_user_model.dart';
 
@@ -51,6 +53,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   final FocusNode _focusNode = FocusNode();
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   String currentUserMessageId = "";
+  String channelID = "";
   final ScrollController _scrollController = ScrollController();
   final _textFieldKey = GlobalKey();
   OverlayEntry? _overlayEntry;
@@ -98,7 +101,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       _removeMentionOverlay();
     }
     socketProvider.userTypingEventChannel(
-        channelId: widget.channelId,
+        channelId: channelID,
         isReplyMsg: false,
         isTyping: text.trim().length > 1 ? 1 : 0
     );
@@ -373,8 +376,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   @override
   void initState() {
     super.initState();
+    channelID = widget.channelId;
+    initializedScreen();
+  }
+
+  initializedScreen(){
     _messageController.addListener(_onTextChanged);
-    print("CHANNELID>>> ${widget.channelId}");
+    print("CHANNELID>>> ${channelID}");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       channelChatProviderInit.getTypingUpdate(true);
       /// this for socket listen in channel chat for new message and delete //
@@ -386,8 +394,17 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       channelChatProviderInit.getChannelChatApiCall(channelId: widget.channelId,pageNo: 1);
       channelChatProviderInit.getChannelMembersList(widget.channelId);
       channelChatProviderInit.getFileListingInChannelChat(channelId: widget.channelId);
+      // socketProvider.listenChannelChatScreen(channelId: channelID);
+      socketProvider.commonListenForChats(id: channelID, isSingleChat: false);
+      // socketProvider.listenChannelChatScreen(channelId: channelID);
+      pagination(channelId: channelID);
+      Provider.of<ChannelChatProvider>(context, listen: false).getChannelInfoApiCall(channelId: channelID,callFroHome: true);
+      Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
+      Provider.of<ChannelChatProvider>(context, listen: false).getChannelChatApiCall(channelId: channelID,pageNo: 1);
+      Provider.of<ChannelChatProvider>(context, listen: false).getChannelMembersList(channelID);
     },);
   }
+
   late FileServiceProvider _fileServiceProvider;
   @override
   void didChangeDependencies() {
@@ -494,7 +511,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       if (newName.isNotEmpty) {
                         Provider.of<ChannelListProvider>(context, listen: false)
                           .renameChannel(
-                            channelId: widget.channelId,
+                            channelId: channelID,
                             name: newName,
                             isPrivate: false
                           )
@@ -607,9 +624,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty) {
                         if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
                           final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
-                          channelChatProvider.sendMessage(content: plainText, channelId: widget.channelId, files: filesOfList);
+                          channelChatProvider.sendMessage(content: plainText, channelId: channelID, files: filesOfList);
                         } else {
-                          channelChatProvider.sendMessage(content: plainText, channelId: widget.channelId,editMsgID: currentUserMessageId).then((value) => setState(() {
+                          channelChatProvider.sendMessage(content: plainText, channelId: channelID,editMsgID: currentUserMessageId).then((value) => setState(() {
                             currentUserMessageId = "";
                           }),);
                         }
@@ -685,7 +702,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       if (channelChatProvider.getChannelInfo?.data?.members?.isNotEmpty ?? false) {
                         pushScreen(
                           screen: ChannelMembersInfo(
-                            channelId: widget.channelId,
+                            channelId: channelID,
                             channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
                           ),
                         );
@@ -712,7 +729,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     onTap: () => pushScreen(
                       screen: ChannelPinnedPostsScreen(
                         channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                        channelId: widget.channelId,
+                        channelId: channelID,
                       ),
                     ),
                     child: Container(
@@ -736,7 +753,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     onTap: () => pushScreen(
                       screen: FilesListingScreen(
                         channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                        channelId: widget.channelId,
+                        channelId: channelID,
                       ),
                     ),
                     child: Container(
@@ -750,10 +767,33 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
           ),
           actions: [
             IconButton(
+              icon: const Icon(Icons.search, color: AppColor.whiteColor),
+              onPressed: () {
+                pushScreenWithTransition(FindMessageScreen()).then((value) {
+                  print("value>>> $value");
+                  if(value != null){
+                    if(value['needToOpenChannelChat']){
+                      if(!(channelID == value['channelId'])){
+                        setState(() {
+                          channelID = value['channelId'];
+                          initializedScreen();
+                        });
+                      }
+                    }else{
+                      print("userName : ${value['name']} && userId ${value['id']}");
+                      pushReplacement(screen: SingleChatMessageScreen(userName: value['name'], oppositeUserId: value['id'],));
+                    }
+                    print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
+                  }
+                });
+                // showChatSettingsBottomSheet(userId: oppositeUserId);
+              },
+            ),
+            IconButton(
               icon: Icon(Icons.info, color: AppColor.whiteColor),
               onPressed: () => pushScreen(
                 screen: ChannelInfoScreen(
-                  channelId: widget.channelId,
+                  channelId: channelID,
                   channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
                   isPrivate: false,
                 ),
@@ -781,7 +821,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
             Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
               var filteredTypingUsers = channelChatProvider.typingUsers
                   .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                  && user['routeId'] == widget.channelId).toList();
+                  && user['routeId'] == channelID).toList();
               String typingMessage;
 
               if (filteredTypingUsers.isEmpty) {
@@ -878,7 +918,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => AddPeopleToChannel(
-                          channelId: widget.channelId,
+                          channelId: channelID,
                           channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
                         ),
                       ),
@@ -935,7 +975,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => AddPeopleToChannel(
-                                  channelId: widget.channelId,
+                                  channelId: channelID,
                                   channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
                                 ),
                               ),
@@ -1274,14 +1314,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                             context.read<ChannelChatProvider>().reactionRemove(
                                                 messageId: messageList.id!,
                                                 reactUrl: entry.key,
-                                                channelId: widget.channelId,
+                                                channelId: channelID,
                                                 isFrom: "Channel"
                                             );
                                           } else {
                                             context.read<ChannelChatProvider>().reactMessage(
                                                 messageId: messageList.id!,
                                                 reactUrl: entry.key,
-                                                channelId: widget.channelId,
+                                                channelId: channelID,
                                                 isFrom: "Channel"
                                             );
                                           }
@@ -1435,7 +1475,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           onTap: () {
                             print("Simple Passing = ${messageId.toString()}");
                             pushScreenWithTransition(
-                              ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: widget.channelId,)
+                              ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)
                             ).then((value) {
                               print("value>>> $value");
                               if (messageList.replies != null && messageList.replies!.isNotEmpty) {
@@ -1576,13 +1616,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       onOpened: () {},
                       onClosed: () {},
                       onReact: () {
-                        showReactionBar(context, messageId, widget.channelId, "Channel");
+                        showReactionBar(context, messageId, channelID, "Channel");
                       },
                       isForwarded: messageList.isForwarded! ? false : true,
                       opened: false,
                       onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,)),
-                      onReply: () => pushScreen(screen: ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: widget.channelId,)),
-                      onPin: () => channelChatProvider.pinUnPinMessage(channelID: widget.channelId, messageId: messageId, pinned: pinnedMsg = !pinnedMsg ),
+                      onReply: () => pushScreen(screen: ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)),
+                      onPin: () => channelChatProvider.pinUnPinMessage(channelID: channelID, messageId: messageId, pinned: pinnedMsg = !pinnedMsg ),
                       onCopy: () => copyToClipboard(context, message),
                       onEdit: () => setState(() {
                         _messageController.clear();

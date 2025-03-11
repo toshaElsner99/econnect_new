@@ -13,6 +13,7 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:intl/intl.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../model/message_model.dart';
 import '../../providers/channel_chat_provider.dart';
 import '../../providers/channel_list_provider.dart';
@@ -1760,6 +1761,18 @@ Widget commonHTMLText({required String message}) {
       return styles;
     },
     customWidgetBuilder: (element) {
+      if (element.localName == 'a') {
+        final String? url = element.attributes['href'];
+        if (url != null) {
+          return GestureDetector(
+            onTap: () => _openUrl(url),
+            child: Text(
+              url,
+              style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+            ),
+          );
+        }
+      }
       if (element.classes.contains('renderer_emoji')) {
         final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
         if (imageUrl != null) {
@@ -1775,6 +1788,15 @@ Widget commonHTMLText({required String message}) {
     },
     enableCaching: true,
   );
+}
+
+/// ✅ Function to Open URL in Browser
+
+void _openUrl(String url) async {
+  final Uri uri = Uri.parse(url);
+  if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+    throw 'Could not launch $url';
+  }
 }
 
 
@@ -2158,10 +2180,11 @@ Widget commonTextFormField({
   Widget? prefixWidget,
   FocusNode? focusNode,
   String? Function(String?)? validator,
+  String? Function(String?)? fieldSubmitted,
   int? errorMaxLines,
   void Function()? onTap,
   Color? fillColor = Colors.white,
-  bool? filled = false,
+  bool? filled = false
 }) {
   return TextFormField(
     controller: controller,
@@ -2170,6 +2193,7 @@ Widget commonTextFormField({
     obscureText: obscureText,
     autovalidateMode: AutovalidateMode.onUserInteraction,
     validator: validator,
+    onFieldSubmitted:fieldSubmitted,
     readOnly: readOnly,
     focusNode: focusNode,
     textInputAction: textInputAction,

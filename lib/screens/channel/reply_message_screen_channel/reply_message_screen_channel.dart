@@ -594,7 +594,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                   opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
                   onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.username ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
-                  onPin: () => channelChatProvider.pinUnPinMessage(messageId: messageId,pinned: pinnedMsg,channelID: widget.channelId,isCalledForReply: true),
+                  onPin: () => channelChatProvider.pinUnPinMessage(messageId: messageId,pinned: pinnedMsg = !pinnedMsg,channelID: widget.channelId,isCalledForReply: true),
                   onCopy: () => copyToClipboard(context, message),
                   onEdit: () => setState(() {
                     _messageController.clear();

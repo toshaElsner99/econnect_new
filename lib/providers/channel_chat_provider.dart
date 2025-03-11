@@ -198,15 +198,18 @@ class ChannelChatProvider extends ChangeNotifier{
   Future<void> pinUnPinMessage({required String channelID,required String messageId,required bool pinned,bool isCalledForReply = false})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
+      print("pinUnPinMessage = Success");
       socketProvider.pinUnPinMessageEventChannelChat(senderId: signInModel.data?.user?.id ?? "", channelId: channelID);
-      if(isCalledForReply == true){
-        print("isCalledForReply>>>>>>>. $isCalledForReply");
-        for (MessagesList messageGroup in getReplyMessageChannelModel?.data?.messagesList ?? []) {
-          for (MessagesGroupList message in messageGroup.messagesGroupList ?? []) {
-            if (message.sId == messageId) {
-              message.isPinned = pinned;
-              notifyListeners();
-              return;
+      if(isCalledForReply) {
+        // Update in reply messages
+        if (getReplyMessageChannelModel?.data?.messagesList != null) {
+          for (var messageGroup in getReplyMessageChannelModel!.data!.messagesList!) {
+            for (var message in messageGroup.messagesGroupList ?? []) {
+              if (message.sId == messageId) {
+                message.isPinned = pinned; // Toggle the pin state
+                notifyListeners();
+                break;
+              }
             }
           }
         }

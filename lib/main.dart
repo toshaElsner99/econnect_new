@@ -3,6 +3,7 @@ import 'package:e_connect/providers/channel_list_provider.dart';
 import 'package:e_connect/providers/chat_provider.dart';
 import 'package:e_connect/providers/common_provider.dart';
 import 'package:e_connect/providers/download_provider.dart';
+import 'package:e_connect/providers/search_message_provider.dart';
 import 'package:e_connect/providers/sign_in_provider.dart';
 import 'package:e_connect/providers/splash_screen_provider.dart';
 import 'package:e_connect/screens/bottom_navigation_screen/bottom_navigation_screen_cubit.dart';
@@ -35,9 +36,10 @@ void main() {
     DeviceOrientation.portraitDown,
   ]).then((value)async{
     await Firebase.initializeApp();
-    await PushNotificationService().setupInteractedMessage();
-    // DownloadFileProvider downloadFileProvider = DownloadFileProvider();
-    // await downloadFileProvider.initializeNotifications();
+    // Initialize Notifications
+    await NotificationService.initializeNotifications();
+    // Handle notification click when app is reopened
+    NotificationService.registerFirebaseListeners();
     RemoteMessage? initialMessage =
     await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
@@ -85,6 +87,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => FileServiceProvider()),
         ChangeNotifierProvider(create: (_) => DownloadFileProvider()),
+        ChangeNotifierProvider(create: (_) => SearchMessageProvider()),
       ],
       child: OKToast(
         child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {

@@ -34,6 +34,9 @@ import '../../providers/chat_provider.dart';
 import '../../providers/common_provider.dart';
 import '../../screens/chat/media_preview_screen.dart';
 import '../../widgets/chat_profile_header.dart';
+import '../bottom_nav_tabs/home_screen.dart';
+import '../channel/channel_chat_screen.dart';
+import '../find_message_screen/find_message_screen.dart';
 
 
 
@@ -43,8 +46,9 @@ class SingleChatMessageScreen extends StatefulWidget {
   final String oppositeUserId;
   final bool? calledForFavorite;
   final bool? needToCallAddMessage;
+  final bool? isFromNotification;
 
-  const SingleChatMessageScreen({super.key, required this.userName, required this.oppositeUserId, this.calledForFavorite, this.needToCallAddMessage});
+  const SingleChatMessageScreen({super.key, required this.userName, required this.oppositeUserId, this.calledForFavorite, this.needToCallAddMessage, this.isFromNotification});
 
   @override
   State<SingleChatMessageScreen> createState() => _SingleChatMessageScreenState();
@@ -71,53 +75,63 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   late FileServiceProvider _fileServiceProvider;
   final ScrollController scrollController = ScrollController();
   double? _savedScrollPosition;
+  String oppositeUserId = "";
+  String userName = "";
 
 
   @override
   void initState() {
     super.initState();
+    oppositeUserId = widget.oppositeUserId;
+    userName = widget.userName ?? "";
+    initializeScreen();
+  }
+
+  initializeScreen(){
     scrollController.addListener(() {
       _saveScrollPosition();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      print("oppositeUserId in init==> ${widget.oppositeUserId}");
+      print("oppositeUserId in init==> ${oppositeUserId}");
       /// this is for pagination ///
-      pagination(oppositeUserId: widget.oppositeUserId);
+      pagination(oppositeUserId: oppositeUserId);
       commonProvider.updateStatusCall(status: "online");
       /// opposite user typing listen ///
       chatProvider.getTypingUpdate();
       /// THis Is Socket Listening Event ///
-      // socketProvider.listenSingleChatScreen(oppositeUserId: widget.oppositeUserId,getSecondUserCall: (){
+      // socketProvider.listenSingleChatScreen(oppositeUserId: oppositeUserId,getSecondUserCall: (){
       //   fetchOppositeUserDetails();
       // });
-      socketProvider.commonListenForChats(id: widget.oppositeUserId, isSingleChat: true,getSecondUserCall: ()=> fetchOppositeUserDetails());
+      socketProvider.commonListenForChats(id: oppositeUserId, isSingleChat: true,getSecondUserCall: ()=> fetchOppositeUserDetails());
       /// THis is Doing for update pin message and get Message List ///
-      // socketProvider.socketListenPinMessage(oppositeUserId: widget.oppositeUserId,callFun: (){
-      //   chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,currentPage: 1,isFromMsgListen: true);
+      // socketProvider.socketListenPinMessage(oppositeUserId: oppositeUserId,callFun: (){
+      //   chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
       //   fetchOppositeUserDetails();
       // });
       /// this for add user to chat list on home screen 3rd Expansion tiles ///
       if(widget.needToCallAddMessage == true){
-        channelListProvider.addUserToChatList(selectedUserId: widget.oppositeUserId);
+        channelListProvider.addUserToChatList(selectedUserId: oppositeUserId);
       }
-      // chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
+      // chatProvider.getFileListingInChat(oppositeUserId: oppositeUserId);
       /// this is for read message ///
-      channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
+      channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
       /// this is default call with page 1 for chat listing ///
-      chatProvider.getMessagesList(oppositeUserId: widget.oppositeUserId,currentPage: 1,);
+      chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,);
       /// this is for fetch other user details and store it to cache memory ///
       _fetchAndCacheUserDetails();
       /// this is for get user mention listing api ///
+      commonProvider.getUserApi(id: oppositeUserId);
       commonProvider.getUserApi(id: widget.oppositeUserId);
       chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
     },);
     _messageController.addListener(_onTextChanged);
   }
+
   void fetchOppositeUserDetails()async{
-    userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.oppositeUserId);
+    userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: oppositeUserId);
   }
   void _fetchAndCacheUserDetails() async {
-    userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.oppositeUserId);
+    userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: oppositeUserId);
     setState(()  {
       userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
       userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
@@ -173,7 +187,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       return PopScope(
         canPop: true,
         onPopInvokedWithResult: (didPop, result) {
-          channelListProvider.readUnreadMessages(oppositeUserId: widget.oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
+          channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
         },
         child: Scaffold(
           appBar: buildAppBar(commonProvider, chatProvider),
@@ -268,7 +282,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             children: [
               Flexible(
                 child: commonText(
-                  text: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "Loading..." : widget.userName,
+                  text: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -327,8 +341,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               GestureDetector(
                 onTap: () => pushScreen(
                   screen: PinnedPostsScreen(
-                    userName: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "Loading..." : widget.userName,
-                    oppositeUserId: widget.oppositeUserId,
+                    userName: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
+                    oppositeUserId: oppositeUserId,
                     userCache: userCache,
                   ),
                 ),
@@ -351,8 +365,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               GestureDetector(
                 onTap: () => pushScreen(
                   screen: FilesListingScreen(
-                    userName: widget.userName == "" ? userCache[widget.oppositeUserId]?.data?.user?.username ?? "Loading..." : widget.userName,
-                    oppositeUserId: widget.oppositeUserId
+                    userName: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
+                    oppositeUserId: oppositeUserId
                   ),
                 ),
                 child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: Colors.white),
@@ -363,9 +377,36 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       ),
       actions: [
         IconButton(
+          icon: const Icon(Icons.search, color: AppColor.whiteColor),
+          onPressed: () {
+            pushScreenWithTransition(FindMessageScreen()).then((value) {
+              print("value>>> $value");
+              if(value != null){
+                if(!value['needToOpenChannelChat']){
+                  if(!(oppositeUserId == value['id'])){
+                    setState(() {
+                      oppositeUserId = signInModel.data!.user!.id == value['id'] ? value['oppositeUserID'] : value['id'] ;
+                      userName = signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'];
+                      initializeScreen();
+                      // chatProvider.messageGroups.indexWhere((test)=> test.)
+                    });
+
+                  }
+
+                }else{
+                  print("Channel Id : ${value['channelId']}");
+                  pushReplacement(screen: ChannelChatScreen(channelId: value['channelId'] ?? ""));
+                }
+                print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
+              }
+            });
+            // showChatSettingsBottomSheet(userId: oppositeUserId);
+          },
+        ),
+        IconButton(
           icon: const Icon(Icons.more_vert, color: AppColor.whiteColor),
           onPressed: () {
-            showChatSettingsBottomSheet(userId: widget.oppositeUserId);
+            showChatSettingsBottomSheet(userId: oppositeUserId);
           },
         ),
       ],
@@ -469,9 +510,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
                         if(fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty){
                           final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
-                          chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, files: filesOfList);
+                          chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, files: filesOfList);
                         } else {
-                          chatProvider.sendMessage(content: plainText, receiverId: widget.oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
+                          chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
                             currentUserMessageId = "";
                           }),);
                         }
@@ -824,14 +865,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                             context.read<ChatProvider>().reactionRemove(
                                               messageId: messageList.sId!,
                                               reactUrl: entry.key,
-                                              receiverId: widget.oppositeUserId,
+                                              receiverId: oppositeUserId,
                                               isFrom: "Chat"
                                             );
                                           } else {
                                             context.read<ChatProvider>().reactMessage(
                                               messageId: messageList.sId!,
                                               reactUrl: entry.key,
-                                              receiverId: widget.oppositeUserId,
+                                              receiverId: oppositeUserId,
                                               isFrom: "Chat"
                                             );
                                           }
@@ -989,7 +1030,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               ReplyMessageScreen(
                                 userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
                                 messageId: messageId.toString(),
-                                receiverId: widget.oppositeUserId,
+                                receiverId: oppositeUserId,
                               ),
                             ).then((value) {
                               print("value>>> $value");
@@ -1108,7 +1149,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     onOpened: () {},
                     onClosed: () {},
                     onReact: () {
-                      showReactionBar(context, messageId.toString(), widget.oppositeUserId, "Chat");
+                      showReactionBar(context, messageId.toString(), oppositeUserId, "Chat");
                     },
                     isForwarded: messageList.isForwarded! ? false : true,
                     opened: false,
@@ -1136,7 +1177,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                       _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                     }),
-                    onDelete: () => deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: widget.oppositeUserId)))),
+                    onDelete: () => deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: oppositeUserId)))),
               ],
             ),
           ],
@@ -1181,7 +1222,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
     // Keep existing typing event
     socketProvider.userTypingEvent(
-        oppositeUserId: widget.oppositeUserId,
+        oppositeUserId: oppositeUserId,
         isReplyMsg: false,
         isTyping: text.trim().length > 1 ? 1 : 0
     );
@@ -1424,7 +1465,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
     final List<dynamic> initialUsers = [];
     final allUsers = provider.getUserMentionModel?.data?.users ?? [];
-    final bool isSelfChat = widget.oppositeUserId == signInModel.data?.user?.id;
+    final bool isSelfChat = oppositeUserId == signInModel.data?.user?.id;
 
     // If no search query, show prioritized users
     if (searchQuery?.isEmpty ?? true) {
@@ -1443,7 +1484,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 (user) => user.sId == signInModel.data?.user?.id,
           );
           final oppositeUser = allUsers.firstWhere(
-                (user) => user.sId == widget.oppositeUserId,
+                (user) => user.sId == oppositeUserId,
           );
           initialUsers.add(currentUser);
           initialUsers.add(oppositeUser);
@@ -1489,7 +1530,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
       try {
         final oppositeUser = allUsers.firstWhere(
-                (user) => user.sId == widget.oppositeUserId &&
+                (user) => user.sId == oppositeUserId &&
                 ((user.username?.toLowerCase().contains(query) ?? false) ||
                     (user.fullName?.toLowerCase().contains(query) ?? false))
         );

@@ -1,147 +1,231 @@
 import 'dart:convert';
-
-import 'package:firebase_core/firebase_core.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:oktoast/oktoast.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import '../screens/chat/single_chat_message_screen.dart';
 import '../screens/channel/channel_chat_screen.dart';
+import '../utils/loading_widget/loading_cubit.dart';
 import '../utils/common/common_function.dart';
-// import '../general_exports.dart';
-class PushNotificationService {
 
-  void handleNotificationRedirect(Map<String, dynamic> data) {
-    print("data => ${data}");
+class NotificationService {
+  static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
+
+  static Future<void> initializeNotifications() async {
+    const androidInitialize = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iOSInitialize = DarwinInitializationSettings();
+    const initializationSettings = InitializationSettings(
+      android: androidInitialize,
+      iOS: iOSInitialize,
+    );
+
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) async {
+        final String? payload = response.payload;
+        print("Notification Click Payload: $payload");
+
+        if (payload != null && payload.isNotEmpty) {
+          if (payload.contains('{')) {
+            // Push Notification Click Handling
+            final Map<String, dynamic> payloadData = Map<String, dynamic>.from(json.decode(payload.replaceAll("'", '"')));
+            _handleNotificationRedirect(payloadData);
+          } else {
+            // File Download Click Handling
+            _openDownloadedFile(payload);
+          }
+        }
+      },
+    );
+
+    enableIOSNotifications();
+    registerFirebaseListeners();
+  }
+
+  /// ✅ Handles navigation when user clicks on push notification
+  static void _handleNotificationRedirect(Map<String, dynamic> data) {
+    print("Handling Notification Click: $data");
+
     if (data['type'] == 'message') {
-      // Handle single chat notification
-      final senderId = data['senderId'];
       pushScreen(
         screen: SingleChatMessageScreen(
           userName: "",
-          oppositeUserId: senderId,
-          needToCallAddMessage: false
+          oppositeUserId: data['senderId'],
+          needToCallAddMessage: false,
+          isFromNotification: true
         ),
       );
     } else if (data['type'] == 'channel') {
-      print("IN CHANNEL TAP => ${data}");
-      // Handle channel notification
-      final channelId = data['senderId'];
       pushScreen(
         screen: ChannelChatScreen(
-          channelId: channelId,
-          isFromNotification: true
+          channelId: data['senderId'],
+          isFromNotification: true,
         ),
       );
     }
   }
 
-  Future<void> setupInteractedMessage() async {
-    // This function is called when ios app is opened, for android case `onDidReceiveNotificationResponse` function is called
+  /// ✅ Handles opening a downloaded file when user clicks on download notification
+  static Future<void> _openDownloadedFile(String filePath) async {
+    try {
+      if (await requestStoragePermission()) {
+        final file = File(filePath);
+
+        if (await file.exists()) {
+          final result = await OpenFile.open(filePath);
+          if (result.type != ResultType.done) {
+            if (Platform.isAndroid) {
+              await launchUrl(Uri.parse("content://com.android.externalstorage.documents/document/primary:Download"));
+            } else if (Platform.isIOS) {
+              print("Could not open file on iOS: ${result.message}");
+            }
+          }
+        } else {
+          print("File does not exist: $filePath");
+        }
+      } else {
+        print("Storage permission denied.");
+      }
+    } catch (e) {
+      print("Error opening file: $e");
+    }
+  }
+
+  /// ✅ Registers Firebase Messaging Listeners
+  static Future<void> registerFirebaseListeners() async {
     FirebaseMessaging.onMessageOpenedApp.listen(
           (RemoteMessage message) {
-            // notificationRedirect(message.data[keyTypeValue], message.data[keyType]);
-            print("onMessageOpenedApp :::> ${message.data}");
-            handleNotificationRedirect(message.data);
+        print("onMessageOpenedApp: ${message.data}");
+        _handleNotificationRedirect(message.data);
       },
     );
-    enableIOSNotifications();
-    await registerNotificationListeners();
-  }
 
-  Future<void> registerNotificationListeners() async {
-    final AndroidNotificationChannel channel = androidNotificationChannel();
-    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
-    // flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>().requestNotificationsPermission();
-    const AndroidInitializationSettings androidSettings =
-    AndroidInitializationSettings('mipmap/ic_launcher');
-    const DarwinInitializationSettings iOSSettings =
-    DarwinInitializationSettings(
-      requestSoundPermission: true,
-      requestBadgePermission: true,
-      requestAlertPermission: true,
-    );
-    const InitializationSettings initSettings =
-    InitializationSettings(android: androidSettings, iOS: iOSSettings);
-    flutterLocalNotificationsPlugin.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse details) {
-        // Convert payload string to map
-        if (details.payload != null) {
-          final Map<String, dynamic> payloadData = Map<String, dynamic>.from(
-            json.decode(details.payload!.replaceAll("'", '"'))
-          );
-          handleNotificationRedirect(payloadData);
-        }
-      },
-    );
-    // _fcmToken = (await FirebaseMessaging.instance.getToken())!;
-    // print("firebase token :- $_fcmToken");
-    // FirebaseMessaging.instance.onTokenRefresh.listen((event) {
-    //   //API call can be done here to update token in back-end
-    //   _fcmToken = event;
-    //   print("firebase token refresh :- $_fcmToken");
-    // });
-    // LoginProvider loginProvider = Provider.of<LoginProvider>(navigatorKey.currentState!.context, listen: false);
-    // loginProvider.setDToken(token: _fcmToken);
-// onMessage is called when the app is in foreground and a notification is received
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      // consoleLog(message, key: 'firebase_message');
-      // print("firebase_message :::> ${message?.contentAvailable}");
-      // print("firebase_message1 :::> ${message?.data}");
-      // print("firebase_message3 :::> ${message?.notification!.toMap()}");
-      // print("firebase_message5 :::> ${message?.notification!.web!.link}");
-        final RemoteNotification? notification = message.notification;
-      final AndroidNotification? android = message.notification?.android;
-
-// If `onMessage` is triggered with a notification, construct our own
-// local notification to show to users using the created channel.
-      if (notification != null && android != null) {
-        print("hashcode :::> ${notification.hashCode}");
-        flutterLocalNotificationsPlugin.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          NotificationDetails(
-            android: AndroidNotificationDetails(
-              channel.id,
-              channel.name,
-              channelDescription: channel.description,
-              importance: Importance.high,
-              priority: Priority.high,
-              playSound: true,
-              enableVibration: true,
-              styleInformation: BigTextStyleInformation(notification.body!),
-              icon: android.smallIcon,
-            ),
-          ),
-          payload: json.encode(message.data), // Store the data as JSON string
-        );
-        print("notification :::> ${message.data}");
-      }
+      print("Firebase Notification Received: ${message.data}");
+      _showPushNotification(message);
     });
   }
-  Future<void> enableIOSNotifications() async {
+
+  /// ✅ Shows push notifications
+  static Future<void> _showPushNotification(RemoteMessage message) async {
+    final RemoteNotification? notification = message.notification;
+    final AndroidNotification? android = message.notification?.android;
+
+    if (notification != null && android != null) {
+      final AndroidNotificationChannel channel = _androidNotificationChannel();
+      flutterLocalNotificationsPlugin.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            channel.id,
+            channel.name,
+            channelDescription: channel.description,
+            importance: Importance.high,
+            priority: Priority.high,
+            playSound: true,
+            enableVibration: true,
+            styleInformation: BigTextStyleInformation(notification.body!),
+            icon: 'mipmap/ic_notification'
+          ),
+        ),
+        payload: json.encode(message.data),
+      );
+    }
+  }
+
+  /// ✅ Shows file download notifications
+  static Future<void> showDownloadNotification({
+    required String fileName,
+    required String filePath,
+    required int notificationId,
+    required bool isCompleted,
+  }) async {
+    AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'download_channel',
+      'File Download',
+      channelDescription: 'Shows file download progress',
+      importance: Importance.high,
+      priority: Priority.high,
+      ongoing: !isCompleted,
+      autoCancel: isCompleted,
+    );
+
+    DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidDetails,
+      iOS: iOSDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      notificationId,
+      isCompleted ? 'Download Complete' : 'Downloading...',
+      isCompleted ? 'Tap to open $fileName' : 'Downloading $fileName...',
+      platformChannelSpecifics,
+      payload: isCompleted ? filePath : null,
+    );
+  }
+
+  /// ✅ Enable iOS Notifications
+  static Future<void> enableIOSNotifications() async {
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-      alert: true, // Required to display a heads up notification
+      alert: true,
       badge: true,
       sound: true,
     );
   }
 
-  AndroidNotificationChannel androidNotificationChannel() =>
-      const AndroidNotificationChannel(
-        'econnect', // id
-        'Econnect', // title
-        showBadge: true,
-        groupId: 'chat',
-        importance: Importance.high,
-        playSound: true,
-        enableVibration: true,
-      );
+  /// ✅ Create Android Notification Channel
+  static AndroidNotificationChannel _androidNotificationChannel() => const AndroidNotificationChannel(
+    'econnect',
+    'Econnect',
+    showBadge: true,
+    groupId: 'chat',
+    importance: Importance.high,
+    playSound: true,
+    enableVibration: true,
+  );
+
+  /// ✅ Request Storage Permission for Android
+  static Future<bool> requestStoragePermission() async {
+    if (Platform.isAndroid) {
+      int sdkInt = await getDeviceSdkForAndroid();
+      if (sdkInt >= 30) {
+        if (await Permission.manageExternalStorage.isGranted) {
+          return true;
+        } else {
+          PermissionStatus status = await Permission.manageExternalStorage.request();
+          return status == PermissionStatus.granted;
+        }
+      } else {
+        PermissionStatus status = await Permission.storage.request();
+        return status == PermissionStatus.granted;
+      }
+    }
+    return true;
+  }
+
+  /// ✅ Get Android SDK Version
+  static Future<int> getDeviceSdkForAndroid() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+    return androidInfo.version.sdkInt;
+  }
 }
-
-
-
-
