@@ -30,6 +30,7 @@ class ChatProvider extends  ChangeNotifier {
   String? lastOpenedUserId;
   String? lastOpenedUserMSGId;
   String oppUserIdForTyping = "";
+  bool? isTypingFor;
   int msgLength = 0;
   bool idChatListLoading = false;
   int currentPagea = 1;
@@ -122,7 +123,10 @@ class ChatProvider extends  ChangeNotifier {
       notifyListeners();
     }
   }
-
+  // 42["user_typing",{"message":"","type":"userTyping",
+  // "data":[{"sender":"676d5d2de010e883aec47240","receivers":"677b7adc3f5bb1fd3416ca3e"}],
+  // "time":"2025-03-11T09:41:10.040Z","message_type":"message","routeId":"676d5d2de010e883aec47240","tagged_users":[],"msgLength":1,
+  // "userData":{},"isChannel":false,"isReply":true,"parentId":""}]
   getTypingUpdate() {
     try {
       socketProvider.socket.onAny((event, data) {
@@ -131,12 +135,14 @@ class ChatProvider extends  ChangeNotifier {
           var typingData = data['data'];
           if (typingData.isNotEmpty) {
             msgLength = data['msgLength'] ?? 0;
+            isTypingFor = data['isReply'];
             oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
             notifyListeners();
-            print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength");
+            print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor");
           } else {
             msgLength = 0;
             oppUserIdForTyping = "";
+            isTypingFor = null;
             notifyListeners();
             print("Data array is empty.");
           }

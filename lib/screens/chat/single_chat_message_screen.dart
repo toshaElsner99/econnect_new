@@ -294,7 +294,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               const SizedBox(width: 5),
               Flexible(
                 child: commonText(
-                  text: (userDetails?.data?.user?.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1)
+                  text: (userDetails?.data?.user?.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1 && chatProvider.isTypingFor == false)
                       ? "Typing..."
                       : getLastOnlineStatus(
                     userDetails?.data?.user?.status ?? ".....",
@@ -1182,7 +1182,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     // Keep existing typing event
     socketProvider.userTypingEvent(
         oppositeUserId: widget.oppositeUserId,
-        isReplyMsg: true,
+        isReplyMsg: false,
         isTyping: text.trim().length > 1 ? 1 : 0
     );
   }

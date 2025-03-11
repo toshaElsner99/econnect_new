@@ -213,7 +213,10 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
             commonText(text: "Thread", fontSize: 16,),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 1.5),
-              child: commonText(text: widget.userName, fontSize: 12,fontWeight: FontWeight.w400),
+              child: commonText(text:
+              (userDetails?.data?.user?.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1 && chatProvider.isTypingFor == true)
+                  ? "Typing..." : widget.userName,
+                  fontSize: 12,fontWeight: FontWeight.w400),
 
             ),
           ],
@@ -976,7 +979,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     // Keep existing typing event
     socketProvider.userTypingEvent(
         oppositeUserId: widget.receiverId,
-        isReplyMsg: false,
+        isReplyMsg: true,
         isTyping: text.trim().length > 1 ? 1 : 0
     );
   }
