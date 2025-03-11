@@ -38,6 +38,28 @@ class ChatProvider extends  ChangeNotifier {
   FilesListingInChatModel? filesListingInChatModel;
   bool isGettingListFalse = false;
 
+
+  void pinMessageModelUpdate() {
+    // Increment the pinned message count safely
+    commonProvider.getUserModelSecondUser ?.data?.user?.pinnedMessageCount =
+    (commonProvider.getUserModelSecondUser ?.data?.user?.pinnedMessageCount ?? 0) + 1;
+
+    // Notify listeners to update the UI
+    commonProvider.notifyListeners();
+    }
+
+  void unpinMessageModelUpdate() {
+    // Check if the pinned message count is greater than 0 before decrementing
+    if (commonProvider.getUserModelSecondUser ?.data?.user?.pinnedMessageCount != null &&
+    (commonProvider.getUserModelSecondUser ?.data?.user?.pinnedMessageCount ?? 0) > 0) {
+    commonProvider.getUserModelSecondUser ?.data?.user?.pinnedMessageCount =
+    (commonProvider.getUserModelSecondUser ?.data?.user?.pinnedMessageCount ?? 0) - 1;
+
+    // Notify listeners to update the UI
+    commonProvider.notifyListeners();
+    }
+  }
+
   void paginationAPICall({required String oppositeUserId}) {
     if(currentPagea < totalPages) {
       currentPagea++;
@@ -351,6 +373,11 @@ class ChatProvider extends  ChangeNotifier {
         commonProvider.getUserByIDCallForSecondUser(userId: receiverId);
       }else {
         togglePinModel(messageId);
+        if(pinned){
+          pinMessageModelUpdate();
+        }else{
+          unpinMessageModelUpdate();
+        }
       }
       // _updatePinnedStatus(messageId, pinned);
       socketProvider.pinUnPinMessageEventSingleChat(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
@@ -360,6 +387,11 @@ class ChatProvider extends  ChangeNotifier {
   Future<void> pinUnPinMessageForReply({required String receiverId,required String messageId,required bool pinned})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
+      if(pinned){
+        pinMessageModelUpdate();
+      }else{
+        unpinMessageModelUpdate();
+      }
       _updatePinnedStatus(messageId, pinned);
       socketProvider.pinUnPinMessageEventSingleChat(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
     }

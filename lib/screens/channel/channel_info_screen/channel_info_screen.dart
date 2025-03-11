@@ -45,7 +45,7 @@ class ChannelInfoScreen extends StatelessWidget {
       body: Column(
         children: [
           // Favorite and Mute buttons
-          Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+          Consumer2<ChannelChatProvider,ChannelListProvider>(builder: (context, channelChatProvider,channelListProvider, child) {
               return Container(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Row(
@@ -58,16 +58,29 @@ class ChannelInfoScreen extends StatelessWidget {
                           : Icons.star_border,
                       label:  channelChatProvider.getChannelInfo?.data?.isFavourite == true ? 'Favorited':'Favorite',
                       onTap: () {
-                        context.read<ChannelListProvider>().addChannelToFavorite(
-                          channelId: channelId,
-                        );
+                        if(channelChatProvider.getChannelInfo != null && channelChatProvider.getChannelInfo?.data?.isFavourite == true){
+                          context.read<ChannelListProvider>().removeChannelFromFavorite(
+                            favoriteChannelID:channelId ,
+                              callOtherApi: (){
+                                channelChatProvider.getChannelInfoApiCall(channelId: channelId, callFroHome: false);
+                              }
+                          );
+                        }else{
+                          context.read<ChannelListProvider>().addChannelToFavorite(
+                              channelId: channelId,
+                              callOtherApi: (){
+                                channelChatProvider.getChannelInfoApiCall(channelId: channelId, callFroHome: false);
+                              }
+                          );
+                        }
+
                       },
                     ),
                     _buildActionButton(
-                      icon: Icons.notifications_off_outlined,
+                      icon: signInModel.data?.user?.muteChannels?.contains(channelId) ?? false ? Icons.notifications_off_outlined : Icons.notifications_active_outlined,
                       label: signInModel.data?.user?.muteChannels?.contains(channelId) ?? false ? 'Muted' : 'Mute',
                       onTap: () {
-                        context.read<ChannelListProvider>().muteUnMuteChannels(
+                        channelListProvider.muteUnMuteChannels(
                           channelId: channelId,
                           isMutedChannel: signInModel.data?.user?.muteChannels?.contains(channelId) ?? false,
                         );

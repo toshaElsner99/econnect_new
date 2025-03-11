@@ -29,14 +29,16 @@ import 'package:http/http.dart'as http;
 
 
 class ChannelListProvider extends ChangeNotifier{
-final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
+  final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
+  final channelChatProvider = Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false);
+  final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
+
   FavoriteListModel? favoriteListModel;
   ChannelListModel? channelListModel;
   DirectMessageListModel? directMessageListModel;
   BrowseAndSearchChannelModel? browseAndSearchChannelModel;
   GetUserSuggestions? getUserSuggestions;
   SearchUserModel? searchUserModel;
-  final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
 
   /// GET FAVORITE LIST IN HOME SCREEN ///
   Future<void> getFavoriteList()async{
@@ -206,10 +208,8 @@ bool isLoading = false;
 
   Future<void> removeChannelFromFavorite({
     required String favoriteChannelID,
+    Function? callOtherApi,
   }) async {
-    final header = {
-      'Authorization': "Bearer ${signInModel.data!.authToken}",
-    };
     final response = await ApiService.instance.request(
         endPoint: ApiString.removeFromChannelFromFavorite + favoriteChannelID,
         method: Method.PUT,);
@@ -217,6 +217,7 @@ bool isLoading = false;
       getFavoriteList();
       getChannelList();
       getDirectMessageList();
+      callOtherApi?.call();
     }
     notifyListeners();
   }
@@ -383,6 +384,7 @@ Future<void> addUserToFavorite({
   }
 Future<void> addChannelToFavorite({
     required String channelId,
+  Function? callOtherApi ,
   }) async {
     final response = await ApiService.instance.request(
         endPoint: ApiString.addChannelTOFavorite + channelId,
@@ -391,6 +393,7 @@ Future<void> addChannelToFavorite({
           getFavoriteList();
           getChannelList();
           getDirectMessageList();
+          callOtherApi?.call();
     }
     notifyListeners();
   }
@@ -494,7 +497,9 @@ Future<void> removeMember(
       log("Member IDs: $memberIds");
     }
     
-    await Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false).getChannelMembersList(channelId);
+    await channelChatProvider.getChannelMembersList(channelId);
+    await channelChatProvider.getChannelInfoApiCall(callFroHome: false,channelId: channelId);
+    await channelChatProvider.getChannelChatApiCall(channelId: channelId,pageNo: 1);
     socketProvider.memberRemoveSC(response: {
       "senderId": signInModel.data!.user!.id,
       "removeduser": userId,

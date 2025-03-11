@@ -109,8 +109,11 @@ class ChannelChatProvider extends ChangeNotifier{
   //     notifyListeners();
   //   }
   // }
-  getTypingUpdate() {
+  getTypingUpdate(bool isChannel) {
     try {
+      if(isChannel == false){
+        return;
+      }
       socketProvider.socket.onAny((event, data) {
         print("Event: $event >>> Data: $data");
         if (data['type'] == "userTyping" && data['data'] is List) {
@@ -435,6 +438,8 @@ class ChannelChatProvider extends ChangeNotifier{
         }
       };
       getChannelMembersList(channelId);
+      getChannelInfoApiCall(channelId: channelId, callFroHome: false);
+      getChannelChatApiCall(channelId: channelId, pageNo: 1);
       socketProvider.addMemberToChannel(response: passInSocket);
     }
     else {
@@ -767,5 +772,35 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
     }
   }
 
+  Future<void> markRepliesAsRead(String messageId) async {
+    try {
+      final response = await ApiService.instance.request(
+        endPoint: ApiString.markRepliesAsRead(messageId),
+        method: Method.PUT,
+      );
+      
+      if (statusCode200Check(response)) {
+        // Update local state
+        for (var messageGroup in messageGroups) {
+          for (var message in messageGroup.messages ?? []) {
+            if (message.id == messageId && message.replies != null) {
+              for (var reply in message.replies!) {
+                if (reply.senderId != signInModel.data?.user?.id) {
+                  reply.isSeen = true;
+                  reply.readBy ??= [];
+                  if (!reply.readBy!.contains(signInModel.data!.user!.id)) {
+                    reply.readBy!.add(signInModel.data!.user!.id!);
+                  }
+                }
+              }
+            }
+          }
+        }
+        notifyListeners();
+      }
+    } catch (e) {
+      print("Error marking replies as read: $e");
+    }
+  }
 
 }

@@ -28,6 +28,7 @@ import 'package:provider/provider.dart';
 
 // import '../../model/browse_and_search_channel_model.dart';
 import '../../model/get_user_mention_model.dart';
+import '../../providers/channel_chat_provider.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/common_provider.dart';
@@ -108,6 +109,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       _fetchAndCacheUserDetails();
       /// this is for get user mention listing api ///
       commonProvider.getUserApi(id: widget.oppositeUserId);
+      chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
     },);
     _messageController.addListener(_onTextChanged);
   }
@@ -333,7 +335,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 child: Row(
                   children: [
                     commonText(
-                      text: "${userDetails?.data?.user?.pinnedMessageCount ?? 0}",
+                      text: "${commonProvider.getUserModelSecondUser?.data?.user?.pinnedMessageCount ?? 0}",
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                       color: Colors.white,
@@ -1113,7 +1115,17 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     createdAt: messageList.createdAt!,
                     currentUserId: userId,
                     onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,)),
-                    onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,)),
+                    onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,)).then((value) {
+                      // print("value>>> $value");
+                      if (messageList.replies != null && messageList.replies!.isNotEmpty) {
+                        for (var reply in messageList.replies!) {
+                          if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
+                            setState(() =>
+                            reply.isSeen = true);
+                          }
+                        }
+                      }
+                    }),
                     onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
                     onCopy: () => copyToClipboard(context, message),
                     onEdit: () => setState(() {

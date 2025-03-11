@@ -60,6 +60,9 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
     super.initState();
     _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Mark messages as read on server
+      Provider.of<ChannelChatProvider>(context, listen: false).markRepliesAsRead(widget.msgID);
+      
       /// socket listen messages list ///
       channelChatProvider.getReplyListUpdateSocketForChannel(widget.msgID);
       /// socket listen messages list for deleted message ///
@@ -68,8 +71,6 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
       print("I'm In initState");
       /// For the first time init ///
       channelChatProvider.getReplyMessageListChannel(msgId: widget.msgID,fromWhere: "SCREEN INIT");
-      Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.channelId);
-      // Provider.of<CommonProvider>(context, listen: false).getUserApi(id :widget.receiverId);
     });
   }
 

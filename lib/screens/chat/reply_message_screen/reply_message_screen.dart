@@ -200,7 +200,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(onPressed: (){
-          pop();
+          pop(popValue: true);
           chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
         },
         icon: Icon(CupertinoIcons.back,color: Colors.white,)),

@@ -36,8 +36,8 @@ void main() {
   ]).then((value)async{
     await Firebase.initializeApp();
     await PushNotificationService().setupInteractedMessage();
-    DownloadFileProvider downloadFileProvider = DownloadFileProvider();
-    await downloadFileProvider.initializeNotifications();
+    // DownloadFileProvider downloadFileProvider = DownloadFileProvider();
+    // await downloadFileProvider.initializeNotifications();
     RemoteMessage? initialMessage =
     await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {

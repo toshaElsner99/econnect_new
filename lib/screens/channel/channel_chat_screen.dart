@@ -376,15 +376,16 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     _messageController.addListener(_onTextChanged);
     print("CHANNELID>>> ${widget.channelId}");
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      channelChatProviderInit.getTypingUpdate();
+      channelChatProviderInit.getTypingUpdate(true);
       /// this for socket listen in channel chat for new message and delete //
       // socketProvider.listenChannelChatScreen(channelId: widget.channelId);
       socketProvider.commonListenForChats(id: widget.channelId, isSingleChat: false,);
       pagination(channelId: widget.channelId);
-      Provider.of<ChannelChatProvider>(context, listen: false).getChannelInfoApiCall(channelId: widget.channelId,callFroHome: true);
+      channelChatProviderInit.getChannelInfoApiCall(channelId: widget.channelId,callFroHome: true);
       Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
-      Provider.of<ChannelChatProvider>(context, listen: false).getChannelChatApiCall(channelId: widget.channelId,pageNo: 1);
-      Provider.of<ChannelChatProvider>(context, listen: false).getChannelMembersList(widget.channelId);
+      channelChatProviderInit.getChannelChatApiCall(channelId: widget.channelId,pageNo: 1);
+      channelChatProviderInit.getChannelMembersList(widget.channelId);
+      channelChatProviderInit.getFileListingInChannelChat(channelId: widget.channelId);
     },);
   }
   late FileServiceProvider _fileServiceProvider;
@@ -776,7 +777,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 ),
               ),
             },
-            SizedBox(height: 20),
+            // SizedBox(height: 20),
             Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
               var filteredTypingUsers = channelChatProvider.typingUsers
                   .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
@@ -794,7 +795,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               }
 
               return Container(
-                margin: EdgeInsets.symmetric(horizontal: 20,vertical: 15),
+                margin: EdgeInsets.only(right: 20,left : 20, top: 15,bottom: 6),
                 alignment: Alignment.centerLeft,
                 child: Column(
                   children: [
@@ -1106,7 +1107,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: commonHTMLText(message: message),
+                                    child: commonHTMLText(message: message,),
                                   ),
                                   if (isEdited)
                                     WidgetSpan(
@@ -1439,9 +1440,12 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               print("value>>> $value");
                               if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                                 for (var reply in messageList.replies!) {
-                                  if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
-                                    setState(() =>
-                                    reply.isSeen = true);
+                                  if (!(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) && (reply.isSeen ?? false) == false) {
+                                    reply.isSeen = true;
+                                    reply.readBy ??= [];
+                                    if (!reply.readBy!.contains(signInModel.data!.user!.id!)) {
+                                      reply.readBy!.add(signInModel.data!.user!.id!);
+                                    }
                                   }
                                 }
                               }
@@ -1489,22 +1493,15 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                 // 🔴 Red dot circle
                                 Visibility(
                                   replacement: SizedBox.shrink(),
-                                  visible: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any(
-                                   (reply) => !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) && (reply.isSeen ?? false) == false,),
+                                  visible: messageList.replies != null &&
+                                      messageList.replies!.isNotEmpty &&
+                                      messageList.replies!.any((reply) =>
+                                          !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) ||
+                                          (reply.isSeen == false && reply.senderId != signInModel.data?.user!.id)),
                                   child: Container(
                                     margin:EdgeInsets.only(right: 5),
-                                    width: messageList.replies != null && messageList.replies!.isNotEmpty &&
-                                        messageList.replies!.any(
-                                              (reply) => !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) &&
-                                              (reply.isSeen ?? false) == false,
-                                        )
-                                        ? 10 : 0,
-                                    height: messageList.replies != null && messageList.replies!.isNotEmpty &&
-                                        messageList.replies!.any(
-                                              (reply) => !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) &&
-                                              (reply.isSeen ?? false) == false,
-                                        )
-                                        ? 10 : 0,
+                                    width: 10,
+                                    height: 10,
                                     decoration: const BoxDecoration(
                                       color: Colors.red,
                                       shape: BoxShape.circle,

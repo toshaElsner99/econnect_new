@@ -38,6 +38,7 @@ class AppImage{
   static const editIcon = "$path/edit.png";
   static const deleteIcon = "$path/delete.png";
   static const reactionIcon = "$path/reactions.png";
+  static const splashScreen = "$path/splash_screen.png";
 
 
 
