@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -138,7 +139,10 @@ class NotificationService {
             playSound: true,
             enableVibration: true,
             styleInformation: BigTextStyleInformation(notification.body!),
-            icon: 'mipmap/ic_notification'
+            icon: 'mipmap/ic_notification',
+            color: AppColor.appBarColor,
+            // colorized: true,
+            // ledColor: AppColor.commonAppColor,
           ),
         ),
         payload: json.encode(message.data),

@@ -43,10 +43,10 @@ class Message {
   dynamic replyTo;
   bool isForwarded;
   String senderId;
-  ErInfo senderInfo;
+  ErInfo? senderInfo;
   ChannelInfo? channelInfo;
   String? channelId;
-  ErInfo oppositeUserInfo;
+  ErInfo? oppositeUserInfo;
   String? receiverId;
 
   Message({
@@ -70,10 +70,10 @@ class Message {
     replyTo: json["replyTo"],
     isForwarded: json["isForwarded"],
     senderId: json["senderId"],
-    senderInfo: ErInfo.fromJson(json["senderInfo"]),
+    senderInfo:json["senderInfo"] == null ? null : ErInfo.fromJson(json["senderInfo"]),
     channelInfo: json["channelInfo"] == null ? null : ChannelInfo.fromJson(json["channelInfo"]),
     channelId: json["channelId"],
-    oppositeUserInfo: ErInfo.fromJson(json["oppositeUserInfo"]),
+    oppositeUserInfo:  json["oppositeUserInfo"] == null ? null :ErInfo.fromJson(json["oppositeUserInfo"]),
     receiverId: json["receiverId"],
   );
 
@@ -84,10 +84,10 @@ class Message {
     "replyTo": replyTo,
     "isForwarded": isForwarded,
     "senderId": senderId,
-    "senderInfo": senderInfo.toJson(),
+    "senderInfo": senderInfo!.toJson(),
     "channelInfo": channelInfo?.toJson(),
     "channelId": channelId,
-    "oppositeUserInfo": oppositeUserInfo.toJson(),
+    "oppositeUserInfo": oppositeUserInfo!.toJson(),
     "receiverId": receiverId,
   };
 }

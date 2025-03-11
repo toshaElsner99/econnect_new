@@ -96,15 +96,16 @@ class CommonProvider extends ChangeNotifier {
       getUserModel = GetUserModel.fromJson(response);
       // getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
       // isMutedUser = signInModel.data?.user!.muteUsers!.contains(userId) ?? false;
-      setCustomTextController.text = getUserModel?.data?.user?.customStatus;
-      customStatusTitle = getUserModel?.data?.user?.customStatus;
-      customStatusUrl = getUserModel?.data?.user?.customStatusEmoji;
+      setCustomTextController.text = getUserModel?.data?.user?.customStatus ?? "";
+      customStatusTitle = getUserModel?.data?.user?.customStatus ?? "";
+      customStatusUrl = getUserModel?.data?.user?.customStatusEmoji ?? "";
       notifyListeners();
     }
   }
   bool isLoadingGetUser = false;
+
   Future<GetUserModelSecondUser?> getUserByIDCallForSecondUser({String? userId}) async {
-    print("Called>>>>getUserByIDCallForSecondUser>>>");
+    print("Called>>>>getUserByIDCallForSecondUser>>> $userId ");
     try{
       isLoadingGetUser = true;
       if(userId != (getUserModelSecondUser?.data?.user?.sId ?? "")){
@@ -115,7 +116,7 @@ class CommonProvider extends ChangeNotifier {
         endPoint: "${ApiString.getUserById}/$userId", method: Method.GET,);
       if (statusCode200Check(response)) {
         getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
-        print("getUserByIDCallForSecondUser>>>${getUserModelSecondUser?.data?.user?.pinnedMessageCount}");
+        // print("getUserByIDCallForSecondUser>>>${getUserModelSecondUser?.data?.user?.pinnedMessageCount}");
         return getUserModelSecondUser;
       }
     }catch (e){

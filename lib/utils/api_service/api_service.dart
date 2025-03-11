@@ -66,7 +66,7 @@ class ApiService {
       response = await _makeRequest(method, uri, reqBody, requestHeaders);
       _logResponse(response);
 
-      if(endPoint.contains(AppString.signIN)){
+      if(endPoint.contains(ApiString.login)){
         final responseData = json.decode(response.body);
         _handleToastMessage(responseData);
       }

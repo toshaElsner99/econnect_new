@@ -289,6 +289,7 @@ class SecondUser {
   bool? isActive;
   List<dynamic>? loginActivity;
   dynamic customStatus;
+
   dynamic customStatusEmoji;
   List<dynamic>? muteUsers;
   List<dynamic>? favoriteList;

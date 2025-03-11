@@ -124,9 +124,73 @@ class ChannelChatProvider extends ChangeNotifier{
   //     notifyListeners();
   //   }
   // }
+  // 42["user_typing",{"message":"","type":"userTyping",
+  // "data":[{"sender":"67bf0f57d75f40cdb0b9c391","receivers":"677b7adc3f5bb1fd3416ca3e"}],
+  // "time":"2025-03-11T13:37:33.040Z","message_type":"message","routeId":"67bf0f57d75f40cdb0b9c391","tagged_users":[],"msgLength":0,
+  // "userData":{"username":"Tosha_Shah","user_id":"676d5d2de010e883aec47240"},"isChannel":true,"isReply":false,"parentId":""}]
+  // getTypingUpdate(bool isChannel) {
+  //   try {
+  //     if(isChannel == false){
+  //       return;
+  //     }
+  //     socketProvider.socket.onAny((event, data) {
+  //       print("Event: $event >>> Data: $data");
+  //       if (data['type'] == "userTyping" && data['data'] is List) {
+  //         var typingData = data['data'];
+  //         if (typingData.isNotEmpty) {
+  //           msgLength = data['msgLength'] ?? 0;
+  //           String userId = data['userData']['user_id'] ?? ""; // Use user_id instead of sender
+  //           String username = data['userData']['username'] ?? "";
+  //           String routeId = data['routeId'] ?? "";
+  //
+  //           print("userId >>> $userId");
+  //           print("routeId >>> $routeId"); // Print the routeId for debugging
+  //
+  //           // Prevent adding your own user in the list
+  //           if (userId.toString() == signInModel.data?.user?.id.toString()) {
+  //             // Also, make sure you remove yourself if already added (just in case)
+  //             typingUsers.removeWhere((user) => user['user_id'] == signInModel.data?.user?.id.toString());
+  //             notifyListeners();
+  //             return; // Exit early if it's the signed-in user
+  //           }
+  //
+  //           if (msgLength > 0) {
+  //             // Check if the user already exists in the list
+  //             bool alreadyExists = typingUsers.any((user) => user['sender'] == userId);
+  //
+  //             if (!alreadyExists) {
+  //               // Add the user to the list
+  //               typingUsers.add({
+  //                 'sender': userId,
+  //                 'username': username,
+  //                 'routeId': routeId, // Optionally store routeId if needed
+  //               });
+  //             }
+  //           } else {
+  //             // Remove user from the list if typing stops
+  //             typingUsers.removeWhere((user) => user['sender'] == userId);
+  //           }
+  //
+  //           notifyListeners();
+  //           print("Currently Typing Users: $typingUsers");
+  //         } else {
+  //           // Clear the list if no user is typing
+  //           typingUsers.clear();
+  //           notifyListeners();
+  //         }
+  //       } else {
+  //         print("Received data is not of the expected structure.");
+  //       }
+  //     });
+  //   } catch (e) {
+  //     print("Error processing the socket event: $e");
+  //   } finally {
+  //     notifyListeners();
+  //   }
+  // }
   getTypingUpdate(bool isChannel) {
     try {
-      if(isChannel == false){
+      if (isChannel == false) {
         return;
       }
       socketProvider.socket.onAny((event, data) {
@@ -135,36 +199,49 @@ class ChannelChatProvider extends ChangeNotifier{
           var typingData = data['data'];
           if (typingData.isNotEmpty) {
             msgLength = data['msgLength'] ?? 0;
-            String userId = data['userData']['user_id']; // Use user_id instead of sender
-            String username = data['userData']['username'];
-            String routeId = data['routeId'];
+            String userId = data['userData']['user_id'] ?? "";
+            String username = data['userData']['username'] ?? "";
+            String routeId = data['routeId'] ?? "";
+            bool isReply = data['isReply'] ?? false;
+            String parentId = data['parentId'] ?? "";
 
             print("userId >>> $userId");
-            print("routeId >>> $routeId"); // Print the routeId for debugging
+            print("routeId >>> $routeId");
+            print("isReply >>> $isReply");
+            print("parentId >>> $parentId");
 
             // Prevent adding your own user in the list
             if (userId.toString() == signInModel.data?.user?.id.toString()) {
-              // Also, make sure you remove yourself if already added (just in case)
               typingUsers.removeWhere((user) => user['user_id'] == signInModel.data?.user?.id.toString());
               notifyListeners();
-              return; // Exit early if it's the signed-in user
+              return;
             }
 
             if (msgLength > 0) {
               // Check if the user already exists in the list
-              bool alreadyExists = typingUsers.any((user) => user['sender'] == userId);
+              bool alreadyExists = typingUsers.any((user) =>
+              user['user_id'] == userId &&
+                  user['routeId'] == routeId &&
+                  user['isReply'] == isReply &&
+                  user['parentId'] == parentId
+              );
 
               if (!alreadyExists) {
                 // Add the user to the list
                 typingUsers.add({
-                  'sender': userId,
+                  'user_id': userId,
                   'username': username,
-                  'routeId': routeId, // Optionally store routeId if needed
+                  'routeId': routeId,
+                  'isReply': isReply,
+                  'parentId': parentId
                 });
               }
             } else {
               // Remove user from the list if typing stops
-              typingUsers.removeWhere((user) => user['sender'] == userId);
+              typingUsers.removeWhere((user) =>
+              user['user_id'] == userId &&
+                  user['routeId'] == routeId
+              );
             }
 
             notifyListeners();

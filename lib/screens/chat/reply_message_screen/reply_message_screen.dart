@@ -69,6 +69,12 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     super.initState();
     _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      socketProvider.userTypingEvent(
+        oppositeUserId: widget.receiverId,
+        isReplyMsg: true,
+        isTyping: 0,
+        msgId: widget.messageId,
+      );
       chatProvider.getReplyListUpdateSC(widget.messageId);
       chatProvider.getTypingUpdate();
       socketProvider.listenDeleteMessageSocketForReply(msgId: widget.messageId);
@@ -103,6 +109,12 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   }
   @override
   void dispose() {
+    socketProvider.userTypingEvent(
+      oppositeUserId: widget.receiverId,
+      isReplyMsg: true,
+      isTyping:  0,
+      msgId: widget.messageId,
+    );
     scrollController.dispose();
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
@@ -211,14 +223,16 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             commonText(text: "Thread", fontSize: 16,),
-            Padding(
+          Consumer<ChatProvider>(builder: (context, value, child) {
+            return Padding(
               padding: const EdgeInsets.symmetric(vertical: 1.5),
               child: commonText(text:
-              (userDetails?.data?.user?.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1 && chatProvider.isTypingFor == true)
+              (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
                   ? "Typing..." : widget.userName,
                   fontSize: 12,fontWeight: FontWeight.w400),
 
-            ),
+            );
+          },),
           ],
         ),
       ),
@@ -819,6 +833,12 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                               .then(
                                 (value) => setState(() {
                                   currentUserMessageId = "";
+                                  socketProvider.userTypingEvent(
+                                    oppositeUserId: widget.receiverId,
+                                    isReplyMsg: true,
+                                    isTyping: 0,
+                                    msgId: widget.messageId,
+                                  );
                                 }),
                               );
                         }
@@ -839,89 +859,6 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     );
   }
 
-  void _showAttachmentOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.attach_file),
-                title: const Text('Document'),
-                onTap: () {
-                  Navigator.pop(context);
-                  FileServiceProvider.instance.pickFiles(AppString.singleChatReply);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo),
-                title: const Text('Gallery'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Camera'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _pickImage(ImageSource source) {
-    FileServiceProvider.instance.pickImages(AppString.singleChatReply);
-  }
-
-  // void _showCameraOptions(BuildContext context) {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     backgroundColor: Colors.white,
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-  //     ),
-  //     builder: (context) {
-  //       return Padding(
-  //         padding: const EdgeInsets.symmetric(vertical: 20),
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             ListTile(
-  //               leading: const Icon(Icons.camera_alt),
-  //               title: const Text('Capture Photo'),
-  //               onTap: () {
-  //                 Navigator.pop(context);
-  //                 FileServiceProvider.instance.captureMedia(isVideo: false);
-  //               },
-  //             ),
-  //             ListTile(
-  //               leading: const Icon(Icons.videocam),
-  //               title: const Text('Record Video'),
-  //               onTap: () {
-  //                 Navigator.pop(context);
-  //                 FileServiceProvider.instance.captureMedia(isVideo: true);
-  //               },
-  //             ),
-  //           ],
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
 
   void _clearInputAndDismissKeyboard() {
     _focusNode.unfocus();
@@ -980,7 +917,8 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     socketProvider.userTypingEvent(
         oppositeUserId: widget.receiverId,
         isReplyMsg: true,
-        isTyping: text.trim().length > 1 ? 1 : 0
+        isTyping: text.trim().length > 1 ? 1 : 0,
+        msgId: widget.messageId,
     );
   }
 

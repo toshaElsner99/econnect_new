@@ -30,6 +30,7 @@ class ChatProvider extends  ChangeNotifier {
   String? lastOpenedUserId;
   String? lastOpenedUserMSGId;
   String oppUserIdForTyping = "";
+  String parentId = "";
   bool? isTypingFor;
   int msgLength = 0;
   bool idChatListLoading = false;
@@ -135,14 +136,16 @@ class ChatProvider extends  ChangeNotifier {
           var typingData = data['data'];
           if (typingData.isNotEmpty) {
             msgLength = data['msgLength'] ?? 0;
-            isTypingFor = data['isReply'];
+            isTypingFor = data['isReply'] ?? false;
+              parentId = data['parentId'] ?? "";
             oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
             notifyListeners();
-            print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor");
+            print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor && $parentId ");
           } else {
             msgLength = 0;
             oppUserIdForTyping = "";
             isTypingFor = null;
+            parentId = "";
             notifyListeners();
             print("Data array is empty.");
           }

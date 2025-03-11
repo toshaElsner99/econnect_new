@@ -92,6 +92,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       _saveScrollPosition();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      socketProvider.userTypingEvent(
+        oppositeUserId: oppositeUserId,
+        isReplyMsg: false,
+        isTyping: 0,
+      );
+      _fetchAndCacheUserDetails();
       print("oppositeUserId in init==> ${oppositeUserId}");
       /// this is for pagination ///
       pagination(oppositeUserId: oppositeUserId);
@@ -99,10 +105,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       /// opposite user typing listen ///
       chatProvider.getTypingUpdate();
       /// THis Is Socket Listening Event ///
-      // socketProvider.listenSingleChatScreen(oppositeUserId: oppositeUserId,getSecondUserCall: (){
-      //   fetchOppositeUserDetails();
-      // });
-      socketProvider.commonListenForChats(id: oppositeUserId, isSingleChat: true,getSecondUserCall: ()=> fetchOppositeUserDetails());
+      socketProvider.listenSingleChatScreen(oppositeUserId: oppositeUserId,getSecondUserCall: (){
+        fetchOppositeUserDetails();
+      });
+      // socketProvider.commonListenForChats(id: oppositeUserId, isSingleChat: true,getSecondUserCall: ()=> fetchOppositeUserDetails());
       /// THis is Doing for update pin message and get Message List ///
       // socketProvider.socketListenPinMessage(oppositeUserId: oppositeUserId,callFun: (){
       //   chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
@@ -118,7 +124,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       /// this is default call with page 1 for chat listing ///
       chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,);
       /// this is for fetch other user details and store it to cache memory ///
-      _fetchAndCacheUserDetails();
       /// this is for get user mention listing api ///
       commonProvider.getUserApi(id: oppositeUserId);
       commonProvider.getUserApi(id: widget.oppositeUserId);
@@ -133,9 +138,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   void _fetchAndCacheUserDetails() async {
     userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: oppositeUserId);
     setState(()  {
-      userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
+      userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser;
       userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
     });
+    // print("userCache>>>>> ${userCache[oppositeUserId]}");
   }
   @override
   void didChangeDependencies() {
@@ -146,6 +152,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
   @override
   void dispose() {
+    socketProvider.userTypingEvent(
+      oppositeUserId: oppositeUserId,
+      isReplyMsg: false,
+      isTyping: 0,
+    );
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _focusNode.dispose();
@@ -220,7 +231,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   ),
                   SizedBox(height: 20,),
                 },
-                if(userDetails?.data?.user?.isLeft == false)...{
+                if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == false)...{
                   inputTextFieldWithEditor()
                 }else...{
                     Container(
@@ -265,12 +276,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         child: IconButton(
           icon: Icon(CupertinoIcons.back, color: Colors.white),
           onPressed: () {
-            pop();
-            channelListProvider.readUnreadMessages(
-              oppositeUserId: widget.oppositeUserId,
-              isCalledForFav: widget.calledForFavorite ?? false,
-              isCallForReadMessage: true,
-            );
+            if(widget.isFromNotification ?? false) {
+              pushAndRemoveUntil(screen: HomeScreen());
+            }else{
+              pop();
+              channelListProvider.readUnreadMessages(
+                oppositeUserId: oppositeUserId,
+                isCalledForFav: widget.calledForFavorite ?? false,
+                isCallForReadMessage: true,
+              );
+            }
           },
         ),
       ),
@@ -308,7 +323,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               const SizedBox(width: 5),
               Flexible(
                 child: commonText(
-                  text: (userDetails?.data?.user?.sId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1 && chatProvider.isTypingFor == false)
+                  text: (oppositeUserId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1 && chatProvider.isTypingFor == false)
                       ? "Typing..."
                       : getLastOnlineStatus(
                     userDetails?.data?.user?.status ?? ".....",
@@ -514,6 +529,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         } else {
                           chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
                             currentUserMessageId = "";
+                            socketProvider.userTypingEvent(
+                              oppositeUserId: oppositeUserId,
+                              isReplyMsg: false,
+                              isTyping: 0,
+                            );
                           }),);
                         }
                         _clearInputAndDismissKeyboard();
@@ -1156,7 +1176,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     createdAt: messageList.createdAt!,
                     currentUserId: userId,
                     onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,)),
-                    onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: widget.oppositeUserId,)).then((value) {
+                    onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: oppositeUserId,)).then((value) {
                       // print("value>>> $value");
                       if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                         for (var reply in messageList.replies!) {

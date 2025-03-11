@@ -102,7 +102,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                               itemCount: messageData.messages.length,
                               itemBuilder: (context, msgIndex) {
                                 final message = messageData.messages[msgIndex];
-                                final sender = message.senderInfo.username;
+                                final sender = message.senderInfo?.username;
                                 final channel = message.channelInfo?.name ?? '';
                                 final content = message.content;
                                 final isForwarded = message.isForwarded;
@@ -114,14 +114,14 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                       // print("Is From Channel ${message.channelInfo != null ? true : false}");
                                       await value.getPageNumber(messageId: message.id, senderId: message.senderId,receiverId: message.receiverId!).then((int pageNumber) {
                                         print("Page number $pageNumber");
-                                        Navigator.pop(context,{"id":message.senderInfo.id,"oppositeUserID":message.oppositeUserInfo.id,"oppositeUserName":message.oppositeUserInfo.username,"name":message.senderInfo.username,"needToOpenChannelChat":message.channelInfo != null ? true : false,"channelId":message.channelInfo != null ? message.channelInfo?.id : "","pageNO":pageNumber});
+                                        Navigator.pop(context,{"id":message.senderInfo?.id,"oppositeUserID":message.oppositeUserInfo?.id,"oppositeUserName":message.oppositeUserInfo!.username,"name":message.senderInfo!.username,"needToOpenChannelChat":message.channelInfo != null ? true : false,"channelId":message.channelInfo != null ? message.channelInfo?.id : "","pageNO":pageNumber});
                                       });
                                     },
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         SizedBox(height: 8,),
-                                        commonText(text : channel != "" ? channel :"Direct Message (With ${message.oppositeUserInfo.username})",fontSize: 18,color: Colors.grey),
+                                        commonText(text : channel != "" ? channel :"Direct Message (With ${message.oppositeUserInfo?.username})",fontSize: 18,color: Colors.grey),
                                         SizedBox(height: 10,),
                                         Row(
                                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,9 +134,9 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                   backgroundColor: Colors.grey[200],
                                                   child: ClipOval(
                                                     child: CachedNetworkImage(
-                                                      imageUrl: signInModel.data?.user?.id == message.senderInfo.id
+                                                      imageUrl: signInModel.data?.user?.id == message.senderInfo?.id
                                                           ? ApiString.profileBaseUrl + (signInModel.data!.user!.thumbnailAvatarUrl ?? '')
-                                                          : ApiString.profileBaseUrl + (message.senderInfo.thumbnailAvatarUrl ?? ''),
+                                                          : ApiString.profileBaseUrl + (message.senderInfo?.thumbnailAvatarUrl ?? ''),
                                                       width: 25 * 2,
                                                       height: 25 * 2,
                                                       fit: BoxFit.cover,
@@ -154,11 +154,11 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                         height: 20,
                                                         width: 20,
                                                         decoration: BoxDecoration(
-                                                          color: message.senderInfo.status.name.contains("offline") ? Colors.transparent : Colors.white,
+                                                          color:message.senderInfo == null ? Colors.white : message.senderInfo!.status.name.contains("offline") ? Colors.transparent : Colors.white,
                                                           shape: BoxShape.circle,
                                                         ),
                                                       ),
-                                                      getCommonStatusIcons(status: message.senderInfo.status.name, size: 20, assetIcon: false),
+                                                      getCommonStatusIcons(status: message.senderInfo!.status.name, size: 20, assetIcon: false),
                                                     ],
                                                   ),
                                               ],
@@ -176,7 +176,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                               child: Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  commonText(text : sender,fontSize: 18),
+                                                  commonText(text : sender!,fontSize: 18),
                                                   SizedBox(height: 10),
                                                   commonHTMLText(message: content),
                                                 ],

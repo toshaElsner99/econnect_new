@@ -60,6 +60,12 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
     super.initState();
     _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      socketProvider.userTypingEventChannel(
+        channelId: widget.channelId,
+        isReplyMsg: true,
+        isTyping: 0,
+        msgId: widget.msgID,
+      );
       Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.msgID);
       /// socket listen messages list ///
       channelChatProvider.getReplyListUpdateSocketForChannel(widget.msgID);
@@ -85,6 +91,12 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   void dispose() {
     _messageController.removeListener(_onTextChanged);
     super.dispose();
+    socketProvider.userTypingEventChannel(
+      channelId: widget.channelId,
+      isReplyMsg: true,
+      isTyping: 0,
+      msgId: widget.msgID,
+    );
     scrollController.dispose();
     _messageController.dispose();
     _focusNode.dispose();
@@ -124,7 +136,41 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
               ],
             ),
           ),
-          SizedBox(height: 20,),
+          Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+            var filteredTypingUsers = channelChatProvider.typingUsers
+                .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                && user['routeId'] == widget.channelId
+                && user['isReply'] == true
+                && user['parentId'] == widget.msgID).toList();
+
+            String typingMessage;
+
+            if (filteredTypingUsers.isEmpty) {
+              typingMessage = "";
+            } else if (filteredTypingUsers.length == 1) {
+              typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+            } else {
+              var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+              var lastUser  = usernames.removeLast();
+              typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
+            }
+
+            return Container(
+              margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
+              alignment: Alignment.centerLeft,
+              child: Column(
+                children: [
+                  if (typingMessage.isNotEmpty)
+                    commonText(
+                      text: typingMessage,
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w400,
+                    ),
+                ],
+              ),
+            );
+          },),
           inputTextFieldWithEditor()
         ],
       ),
@@ -727,7 +773,15 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                               replyId: widget.msgID,
                               editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
                               isEditFromReply: true,
-                          );
+                          ).then((value) {
+                            currentUserMessageId = "";
+                            socketProvider.userTypingEventChannel(
+                              channelId: widget.channelId,
+                              isReplyMsg: true,
+                              isTyping: 0,
+                              msgId: widget.msgID,
+                            );
+                          },);
                         }
 
                         // Update reply count in single chat screen
@@ -793,13 +847,12 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
       _removeMentionOverlay();
     }
 
-    // Keep existing typing event
-    /////////********/////
-    // socketProvider.userTypingEvent(
-    //     oppositeUserId: widget.receiverId,
-    //     isReplyMsg: false,
-    //     isTyping: text.trim().length > 1 ? 1 : 0
-    // );
+    socketProvider.userTypingEventChannel(
+        channelId: widget.channelId,
+        isReplyMsg: true,
+        isTyping: text.trim().length > 1 ? 1 : 0,
+        msgId: widget.msgID,
+    );
   }
   void _showMentionOverlay({String? searchQuery}) {
     _removeMentionOverlay();

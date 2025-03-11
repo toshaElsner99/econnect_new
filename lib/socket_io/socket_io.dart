@@ -126,14 +126,43 @@ class SocketIoProvider extends ChangeNotifier{
   }
 
 
-  userTypingEvent({required String oppositeUserId, required bool isReplyMsg,required int isTyping}){
-    print("CALLLED_userTypingEvent>>>>>>> ");
-    socket.emit(userTyping,{"senderId": signInModel.data?.user?.id ?? "","receiverId": oppositeUserId,"inputValue":isTyping,"isReply":isReplyMsg});
+  userTypingEvent({
+    required String oppositeUserId,
+    required bool isReplyMsg,
+    required int isTyping,
+    String msgId = ""
+  }) {
+    print("CALLLED_userTypingEvent>>>>>>>");
+
+    Map<String, dynamic> data = {
+      "senderId": signInModel.data?.user?.id ?? "",
+      "receiverId": oppositeUserId,
+      "inputValue": isTyping,
+      "isReply": isReplyMsg,
+    };
+
+    if (msgId.isNotEmpty) {
+      data["parentId"] = msgId;
+    }
+
+    socket.emit(userTyping, data);
   }
 
-  userTypingEventChannel({required String channelId,required int isTyping, required bool isReplyMsg,}){
+
+  userTypingEventChannel({required String channelId,required int isTyping, required bool isReplyMsg,String msgId = ""}){
     print("CALLLED_userTypingEventChannel>>>>>>> ");
-    socket.emit(userTyping,{"senderId": signInModel.data?.user?.id ?? "","channelId": channelId,"inputValue":isTyping,"username": signInModel.data?.user?.username ?? "","userId": signInModel.data?.user?.id ?? "","isReply":isReplyMsg});
+    Map<String, dynamic> data = {
+      "senderId": signInModel.data?.user?.id ?? "",
+      "channelId": channelId,
+      "inputValue":isTyping,
+      "username": signInModel.data?.user?.username ?? "",
+      "userId": signInModel.data?.user?.id ?? "",
+      "isReply":isReplyMsg
+    };
+    if (msgId.isNotEmpty) {
+      data["parentId"] = msgId;
+    }
+    socket.emit(userTyping,data);
   }
 
   sendMessagesSC({required Map<String, dynamic> response,bool emitReplyMsg = false}) {
@@ -166,32 +195,37 @@ class SocketIoProvider extends ChangeNotifier{
 
 
   void listenSingleChatScreen({required String oppositeUserId,required Function getSecondUserCall}) {
+    socket.off(notification);
+    socket.off(deleteMessageForListen);
+    socket.off(notificationForPinMessagesListen);
+    socket.off(replyNotification);
+    socket.off(notificationForMessageReacting);
     if (!socket.connected) {
       print("⚠️ Socket is not connected. Attempting to reconnect...");
       socket.connect();
     }
-    socket.off(deleteMessageForListen);
-    socket.on((deleteMessageForListen), (data) {
-      print("deleteMessageForListen >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1, isFromMsgListen: true);
-    });
-    socket.off(notification);
+
     socket.on(notification, (data) {
       print("listSingleChatScreen >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
     });
-    socket.off(notificationForPinMessagesListen);
+
+    socket.on((deleteMessageForListen), (data) {
+      print("deleteMessageForListen >>> $data");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1, isFromMsgListen: true);
+    });
+
     socket.on(notificationForPinMessagesListen, (data) {
       print("listSingleChatScreen >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
       getSecondUserCall.call();
     });
-    socket.off(replyNotification);
+
     socket.on(replyNotification, (data) {
       print("listSingleChatScreen >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
     });
-    socket.off(notificationForMessageReacting);
+
     socket.on(notificationForMessageReacting, (data) {
       print("messageReaction >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
@@ -200,9 +234,6 @@ class SocketIoProvider extends ChangeNotifier{
 
   void listenChannelChatScreen({required String channelId,}) {
     socket.off(notification);
-    socket.off(deleteMessageChannelListen);
-    socket.off(notificationForPinMessagesChannelListen);
-    socket.off(renameChannel);
     if (!socket.connected) {
       print("⚠️ Socket is not connected. Attempting to reconnect...");
       socket.connect();
@@ -236,7 +267,6 @@ class SocketIoProvider extends ChangeNotifier{
     socket.on(notificationForMessageReactionChannel, (data) {
       print("socketListenReactMessageInChannelScreen >>> $data");
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId,pageNo: 1,isFromMsgListen: true);
-
     });
   }
   void commonListenForChats({

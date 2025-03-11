@@ -384,6 +384,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     _messageController.addListener(_onTextChanged);
     print("CHANNELID>>> ${channelID}");
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      socketProvider.userTypingEventChannel(
+          channelId: channelID,
+          isReplyMsg: false,
+          isTyping:  0
+      );
       channelChatProviderInit.getTypingUpdate(true);
       /// this for socket listen in channel chat for new message and delete //
       // socketProvider.listenChannelChatScreen(channelId: widget.channelId);
@@ -395,7 +400,6 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       channelChatProviderInit.getChannelMembersList(widget.channelId);
       channelChatProviderInit.getFileListingInChannelChat(channelId: widget.channelId);
       // socketProvider.listenChannelChatScreen(channelId: channelID);
-      socketProvider.commonListenForChats(id: channelID, isSingleChat: false);
       // socketProvider.listenChannelChatScreen(channelId: channelID);
       pagination(channelId: channelID);
       Provider.of<ChannelChatProvider>(context, listen: false).getChannelInfoApiCall(channelId: channelID,callFroHome: true);
@@ -416,6 +420,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   void dispose() {
     _messageController.removeListener(_onTextChanged);
     super.dispose();
+    socketProvider.userTypingEventChannel(
+        channelId: channelID,
+        isReplyMsg: false,
+        isTyping:  0
+    );
     _scrollController.dispose();
     _messageController.dispose();
     _focusNode.dispose();
@@ -628,6 +637,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         } else {
                           channelChatProvider.sendMessage(content: plainText, channelId: channelID,editMsgID: currentUserMessageId).then((value) => setState(() {
                             currentUserMessageId = "";
+                            socketProvider.userTypingEventChannel(
+                                channelId: channelID,
+                                isReplyMsg: false,
+                                isTyping:  0
+                            );
                           }),);
                         }
                         _clearInputAndDismissKeyboard();
@@ -818,10 +832,45 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               ),
             },
             // SizedBox(height: 20),
+            // Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+            //   var filteredTypingUsers = channelChatProvider.typingUsers
+            //       .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+            //       && user['routeId'] == channelID).toList();
+            //   String typingMessage;
+            //
+            //   if (filteredTypingUsers.isEmpty) {
+            //     typingMessage = "";
+            //   } else if (filteredTypingUsers.length == 1) {
+            //     typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+            //   } else {
+            //     var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+            //     var lastUser  = usernames.removeLast(); // Get the last username
+            //     typingMessage = "${usernames.join(', ')}, and $lastUser  are Typing..."; // Join the rest with commas
+            //   }
+            //
+            //   return Container(
+            //     margin: EdgeInsets.only(right: 20,left : 20, top: 15,bottom: 6),
+            //     alignment: Alignment.centerLeft,
+            //     child: Column(
+            //       children: [
+            //         // Other widgets...
+            //         if (typingMessage.isNotEmpty)
+            //           commonText(text:
+            //             typingMessage,
+            //               fontSize: 14,
+            //               color: Colors.grey.shade600,
+            //               fontWeight: FontWeight.w400,
+            //           ),
+            //       ],
+            //     ),
+            //   );
+            // },),
             Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
               var filteredTypingUsers = channelChatProvider.typingUsers
                   .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                  && user['routeId'] == channelID).toList();
+                  && user['routeId'] == channelID
+                  && user['isReply'] == false).toList();
+
               String typingMessage;
 
               if (filteredTypingUsers.isEmpty) {
@@ -830,57 +879,27 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
               } else {
                 var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-                var lastUser  = usernames.removeLast(); // Get the last username
-                typingMessage = "${usernames.join(', ')}, and $lastUser  are Typing..."; // Join the rest with commas
+                var lastUser  = usernames.removeLast();
+                typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
               }
 
               return Container(
-                margin: EdgeInsets.only(right: 20,left : 20, top: 15,bottom: 6),
+                margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
                 alignment: Alignment.centerLeft,
                 child: Column(
                   children: [
-                    // Other widgets...
                     if (typingMessage.isNotEmpty)
-                      commonText(text:
-                        typingMessage,
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w400,
+                      commonText(
+                        text: typingMessage,
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w400,
                       ),
                   ],
                 ),
               );
             },),
-            // Wrap(
-            //   spacing: 4.0,
-            //   runSpacing: 4.0,
-            //   children: channelChatProvider.typingUsers
-            //       .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString())
-            //       .map((user) {
-            //     return RichText(
-            //       text: TextSpan(
-            //         children: [
-            //           TextSpan(
-            //             text: user['username'],
-            //             style: TextStyle(
-            //               fontSize: 14,
-            //               color: Colors.grey.shade600,
-            //               fontWeight: FontWeight.w400,
-            //             ),
-            //           ),
-            //           TextSpan(
-            //             text: ' Typing...',
-            //             style: TextStyle(
-            //               fontSize: 14,
-            //               color: Colors.grey.shade500,
-            //               fontStyle: FontStyle.italic,
-            //             ),
-            //           ),
-            //         ],
-            //       ),
-            //     );
-            //   }).toList(),
-            // ),
+
             inputTextFieldWithEditor(channelChatProvider),
           ],
         ),
