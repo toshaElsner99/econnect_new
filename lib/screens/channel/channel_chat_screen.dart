@@ -391,8 +391,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       );
       channelChatProviderInit.getTypingUpdate(true);
       /// this for socket listen in channel chat for new message and delete //
-      // socketProvider.listenChannelChatScreen(channelId: widget.channelId);
-      socketProvider.commonListenForChats(id: widget.channelId, isSingleChat: false,);
+      socketProvider.listenForChannelChatScreen(channelId: widget.channelId);
+      // socketProvider.commonListenForChats(id: widget.channelId, isSingleChat: false,);
       pagination(channelId: widget.channelId);
       channelChatProviderInit.getChannelInfoApiCall(channelId: widget.channelId,callFroHome: true);
       Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
