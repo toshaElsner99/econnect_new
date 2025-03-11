@@ -63,4 +63,8 @@ class ApiString{
   static const getChannelPinnedMessage = "messages/channel/get-pinned-message-for-channel";
   static deleteMessageFromChannel (String messageId) => "messages/delete/$messageId";
   static const String addChannelTO = "channels/add";
+
+  // Search Message
+  static const searchMessages = "messages/search";
+  static const messageJump = "messages/get-message-jump";
 }

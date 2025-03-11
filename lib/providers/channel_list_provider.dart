@@ -7,6 +7,7 @@ import 'package:e_connect/model/channel_list_model.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/model/search_user_model.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
+import 'package:e_connect/screens/channel/channel_chat_screen.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
@@ -89,6 +90,7 @@ final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.co
     final response = await ApiService.instance.request(endPoint: ApiString.createChannel, method: Method.POST,reqBody: requestBody);
     if(statusCode200Check(response)){
       pop();
+      pushScreen(screen: ChannelChatScreen(channelId: response["data"]["_id"]));
       getChannelList();
     }
     notifyListeners();

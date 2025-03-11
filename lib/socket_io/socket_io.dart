@@ -264,6 +264,11 @@ class SocketIoProvider extends ChangeNotifier{
         _getChatMessages(id, isSingleChat);
         getSecondUserCall?.call();
       },
+      notificationForPinMessagesChannelListen: (data) {
+        print("listChatScreen >>> $data");
+        _getChatMessages(id, false);
+        getSecondUserCall?.call();
+      },
       replyNotification: (data) {
         print("listChatScreen >>> $data");
         _getChatMessages(id, isSingleChat);
