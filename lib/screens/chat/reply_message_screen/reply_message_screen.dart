@@ -70,6 +70,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       chatProvider.getReplyListUpdateSC(widget.messageId);
+      chatProvider.getTypingUpdate();
       socketProvider.listenDeleteMessageSocketForReply(msgId: widget.messageId);
       socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
       socketProvider.socketListenReactMessageInReplyScreen(msgId: widget.messageId);

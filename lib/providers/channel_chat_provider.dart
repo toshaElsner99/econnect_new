@@ -36,6 +36,21 @@ class ChannelChatProvider extends ChangeNotifier{
   List<msg.MessageGroup> messageGroups = [];
   int currentPage = 1;
   int totalPages = 0;
+
+  void incrementPinnedMessagesCountModel() {
+    getChannelInfo?.data?.pinnedMessagesCount = (getChannelInfo?.data?.pinnedMessagesCount ?? 0) + 1;
+    notifyListeners();
+  }
+
+  void decrementPinnedMessagesCountModel() {
+    if (getChannelInfo?.data?.pinnedMessagesCount != null &&
+        (getChannelInfo?.data?.pinnedMessagesCount ?? 0) > 0) {
+      getChannelInfo?.data?.pinnedMessagesCount =
+          (getChannelInfo?.data?.pinnedMessagesCount ?? 0) - 1;
+    }
+  }
+
+
   // getTypingUpdate() {
   //   try {
   //     socketProvider.socket.onAny((event, data) {
@@ -205,6 +220,11 @@ class ChannelChatProvider extends ChangeNotifier{
             }
           }
         }
+      }
+      if(pinned){
+        incrementPinnedMessagesCountModel();
+      }else {
+        decrementPinnedMessagesCountModel();
       }
     }
   }
@@ -772,35 +792,5 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
     }
   }
 
-  Future<void> markRepliesAsRead(String messageId) async {
-    try {
-      final response = await ApiService.instance.request(
-        endPoint: ApiString.markRepliesAsRead(messageId),
-        method: Method.PUT,
-      );
-      
-      if (statusCode200Check(response)) {
-        // Update local state
-        for (var messageGroup in messageGroups) {
-          for (var message in messageGroup.messages ?? []) {
-            if (message.id == messageId && message.replies != null) {
-              for (var reply in message.replies!) {
-                if (reply.senderId != signInModel.data?.user?.id) {
-                  reply.isSeen = true;
-                  reply.readBy ??= [];
-                  if (!reply.readBy!.contains(signInModel.data!.user!.id)) {
-                    reply.readBy!.add(signInModel.data!.user!.id!);
-                  }
-                }
-              }
-            }
-          }
-        }
-        notifyListeners();
-      }
-    } catch (e) {
-      print("Error marking replies as read: $e");
-    }
-  }
 
 }

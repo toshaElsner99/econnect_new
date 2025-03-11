@@ -1182,7 +1182,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     // Keep existing typing event
     socketProvider.userTypingEvent(
         oppositeUserId: widget.oppositeUserId,
-        isReplyMsg: false,
+        isReplyMsg: true,
         isTyping: text.trim().length > 1 ? 1 : 0
     );
   }

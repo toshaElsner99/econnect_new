@@ -538,6 +538,9 @@ Future<void> renameChannel({
   http.StreamedResponse response = await request.send();
   print("response =${response.statusCode}");
   if (response.statusCode == 200) {
+    channelChatProvider.getChannelInfo?.data?.name = name;
+    channelChatProvider.getChannelChatApiCall(channelId: channelId, pageNo: 1);
+    notifyListeners();
     await getChannelList();
   } else {
     print(response.reasonPhrase);
