@@ -17,6 +17,7 @@ import 'package:provider/provider.dart';
 import '../../main.dart';
 import '../../model/channel_list_model.dart';
 import '../../model/direct_message_list_model.dart';
+import '../../notificationServices/pushNotificationService.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/common_provider.dart';
 import '../../socket_io/socket_io.dart';
@@ -64,11 +65,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
     Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
     getFCM();
+    Future.delayed(Duration(seconds: 5),(){
+      setBadge();
+    });
   }
 
   getFCM() async{
    String fcmToken = await getData(AppPreferenceConstants.fcmToken);
    print("fcmToken => $fcmToken");
+  }
+
+  setBadge() async{
+    await NotificationService.setBadgeCount();
   }
 
   @override
@@ -81,6 +89,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         await Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
       },
       child: Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
+        setBadge();
         return Scaffold(
           backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? null : AppColor.appBarColor,
           floatingActionButtonLocation: FloatingActionButtonLocation.endContained,

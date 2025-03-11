@@ -26,6 +26,7 @@ import '../screens/bottom_nav_tabs/home_screen.dart';
 import '../socket_io/socket_io.dart';
 import 'common_provider.dart';
 import 'package:http/http.dart'as http;
+import '../notificationServices/pushNotificationService.dart';
 
 
 
@@ -52,6 +53,7 @@ final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.co
     if(statusCode200Check(response)){
       favoriteListModel = FavoriteListModel.fromJson(response);
     }
+    NotificationService.setBadgeCount();
     notifyListeners();
   }
   /// GET CHANNEL LIST IN HOME SCREEN ///
@@ -61,6 +63,7 @@ final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.co
     if(statusCode200Check(response)){
       channelListModel = ChannelListModel.fromJson(response);
     }
+    NotificationService.setBadgeCount();
     notifyListeners();
   }
   /// GET DIRECT MESSAGE IN HOME SCREEN ///
@@ -74,6 +77,7 @@ final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.co
       directMessageListModel = DirectMessageListModel.fromJson(response);
       // emit(ChannelListInitial());
     }
+    NotificationService.setBadgeCount();
     notifyListeners();
   }
   /// CREATE A NRE CHANNEL ///
@@ -320,9 +324,6 @@ Future<void> leaveChannel({
     required bool isCalledForFav,
     required bool isCallForReadMessage
   }) async {
-    // emit(ChannelListInitial());
-    print("isCallForReadMessage>>> $isCallForReadMessage");
-
     final requestBody = {
       "acknowledged": true,
       "modifiedCount": 1,
@@ -338,7 +339,7 @@ Future<void> leaveChannel({
       await getFavoriteList();
       await getChannelList();
       await getDirectMessageList();
-      // emit(ChannelListInitial());
+      await NotificationService.setBadgeCount();
     }
     notifyListeners();
   }
@@ -355,6 +356,7 @@ Future<void> leaveChannel({
       await getFavoriteList();
       await getChannelList();
       await getDirectMessageList();
+      await NotificationService.setBadgeCount();
     }
     notifyListeners();
   }

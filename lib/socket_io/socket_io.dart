@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:e_connect/main.dart';
@@ -9,6 +11,8 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../providers/channel_list_provider.dart';
 import '../providers/chat_provider.dart';
 import '../providers/common_provider.dart';
+import '../notificationServices/pushNotificationService.dart';
+
 class SocketIoProvider extends ChangeNotifier{
 
 
@@ -161,6 +165,7 @@ class SocketIoProvider extends ChangeNotifier{
       Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getFavoriteList();
       Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getChannelList();
       Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getDirectMessageList();
+      NotificationService.setBadgeCount();
     });
   }
 

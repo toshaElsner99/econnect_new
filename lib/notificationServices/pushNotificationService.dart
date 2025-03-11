@@ -5,6 +5,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_new_badger/flutter_new_badger.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -17,6 +18,7 @@ import '../screens/chat/single_chat_message_screen.dart';
 import '../screens/channel/channel_chat_screen.dart';
 import '../utils/loading_widget/loading_cubit.dart';
 import '../utils/common/common_function.dart';
+import '../providers/channel_list_provider.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -51,10 +53,11 @@ class NotificationService {
 
     enableIOSNotifications();
     registerFirebaseListeners();
+    await setBadgeCount();
   }
 
   /// ✅ Handles navigation when user clicks on push notification
-  static void _handleNotificationRedirect(Map<String, dynamic> data) {
+  static void _handleNotificationRedirect(Map<String, dynamic> data) async{
     print("Handling Notification Click: $data");
 
     if (data['type'] == 'message') {
@@ -74,6 +77,7 @@ class NotificationService {
         ),
       );
     }
+    await setBadgeCount();
   }
 
   /// ✅ Handles opening a downloaded file when user clicks on download notification
@@ -124,7 +128,7 @@ class NotificationService {
 
     if (notification != null && android != null) {
       final AndroidNotificationChannel channel = _androidNotificationChannel();
-      flutterLocalNotificationsPlugin.show(
+      await flutterLocalNotificationsPlugin.show(
         notification.hashCode,
         notification.title,
         notification.body,
@@ -143,6 +147,9 @@ class NotificationService {
         ),
         payload: json.encode(message.data),
       );
+      
+      // Update badge count when notification is received
+      await setBadgeCount();
     }
   }
 
@@ -227,5 +234,55 @@ class NotificationService {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
     return androidInfo.version.sdkInt;
+  }
+
+  /// Calculate and set badge count based on unread messages
+  static Future<void> setBadgeCount() async {
+    try {
+      final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context, listen: false);
+
+      // Get unread counts from favorites
+      int favoritesUnreadCount = 0;
+      channelListProvider.favoriteListModel?.data?.chatList?.forEach((chat) {
+        favoritesUnreadCount += (chat.unseenMessagesCount ?? 0).toInt();
+      });
+      channelListProvider.favoriteListModel?.data?.favouriteChannels?.forEach((channel) {
+        favoritesUnreadCount += (channel.unseenMessagesCount ?? 0).toInt();
+      });
+
+      // Get unread counts from channels
+      int channelsUnreadCount = 0;
+      channelListProvider.channelListModel?.data?.forEach((channel) {
+        channelsUnreadCount += (channel.unreadCount ?? 0).toInt();
+      });
+
+      // Get unread counts from direct messages
+      int directMessagesUnreadCount = 0;
+      channelListProvider.directMessageListModel?.data?.chatList?.forEach((chat) {
+        directMessagesUnreadCount += (chat.unseenMessagesCount ?? 0).toInt();
+      });
+
+      // Calculate total unread count
+      int totalUnreadCount = favoritesUnreadCount + channelsUnreadCount + directMessagesUnreadCount;
+
+      // Update the badge count
+      if (totalUnreadCount > 0) {
+        await FlutterNewBadger.setBadge(totalUnreadCount);
+      } else {
+        await FlutterNewBadger.removeBadge();
+      }
+    } catch (e) {
+      print("Error setting badge count: $e");
+    }
+  }
+
+  static clearBadgeCount() async{
+    await FlutterNewBadger.setBadge(0);
+    await FlutterNewBadger.removeBadge();
+  }
+
+  static Future<void> clearAllNotifications() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
+    print("✅ All notifications cleared!");
   }
 }
