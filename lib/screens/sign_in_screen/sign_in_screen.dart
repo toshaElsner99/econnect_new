@@ -7,6 +7,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../notificationServices/pushNotificationService.dart';
 import '../../providers/sign_in_provider.dart';
 import '../../utils/app_color_constants.dart';
 
@@ -26,7 +27,12 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    clearBadge();
     _setupAnimations();
+  }
+
+  clearBadge() async{
+    await NotificationService.clearBadgeCount();
   }
 
   void _setupAnimations() {

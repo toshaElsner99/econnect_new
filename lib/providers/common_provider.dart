@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../model/get_user_mention_model.dart';
+import '../notificationServices/pushNotificationService.dart';
 import '../screens/sign_in_screen/sign_in_Screen.dart';
 import '../utils/common/common_function.dart';
 import '../utils/common/prefrance_function.dart';
@@ -53,6 +54,8 @@ class CommonProvider extends ChangeNotifier {
     signInProvider.fcmTokenRemoveInAPI();
     await clearData();
     pushAndRemoveUntil(screen: SignInScreen());
+    await NotificationService.clearBadgeCount();
+    await NotificationService.clearAllNotifications();
   }
 
   Future<void> updateStatusCall({required String status}) async {
