@@ -23,7 +23,6 @@ import '../../screens/chat/media_preview_screen.dart';
 import '../api_service/api_string_constants.dart';
 import '../app_color_constants.dart';
 import '../app_fonts_constants.dart';
-import '../app_preference_constants.dart';
 import '../app_string_constants.dart';
 import 'common_function.dart';
 import 'package:e_connect/providers/chat_provider.dart';
@@ -1683,17 +1682,20 @@ Widget commonHTMLText({required String message}) {
 
         }
         if (user.fullName != null) {
-          processedMessage = processedMessage.replaceAllMapped(
-            RegExp(r'\b' + RegExp.escape(user.fullName!) + r'\b', caseSensitive: false),
-                (match) {
-              // Don't wrap if it's already wrapped in username span
-                int startIndex = match.start - 20 >= 0 ? match.start - 20 : 0;
-                if (match.input.substring(startIndex, match.start).contains('class="username"')) {
-                return match.group(0)!;
-              }
-              return '<span class="username">${match.group(0)}</span>';
-            },
-          );
+          if (processedMessage.startsWith("<")) {
+            processedMessage = processedMessage.replaceAllMapped(
+              RegExp(r'\b' + RegExp.escape(user.fullName!) + r'\b',
+                  caseSensitive: false),
+                  (match) {
+                // Don't wrap if it's already wrapped in username span
+                if (match.input.substring(match.start - 20, match.start)
+                    .contains('class="username"')) {
+                  return match.group(0)!;
+                }
+                return '<span class="username">${match.group(0)}</span>';
+              },
+            );
+          }
         }
       }
     }

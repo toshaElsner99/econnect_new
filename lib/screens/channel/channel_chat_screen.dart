@@ -383,29 +383,19 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   initializedScreen(){
     _messageController.addListener(_onTextChanged);
     print("CHANNELID>>> ${channelID}");
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      socketProvider.userTypingEventChannel(
-          channelId: channelID,
-          isReplyMsg: false,
-          isTyping:  0
-      );
+      socketProvider.userTypingEventChannel(channelId: channelID, isReplyMsg: false, isTyping:  0);
       channelChatProviderInit.getTypingUpdate(true);
+
       /// this for socket listen in channel chat for new message and delete //
       socketProvider.listenForChannelChatScreen(channelId: widget.channelId);
-      // socketProvider.commonListenForChats(id: widget.channelId, isSingleChat: false,);
       pagination(channelId: widget.channelId);
       channelChatProviderInit.getChannelInfoApiCall(channelId: widget.channelId,callFroHome: true);
       Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
       channelChatProviderInit.getChannelChatApiCall(channelId: widget.channelId,pageNo: 1);
       channelChatProviderInit.getChannelMembersList(widget.channelId);
       channelChatProviderInit.getFileListingInChannelChat(channelId: widget.channelId);
-      // socketProvider.listenChannelChatScreen(channelId: channelID);
-      // socketProvider.listenChannelChatScreen(channelId: channelID);
-      pagination(channelId: channelID);
-      Provider.of<ChannelChatProvider>(context, listen: false).getChannelInfoApiCall(channelId: channelID,callFroHome: true);
-      Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
-      Provider.of<ChannelChatProvider>(context, listen: false).getChannelChatApiCall(channelId: channelID,pageNo: 1);
-      Provider.of<ChannelChatProvider>(context, listen: false).getChannelMembersList(channelID);
     },);
   }
 
