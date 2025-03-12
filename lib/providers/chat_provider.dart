@@ -487,6 +487,7 @@ class ChatProvider extends  ChangeNotifier {
         method: Method.POST,
         reqBody: reqBody);
     if (statusCode200Check(response)) {
+      socketProvider.reactMessagesSC(response: {"receiverId": receiverId, "senderId": signInModel.data?.user?.id});
       print("Reacted Successfully");
       print("isFrom = $isFrom");
       if (isFrom == "Chat") {
@@ -559,11 +560,6 @@ class ChatProvider extends  ChangeNotifier {
           }
         }
       }
-
-      socketProvider.reactMessagesSC(response: {
-        "receiverId": receiverId,
-        "senderId": signInModel.data?.user?.id,
-      });
     }
   }
 
@@ -580,6 +576,10 @@ class ChatProvider extends  ChangeNotifier {
     final response = await ApiService.instance.request(
         endPoint: ApiString.removeReact, method: Method.POST, reqBody: reqBody);
     if (statusCode200Check(response)) {
+      socketProvider.reactMessagesSC(response: {
+        "receiverId": receiverId,
+        "senderId": signInModel.data?.user?.id,
+      });
       print("React removed Successfully");
       print("isFrom = $isFrom");
 
@@ -621,10 +621,7 @@ class ChatProvider extends  ChangeNotifier {
         }
       }
 
-      socketProvider.reactMessagesSC(response: {
-        "receiverId": receiverId,
-        "senderId": signInModel.data?.user?.id,
-      });
+
     }
   }
 }

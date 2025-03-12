@@ -105,7 +105,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       /// opposite user typing listen ///
       chatProvider.getTypingUpdate();
       /// THis Is Socket Listening Event ///
-      socketProvider.listenSingleChatScreen(oppositeUserId: oppositeUserId,getSecondUserCall: (){
+      socketProvider.listenForSingleChatScreen(oppositeUserId: oppositeUserId,getSecondUserCall: (){
         fetchOppositeUserDetails();
       });
       // socketProvider.commonListenForChats(id: oppositeUserId, isSingleChat: true,getSecondUserCall: ()=> fetchOppositeUserDetails());
