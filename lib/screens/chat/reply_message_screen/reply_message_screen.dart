@@ -93,7 +93,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     // await commonProvider.getUserByIDCallForSecondUser(userId: signInModel.data!.user!.id);
     setState(()  {
       userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
-      userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
+      userCache["${commonProvider.getUserModel?.data!.user!.id}"] = commonProvider.getUserModel!;
     });
     print("user>>>>>> ${userCache}");
     print("user>>>>>> ${userDetails?.data!.user!.username}");
