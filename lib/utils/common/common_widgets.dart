@@ -3065,7 +3065,8 @@ void showReactionBar(BuildContext context, String messageId, String receiverId, 
         child: reactionBar(
           context: context,
           onReactionSelected: (reactionUrl) {
-            if(isFrom == "Chat" && isFrom == "Reply") {
+            print("Reaction Bar = $isFrom");
+            if(isFrom == "Chat" || isFrom == "Reply") {
               final chatProvider =
                   Provider.of<ChatProvider>(context, listen: false);
               chatProvider.reactMessage(
