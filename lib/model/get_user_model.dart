@@ -254,7 +254,7 @@ class UserData {
 }
 
 class User {
-  final String? id;
+  final String? sId;
   final String? fullName;
   final String? username;
   final String? email;
@@ -283,7 +283,7 @@ class User {
   final int? pinnedMessageCount;
 
   User({
-    this.id,
+    this.sId,
     this.fullName,
     this.username,
     this.email,
@@ -314,7 +314,7 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['_id'] as String?,
+      sId: json['_id'] as String?,
       fullName: json['fullName'] as String?,
       username: json['username'] as String?,
       email: json['email'] as String?,
@@ -671,8 +671,8 @@ class SecondUser {
   String? status;
   bool? isActive;
   List<dynamic>? loginActivity;
-  dynamic customStatus;
-  dynamic customStatusEmoji;
+  String? customStatus;
+  String? customStatusEmoji;
   List<dynamic>? muteUsers;
   List<dynamic>? favoriteList;
   bool? isLeft;
@@ -733,8 +733,8 @@ class SecondUser {
         loginActivity!.add(v);
       });
     }
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['custom_status'] ?? "";
+    customStatusEmoji = json['custom_status_emoji'] ?? "";
     if (json['mute_users'] != null) {
       muteUsers = <dynamic>[];
       json['mute_users'].forEach((v) {
@@ -779,8 +779,8 @@ class SecondUser {
     if (loginActivity != null) {
       data['loginActivity'] = loginActivity!.map((v) => v).toList();
     }
-    data['custom_status'] = customStatus;
-    data['custom_status_emoji'] = customStatusEmoji;
+    data['custom_status'] = customStatus ?? "";
+    data['custom_status_emoji'] = customStatusEmoji ?? "";
     if (muteUsers != null) {
       data['mute_users'] = muteUsers!.map((v) => v).toList();
     }
@@ -1065,46 +1065,46 @@ class ReceiverInfoSecondUser {
 
 
 class ForwardMSGInfoSecondUser {
-  String id;
-  String senderId;
-  String receiverId;
-  String content;
-  List<String> files;
+  String? id;
+  String? senderId;
+  String? receiverId;
+  String? content;
+  List<String>? files;
   String? replyTo;
-  bool isReply;
-  bool isLog;
-  bool isForwarded;
-  bool isEdited;
+  bool? isReply;
+  bool? isLog;
+  bool? isForwarded;
+  bool? isEdited;
   String? forwardFrom;
-  List<String> readBy;
-  bool isSeen;
-  bool isDeleted;
-  List<String> taggedUsers;
-  List<String> reactions;
-  DateTime createdAt;
-  DateTime updatedAt;
-  int v;
+  List<String>? readBy;
+  bool? isSeen;
+  bool? isDeleted;
+  List<String>? taggedUsers;
+  List<String>? reactions;
+  DateTime? createdAt;
+  DateTime? updatedAt;
+  int? v;
 
   ForwardMSGInfoSecondUser({
-    required this.id,
-    required this.senderId,
-    required this.receiverId,
-    required this.content,
-    required this.files,
+    this.id,
+    this.senderId,
+    this.receiverId,
+    this.content,
+    this.files,
     this.replyTo,
-    required this.isReply,
-    required this.isLog,
-    required this.isForwarded,
-    required this.isEdited,
+    this.isReply,
+    this.isLog,
+    this.isForwarded,
+    this.isEdited,
     this.forwardFrom,
-    required this.readBy,
-    required this.isSeen,
-    required this.isDeleted,
-    required this.taggedUsers,
-    required this.reactions,
-    required this.createdAt,
-    required this.updatedAt,
-    required this.v,
+    this.readBy,
+    this.isSeen,
+    this.isDeleted,
+    this.taggedUsers,
+    this.reactions,
+    this.createdAt,
+    this.updatedAt,
+    this.v,
   });
 
   // Factory method to create a Forward instance from JSON
@@ -1151,8 +1151,8 @@ class ForwardMSGInfoSecondUser {
       'isDeleted': isDeleted,
       'tagged_users': taggedUsers,
       'reactions': reactions,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
       '__v': v,
     };
   }

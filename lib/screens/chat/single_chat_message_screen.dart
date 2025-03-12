@@ -126,7 +126,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: oppositeUserId);
     setState(()  {
       userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser;
-      userCache["${commonProvider.getUserModel?.data!.user!.id}"] = commonProvider.getUserModel!;
+      userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
     });
     // print("userCache>>>>> ${userCache[oppositeUserId]}");
   }
@@ -326,7 +326,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               const SizedBox(width: 5),
               Visibility(
                 visible: userDetails?.data?.user?.customStatusEmoji != null &&
-                    userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
+                    userDetails?.data?.user?.customStatusEmoji! != "",
                 child: Padding(
                   padding: const EdgeInsets.only(left: 5.0),
                   child: CachedNetworkImage(
@@ -680,7 +680,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(userID: "${user?.data!.user!.id}", status: "${user?.data!.user!.status}",otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',radius: 17),
+                    child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "${user?.data!.user!.status}",otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',radius: 17),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -698,20 +698,20 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 height: 1.2,
                                 text:
                                 user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', fontWeight: FontWeight.bold),
-                            if (signInModel.data?.user!.id == user?.data!.user!.id && commonProvider.customStatusUrl.isNotEmpty) ...{
+                            if (signInModel.data?.user!.id == user?.data!.user!.sId && commonProvider.customStatusUrl.isNotEmpty) ...{
                               SizedBox(width: 8,),
                               CachedNetworkImage(
                                 width: 20,
                                 height: 20,
                                 imageUrl: commonProvider.customStatusUrl,
                               ),
-                            } else if (userDetails?.data!.user!.customStatusEmoji != "" && userDetails?.data!.user!.customStatusEmoji != null) ...{
+                            } else if (userDetails?.data?.user?.customStatusEmoji != "" && userDetails?.data?.user?.customStatusEmoji != null) ...{
                             Padding(
                             padding: const EdgeInsets.only(left: 5.0),
                             child: CachedNetworkImage(
                                 width: 20,
                                 height: 20,
-                                imageUrl: userDetails?.data!.user!.customStatusEmoji,
+                                imageUrl: userDetails?.data?.user?.customStatusEmoji  ?? "",
                               ),),
                             },
                             Padding(
