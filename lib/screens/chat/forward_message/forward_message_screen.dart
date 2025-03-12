@@ -49,7 +49,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
           context.read<ChannelListProvider>().browseAndSearchChannel(search: provider.searchController.text,combineList: true);
         }else {
           context.read<ChannelListProvider>().browseAndSearchChannel(search: "",combineList: true);
-          if(provider.searchController.text.length == 0){
+          if(provider.searchController.text.isEmpty){
             provider.clearList();
           }
         }

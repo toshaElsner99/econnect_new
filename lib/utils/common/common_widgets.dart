@@ -2188,7 +2188,8 @@ Widget commonTextFormField({
   int? errorMaxLines,
   void Function()? onTap,
   Color? fillColor = Colors.white,
-  bool? filled = false
+  bool? filled = false,
+  TextStyle? textStyle,
 }) {
   return TextFormField(
     controller: controller,
@@ -2203,8 +2204,7 @@ Widget commonTextFormField({
     textInputAction: textInputAction,
     initialValue: initialValue,
     inputFormatters: inputFormatters,
-    // style: const TextStyle(
-    //     color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14),
+    style: textStyle,
     decoration: InputDecoration(
       labelText: labelText,
       hintText: hintText,

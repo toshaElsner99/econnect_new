@@ -17,6 +17,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import '../screens/chat/single_chat_message_screen.dart';
 import '../screens/channel/channel_chat_screen.dart';
+import '../socket_io/socket_io.dart';
 import '../utils/loading_widget/loading_cubit.dart';
 import '../utils/common/common_function.dart';
 import '../providers/channel_list_provider.dart';
@@ -60,8 +61,10 @@ class NotificationService {
   /// ✅ Handles navigation when user clicks on push notification
   static void _handleNotificationRedirect(Map<String, dynamic> data) async{
     print("Handling Notification Click: $data");
-
     if (data['type'] == 'message') {
+      if(signInModel.data?.user?.id != null || signInModel.data?.user?.id != ""){
+        Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false).connectSocket();
+      }
       pushScreen(
         screen: SingleChatMessageScreen(
           userName: "",
@@ -71,6 +74,9 @@ class NotificationService {
         ),
       );
     } else if (data['type'] == 'channel') {
+      if(signInModel.data?.user?.id != null || signInModel.data?.user?.id != "") {
+        Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
+      }
       pushScreen(
         screen: ChannelChatScreen(
           channelId: data['senderId'],
@@ -144,8 +150,9 @@ class NotificationService {
             enableVibration: true,
             styleInformation: BigTextStyleInformation(notification.body!),
             // icon: 'mipmap/ic_notification',
-            icon: 'mipmap/transperent_logo',
-            color: AppColor.appBarColor,
+            color: Colors.transparent,
+            icon: 'mipmap/logo_e',
+            // color: AppColor.appBarColor,
             // colorized: true,
             // ledColor: AppColor.commonAppColor,
           ),

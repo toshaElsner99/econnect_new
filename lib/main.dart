@@ -75,6 +75,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SocketIoProvider()),
+        ChangeNotifierProvider(create: (_) => SocketIoProvider()),
         ChangeNotifierProvider(create: (_) => ChannelChatProvider()),
         ChangeNotifierProvider(create: (_) => LoadingProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
