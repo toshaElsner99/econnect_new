@@ -104,7 +104,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
             color: Colors.white.withOpacity(0.1),
           ),
           child: Image.asset(
-            AppImage.econnectLogo,
+            AppImage.appLogo,
             height: 60,
             width: 60,
           ),

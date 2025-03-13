@@ -751,7 +751,7 @@ class SecondUser {
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     lastActiveChat = json['lastActiveChat'] != null
-        ? LastActiveChatSecondUser.fromJson(json['lastActiveChat'])
+        ? LastActiveChatSecondUser .fromJson(json['lastActiveChat'])
         : null;
     avatarUrl = json['avatarUrl'];
     thumbnailAvatarUrl = json['thumbnail_avatarUrl'];

@@ -126,7 +126,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                             children: [
                               Padding(
                                 padding: EdgeInsets.only(right: 10),
-                                child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',radius: 15,needToShowIcon: false),
+                                child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data?.user?.thumbnailAvatarUrl ?? '',radius: 15,needToShowIcon: false,userName: user?.data?.user?.username ?? ""),
                               ),
                               Flexible(
                                 child: Column(
@@ -196,7 +196,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                               Padding(
                                                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                                                 child: Row(children: [
-                                                  profileIconWithStatus(userID: messages.senderOfForwardSecondUser?.id ?? "", status: messages.senderOfForwardSecondUser?.status ?? "offline",needToShowIcon: false,otherUserProfile: messages.senderOfForwardSecondUser?.thumbnailAvatarUrl),
+                                                  profileIconWithStatus(userID: messages.senderOfForwardSecondUser?.id ?? "", status: messages.senderOfForwardSecondUser?.status ?? "offline",needToShowIcon: false,otherUserProfile: messages.senderOfForwardSecondUser?.thumbnailAvatarUrl,userName: messages.senderOfForwardSecondUser?.username ?? ""),
                                                   Padding(
                                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                                     child: Column(
@@ -299,7 +299,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                             children: [
                                               Padding(
                                                 padding: EdgeInsets.only(right: 10),
-                                                child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',radius: 10,needToShowIcon: false),
+                                                child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data?.user?.thumbnailAvatarUrl ?? '',radius: 10,needToShowIcon: false,userName: user?.data?.user?.username),
                                               ),
                                               // 🖼️ Overlapping profile images
                                               // if (messageList.repliesSenderInfo != null && messageList.repliesSenderInfo!.isNotEmpty)

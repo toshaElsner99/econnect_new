@@ -1003,6 +1003,7 @@ Widget commonPopUpForMsg({double size = 20,Function? delete,Function? pinMessage
 Widget profileIconWithStatus({
   required String userID,
   required String status,
+  required String userName,
   String? otherUserProfile,
   double radius = 15.0,
   double iconSize = 14.0,
@@ -1060,7 +1061,13 @@ Widget profileIconWithStatus({
               placeholder: (context, url) => CircularProgressIndicator(
                 strokeWidth: 2,
               ),
-              errorWidget: (context, url, error) => Icon(Icons.error, size: radius),
+              errorWidget: (context, url, error) {
+                String name = signInModel.data?.user?.id == userID
+                    ? signInModel.data?.user?.username ?? ''
+                    : userName; // Ensure 'userName' is defined if it's for another user
+                String firstLetter = name.isNotEmpty ? name[0].toUpperCase() : 'U'; // First letter or 'U' if empty
+                return Center(child: commonText(text: firstLetter)); // Display the first letter of the username
+              },
             ),
           ),
         ),
@@ -1366,7 +1373,7 @@ Future commonForwardMSGDialog({required BuildContext context,
                     children: [
                       Row(
                         children: [
-                          profileIconWithStatus(userID: userID, status: "",otherUserProfile: otherUserProfile,needToShowIcon: false,),
+                          profileIconWithStatus(userID: userID, status: "",otherUserProfile: otherUserProfile,needToShowIcon: false,userName: userName),
                           commonText(text: userName),
                           commonText(text: time),
                         ],
@@ -1653,9 +1660,9 @@ Widget commonText({
   );
 }
 
-Widget commonHTMLText({required String message}) {
+Widget commonHTMLText({required String message,String userId = "", bool isLog = false}) {
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
-
+  final currentUserId = signInModel.data?.user?.id ?? "";
   // First process @mentions
   String processedMessage = message.replaceAllMapped(
     RegExp(r'@(\w+)'),
@@ -1713,7 +1720,20 @@ Widget commonHTMLText({required String message}) {
       Map<String, String> styles = {
         'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
       };
-
+      if (userId == currentUserId) {
+        processedMessage = processedMessage.replaceAll(
+          RegExp(r'added to the channel by (\s*<span class="username">@(\w+)<\/span>)'),
+          'added to the channel by you',
+        );
+      } else {
+        // Replace the username with a grey overlay
+        processedMessage = processedMessage.replaceAllMapped(
+          RegExp(r'@(\w+)'),
+              (match) {
+            return '<span style="color: rgb(150, 150, 150);">@${match.group(1)}</span>';
+          },
+        );
+      }
       if (element.classes.contains('renderer_bold')) {
         styles['font-weight'] = 'bold';
       }

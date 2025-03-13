@@ -644,18 +644,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ),
       ),
-      child: Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-          Image.asset(AppImage.eCLogo, width: 30, height: 30),
-        commonText(
-          text: AppString.connect,
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-        ),
-      ],
-      ),
+      child: Image.asset(AppImage.appLogo, width: 30, height: 30),
     );
   }
 
@@ -758,6 +747,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: Row(
         children: [
           profileIconWithStatus(
+            userName: username,
             userID: userId,
             otherUserProfile: imageUrl,
             status: status,

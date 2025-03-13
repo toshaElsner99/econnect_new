@@ -185,7 +185,15 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       return PopScope(
         canPop: true,
         onPopInvokedWithResult: (didPop, result) {
-          channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
+          if(widget.isFromNotification ?? false) {
+            pushAndRemoveUntil(screen: HomeScreen());
+          }else{
+            channelListProvider.readUnreadMessages(
+              oppositeUserId: oppositeUserId,
+              isCalledForFav: widget.calledForFavorite ?? false,
+              isCallForReadMessage: true,
+            );
+          }
         },
         child: Scaffold(
           appBar: buildAppBar(commonProvider, chatProvider),
@@ -680,7 +688,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "${user?.data!.user!.status}",otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',radius: 17),
+                    child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "${user?.data!.user!.status}",otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',radius: 17,userName: user?.data!.user!.username ?? ''),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -817,6 +825,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                                     child: Row(
                                                       children: [
                                                         profileIconWithStatus(
+                                                          userName: reaction.username ?? "",
                                                           userID: reaction.userId ?? "",
                                                           status: "online",
                                                           radius: 16,
@@ -935,7 +944,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                                 child: Row(children: [
-                                  profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "" , status: messageList.senderOfForward?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl),
+                                  profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "" , status: messageList.senderOfForward?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl,userName: messageList.senderOfForward?.username ?? ""),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                     child: Column(
@@ -1066,6 +1075,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                             clipBehavior: Clip.none,
                                             children: [
                                               profileIconWithStatus(
+                                                userName: messageList.repliesSenderInfo![0].username,
                                                 userID: messageList.repliesSenderInfo![0].id,
                                                 status: "",
                                                 needToShowIcon: false,
@@ -1076,6 +1086,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                                 Positioned(
                                                   left: 16,
                                                   child: profileIconWithStatus(
+                                                    userName: messageList.repliesSenderInfo![0].username,
                                                     userID: messageList.repliesSenderInfo![1].id,
                                                     status: "",
                                                     needToShowIcon: false,

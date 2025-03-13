@@ -230,6 +230,7 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: profileIconWithStatus(
+        userName: member.username.toString(),
         userID: member.sId!,
         otherUserProfile: member.avatarUrl,
         status: member.status!,
@@ -615,6 +616,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                     final user = filteredUsers[index];
                     return ListTile(
                       leading: profileIconWithStatus(
+                        userName: user.username.toString(),
                         userID: user.sId ?? '',
                         otherUserProfile: user.avatarUrl,
                         status: '',

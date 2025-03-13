@@ -229,6 +229,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                                   children: [
                                     if (list['type'] == 'user') ...{
                                       profileIconWithStatus(
+                                        userName: list['name'],
                                         userID: list['userId'],
                                         status: "",
                                         needToShowIcon: false,
@@ -293,6 +294,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                     Row(
                       children: [
                         profileIconWithStatus(
+                          userName: widget.userName,
                             userID: widget.userID,
                             status: "",
                             otherUserProfile: widget.otherUserProfile,

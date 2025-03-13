@@ -24,6 +24,7 @@ ThemeData lightMode = ThemeData(
       ),
     ),
     appBarTheme: const AppBarTheme(
+        centerTitle: false,
         titleSpacing: 0,
         surfaceTintColor: Colors.transparent,
         // backgroundColor: Colors.transparent,
@@ -72,6 +73,7 @@ ThemeData darkMode = ThemeData(
       ),
     ),
     appBarTheme: const AppBarTheme(
+        centerTitle: false,
         titleSpacing: 0,
         surfaceTintColor: Colors.transparent,
         // backgroundColor: Colors.transparent,

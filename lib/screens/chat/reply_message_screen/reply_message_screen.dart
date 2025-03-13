@@ -9,7 +9,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -210,46 +209,53 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(onPressed: (){
-          pop(popValue: true);
-          chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
-        },
-        icon: Icon(CupertinoIcons.back,color: Colors.white,)),
-        bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
-        titleSpacing: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            commonText(text: "Thread", fontSize: 16,),
-          Consumer<ChatProvider>(builder: (context, value, child) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 1.5),
-              child: commonText(text:
-              (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
-                  ? "Typing..." : widget.userName,
-                  fontSize: 12,fontWeight: FontWeight.w400),
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        // pop(popValue: true);
+        chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(onPressed: (){
+            pop(popValue: true);
+            chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
+          },
+          icon: Icon(CupertinoIcons.back,color: Colors.white,)),
+          bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
+          titleSpacing: 0,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              commonText(text: "Thread", fontSize: 16,),
+            Consumer<ChatProvider>(builder: (context, value, child) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 1.5),
+                child: commonText(text:
+                (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
+                    ? "Typing..." : widget.userName,
+                    fontSize: 12,fontWeight: FontWeight.w400),
 
-            );
-          },),
+              );
+            },),
+            ],
+          ),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                reverse: true,
+                children: [
+                  dateHeaders(),
+                ],
+              ),
+            ),
+            SizedBox(height: 20,),
+            inputTextFieldWithEditor(),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              controller: scrollController,
-              reverse: true,
-              children: [
-                dateHeaders(),
-              ],
-            ),
-          ),
-          SizedBox(height: 20,),
-          inputTextFieldWithEditor(),
-        ],
       ),
     );
   }
@@ -350,7 +356,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: profileIconWithStatus(userID: "${messageList.senderId!.sId}", status: "${messageList.senderId!.status}",otherUserProfile: "${messageList.senderId!.avatarUrl}",radius: 17),
+                    child: profileIconWithStatus(userID: "${messageList.senderId!.sId}", status: "${messageList.senderId!.status}",otherUserProfile: messageList.senderId?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderId?.userName ?? ""),
                   ),
 
                 Expanded(
@@ -464,6 +470,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                                     child: Row(
                                                       children: [
                                                         profileIconWithStatus(
+                                                          userName: reaction.userId?.username ?? "",
                                                           userID: reaction.userId!.sId ?? '',
                                                           status: "online",
                                                           radius: 16,
@@ -586,7 +593,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl),
+                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl,userName: messageList.forwardFrom?.senderId?.userName ?? ""),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
