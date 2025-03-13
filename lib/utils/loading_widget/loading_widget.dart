@@ -26,21 +26,21 @@ class Loading extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                 Image.asset(AppImage.noInternet,height: 100,width: 100,color: Colors.white,),
+                  Image.asset(AppImage.noInternet,height: 100,width: 100,color: Colors.white,),
                   const SizedBox(height: 16),
                   commonText(text:
-                    networkData.connectionStatus,
-                    textAlign: TextAlign.center,
-                    color: Colors.white,
-                    fontSize: 16,
-                    decoration: TextDecoration.none
+                  networkData.connectionStatus,
+                      textAlign: TextAlign.center,
+                      color: Colors.white,
+                      fontSize: 16,
+                      decoration: TextDecoration.none
                   ),
                 ],
               ),
             ),
           );
         }
-        
+
         return IgnorePointer(
           ignoring: (loadingData.isLoading),
           child: Stack(
@@ -52,8 +52,8 @@ class Loading extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.all(Radius.circular(16)),
-                      color: Colors.black.withOpacity(0.2)
+                        borderRadius: const BorderRadius.all(Radius.circular(16)),
+                        color: Colors.black.withOpacity(0.2)
                     ),
                     child: const SpinKitCircle(
                       color: Colors.white,
