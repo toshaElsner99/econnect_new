@@ -11,6 +11,7 @@ import 'package:e_connect/screens/channel/channel_chat_screen.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
+import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -45,9 +46,6 @@ class ChannelListProvider extends ChangeNotifier{
   /// GET FAVORITE LIST IN HOME SCREEN ///
   Future<void> getFavoriteList()async{
     print("userID>>>> ${signInModel.data?.user?.id}");
-    // final header = {
-    //   'Authorization': "Bearer ${signInModel.data!.authToken}",
-    // };
     final requestBody = {
       "userId": signInModel.data?.user?.id,
     };
@@ -98,6 +96,8 @@ class ChannelListProvider extends ChangeNotifier{
       pop();
       pushScreen(screen: ChannelChatScreen(channelId: response["data"]["_id"]));
       getChannelList();
+    }else if(response['statusCode'] == 403) {
+        commonShowToast("Channel Name is already used",Colors.red);
     }
     notifyListeners();
   }
