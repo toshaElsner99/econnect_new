@@ -32,7 +32,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   }
 
   clearBadge() async{
-    await NotificationService.clearBadgeCount();
+    // await NotificationService.clearBadgeCount();
   }
 
   void _setupAnimations() {
