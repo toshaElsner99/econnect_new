@@ -28,9 +28,9 @@ class CommonProvider extends ChangeNotifier {
 
   void updatesCustomStatus(){
     selectedIndexOfStatus = null;
-    setCustomTextController.text = getUserModel?.data?.user?.customStatus;
-    customStatusTitle = getUserModel?.data?.user?.customStatus;
-    customStatusUrl = getUserModel?.data?.user?.customStatusEmoji;
+    setCustomTextController.text = getUserModel?.data?.user?.customStatus ?? "";
+    customStatusTitle = getUserModel?.data?.user?.customStatus ?? "";
+    customStatusUrl = getUserModel?.data?.user?.customStatusEmoji ?? "";
     notifyListeners();
   }
 

@@ -212,14 +212,14 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                               ),
                                               commonHTMLText(message: "${messages.forwardMSGInfoSecondUser?.content}"),
                                               Visibility(
-                                                visible: messages.forwardMSGInfoSecondUser?.files.length != 0 ? true : false,
+                                                visible: messages.forwardMSGInfoSecondUser?.files?.length != 0 ? true : false,
                                                 child: ListView.builder(
                                                   shrinkWrap: true,
-                                                  itemCount: messages.forwardMSGInfoSecondUser?.files.length ?? 0,
+                                                  itemCount: messages.forwardMSGInfoSecondUser?.files?.length ?? 0,
                                                   physics: NeverScrollableScrollPhysics(),
                                                   itemBuilder: (context, index) {
-                                                    final filesUrl = messages.forwardMSGInfoSecondUser?.files[index];
-                                                    String originalFileName = getFileName(messages.forwardMSGInfoSecondUser!.files[index]);
+                                                    final filesUrl = messages.forwardMSGInfoSecondUser?.files?[index] ?? "";
+                                                    String originalFileName = getFileName(messages.forwardMSGInfoSecondUser!.files?[index] ?? "");
                                                     String formattedFileName = formatFileName(originalFileName);
                                                     String fileType = getFileExtension(originalFileName);
                                                     return Container(

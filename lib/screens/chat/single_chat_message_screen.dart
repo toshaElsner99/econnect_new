@@ -88,15 +88,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
 
   initializeScreen(){
-    scrollController.addListener(() {
-      _saveScrollPosition();
-    });
+    scrollController.addListener(() {_saveScrollPosition();});
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      socketProvider.userTypingEvent(
-        oppositeUserId: oppositeUserId,
-        isReplyMsg: false,
-        isTyping: 0,
-      );
+      socketProvider.userTypingEvent(oppositeUserId: oppositeUserId, isReplyMsg: false, isTyping: 0,);
       _fetchAndCacheUserDetails();
       print("oppositeUserId in init==> ${oppositeUserId}");
       /// this is for pagination ///
@@ -108,17 +102,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       socketProvider.listenForSingleChatScreen(oppositeUserId: oppositeUserId,getSecondUserCall: (){
         fetchOppositeUserDetails();
       });
-      // socketProvider.commonListenForChats(id: oppositeUserId, isSingleChat: true,getSecondUserCall: ()=> fetchOppositeUserDetails());
-      /// THis is Doing for update pin message and get Message List ///
-      // socketProvider.socketListenPinMessage(oppositeUserId: oppositeUserId,callFun: (){
-      //   chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
-      //   fetchOppositeUserDetails();
-      // });
-      /// this for add user to chat list on home screen 3rd Expansion tiles ///
+
       if(widget.needToCallAddMessage == true){
         channelListProvider.addUserToChatList(selectedUserId: oppositeUserId);
       }
-      // chatProvider.getFileListingInChat(oppositeUserId: oppositeUserId);
+
       /// this is for read message ///
       channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
       /// this is default call with page 1 for chat listing ///
@@ -126,7 +114,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       /// this is for fetch other user details and store it to cache memory ///
       /// this is for get user mention listing api ///
       commonProvider.getUserApi(id: oppositeUserId);
-      commonProvider.getUserApi(id: widget.oppositeUserId);
       chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
     },);
     _messageController.addListener(_onTextChanged);
@@ -339,7 +326,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               const SizedBox(width: 5),
               Visibility(
                 visible: userDetails?.data?.user?.customStatusEmoji != null &&
-                    userDetails?.data?.user?.customStatusEmoji!.isNotEmpty,
+                    userDetails?.data?.user?.customStatusEmoji! != "",
                 child: Padding(
                   padding: const EdgeInsets.only(left: 5.0),
                   child: CachedNetworkImage(
@@ -725,13 +712,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 height: 20,
                                 imageUrl: commonProvider.customStatusUrl,
                               ),
-                            } else if (userDetails?.data!.user!.customStatusEmoji != "" && userDetails?.data!.user!.customStatusEmoji != null) ...{
+                            } else if (userDetails?.data?.user?.customStatusEmoji != "" && userDetails?.data?.user?.customStatusEmoji != null) ...{
                             Padding(
                             padding: const EdgeInsets.only(left: 5.0),
                             child: CachedNetworkImage(
                                 width: 20,
                                 height: 20,
-                                imageUrl: userDetails?.data!.user!.customStatusEmoji,
+                                imageUrl: userDetails?.data?.user?.customStatusEmoji  ?? "",
                               ),),
                             },
                             Padding(
