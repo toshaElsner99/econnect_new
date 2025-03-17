@@ -185,7 +185,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(userID: messageList.senderInfo?.sId ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.thumbnailAvatarUrl ?? "",radius: 17),
+                    child: profileIconWithStatus(userID: messageList.senderInfo?.sId ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderInfo?.username ?? ""),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -263,7 +263,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.senderOfForward?.sId ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl ?? ""),
+                                    profileIconWithStatus(userID: messageList.senderOfForward?.sId ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl ?? "",userName: messageList.senderOfForward?.username ?? ""),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
@@ -388,6 +388,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                           clipBehavior: Clip.none,
                                           children: [
                                             profileIconWithStatus(
+                                              userName: messageList.repliesSenderInfo?[0].username ?? "",
                                               userID: messageList.repliesSenderInfo?[0].sId ?? "",
                                               status: "",
                                               needToShowIcon: false,
@@ -398,6 +399,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                               Positioned(
                                                 left: 16,
                                                 child: profileIconWithStatus(
+                                                  userName: messageList.repliesSenderInfo?[1].sId ?? "",
                                                   userID: messageList.repliesSenderInfo?[1].sId ?? "",
                                                   status: "",
                                                   needToShowIcon: false,

@@ -237,7 +237,7 @@ class SocketIoProvider extends ChangeNotifier{
     });
   }
   /// This is for channel chat screen ///
-  void listenForChannelChatScreen({required String channelId}) {
+  void listenForChannelChatScreen({required String channelId,}) {
     socket.off(notification);
     socket.off(deleteMessageChannelListen);
     socket.off(notificationForPinMessagesChannelListen);
@@ -262,6 +262,7 @@ class SocketIoProvider extends ChangeNotifier{
     socket.on(notificationForPinMessagesChannelListen, (data) {
       print("listSingleChatScreen >>> $data");
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true);
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelInfoApiCall(channelId: channelId, callFroHome: false);
     });
 
     socket.on(renameChannel, (data) {

@@ -681,12 +681,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
                     child: profileIconWithStatus(
-                      userID: "${user?.data!.user!.sId}", 
+                      userID: "${user?.data!.user!.sId}",
                       status: "${user?.data!.user!.status}",
                       otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',
                       radius: 17,
                       needToShowIcon: false,
                       borderColor: AppColor.blueColor,
+                        userName: user?.data!.user!.username ?? ''
                     ),
                   )
                 } else ...{
@@ -797,7 +798,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                       .toSet()
                                       .take(2)
                                       .toList();
-                                    
+
                                     return Stack(
                                       children: [
                                         if (uniqueUsers.length >= 2)
@@ -946,11 +947,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                                 child: Row(children: [
                                   profileIconWithStatus(
-                                    userID: messageList.senderOfForward?.id ?? "" , 
+                                    userID: messageList.senderOfForward?.id ?? "" ,
                                     status: messageList.senderOfForward?.status ?? "offline",
                                     needToShowIcon: false,
                                     otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl,
                                     borderColor: AppColor.blueColor,
+                                      userName: messageList.senderOfForward?.username ?? ""
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -1082,6 +1084,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                             clipBehavior: Clip.none,
                                             children: [
                                               profileIconWithStatus(
+                                                userName: messageList.repliesSenderInfo![0].username,
                                                 userID: messageList.repliesSenderInfo![0].id,
                                                 status: "",
                                                 needToShowIcon: false,
@@ -1093,12 +1096,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                                 Positioned(
                                                   left: 16,
                                                   child: profileIconWithStatus(
+                                                    userName: messageList.repliesSenderInfo![0].username,
                                                     userID: messageList.repliesSenderInfo![1].id,
                                                     status: "",
                                                     needToShowIcon: false,
                                                     radius: 12,
                                                     otherUserProfile: messageList.repliesSenderInfo![1].thumbnailAvatarUrl,
-                                                    borderColor: AppColor.blueColor,
                                                   ),
                                                 ),
                                             ],
@@ -1571,104 +1574,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     ).toList();
 
     return [...initialUsers, ...otherUsers];
-  }
-
-  void _showReactionsList(BuildContext context, List<Reaction> reactions) {
-    // Group reactions by user
-    final Map<String, List<String>> userReactions = {};
-    for (var reaction in reactions) {
-      if (reaction.userId != null) {
-        if (!userReactions.containsKey(reaction.userId)) {
-          userReactions[reaction.userId!] = [];
-        }
-        if (reaction.emoji != null) {
-          userReactions[reaction.userId!]!.add(reaction.emoji!);
-        }
-      }
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Reactions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
-                ),
-              ),
-              SizedBox(height: 12),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.5,
-                ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: userReactions.length,
-                  itemBuilder: (context, index) {
-                    final userId = userReactions.keys.elementAt(index);
-                    final userEmojis = userReactions[userId]!;
-                    final user = userCache[userId]?.data?.user;
-                    
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
-                        children: [
-                          profileIconWithStatus(
-                            userID: userId,
-                            status: "",
-                            needToShowIcon: false,
-                            radius: 16,
-                            otherUserProfile: user?.thumbnailAvatarUrl ?? '',
-                            borderColor: AppColor.blueColor,
-                          ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  user?.username ?? "Unknown",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Row(
-                                  children: userEmojis.map((emoji) => Padding(
-                                    padding: const EdgeInsets.only(right: 4.0),
-                                    child: CachedNetworkImage(
-                                      imageUrl: emoji,
-                                      height: 20,
-                                      width: 20,
-                                      errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
-                                    ),
-                                  )).toList(),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
 }

@@ -26,6 +26,7 @@ class ChatProfileHeader extends StatelessWidget {
           profileIconWithStatus(
             userID: userId,
             status: userStatus,
+            userName: userName,
             otherUserProfile: userImageUrl,
             radius: 60,
             iconSize: 25,

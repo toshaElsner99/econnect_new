@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <!-- Samsung -->
     <uses-permission android:name="com.sec.android.provider.badge.permission.READ"/>
@@ -51,6 +51,10 @@
                  the Android process has started. This theme is visible to the user
                  while the Flutter UI initializes. After that, this theme continues
                  to determine the Window background behind the Flutter UI. -->
+            <meta-data
+                android:name="com.google.firebase.messaging.default_notification_icon"
+                android:resource="@drawable/ic_notification"/>
+
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"

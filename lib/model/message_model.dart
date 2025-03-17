@@ -532,7 +532,7 @@ class Forward {
   bool isSeen;
   bool isDeleted;
   List<String> taggedUsers;
-  List<String> reactions;
+  // List<Reactions> reactions;
   DateTime createdAt;
   DateTime updatedAt;
   int v;
@@ -554,7 +554,7 @@ class Forward {
     required this.isSeen,
     required this.isDeleted,
     required this.taggedUsers,
-    required this.reactions,
+    // required this.reactions,
     required this.createdAt,
     required this.updatedAt,
     required this.v,
@@ -562,6 +562,7 @@ class Forward {
 
   // Factory method to create a Forward object from JSON
   factory Forward.fromJson(Map<String, dynamic> json) {
+    print("GET_messages_forward ${json['content']}");
     return Forward(
       id: json['_id'],
       senderId: json['senderId'],
@@ -579,7 +580,7 @@ class Forward {
       isSeen: json['is_seen'],
       isDeleted: json['isDeleted'],
       taggedUsers: List<String>.from(json['tagged_users']),
-      reactions: List<String>.from(json['reactions']),
+      // reactions: json['reactions'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
       v: json['__v'],
@@ -605,11 +606,33 @@ class Forward {
       'is_seen': isSeen,
       'isDeleted': isDeleted,
       'tagged_users': taggedUsers,
-      'reactions': reactions,
+      // 'reactions': reactions,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       '__v': v,
     };
+  }
+}
+
+class Reactions {
+  String? emoji;
+  String? userId;
+  String? sId;
+
+  Reactions({this.emoji, this.userId, this.sId});
+
+  Reactions.fromJson(Map<String, dynamic> json) {
+    emoji = json['emoji'];
+    userId = json['userId'];
+    sId = json['_id'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['emoji'] = this.emoji;
+    data['userId'] = this.userId;
+    data['_id'] = this.sId;
+    return data;
   }
 }
 

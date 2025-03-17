@@ -27,31 +27,37 @@ import 'notificationServices/pushNotificationService.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 late SignInModel signInModel;
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // SocketIoProvider();
+  await Firebase.initializeApp();
+  FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    if (message != null) {
+      print("App opened from terminated state: ${message.data}");
+      NotificationService.handleNotificationRedirect(message.data);
+    }
+  });
+  await NotificationService.initializeNotifications();
+  await NotificationService.registerFirebaseListeners();
+  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (initialMessage != null) {
+    // App received a notification when it was killed
+    print("App opened from terminated state: ${initialMessage.data}");
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationService.handleNotificationRedirect(initialMessage.data);
+    });
+  }
+  await Permission.notification.isDenied.then(
+        (bool value) {
+      if (value) {
+        Permission.notification.request();
+      }
+    },
+  );
   NetworkStatusService();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]).then((value)async{
-    await Firebase.initializeApp();
-    // Initialize Notifications
-    await NotificationService.initializeNotifications();
-    // Handle notification click when app is reopened
-    NotificationService.registerFirebaseListeners();
-    RemoteMessage? initialMessage =
-    await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage != null) {
-      // App received a notification when it was killed
-    }
-    await Permission.notification.isDenied.then(
-          (bool value) {
-        if (value) {
-          Permission.notification.request();
-        }
-      },
-    );
     runApp(const MyApp());
   },);
 }
@@ -74,6 +80,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => SocketIoProvider()),
         ChangeNotifierProvider(create: (_) => SocketIoProvider()),
         ChangeNotifierProvider(create: (_) => ChannelChatProvider()),
         ChangeNotifierProvider(create: (_) => LoadingProvider()),

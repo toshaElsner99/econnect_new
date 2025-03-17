@@ -32,7 +32,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   }
 
   clearBadge() async{
-    await NotificationService.clearBadgeCount();
+    // await NotificationService.clearBadgeCount();
   }
 
   void _setupAnimations() {
@@ -104,7 +104,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
             color: Colors.white.withOpacity(0.1),
           ),
           child: Image.asset(
-            AppImage.econnectLogo,
+            AppImage.appLogo,
             height: 60,
             width: 60,
           ),
@@ -157,7 +157,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
               signInProvider: signInProvider,
               controller: signInProvider.emailController,
               hintText: AppString.loginId,
-              prefixIcon: const Icon(CupertinoIcons.person),
+              prefixIcon: const Icon(CupertinoIcons.person,color: Colors.black,),
               isEmail: true,
             ),
             const SizedBox(height: 16),
@@ -165,7 +165,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
               signInProvider: signInProvider,
               controller: signInProvider.passwordController,
               hintText: AppString.password,
-              prefixIcon: const Icon(Icons.lock_open),
+              prefixIcon: const Icon(Icons.lock_open,color: Colors.black,),
               isPassword: true,
             ),
             const SizedBox(height: 24),
@@ -199,6 +199,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         prefixIcon: prefixIcon,
         isInputFormatForEmail: isEmail,
         obscureText: isPassword ? signInProvider.isVisible : false,
+        textStyle: TextStyle(color: Colors.black,),
         suffixIcon: isPassword
             ? InkWell(
           onTap: () => signInProvider.toggleEyeVisibility(),

@@ -106,73 +106,80 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(onPressed: () {
-          pop(popValue: true);
-          channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
-        } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
-        bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
-        titleSpacing: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            commonText(text: "Thread", fontSize: 16,),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 1.5),
-              child: commonText(text: widget.channelName, fontSize: 12,fontWeight: FontWeight.w400),
-            ),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              controller: scrollController,
-              reverse: true,
-              children: [
-                dateHeaders(),
-              ],
-            ),
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        // pop(popValue: true);
+        channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(onPressed: () {
+            pop(popValue: true);
+            channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
+          } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
+          bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
+          titleSpacing: 0,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              commonText(text: "Thread", fontSize: 16,),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 1.5),
+                child: commonText(text: widget.channelName, fontSize: 12,fontWeight: FontWeight.w400),
+              ),
+            ],
           ),
-          Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-            var filteredTypingUsers = channelChatProvider.typingUsers
-                .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                && user['routeId'] == widget.channelId
-                && user['isReply'] == true
-                && user['parentId'] == widget.msgID).toList();
-
-            String typingMessage;
-
-            if (filteredTypingUsers.isEmpty) {
-              typingMessage = "";
-            } else if (filteredTypingUsers.length == 1) {
-              typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-            } else {
-              var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-              var lastUser  = usernames.removeLast();
-              typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
-            }
-
-            return Container(
-              margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
-              alignment: Alignment.centerLeft,
-              child: Column(
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                reverse: true,
                 children: [
-                  if (typingMessage.isNotEmpty)
-                    commonText(
-                      text: typingMessage,
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w400,
-                    ),
+                  dateHeaders(),
                 ],
               ),
-            );
-          },),
-          inputTextFieldWithEditor()
-        ],
+            ),
+            Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+              var filteredTypingUsers = channelChatProvider.typingUsers
+                  .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                  && user['routeId'] == widget.channelId
+                  && user['isReply'] == true
+                  && user['parentId'] == widget.msgID).toList();
+
+              String typingMessage;
+
+              if (filteredTypingUsers.isEmpty) {
+                typingMessage = "";
+              } else if (filteredTypingUsers.length == 1) {
+                typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+              } else {
+                var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+                var lastUser  = usernames.removeLast();
+                typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
+              }
+
+              return Container(
+                margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  children: [
+                    if (typingMessage.isNotEmpty)
+                      commonText(
+                        text: typingMessage,
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w400,
+                      ),
+                  ],
+                ),
+              );
+            },),
+            inputTextFieldWithEditor()
+          ],
+        ),
       ),
     );
   }
@@ -273,7 +280,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                 /// Profile  Section ///
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: profileIconWithStatus(userID: "${messageList.senderId!.sId}", status: "${messageList.senderId!.status}",otherUserProfile: "${messageList.senderId!.avatarUrl}",radius: 17),
+                  child: profileIconWithStatus(userID: "${messageList.senderId?.sId}", status: "${messageList.senderId?.status}",otherUserProfile: messageList.senderId?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderId?.username ?? ""),
                 ),
 
                 Expanded(
@@ -367,14 +374,14 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                         .toSet()
                                         .take(2)
                                         .toList();
-                                      
+
                                       // Count total unique users for the counter
                                       final totalUniqueUsers = messageList.reactions!
                                         .map((r) => r.userId!.sId)
                                         .where((id) => id != null)
                                         .toSet()
                                         .length;
-                                      
+
                                       return Stack(
                                         clipBehavior: Clip.none,
                                         children: [
@@ -386,7 +393,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                                 decoration: BoxDecoration(
                                                   shape: BoxShape.circle,
                                                   border: Border.all(
-                                                    color: AppPreferenceConstants.themeModeBoolValueGet ? 
+                                                    color: AppPreferenceConstants.themeModeBoolValueGet ?
                                                       Colors.grey.shade900 : Colors.white,
                                                     width: 1.5,
                                                   ),
@@ -402,7 +409,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                                 ),
                                               ),
                                             ),
-                                          
+
                                           // Second user profile
                                           if (uniqueUsers.length >= 2)
                                             Positioned(
@@ -411,7 +418,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                                 decoration: BoxDecoration(
                                                   shape: BoxShape.circle,
                                                   border: Border.all(
-                                                    color: AppPreferenceConstants.themeModeBoolValueGet ? 
+                                                    color: AppPreferenceConstants.themeModeBoolValueGet ?
                                                       Colors.grey.shade900 : Colors.white,
                                                     width: 1.5,
                                                   ),
@@ -427,7 +434,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                                 ),
                                               ),
                                             ),
-                                          
+
                                           // Counter for additional users
                                           if (totalUniqueUsers > 2)
                                             Positioned(
@@ -1178,7 +1185,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                   itemBuilder: (context, index) {
                     final userId = userReactions.keys.elementAt(index);
                     final userEmojis = userReactions[userId]!;
-                    
+
                     return FutureBuilder<GetUserModelSecondUser?>(
                       future: Provider.of<CommonProvider>(context, listen: false).getUserByIDCallForSecondUser(userId: userId),
                       builder: (context, snapshot) {

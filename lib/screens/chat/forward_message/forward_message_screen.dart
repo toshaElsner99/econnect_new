@@ -49,7 +49,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
           context.read<ChannelListProvider>().browseAndSearchChannel(search: provider.searchController.text,combineList: true);
         }else {
           context.read<ChannelListProvider>().browseAndSearchChannel(search: "",combineList: true);
-          if(provider.searchController.text.length == 0){
+          if(provider.searchController.text.isEmpty){
             provider.clearList();
           }
         }
@@ -229,6 +229,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                                   children: [
                                     if (list['type'] == 'user') ...{
                                       profileIconWithStatus(
+                                        userName: list['name'],
                                         userID: list['userId'],
                                         status: "",
                                         needToShowIcon: false,
@@ -293,6 +294,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                     Row(
                       children: [
                         profileIconWithStatus(
+                          userName: widget.userName,
                             userID: widget.userID,
                             status: "",
                             otherUserProfile: widget.otherUserProfile,

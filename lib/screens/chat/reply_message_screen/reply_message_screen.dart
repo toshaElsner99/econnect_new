@@ -9,7 +9,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
@@ -210,46 +209,53 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(onPressed: (){
-          pop(popValue: true);
-          chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
-        },
-        icon: Icon(CupertinoIcons.back,color: Colors.white,)),
-        bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
-        titleSpacing: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            commonText(text: "Thread", fontSize: 16,),
-          Consumer<ChatProvider>(builder: (context, value, child) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 1.5),
-              child: commonText(text:
-              (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
-                  ? "Typing..." : widget.userName,
-                  fontSize: 12,fontWeight: FontWeight.w400),
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        // pop(popValue: true);
+        chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(onPressed: (){
+            pop(popValue: true);
+            chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
+          },
+          icon: Icon(CupertinoIcons.back,color: Colors.white,)),
+          bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
+          titleSpacing: 0,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              commonText(text: "Thread", fontSize: 16,),
+            Consumer<ChatProvider>(builder: (context, value, child) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 1.5),
+                child: commonText(text:
+                (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
+                    ? "Typing..." : widget.userName,
+                    fontSize: 12,fontWeight: FontWeight.w400),
 
-            );
-          },),
+              );
+            },),
+            ],
+          ),
+        ),
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                reverse: true,
+                children: [
+                  dateHeaders(),
+                ],
+              ),
+            ),
+            SizedBox(height: 20,),
+            inputTextFieldWithEditor(),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              controller: scrollController,
-              reverse: true,
-              children: [
-                dateHeaders(),
-              ],
-            ),
-          ),
-          SizedBox(height: 20,),
-          inputTextFieldWithEditor(),
-        ],
       ),
     );
   }
@@ -350,7 +356,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: profileIconWithStatus(userID: "${messageList.senderId!.sId}", status: "${messageList.senderId!.status}",otherUserProfile: "${messageList.senderId!.avatarUrl}",radius: 17),
+                    child: profileIconWithStatus(userID: "${messageList.senderId!.sId}", status: "${messageList.senderId!.status}",otherUserProfile: messageList.senderId?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderId?.userName ?? ""),
                   ),
 
                 Expanded(
@@ -445,14 +451,14 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                         .toSet()
                                         .take(2)
                                         .toList();
-                                      
+
                                       // Count total unique users for the counter
                                       final totalUniqueUsers = messageList.reactions!
                                         .map((r) => r.userId!.sId)
                                         .where((id) => id != null)
                                         .toSet()
                                         .length;
-                                      
+
                                       return Stack(
                                         clipBehavior: Clip.none,
                                         children: [
@@ -464,12 +470,13 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                                 decoration: BoxDecoration(
                                                   shape: BoxShape.circle,
                                                   border: Border.all(
-                                                    color: AppPreferenceConstants.themeModeBoolValueGet ? 
+                                                    color: AppPreferenceConstants.themeModeBoolValueGet ?
                                                       Colors.grey.shade900 : Colors.white,
                                                     width: 1.5,
                                                   ),
                                                 ),
                                                 child: profileIconWithStatus(
+                                                  userName: reaction.userId?.username ?? "",
                                                   userID: uniqueUsers[0] ?? "",
                                                   status: "",
                                                   needToShowIcon: false,
@@ -480,7 +487,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                                 ),
                                               ),
                                             ),
-                                          
+
                                           // Second user profile
                                           if (uniqueUsers.length >= 2)
                                             Positioned(
@@ -489,12 +496,13 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                                 decoration: BoxDecoration(
                                                   shape: BoxShape.circle,
                                                   border: Border.all(
-                                                    color: AppPreferenceConstants.themeModeBoolValueGet ? 
+                                                    color: AppPreferenceConstants.themeModeBoolValueGet ?
                                                       Colors.grey.shade900 : Colors.white,
                                                     width: 1.5,
                                                   ),
                                                 ),
                                                 child: profileIconWithStatus(
+                                                  userName: reaction.userId?.username ?? "",
                                                   userID: uniqueUsers[1] ?? "",
                                                   status: "",
                                                   needToShowIcon: false,
@@ -505,7 +513,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                                 ),
                                               ),
                                             ),
-                                          
+
                                           // Counter for additional users
                                           if (totalUniqueUsers > 2)
                                             Positioned(
@@ -521,7 +529,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                                     shape: BoxShape.circle,
                                                     color: AppColor.blueColor,
                                                     border: Border.all(
-                                                      color: AppPreferenceConstants.themeModeBoolValueGet ? 
+                                                      color: AppPreferenceConstants.themeModeBoolValueGet ?
                                                         Colors.grey.shade900 : Colors.white,
                                                       width: 1.5,
                                                     ),
@@ -1251,7 +1259,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   itemBuilder: (context, index) {
                     final userId = userReactions.keys.elementAt(index);
                     final userEmojis = userReactions[userId]!;
-                    
+
                     return FutureBuilder<GetUserModelSecondUser?>(
                       future: Provider.of<CommonProvider>(context, listen: false).getUserByIDCallForSecondUser(userId: userId),
                       builder: (context, snapshot) {
