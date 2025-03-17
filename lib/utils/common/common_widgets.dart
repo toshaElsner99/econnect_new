@@ -1010,6 +1010,8 @@ Widget profileIconWithStatus({
   double containerSize = 10.0,
   bool needToShowIcon = true,
   bool isMuted = false,
+  Color borderColor = AppColor.blueColor,
+  void Function()? onTap
 }) {
   String imageUrl = signInModel.data?.user?.id == userID
       ? ApiString.profileBaseUrl + (signInModel.data!.user!.thumbnailAvatarUrl ?? '')
@@ -1047,27 +1049,36 @@ Widget profileIconWithStatus({
     child: Stack(
       alignment: Alignment.bottomRight,
       children: [
-        CircleAvatar(
-          radius: radius,
-          backgroundColor: Colors.grey[200],
-          child: ClipOval(
-            child: CachedNetworkImage(
-              color: isMuted ? Colors.black26 : null,
-              colorBlendMode: isMuted ? BlendMode.srcOver : null,
-              imageUrl: imageUrl,
-              width: radius * 2,
-              height: radius * 2,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => CircularProgressIndicator(
-                strokeWidth: 2,
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: borderColor,
+              width: 2,
+            ),
+          ),
+          child: CircleAvatar(
+            radius: radius,
+            backgroundColor: Colors.grey[200],
+            child: ClipOval(
+              child: CachedNetworkImage(
+                color: isMuted ? Colors.black26 : null,
+                colorBlendMode: isMuted ? BlendMode.srcOver : null,
+                imageUrl: imageUrl,
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => CircularProgressIndicator(
+                  strokeWidth: 2,
+                ),
+                errorWidget: (context, url, error) {
+                  String name = signInModel.data?.user?.id == userID
+                      ? signInModel.data?.user?.username ?? ''
+                      : userName; // Ensure 'userName' is defined if it's for another user
+                  String firstLetter = name.isNotEmpty ? name[0].toUpperCase() : 'U'; // First letter or 'U' if empty
+                  return Center(child: commonText(text: firstLetter)); // Display the first letter of the username
+                },
               ),
-              errorWidget: (context, url, error) {
-                String name = signInModel.data?.user?.id == userID
-                    ? signInModel.data?.user?.username ?? ''
-                    : userName; // Ensure 'userName' is defined if it's for another user
-                String firstLetter = name.isNotEmpty ? name[0].toUpperCase() : 'U'; // First letter or 'U' if empty
-                return Center(child: commonText(text: firstLetter)); // Display the first letter of the username
-              },
             ),
           ),
         ),

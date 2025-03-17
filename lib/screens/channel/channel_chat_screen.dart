@@ -1205,113 +1205,141 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       ),
                       if (messageList.reactions?.isNotEmpty ?? false)
                         Container(
-                          margin: const EdgeInsets.only(top: 4),
+                          margin: const EdgeInsets.only(top: 6, bottom: 6),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            // mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              GestureDetector(
-                                onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => Dialog(
-                                      backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Reactions',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
-                                              ),
-                                            ),
-                                            SizedBox(height: 12),
-                                            ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                maxHeight: MediaQuery.of(context).size.height * 0.5,
-                                              ),
-                                              child: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: messageList.reactions?.length ?? 0,
-                                                itemBuilder: (context, index) {
-                                                  final reaction = messageList.reactions![index];
-                                                  final userDetails = Provider.of<CommonProvider>(context, listen: false).getUserByIDCallForSecondUser(userId: reaction.userId);
-                                                  return FutureBuilder<GetUserModelSecondUser?>(
-                                                    future: userDetails,
-                                                    builder: (context, snapshot) {
-                                                      Widget profileWidget;
-                                                      if (snapshot.connectionState == ConnectionState.waiting) {
-                                                        profileWidget = Container(
-                                                          width: 32,
-                                                          height: 32,
-                                                          decoration: BoxDecoration(
-                                                            shape: BoxShape.circle,
-                                                            color: Colors.grey[800],
-                                                          ),
-                                                          child: Center(
-                                                            child: SizedBox(
-                                                              width: 20,
-                                                              height: 20,
-                                                              child: CircularProgressIndicator(
-                                                                strokeWidth: 2,
-                                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[600]!),
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        );
-                                                      } else {
-                                                        profileWidget = profileIconWithStatus(
-                                                          userName: reaction.username ?? "",
-                                                          userID: reaction.userId ?? "",
-                                                          status: "online",
-                                                          radius: 16,
-                                                          otherUserProfile: snapshot.data?.data?.user?.thumbnailAvatarUrl ?? "",
-                                                        );
-                                                      }
+                              // Show first two unique users who reacted
+                              Container(
+                                width: 70,
+                                height: 30,
+                                margin: EdgeInsets.only(left: 4),
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    // Get unique users who reacted
+                                    Builder(builder: (context) {
+                                      final uniqueUsers = messageList.reactions!
+                                        .map((r) => r.userId)
+                                        .where((id) => id != null)
+                                        .map((id) => id as String)
+                                        .toSet()
+                                        .take(2)
+                                        .toList();
 
-                                                      return Padding(
-                                                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                        child: Row(
-                                                          children: [
-                                                            profileWidget,
-                                                            SizedBox(width: 12),
-                                                            Expanded(
-                                                              child: Text(
-                                                                snapshot.data?.data?.user?.username ?? reaction.username ?? "Unknown",
-                                                                style: TextStyle(
-                                                                  color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                            CachedNetworkImage(
-                                                              imageUrl: reaction.emoji ?? "",
-                                                              height: 24,
-                                                              width: 24,
-                                                              errorWidget: (context, url, error) => Icon(Icons.error, size: 24),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    },
-                                                  );
-                                                },
+                                      // Count total unique users for the counter
+                                      final totalUniqueUsers = messageList.reactions!
+                                        .map((r) => r.userId)
+                                        .where((id) => id != null)
+                                        .toSet()
+                                        .length;
+
+                                      String userName0 = '';
+                                      String userName1 = '';
+                                      if(messageList.reactions![0].username != null) {
+                                        userName0 = messageList.reactions![0].username ?? "";
+                                      }
+                                      if(messageList.reactions![1].username != null) {
+                                        userName1 =
+                                            messageList.reactions![1].username ?? "";
+                                      }
+
+                                      return Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          // First user profile
+                                          if (uniqueUsers.isNotEmpty)
+                                            Positioned(
+                                              left: 0,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: AppPreferenceConstants.themeModeBoolValueGet ?
+                                                      Colors.grey.shade900 : Colors.white,
+                                                    width: 1.5,
+                                                  ),
+                                                ),
+                                                child: profileIconWithStatus(
+                                                  userID: uniqueUsers[0],
+                                                  userName: userName0,
+                                                  status: "",
+                                                  needToShowIcon: false,
+                                                  radius: 14,
+                                                  otherUserProfile: channelChatProvider.getUserById(uniqueUsers[0])?.avatarUrl ?? '',
+                                                  borderColor: AppColor.blueColor,
+                                                  onTap: () => _showReactionsList(context, messageList.reactions!),
+                                                ),
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Icon(Icons.info_outline, size: 20),
+
+                                          // Second user profile
+                                          if (uniqueUsers.length >= 2)
+                                            Positioned(
+                                              left: 20,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(
+                                                    color: AppPreferenceConstants.themeModeBoolValueGet ?
+                                                      Colors.grey.shade900 : Colors.white,
+                                                    width: 1.5,
+                                                  ),
+                                                ),
+                                                child: profileIconWithStatus(
+                                                  userID: uniqueUsers[1],
+                                                  userName: userName1,
+                                                  status: "",
+                                                  needToShowIcon: false,
+                                                  radius: 14,
+                                                  otherUserProfile: channelChatProvider.getUserById(uniqueUsers[1])?.avatarUrl ?? '',
+                                                  borderColor: AppColor.blueColor,
+                                                  onTap: () => _showReactionsList(context, messageList.reactions!),
+                                                ),
+                                              ),
+                                            ),
+
+                                          // Counter for additional users
+                                          if (totalUniqueUsers > 2)
+                                            Positioned(
+                                              left: 42,
+                                              top: 5,
+                                              child: GestureDetector(
+                                                onTap: () => _showReactionsList(context, messageList.reactions!),
+                                                child: Container(
+                                                  height: 20,
+                                                  width: 20,
+                                                  alignment: Alignment.center,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: AppColor.white,
+                                                    border: Border.all(
+                                                      color: AppColor.blackColor,
+                                                      width: 1.5,
+                                                    ),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.black.withOpacity(0.3),
+                                                        spreadRadius: 1,
+                                                        blurRadius: 3,
+                                                        offset: Offset(0, 1),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.add,
+                                                    color: Colors.black,
+                                                    size: 15,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      );
+                                    }),
+                                  ],
+                                ),
                               ),
-                              SizedBox(width: 10),
                               Expanded(
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(
@@ -1394,7 +1422,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl ?? "",userName: messageList.senderOfForward?.username ?? ""),
+                                    profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl ?? "",userName: messageList.senderOfForward?.username ?? ''),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
@@ -1524,8 +1552,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                           clipBehavior: Clip.none,
                                           children: [
                                             profileIconWithStatus(
-                                              userName: messageList.repliesSenderInfo?[0].username ?? "",
                                               userID: messageList.repliesSenderInfo?[0].id ?? "",
+                                              userName: messageList.repliesSenderInfo?[0].username ?? "",
                                               status: "",
                                               needToShowIcon: false,
                                               radius: 12,
@@ -1535,8 +1563,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                               Positioned(
                                                 left: 16,
                                                 child: profileIconWithStatus(
-                                                  userName: messageList.repliesSenderInfo?[1].username ?? "",
                                                   userID: messageList.repliesSenderInfo?[1].id ?? "",
+                                                  userName: messageList.repliesSenderInfo?[1].username ?? "",
                                                   status: "",
                                                   needToShowIcon: false,
                                                   radius: 12,
@@ -1567,13 +1595,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                         messageList.replies!.any((reply) =>
                                         !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) &&
                                             (reply.isSeen ?? false) == false)
-                                        ? 10 : 0,
+                                            ? 10 : 0,
                                     height: messageList.replies != null &&
                                         messageList.replies!.isNotEmpty &&
                                         messageList.replies!.any((reply) =>
                                         !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) &&
                                             (reply.isSeen ?? false) == false)
-                                        ? 10 : 0,
+                                            ? 10 : 0,
                                     decoration: const BoxDecoration(
                                       color: Colors.red,
                                       shape: BoxShape.circle,
@@ -1661,6 +1689,105 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         ),
       );
     },);
+  }
+
+  void _showReactionsList(BuildContext context, dynamic reactions) {
+    // Group reactions by user
+    final Map<String, List<String>> userReactions = {};
+    for (var reaction in reactions) {
+      if (reaction.userId != null) {
+        if (!userReactions.containsKey(reaction.userId)) {
+          userReactions[reaction.userId!] = [];
+        }
+        if (reaction.emoji != null) {
+          userReactions[reaction.userId!]!.add(reaction.emoji!);
+        }
+      }
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Reactions',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                ),
+              ),
+              SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.5,
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: userReactions.length,
+                  itemBuilder: (context, index) {
+                    final userId = userReactions.keys.elementAt(index);
+                    final userEmojis = userReactions[userId]!;
+                    final user = Provider.of<ChannelChatProvider>(context, listen: false).getUserById(userId);
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          profileIconWithStatus(
+                            userID: userId,
+                            userName: user?.username ?? '',
+                            status: "",
+                            needToShowIcon: false,
+                            radius: 16,
+                            otherUserProfile: user?.avatarUrl ?? '',
+                            borderColor: AppColor.blueColor,
+                          ),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user?.username ?? "Unknown",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Row(
+                                  children: userEmojis.map((emoji) => Padding(
+                                    padding: const EdgeInsets.only(right: 4.0),
+                                    child: CachedNetworkImage(
+                                      imageUrl: emoji,
+                                      height: 20,
+                                      width: 20,
+                                      errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                    ),
+                                  )).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
 }
