@@ -338,7 +338,7 @@ String? validateEmail(String? value, TextEditingController textController) {
 String? validatePassword(TextEditingController controller, String? value) {
   if (value == null || value.isEmpty) {
     return "Please enter password";
-  } else if (value.trim() != value) {
+  } /*else if (value.trim() != value) {
     return "Please enter a valid password";
   } else if (!RegExp(r'^(?=.*[A-Z])').hasMatch(controller.text)) {
     return 'Password must contain uppercase letters';
@@ -350,7 +350,7 @@ String? validatePassword(TextEditingController controller, String? value) {
     return 'Password must contain at least one numeric character';
   } else if (!RegExp(r'(?=.{8,})').hasMatch(controller.text)) {
     return 'Password must contain at least 8 characters';
-  }
+  }*/
   return null;
 }
 

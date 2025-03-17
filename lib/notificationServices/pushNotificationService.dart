@@ -1,24 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:device_info_plus/device_info_plus.dart';
-import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_new_badger/flutter_new_badger.dart';
-import 'package:oktoast/oktoast.dart';
 import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
 import '../screens/chat/single_chat_message_screen.dart';
 import '../screens/channel/channel_chat_screen.dart';
 import '../socket_io/socket_io.dart';
-import '../utils/loading_widget/loading_cubit.dart';
 import '../utils/common/common_function.dart';
 import '../providers/channel_list_provider.dart';
 
@@ -27,7 +19,7 @@ class NotificationService {
   FlutterLocalNotificationsPlugin();
 
   static Future<void> initializeNotifications() async {
-    const androidInitialize = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInitialize = AndroidInitializationSettings('@drawable/ic_notification');
     const iOSInitialize = DarwinInitializationSettings();
     const initializationSettings = InitializationSettings(
       android: androidInitialize,
@@ -44,10 +36,10 @@ class NotificationService {
           if (payload.contains('{')) {
             // Push Notification Click Handling
             final Map<String, dynamic> payloadData = Map<String, dynamic>.from(json.decode(payload.replaceAll("'", '"')));
-            _handleNotificationRedirect(payloadData);
+            handleNotificationRedirect(payloadData);
           } else {
             // File Download Click Handling
-            _openDownloadedFile(payload);
+            openDownloadedFile(payload);
           }
         }
       },
@@ -59,7 +51,7 @@ class NotificationService {
   }
 
   /// ✅ Handles navigation when user clicks on push notification
-  static void _handleNotificationRedirect(Map<String, dynamic> data) async{
+  static void handleNotificationRedirect(Map<String, dynamic> data) async{
     print("Handling Notification Click: $data");
     if (data['type'] == 'message') {
       if(signInModel.data?.user?.id != null || signInModel.data?.user?.id != ""){
@@ -67,10 +59,10 @@ class NotificationService {
       }
       pushScreen(
         screen: SingleChatMessageScreen(
-          userName: "",
-          oppositeUserId: data['senderId'],
-          needToCallAddMessage: false,
-          isFromNotification: true
+            userName: "",
+            oppositeUserId: data['senderId'],
+            needToCallAddMessage: false,
+            isFromNotification: true
         ),
       );
     } else if (data['type'] == 'channel') {
@@ -88,25 +80,16 @@ class NotificationService {
   }
 
   /// ✅ Handles opening a downloaded file when user clicks on download notification
-  static Future<void> _openDownloadedFile(String filePath) async {
+  static Future<void> openDownloadedFile(String filePath) async {
     try {
-      if (await requestStoragePermission()) {
-        final file = File(filePath);
-
-        if (await file.exists()) {
-          final result = await OpenFile.open(filePath);
-          if (result.type != ResultType.done) {
-            if (Platform.isAndroid) {
-              await launchUrl(Uri.parse("content://com.android.externalstorage.documents/document/primary:Download"));
-            } else if (Platform.isIOS) {
-              print("Could not open file on iOS: ${result.message}");
-            }
-          }
-        } else {
-          print("File does not exist: $filePath");
+      final file = File(filePath);
+      if (await file.exists()) {
+        final result = await OpenFile.open(filePath);
+        if (result.type != ResultType.done) {
+          print("Error opening file: ${result.message}");
         }
       } else {
-        print("Storage permission denied.");
+        print("File does not exist.");
       }
     } catch (e) {
       print("Error opening file: $e");
@@ -118,7 +101,7 @@ class NotificationService {
     FirebaseMessaging.onMessageOpenedApp.listen(
           (RemoteMessage message) {
         print("onMessageOpenedApp: ${message.data}");
-        _handleNotificationRedirect(message.data);
+        handleNotificationRedirect(message.data);
       },
     );
 
@@ -127,6 +110,25 @@ class NotificationService {
       _showPushNotification(message);
     });
   }
+  // static Future<void> registerFirebaseListeners() async {
+  //   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+  //     print("onMessageOpenedApp: ${message.data}");
+  //     handleNotificationRedirect(message.data);
+  //   });
+  //
+  //   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  //     print("Firebase Notification Received: ${message.data}");
+  //     _showPushNotification(message);
+  //   });
+  //
+  //   // ✅ Handle notifications when the app is killed and then opened
+  //   FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+  //     if (message != null) {
+  //       print("Handling notification from terminated state: ${message.data}");
+  //       handleNotificationRedirect(message.data);
+  //     }
+  //   });
+  // }
 
   /// ✅ Shows push notifications
   static Future<void> _showPushNotification(RemoteMessage message) async {
@@ -149,12 +151,12 @@ class NotificationService {
             playSound: true,
             enableVibration: true,
             styleInformation: BigTextStyleInformation(notification.body!),
-            icon: 'mipmap/e_transperant',
+            icon: '@drawable/ic_notification',
           ),
         ),
         payload: json.encode(message.data),
       );
-      
+
       // Update badge count when notification is received
       await setBadgeCount();
     }

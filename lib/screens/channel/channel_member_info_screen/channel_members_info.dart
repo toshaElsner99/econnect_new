@@ -383,7 +383,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounceTimer;
   List<User> selectedUsers = []; // Changed from List<Users> to List<User>
-
+  final FocusNode _focusNode = FocusNode();
   @override
   void dispose() {
     _debounceTimer?.cancel();
@@ -455,113 +455,118 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
           // Search TextField
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                // color: Colors.grey,
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        // Selected user chips
-                        ...selectedUsers.map((user) => Container(
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            // color: const Color(0xFF1E1E1E),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: Colors.grey[800]!,
-                                width: 1
+            child: GestureDetector(
+              onTap: () {
+                _focusNode.requestFocus();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          // Selected user chips
+                          ...selectedUsers.map((user) => Container(
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 10,
                             ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
-                                    ? Image.network(
-                                  user.avatarUrl!,
-                                  width: 28,
-                                  height: 28,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(),
-                                  loadingBuilder: (context, child, loadingProgress) {
-                                    if (loadingProgress == null) return child;
-                                    return _buildDefaultAvatar();
+                            decoration: BoxDecoration(
+                              // color: const Color(0xFF1E1E1E),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                  color: Colors.grey[800]!,
+                                  width: 1
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                                      ? Image.network(
+                                    user.avatarUrl!,
+                                    width: 28,
+                                    height: 28,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => _buildDefaultAvatar(),
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return _buildDefaultAvatar();
+                                    },
+                                  )
+                                      : _buildDefaultAvatar(),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  user.username ?? '',
+                                  style: const TextStyle(
+                                    // color: Colors.white,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      selectedUsers.remove(user);
+                                    });
                                   },
-                                )
-                                    : _buildDefaultAvatar(),
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                user.username ?? '',
-                                style: const TextStyle(
-                                  // color: Colors.white,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(width: 5),
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    selectedUsers.remove(user);
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[800],  // Darker background for X icon
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 14
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[800],  // Darker background for X icon
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 14
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        )).toList(),
-                        // Search TextField
-                        Container(
-                          constraints: const BoxConstraints(minWidth: 100),
-                          child: IntrinsicWidth(
-                            child: TextField(
-                              controller: _searchController,
-                              // style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                hintText: selectedUsers.isEmpty ? 'Search for users' : '',
-                                hintStyle: TextStyle(color: Colors.grey[600]),
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 12,
+                              ],
+                            ),
+                          )).toList(),
+                          // Search TextField
+                          Container(
+                            constraints: const BoxConstraints(minWidth: 100),
+                            child: IntrinsicWidth(
+                              child: TextField(
+                                focusNode: _focusNode,
+                                controller: _searchController,
+                                // style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  hintText: selectedUsers.isEmpty ? 'Search for users' : '',
+                                  hintStyle: TextStyle(color: Colors.grey[600]),
+                                  border: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 12,
+                                  ),
+                                  isDense: true,
                                 ),
-                                isDense: true,
+                                onChanged: _onSearchChanged,
                               ),
-                              onChanged: _onSearchChanged,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

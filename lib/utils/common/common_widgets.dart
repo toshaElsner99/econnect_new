@@ -1785,7 +1785,7 @@ Widget commonHTMLText({required String message,String userId = "", bool isLog = 
       return styles;
     },
     customWidgetBuilder: (element) {
-      if (element.localName == 'a') {
+      if (element.localName == 'a' || element.localName.toString().startsWith("https") || element.localName.toString().startsWith("http")) {
         final String? url = element.attributes['href'];
         if (url != null) {
           return GestureDetector(

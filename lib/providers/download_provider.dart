@@ -1,13 +1,13 @@
+
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart';
 import '../notificationServices/pushNotificationService.dart';
 import '../utils/loading_widget/loading_cubit.dart';
 
@@ -22,47 +22,53 @@ class DownloadFileProvider extends ChangeNotifier {
     return androidInfo.version.sdkInt;
   }
 
-  /// ✅ Request Storage Permission Before Download
+  /// ✅ Request Storage Permission Before Download (Only Needed for Android < 10)
   Future<bool> requestStoragePermission() async {
     if (Platform.isAndroid) {
       int sdkInt = await getDeviceSdkForAndroid();
-      if (sdkInt >= 30) {
-        return await Permission.manageExternalStorage.request().isGranted;
-      } else {
+      if (sdkInt < 29) {
         return await Permission.storage.request().isGranted;
       }
     }
-    return true;
+    return true; // No permission needed for Scoped Storage (Android 10+)
   }
 
-  /// ✅ File Download Function
+  /// ✅ File Download Function Using Scoped Storage (Saves in `/Download/Econnect/`)
   Future<void> downloadFile({
     required String fileUrl,
     required BuildContext context,
   }) async {
     try {
-      // ✅ Step 1: Request Permission First
       bool hasPermission = await requestStoragePermission();
       if (!hasPermission) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Storage permission is required to download files.")),
+          SnackBar(
+              content:
+              Text("Storage permission is required to download files.")),
         );
         return;
       }
 
-      // ✅ Step 2: Initialize Variables
       progress = 0.0;
       String fileName = fileUrl.split('/').last;
-      String uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_$fileName';
+      String formattedTime =
+      DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      String uniqueFileName = '${formattedTime}_$fileName';
       final int notificationId = DateTime.now().millisecondsSinceEpoch.hashCode;
 
       Provider.of<LoadingProvider>(context, listen: false).startLoading();
 
-      String filePath;
+      String? filePath;
+
       if (Platform.isAndroid) {
-        const downloadPath = '/storage/emulated/0/Download';
-        final directory = await Directory(downloadPath).create(recursive: true);
-        filePath = '${directory.path}/$uniqueFileName';
+        int sdkInt = await getDeviceSdkForAndroid();
+        if (sdkInt >= 29) {
+          // ✅ Save file using Scoped Storage in `/Download/Econnect/`
+          filePath = await saveFileToScopedStorage(fileUrl, uniqueFileName);
+        } else {
+          // ✅ Save to external storage for Android 9 or lower
+          filePath = await saveFileToLegacyStorage(fileUrl, uniqueFileName);
+        }
       } else if (Platform.isIOS) {
         final directory = await getApplicationDocumentsDirectory();
         filePath = '${directory.path}/$uniqueFileName';
@@ -70,34 +76,38 @@ class DownloadFileProvider extends ChangeNotifier {
         return;
       }
 
-      File file = File(filePath);
+      if (filePath == null) {
+        print("Failed to get file path.");
+        return;
+      }
 
-      // ✅ Step 3: Start Download
+      // ✅ Show notification when download starts
+      await NotificationService.showDownloadNotification(
+        fileName: fileName,
+        filePath: filePath,
+        notificationId: notificationId,
+        isCompleted: false,
+      );
+
+      print("Downloading file to: $filePath");
+
       final request = http.Request('GET', Uri.parse(fileUrl));
       final response = await http.Client().send(request);
 
       if (response.statusCode == 200) {
         int totalBytes = response.contentLength ?? 0;
         int receivedBytes = 0;
-
-        // ✅ Show notification when download starts
-        await NotificationService.showDownloadNotification(
-          fileName: fileName,
-          filePath: filePath,
-          notificationId: notificationId,
-          isCompleted: false,
-        );
+        File file = File(filePath);
 
         await response.stream.listen((data) async {
           receivedBytes += data.length;
           progress = (receivedBytes / totalBytes) * 100;
           file.writeAsBytesSync(data, mode: FileMode.append);
 
-          // ✅ Update notification only when the download completes
           if (progress == 100) {
             await NotificationService.showDownloadNotification(
               fileName: fileName,
-              filePath: filePath,
+              filePath: filePath!,
               notificationId: notificationId,
               isCompleted: true,
             );
@@ -117,28 +127,35 @@ class DownloadFileProvider extends ChangeNotifier {
     }
   }
 
-  /// ✅ Open Downloaded File
-  Future<void> openDownloadedFile(String filePath) async {
+  /// ✅ Save File to `/Download/Econnect/` Using Scoped Storage (Android 10+)
+  Future<String?> saveFileToScopedStorage(
+      String fileUrl, String fileName) async {
     try {
-      if (await requestStoragePermission()) {
-        final file = File(filePath);
-        if (await file.exists()) {
-          final result = await OpenFile.open(filePath);
-          if (result.type != ResultType.done) {
-            if (Platform.isAndroid) {
-              await launchUrl(Uri.parse("content://com.android.externalstorage.documents/document/primary:Download"));
-            } else if (Platform.isIOS) {
-              print("Could not open file on iOS: ${result.message}");
-            }
-          }
-        } else {
-          print("File does not exist: $filePath");
-        }
-      } else {
-        print("Storage permission denied.");
+      final directory = Directory('/storage/emulated/0/Download/Econnect');
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
       }
+      final filePath = '${directory.path}/$fileName';
+      return filePath;
     } catch (e) {
-      print("Error opening file: $e");
+      print("Error saving file in Econnect folder: $e");
+      return null;
+    }
+  }
+
+  /// ✅ Save File Normally to `/Download/Econnect/` for Android 9 & Below
+  Future<String?> saveFileToLegacyStorage(
+      String fileUrl, String fileName) async {
+    try {
+      final directory = Directory('/storage/emulated/0/Download/Econnect');
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+      final filePath = '${directory.path}/$fileName';
+      return filePath;
+    } catch (e) {
+      print("Error saving file in Econnect folder: $e");
+      return null;
     }
   }
 }

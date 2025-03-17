@@ -56,17 +56,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     'CHANNEL': true,
     'DIRECT MESSAGE': true,
   };
+  bool _isInitialized = false;
   @override
   void initState() {
     super.initState();
     Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
-    Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
-    Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
-    Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
-    Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+    if(!_isInitialized) {
+      Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
+      Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
+      Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
+      Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+    }
     getFCM();
     Future.delayed(Duration(seconds: 5),(){
       setBadge();
+    });
+    setState(() {
+      _isInitialized = true;
     });
   }
 
@@ -76,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   setBadge() async{
-    await NotificationService.setBadgeCount();
+    // await NotificationService.setBadgeCount();
   }
 
   @override
@@ -743,7 +749,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
        onTap: () => pushScreen(screen: SingleChatMessageScreen(userName: username, oppositeUserId: userId,calledForFavorite: true,)),
        borderRadius: BorderRadius.circular(8),
        child: Padding(
-         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
       child: Row(
         children: [
           profileIconWithStatus(
@@ -801,7 +807,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           },
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
       child: Row(
         children: [
           commonChannelIcon(isPrivate: channel.isPrivate == true ? true : false,isMuted: muteChannel),
@@ -930,7 +936,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         onTap: ()=> pushScreen(screen: ChannelChatScreen(channelId: channel.sId!, /*channelName: channel.name!*/)),
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           child: Row(
             children: [
               commonChannelIcon(isPrivate: isPrivate!,isMuted: muteChannel),
