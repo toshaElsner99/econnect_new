@@ -686,8 +686,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',
                       radius: 17,
                       needToShowIcon: false,
-                      borderColor: AppColor.blueColor,
-                        userName: user?.data!.user!.username ?? ''
+                      borderColor: AppColor.blueColor, userName: user?.data!.user!.username ?? user?.data!.user!.fullName
                     ),
                   )
                 } else ...{
@@ -812,6 +811,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                               otherUserProfile: userCache[uniqueUsers[1]]?.data?.user?.thumbnailAvatarUrl ?? '',
                                               borderColor: AppColor.blueColor,
                                               onTap: () => _showReactionsList(context, messageList.reactions!),
+                                              userName: userCache[uniqueUsers[1]]?.data?.user?.username ?? userCache[uniqueUsers[1]]?.data?.user?.fullName ?? "Unknown"
                                             ),
                                           ),
                                         if (uniqueUsers.isNotEmpty)
@@ -823,6 +823,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                             otherUserProfile: userCache[uniqueUsers[0]]?.data?.user?.thumbnailAvatarUrl ?? '',
                                             borderColor: AppColor.blueColor,
                                             onTap: () => _showReactionsList(context, messageList.reactions!),
+                                            userName: userCache[uniqueUsers[0]]?.data?.user?.username ?? userCache[uniqueUsers[0]]?.data?.user?.fullName ?? "Unknown"
                                           ),
                                         if (uniqueUsers.length > 2)
                                           Positioned(
@@ -1576,5 +1577,103 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     return [...initialUsers, ...otherUsers];
   }
 
+  void _showReactionsList(BuildContext context, dynamic reactions) {
+    // Group reactions by user
+    final Map<String, List<String>> userReactions = {};
+    for (var reaction in reactions) {
+      if (reaction.userId != null) {
+        if (!userReactions.containsKey(reaction.userId)) {
+          userReactions[reaction.userId!] = [];
+        }
+        if (reaction.emoji != null) {
+          userReactions[reaction.userId!]!.add(reaction.emoji!);
+        }
+      }
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Reactions',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                ),
+              ),
+              SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.5,
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: userReactions.length,
+                  itemBuilder: (context, index) {
+                    final userId = userReactions.keys.elementAt(index);
+                    final userEmojis = userReactions[userId]!;
+                    final user = userCache[userId]?.data?.user;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          profileIconWithStatus(
+                            userID: userId,
+                            status: "",
+                            needToShowIcon: false,
+                            radius: 16,
+                            otherUserProfile: user?.thumbnailAvatarUrl ?? '',
+                            borderColor: AppColor.blueColor,
+                            userName: user?.username ?? "Unknown"
+                          ),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user?.username ?? "Unknown",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Row(
+                                  children: userEmojis.map((emoji) => Padding(
+                                    padding: const EdgeInsets.only(right: 4.0),
+                                    child: CachedNetworkImage(
+                                      imageUrl: emoji,
+                                      height: 20,
+                                      width: 20,
+                                      errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                    ),
+                                  )).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 

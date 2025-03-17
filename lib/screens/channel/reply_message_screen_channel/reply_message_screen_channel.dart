@@ -381,6 +381,16 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                         .where((id) => id != null)
                                         .toSet()
                                         .length;
+                                      String userName0 = '';
+                                      String userName1 = '';
+                                      if(messageList.reactions![0].userId != null) {
+                                        userName0 = messageList.reactions![0].userId!.username ?? "";
+                                      }
+                                        if(messageList.reactions![1].userId != null) {
+                                          userName1 =
+                                              messageList.reactions![1].userId!
+                                                  .username ?? "";
+                                        }
 
                                       return Stack(
                                         clipBehavior: Clip.none,
@@ -400,6 +410,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                                 ),
                                                 child: profileIconWithStatus(
                                                   userID: uniqueUsers[0] ?? "",
+                                                  userName: userName0,
                                                   status: "",
                                                   needToShowIcon: false,
                                                   radius: 14,
@@ -425,6 +436,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                                 ),
                                                 child: profileIconWithStatus(
                                                   userID: uniqueUsers[1] ?? "",
+                                                  userName: userName1,
                                                   status: "",
                                                   needToShowIcon: false,
                                                   radius: 14,
@@ -558,7 +570,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl),
+                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl,userName: messageList.forwardFrom?.senderId?.username ?? messageList.forwardFrom?.senderId?.fullName ?? ""),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
@@ -1212,6 +1224,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                         } else {
                           profileWidget = profileIconWithStatus(
                             userID: userId,
+                            userName: snapshot.data?.data?.user?.username ?? snapshot.data?.data?.user?.fullName ?? "",
                             status: "",
                             needToShowIcon: false,
                             radius: 16,

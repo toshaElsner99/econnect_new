@@ -1234,6 +1234,16 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                         .toSet()
                                         .length;
 
+                                      String userName0 = '';
+                                      String userName1 = '';
+                                      if(messageList.reactions![0].username != null) {
+                                        userName0 = messageList.reactions![0].username ?? "";
+                                      }
+                                      if(messageList.reactions![1].username != null) {
+                                        userName1 =
+                                            messageList.reactions![1].username ?? "";
+                                      }
+
                                       return Stack(
                                         clipBehavior: Clip.none,
                                         children: [
@@ -1252,6 +1262,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                                 ),
                                                 child: profileIconWithStatus(
                                                   userID: uniqueUsers[0],
+                                                  userName: userName0,
                                                   status: "",
                                                   needToShowIcon: false,
                                                   radius: 14,
@@ -1277,6 +1288,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                                 ),
                                                 child: profileIconWithStatus(
                                                   userID: uniqueUsers[1],
+                                                  userName: userName1,
                                                   status: "",
                                                   needToShowIcon: false,
                                                   radius: 14,
@@ -1410,7 +1422,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl ?? ""),
+                                    profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl ?? "",userName: messageList.senderOfForward?.username ?? ''),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
@@ -1541,6 +1553,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                           children: [
                                             profileIconWithStatus(
                                               userID: messageList.repliesSenderInfo?[0].id ?? "",
+                                              userName: messageList.repliesSenderInfo?[0].username ?? "",
                                               status: "",
                                               needToShowIcon: false,
                                               radius: 12,
@@ -1551,6 +1564,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                                 left: 16,
                                                 child: profileIconWithStatus(
                                                   userID: messageList.repliesSenderInfo?[1].id ?? "",
+                                                  userName: messageList.repliesSenderInfo?[1].username ?? "",
                                                   status: "",
                                                   needToShowIcon: false,
                                                   radius: 12,
@@ -1677,7 +1691,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     },);
   }
 
-  void _showReactionsList(BuildContext context, List<Reaction> reactions) {
+  void _showReactionsList(BuildContext context, dynamic reactions) {
     // Group reactions by user
     final Map<String, List<String>> userReactions = {};
     for (var reaction in reactions) {
@@ -1729,6 +1743,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         children: [
                           profileIconWithStatus(
                             userID: userId,
+                            userName: user?.username ?? '',
                             status: "",
                             needToShowIcon: false,
                             radius: 16,

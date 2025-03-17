@@ -476,7 +476,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                                   ),
                                                 ),
                                                 child: profileIconWithStatus(
-                                                  userName: reaction.userId?.username ?? "",
+                                                  userName: userCache[uniqueUsers[0]]?.data?.user?.username ?? "",
                                                   userID: uniqueUsers[0] ?? "",
                                                   status: "",
                                                   needToShowIcon: false,
@@ -502,7 +502,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                                   ),
                                                 ),
                                                 child: profileIconWithStatus(
-                                                  userName: reaction.userId?.username ?? "",
+                                                  userName: userCache[uniqueUsers[1]]?.data?.user?.username ?? '',
                                                   userID: uniqueUsers[1] ?? "",
                                                   status: "",
                                                   needToShowIcon: false,
@@ -641,7 +641,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl),
+                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl, userName: messageList.forwardFrom?.senderId?.userName ?? ''),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
@@ -1269,6 +1269,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             children: [
                               profileIconWithStatus(
                                 userID: userId,
+                                userName: snapshot.data?.data?.user?.username ?? '',
                                 status: "",
                                 needToShowIcon: false,
                                 radius: 16,
