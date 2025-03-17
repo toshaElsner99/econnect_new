@@ -693,7 +693,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "${user?.data!.user!.status}",otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',radius: 17),
+                    child: profileIconWithStatus(
+                      userID: "${user?.data!.user!.sId}", 
+                      status: "${user?.data!.user!.status}",
+                      otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',
+                      radius: 17,
+                      needToShowIcon: false,
+                      borderColor: AppColor.blueColor,
+                    ),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -791,80 +798,83 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         Container(
                           margin: const EdgeInsets.only(top: 4),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            // mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              GestureDetector(
-                                onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => Dialog(
-                                      backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16.0),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Reactions',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
-                                              ),
+                              // Show first two unique users who reacted
+                              Stack(
+                                children: [
+                                  // Get unique users who reacted
+                                  Builder(builder: (context) {
+                                    final uniqueUsers = messageList.reactions!
+                                      .map((r) => r.userId)
+                                      .toSet()
+                                      .take(2)
+                                      .toList();
+                                    
+                                    return Stack(
+                                      children: [
+                                        if (uniqueUsers.length >= 2)
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 15.0),
+                                            child: profileIconWithStatus(
+                                              userID: uniqueUsers[1] ?? "",
+                                              status: "",
+                                              needToShowIcon: false,
+                                              radius: 15,
+                                              otherUserProfile: userCache[uniqueUsers[1]]?.data?.user?.thumbnailAvatarUrl ?? '',
+                                              borderColor: AppColor.blueColor,
+                                              onTap: () => _showReactionsList(context, messageList.reactions!),
                                             ),
-                                            SizedBox(height: 12),
-                                            ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                maxHeight: MediaQuery.of(context).size.height * 0.5,
-                                              ),
-                                              child: ListView.builder(
-                                                shrinkWrap: true,
-                                                itemCount: messageList.reactions?.length ?? 0,
-                                                itemBuilder: (context, index) {
-                                                  final reaction = messageList.reactions![index];
-                                                  return Padding(
-                                                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                                    child: Row(
-                                                      children: [
-                                                        profileIconWithStatus(
-                                                          userID: reaction.userId ?? "",
-                                                          status: "online",
-                                                          radius: 16,
-                                                          otherUserProfile: userCache[reaction.userId]?.data?.user?.thumbnailAvatarUrl,
-                                                        ),
-                                                        SizedBox(width: 12),
-                                                        Expanded(
-                                                          child: Text(
-                                                            reaction.username ?? "Unknown",
-                                                            style: TextStyle(
-                                                              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        CachedNetworkImage(
-                                                          imageUrl: reaction.emoji ?? "",
-                                                          height: 24,
-                                                          width: 24,
-                                                          errorWidget: (context, url, error) => Icon(Icons.error, size: 24),
-                                                        ),
-                                                      ],
+                                          ),
+                                        if (uniqueUsers.isNotEmpty)
+                                          profileIconWithStatus(
+                                            userID: uniqueUsers[0] ?? "",
+                                            status: "",
+                                            needToShowIcon: false,
+                                            radius: 15,
+                                            otherUserProfile: userCache[uniqueUsers[0]]?.data?.user?.thumbnailAvatarUrl ?? '',
+                                            borderColor: AppColor.blueColor,
+                                            onTap: () => _showReactionsList(context, messageList.reactions!),
+                                          ),
+                                        if (uniqueUsers.length > 2)
+                                          Positioned(
+                                            left: 30,
+                                            top: 5,
+                                            child: GestureDetector(
+                                              onTap: () => _showReactionsList(context, messageList.reactions!),
+                                              child: Container(
+                                                height: 20,
+                                                width: 20,
+                                                alignment: Alignment.center,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: AppColor.white,
+                                                  border: Border.all(
+                                                    color: AppColor.blackColor,
+                                                    width: 1.5,
+                                                  ),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black.withOpacity(0.3),
+                                                      spreadRadius: 1,
+                                                      blurRadius: 3,
+                                                      offset: Offset(0, 1),
                                                     ),
-                                                  );
-                                                },
-                                              ),
+                                                  ],
+                                                ),
+                                                child: Icon(
+                                                  Icons.add,
+                                                  color: Colors.black,
+                                                  size: 15,
+                                                ),
+                                              )
                                             ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: Icon(Icons.info_outline, size: 20),
+                                          ),
+                                      ],
+                                    );
+                                  }),
+                                ],
                               ),
-                              SizedBox(width: 10),
                               Expanded(
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(
@@ -948,7 +958,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                                 child: Row(children: [
-                                  profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "" , status: messageList.senderOfForward?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl),
+                                  profileIconWithStatus(
+                                    userID: messageList.senderOfForward?.id ?? "" , 
+                                    status: messageList.senderOfForward?.status ?? "offline",
+                                    needToShowIcon: false,
+                                    otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl,
+                                    borderColor: AppColor.blueColor,
+                                  ),
                                   Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                     child: Column(
@@ -1084,6 +1100,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                                 needToShowIcon: false,
                                                 radius: 12,
                                                 otherUserProfile: messageList.repliesSenderInfo![0].thumbnailAvatarUrl,
+                                                borderColor: AppColor.blueColor,
                                               ),
                                               if (messageList.repliesSenderInfo!.length > 1)
                                                 Positioned(
@@ -1094,6 +1111,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                                     needToShowIcon: false,
                                                     radius: 12,
                                                     otherUserProfile: messageList.repliesSenderInfo![1].thumbnailAvatarUrl,
+                                                    borderColor: AppColor.blueColor,
                                                   ),
                                                 ),
                                             ],
@@ -1566,6 +1584,104 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     ).toList();
 
     return [...initialUsers, ...otherUsers];
+  }
+
+  void _showReactionsList(BuildContext context, List<Reaction> reactions) {
+    // Group reactions by user
+    final Map<String, List<String>> userReactions = {};
+    for (var reaction in reactions) {
+      if (reaction.userId != null) {
+        if (!userReactions.containsKey(reaction.userId)) {
+          userReactions[reaction.userId!] = [];
+        }
+        if (reaction.emoji != null) {
+          userReactions[reaction.userId!]!.add(reaction.emoji!);
+        }
+      }
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Reactions',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                ),
+              ),
+              SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.5,
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: userReactions.length,
+                  itemBuilder: (context, index) {
+                    final userId = userReactions.keys.elementAt(index);
+                    final userEmojis = userReactions[userId]!;
+                    final user = userCache[userId]?.data?.user;
+                    
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        children: [
+                          profileIconWithStatus(
+                            userID: userId,
+                            status: "",
+                            needToShowIcon: false,
+                            radius: 16,
+                            otherUserProfile: user?.thumbnailAvatarUrl ?? '',
+                            borderColor: AppColor.blueColor,
+                          ),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user?.username ?? "Unknown",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Row(
+                                  children: userEmojis.map((emoji) => Padding(
+                                    padding: const EdgeInsets.only(right: 4.0),
+                                    child: CachedNetworkImage(
+                                      imageUrl: emoji,
+                                      height: 20,
+                                      width: 20,
+                                      errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                    ),
+                                  )).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
 }

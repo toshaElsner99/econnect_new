@@ -1010,13 +1010,15 @@ Widget profileIconWithStatus({
   double containerSize = 10.0,
   bool needToShowIcon = true,
   bool isMuted = false,
+  Color borderColor = AppColor.blueColor,
+  void Function()? onTap
 }) {
   String imageUrl = signInModel.data?.user?.id == userID
       ? ApiString.profileBaseUrl + (signInModel.data!.user!.thumbnailAvatarUrl ?? '')
       : ApiString.profileBaseUrl + (otherUserProfile ?? '');
 
   return GestureDetector(
-    onTap: () {
+    onTap: onTap ?? () {
       if (userID == signInModel.data?.user?.id) {
         showUserProfilePopup(
           navigatorKey.currentState!.context,
@@ -1047,21 +1049,30 @@ Widget profileIconWithStatus({
     child: Stack(
       alignment: Alignment.bottomRight,
       children: [
-        CircleAvatar(
-          radius: radius,
-          backgroundColor: Colors.grey[200],
-          child: ClipOval(
-            child: CachedNetworkImage(
-              color: isMuted ? Colors.black26 : null,
-              colorBlendMode: isMuted ? BlendMode.srcOver : null,
-              imageUrl: imageUrl,
-              width: radius * 2,
-              height: radius * 2,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => CircularProgressIndicator(
-                strokeWidth: 2,
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: borderColor,
+              width: 2,
+            ),
+          ),
+          child: CircleAvatar(
+            radius: radius,
+            backgroundColor: Colors.grey[200],
+            child: ClipOval(
+              child: CachedNetworkImage(
+                color: isMuted ? Colors.black26 : null,
+                colorBlendMode: isMuted ? BlendMode.srcOver : null,
+                imageUrl: imageUrl,
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => CircularProgressIndicator(
+                  strokeWidth: 2,
+                ),
+                errorWidget: (context, url, error) => Icon(Icons.error, size: radius),
               ),
-              errorWidget: (context, url, error) => Icon(Icons.error, size: radius),
             ),
           ),
         ),
