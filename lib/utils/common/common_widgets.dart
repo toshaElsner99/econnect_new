@@ -1018,7 +1018,7 @@ Widget profileIconWithStatus({
       : ApiString.profileBaseUrl + (otherUserProfile ?? '');
 
   return GestureDetector(
-    onTap: () {
+    onTap: onTap ?? () {
       if (userID == signInModel.data?.user?.id) {
         showUserProfilePopup(
           navigatorKey.currentState!.context,

@@ -437,9 +437,10 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             children: [
                               // Show first two unique users who reacted
                               Container(
-                                width: 70,
+                                // width: 70,
                                 height: 30,
-                                margin: EdgeInsets.only(left: 4),
+                                width: 30,
+                                margin: EdgeInsets.only(left: 4,right: 10),
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [

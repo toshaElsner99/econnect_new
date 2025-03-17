@@ -783,7 +783,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         // Put Reacted emojis list here
                       if (messageList.reactions?.isNotEmpty ?? false)
                         Container(
-                          margin: const EdgeInsets.only(top: 4),
+                          margin: const EdgeInsets.only(top: 4,right: 10),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -864,6 +864,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   }),
                                 ],
                               ),
+                              SizedBox(width: 10,),
                               Expanded(
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(

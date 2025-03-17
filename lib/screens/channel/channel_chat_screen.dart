@@ -1239,10 +1239,10 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                       if(messageList.reactions![0].username != null) {
                                         userName0 = messageList.reactions![0].username ?? "";
                                       }
-                                      if(messageList.reactions![1].username != null) {
-                                        userName1 =
-                                            messageList.reactions![1].username ?? "";
+                                      if(messageList.reactions!.length > 1 && messageList.reactions![1].username != null) {
+                                        userName1 = messageList.reactions![1].username ?? "";
                                       }
+
 
                                       return Stack(
                                         clipBehavior: Clip.none,
@@ -1292,7 +1292,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                                   status: "",
                                                   needToShowIcon: false,
                                                   radius: 14,
-                                                  otherUserProfile: channelChatProvider.getUserById(uniqueUsers[1])?.avatarUrl ?? '',
+                                                  otherUserProfile: channelChatProvider.getUserById(uniqueUsers[1])?.thumbnailAvatarUrl ?? '',
                                                   borderColor: AppColor.blueColor,
                                                   onTap: () => _showReactionsList(context, messageList.reactions!),
                                                 ),
