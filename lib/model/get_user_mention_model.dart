@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
 class GetUserMentionModel {
   int? statusCode;
   int? status;
@@ -20,7 +24,27 @@ class GetUserMentionModel {
     //   });
     // }
   }
+  Future<void> saveToPrefs() async {
+    if (statusCode == 200) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String jsonString = jsonEncode(toJson());
+      await prefs.setString('getUserMentionModel', jsonString);
+    }
+  }
 
+  static Future<GetUserMentionModel?> loadFromPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? jsonString = prefs.getString('getUserMentionModel');
+    if (jsonString != null) {
+      return GetUserMentionModel.fromJson(jsonDecode(jsonString));
+    }
+    return null;
+  }
+
+  static Future<void> clearFromPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove('getUserMentionModel');
+  }
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['statusCode'] = this.statusCode;

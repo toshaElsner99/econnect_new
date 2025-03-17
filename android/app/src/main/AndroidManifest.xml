@@ -52,7 +52,9 @@
             <meta-data
                 android:name="com.google.firebase.messaging.default_notification_icon"
                 android:resource="@drawable/ic_notification"/>
-
+            <meta-data
+                android:name="com.google.firebase.messaging.default_notification_channel_id"
+                android:value="econnect"/>
             <meta-data
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"

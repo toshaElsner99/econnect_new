@@ -5,6 +5,9 @@ class ApiString{
   static const String baseUrl = 'https://e-connect.elsner.com/v1/'; /// THIS LIVE URL
   // static const String baseUrl= 'https://dev-econnect.elsnerdev.co/v1/'; /// THIS DEVELOPMENT URL
   static const String profileBaseUrl = 'https://e-connect.elsner.com/public/'; /// Profile Image
+  ///
+
+  static const getAppVersion = "updateFCM_Mobile/get";
 
   /// End Point , Don't Change Belows End Point until didn't confirm through backend ///
   static const login = "user/login";

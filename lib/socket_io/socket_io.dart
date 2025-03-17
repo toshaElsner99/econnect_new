@@ -63,7 +63,13 @@ class SocketIoProvider extends ChangeNotifier{
   String sendReplyMessage = "send_reply_message";
 
 
-  void connectSocket() {
+  void connectSocket([bool? connectFrom = false]) {
+    if(connectFrom == true){
+      print("socket connected >>>> ${socket.active} || ${socket.connected}");
+      if (socket.active == true) {
+        return;
+      }
+    }
     socket = IO.io(
       socketBaseUrl,
       IO.OptionBuilder()

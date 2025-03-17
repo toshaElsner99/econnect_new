@@ -26,14 +26,14 @@ import '../../utils/common/common_function.dart';
 import '../../utils/common/prefrance_function.dart';
 import '../chat/single_chat_message_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatefulWidget  {
   const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   List<OptionItem> options = [
     OptionItem(
       icon: Icons.add,
@@ -60,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
     if(!_isInitialized) {
       Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
@@ -76,13 +77,29 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     });
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
+      Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
+      Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+      Provider.of<SocketIoProvider>(context, listen: false).connectSocket(true);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
   getFCM() async{
    String fcmToken = await getData(AppPreferenceConstants.fcmToken);
    print("fcmToken => $fcmToken");
   }
 
   setBadge() async{
-    // await NotificationService.setBadgeCount();
+    await NotificationService.setBadgeCount();
   }
 
   @override

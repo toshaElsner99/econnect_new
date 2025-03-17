@@ -38,8 +38,13 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
+		<string>audio</string>
 		<string>remote-notification</string>
 	</array>
+	<key>NSUserNotificationAlert</key>
+    <string>YES</string>
+    <key>NSUserNotificationBadge</key>
+    <string>YES</string>
 	<key>UIApplicationSupportsRemoteNotifications</key>
     <true/>
 	<key>UIFileSharingEnabled</key>

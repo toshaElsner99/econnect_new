@@ -32,6 +32,7 @@ Future<void> main() async {
   await Firebase.initializeApp();
   await NotificationService.initializeNotifications();
   await NotificationService.registerFirebaseListeners();
+  NotificationService.requestPermissions();
   await Permission.notification.isDenied.then(
     (bool value) {
       if (value) {
@@ -44,12 +45,12 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  // RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-  // if (initialMessage != null) {
-  //   print("App opened from terminated state: ${initialMessage.data}");
-  //   // Store the notification data to be handled after app initialization
-  //   NotificationService.pendingNotification = initialMessage.data;
-  // }
+  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  if (initialMessage != null) {
+    print("App opened from terminated state: ${initialMessage.data}");
+    // Store the notification data to be handled after app initialization
+    NotificationService.pendingNotification = initialMessage.data;
+  }
   runApp(const MyApp());
 }
 

@@ -41,6 +41,8 @@ class AppImage{
   static const splashScreen = "$path/splash_screen.png";
   static const noInternet = "$path/wifi.png";
   static const appLogo = "$path/econnect_logo.png";
+  static const playStoreIcon = "$path/playstore.png";
+  static const appStoreIcon = "$path/app-store.png";
 
 
 

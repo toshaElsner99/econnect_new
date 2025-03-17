@@ -30,7 +30,7 @@ class ApiService {
     Map<String, dynamic>? queryParams,
     bool? needLoader = false,
   }) async {
-    if (signInModel.data?.authToken != null) {
+    if (signInModel.data?.authToken != null ) {
       SignInModel? loadedModel = await SignInModel.loadFromPrefs();
       if (loadedModel != null) {
         signInModel = loadedModel;
@@ -46,7 +46,7 @@ class ApiService {
     Uri uri = Uri.parse(ApiString.baseUrl + endPoint).replace(queryParameters: queryParams);
     http.Response? response;
     Map<String, String> requestHeaders = {};
-    if (!endPoint.contains(AppString.signIN)) {
+    if (!endPoint.contains(ApiString.login) || !endPoint.contains(ApiString.getAppVersion)) {
       requestHeaders.addAll(header);
     }
 

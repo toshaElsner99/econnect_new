@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../model/get_user_mention_model.dart';
+import '../model/sign_in_model.dart';
 import '../notificationServices/pushNotificationService.dart';
 import '../screens/sign_in_screen/sign_in_Screen.dart';
 import '../utils/common/common_function.dart';
@@ -145,6 +146,9 @@ class CommonProvider extends ChangeNotifier {
     final response = await ApiService.instance.request(endPoint: ApiString.getUser, method: Method.POST,reqBody: requestBody);
     if (statusCode200Check(response)) {
       getUserMentionModel = GetUserMentionModel.fromJson(response);
+      getUserMentionModel?.saveToPrefs();
+      await GetUserMentionModel.loadFromPrefs();
+      getUserMentionModel = (await GetUserMentionModel.loadFromPrefs())!;
     }
   }
 

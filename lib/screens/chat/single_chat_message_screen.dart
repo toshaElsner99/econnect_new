@@ -22,6 +22,7 @@ import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'package:flutter/material.dart';
+import 'package:html/parser.dart';
 import 'package:http/http.dart';
 
 import 'package:provider/provider.dart';
@@ -193,7 +194,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               isCalledForFav: widget.calledForFavorite ?? false,
               isCallForReadMessage: true,
             );
-            Provider.of<SocketIoProvider>(context, listen: false).connectSocket();
             return true;
           }
         },
@@ -283,7 +283,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 isCallForReadMessage: true,
               );
             }
-            Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
           },
         ),
       ),
@@ -485,17 +484,26 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                     // ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => FileServiceProvider.instance.pickFiles(AppString.singleChat),
+                                      onTap: () {
+                                        _focusNode.unfocus();
+                                        FileServiceProvider.instance.pickFiles(AppString.singleChat);
+                                      },
                                       child: const Icon(Icons.attach_file, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  FileServiceProvider.instance.pickImages(AppString.singleChat),
+                                      onTap: () {
+                                        _focusNode.unfocus();
+                                        FileServiceProvider.instance.pickImages(AppString.singleChat);
+                                      },
                                       child: const Icon(Icons.image, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  showCameraOptionsBottomSheet(context,AppString.singleChat),
+                                      onTap: () {
+                                        _focusNode.unfocus();
+                                        showCameraOptionsBottomSheet(context,AppString.singleChat);
+                                      },
                                       child: const Icon(Icons.camera_alt, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
@@ -1209,7 +1217,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       }
                     }),
                     onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
-                    onCopy: () => copyToClipboard(context, message),
+                    onCopy: () => copyToClipboard(context, parse(message).body?.text ?? ""),
                     onEdit: () => setState(() {
                       _messageController.clear();
                       FocusScope.of(context).requestFocus(_focusNode);

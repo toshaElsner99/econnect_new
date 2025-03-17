@@ -1671,7 +1671,7 @@ Widget commonText({
   );
 }
 
-Widget commonHTMLText({required String message,String userId = "", bool isLog = false}) {
+Widget commonHTMLTextOld({required String message,String userId = "", bool isLog = false,String userName = ""}) {
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
   final currentUserId = signInModel.data?.user?.id ?? "";
   // First process @mentions
@@ -1719,6 +1719,18 @@ Widget commonHTMLText({required String message,String userId = "", bool isLog = 
     }
   }
 
+  // Replace "added to the channel by" with a dynamic value
+  if (processedMessage.contains("added to the channel by")) {
+    final isCurrentUser = userId == currentUserId;
+    String replacement = isCurrentUser
+        ? "added to the channel by you"
+        : 'added to the channel by <span class="username" id="$userId">@${userName.isNotEmpty ? userName : "someone"}</span>';
+
+    processedMessage = processedMessage.replaceAll(
+        "added to the channel by", replacement);
+  }
+
+
   return HtmlWidget(
     processedMessage,
     textStyle: TextStyle(
@@ -1731,19 +1743,15 @@ Widget commonHTMLText({required String message,String userId = "", bool isLog = 
       Map<String, String> styles = {
         'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
       };
-      if (userId == currentUserId) {
-        processedMessage = processedMessage.replaceAll(
-          RegExp(r'added to the channel by (\s*<span class="username">@(\w+)<\/span>)'),
-          'added to the channel by you',
-        );
-      } else {
-        // Replace the username with a grey overlay
-        processedMessage = processedMessage.replaceAllMapped(
-          RegExp(r'@(\w+)'),
-              (match) {
-            return '<span style="color: rgb(150, 150, 150);">@${match.group(1)}</span>';
-          },
-        );
+      if (processedMessage.contains("added to the channel by")) {
+        final senderId = userId;
+        final isCurrentUser = senderId == currentUserId;
+
+        String replacement = isCurrentUser
+            ? "added to the channel by you"
+            : 'added to the channel by <span class="username" id="$senderId">@${userName ?? "someone"}</span>';
+
+        processedMessage = processedMessage.replaceAll("added to the channel by", replacement);
       }
       if (element.classes.contains('renderer_bold')) {
         styles['font-weight'] = 'bold';
@@ -1810,6 +1818,119 @@ Widget commonHTMLText({required String message,String userId = "", bool isLog = 
       }
       if (element.classes.contains('renderer_emoji')) {
         final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
+        if (imageUrl != null) {
+          return CachedNetworkImage(
+            imageUrl: imageUrl,
+            width: 21,
+            height: 21,
+            fit: BoxFit.contain,
+          );
+        }
+      }
+      return null;
+    },
+    enableCaching: true,
+  );
+}
+Widget commonHTMLText({
+  required String message,
+  String userId = "",
+  bool isLog = false,
+  String userName = "",
+}) {
+  final commonProvider = Provider.of<CommonProvider>(
+      navigatorKey.currentState!.context,
+      listen: false);
+  final currentUserId = signInModel.data?.user?.id ?? "";
+
+  // First process @mentions
+  String processedMessage = message.replaceAllMapped(
+    RegExp(r'@(\w+)'),
+        (match) {
+      return '<span class="username">@${match.group(1)}</span>';
+    },
+  );
+
+  // Replace "added to the channel by" with a dynamic value
+  if (processedMessage.contains("added to the channel by")) {
+    final isCurrentUser = userId == currentUserId;
+    String replacement = isCurrentUser
+        ? "added to the channel by you"
+        : 'added to the channel by <span class="username" id="$userId">@${userName.isNotEmpty ? userName : "someone"}</span>';
+
+    processedMessage = processedMessage.replaceAll(
+        "added to the channel by", replacement);
+  }
+
+  return HtmlWidget(
+    processedMessage,
+    textStyle: TextStyle(
+      height: 1.2,
+      fontFamily: AppFonts.interFamily,
+      color: AppPreferenceConstants.themeModeBoolValueGet
+          ? Colors.white
+          : Colors.black,
+      fontSize: 16,
+    ),
+    customStylesBuilder: (element) {
+      Map<String, String> styles = {
+        'color': AppPreferenceConstants.themeModeBoolValueGet
+            ? '#FFFFFF'
+            : '#000000',
+      };
+
+      if (element.classes.contains('username')) {
+        // Get username
+        String username = element.text;
+        if (username.startsWith('@')) {
+          username = username.substring(1);
+        }
+
+        // Get CommonProvider instance
+        final commonProvider = Provider.of<CommonProvider>(
+            navigatorKey.currentState!.context,
+            listen: false);
+
+        // Fetch users if not available
+        if (commonProvider.getUserMentionModel == null) {
+          commonProvider.getUserApi(id: signInModel.data!.user!.id!);
+          return {}; // Return empty styles for now
+        }
+
+        // Check if username exists in allUsers
+        bool isValidUser = commonProvider.isUserInAllUsers(username);
+        username = element.text;
+        if (isValidUser) {
+          styles['background-color'] = '#007770';
+          styles['color'] = '#FFFFFF';
+          styles['border-radius'] = '10px';
+          styles['padding'] = '4px 8px';
+          styles['margin'] = '2px';
+          styles['display'] = 'inline-block';
+        }
+      }
+
+      return styles;
+    },
+    customWidgetBuilder: (element) {
+      if (element.localName == 'a' ||
+          element.localName.toString().startsWith("https") ||
+          element.localName.toString().startsWith("http")) {
+        final String? url = element.attributes['href'];
+        if (url != null) {
+          return GestureDetector(
+            onTap: () => _openUrl(url),
+            child: Text(
+              url,
+              style: TextStyle(
+                  color: Colors.blue, decoration: TextDecoration.underline),
+            ),
+          );
+        }
+      }
+      if (element.classes.contains('renderer_emoji')) {
+        final imageUrl =
+            element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
         if (imageUrl != null) {
           return CachedNetworkImage(
             imageUrl: imageUrl,

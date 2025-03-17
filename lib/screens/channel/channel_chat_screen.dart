@@ -15,6 +15,7 @@ import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:html/parser.dart';
 import 'package:provider/provider.dart';
 
 import '../../main.dart';
@@ -585,17 +586,26 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   children: [
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => FileServiceProvider.instance.pickFiles(AppString.channelChat),
+                                      onTap: () {
+                                        _focusNode.unfocus();
+                                        FileServiceProvider.instance.pickFiles(AppString.channelChat);
+                                      },
                                       child: const Icon(Icons.attach_file, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  FileServiceProvider.instance.pickImages(AppString.channelChat),
+                                      onTap: () {
+                                        _focusNode.unfocus();
+                                        FileServiceProvider.instance.pickImages(AppString.channelChat);
+                                      },
                                       child: const Icon(Icons.image, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  showCameraOptionsBottomSheet(context,AppString.channelChat),
+                                      onTap: () {
+                                        _focusNode.unfocus();
+                                        showCameraOptionsBottomSheet(context,AppString.channelChat);
+                                      },
                                       child: const Icon(Icons.camera_alt, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
@@ -665,7 +675,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
             pushAndRemoveUntil(screen: HomeScreen());
             return false;
           } else {
-            Provider.of<SocketIoProvider>(context, listen: false).connectSocket();
+            Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
             return true;
           }
         },
@@ -679,9 +689,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 if(widget.isFromNotification ?? false) {
                   pushAndRemoveUntil(screen: HomeScreen());
                 }else{
+                  Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
                   pop();
                 }
-                Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
               },
             ),
             title: Column(
@@ -1172,7 +1182,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: commonHTMLText(message: message,userId: messageList.senderInfo?.id ?? "",isLog: messageList.isLog ?? false),
+                                    child: commonHTMLText(message: message,userId: messageList.senderInfo?.id ?? "",isLog: messageList.isLog ?? false,userName: messageList.senderInfo?.username ?? ""),
                                   ),
                                   if (isEdited)
                                     WidgetSpan(
@@ -1679,7 +1689,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,)),
                       onReply: () => pushScreen(screen: ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)),
                       onPin: () => channelChatProvider.pinUnPinMessage(channelID: channelID, messageId: messageId, pinned: pinnedMsg = !pinnedMsg ),
-                      onCopy: () => copyToClipboard(context, message),
+                      onCopy: () => copyToClipboard(context, parse(message).body?.text ?? ""),
                       onEdit: () => setState(() {
                         _messageController.clear();
                         FocusScope.of(context).requestFocus(_focusNode);

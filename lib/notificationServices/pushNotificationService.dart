@@ -8,21 +8,33 @@ import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
+import '../providers/channel_list_provider.dart';
 import '../screens/chat/single_chat_message_screen.dart';
 import '../screens/channel/channel_chat_screen.dart';
 import '../socket_io/socket_io.dart';
 import '../utils/common/common_function.dart';
-import '../providers/channel_list_provider.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
+  static void requestPermissions() {
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(
+      sound: true,
+      alert: true,
+      badge: true,
+    );
+  }
   static Map<String, dynamic>? pendingNotification;
 
   static Future<void> initializeNotifications() async {
-    const androidInitialize = AndroidInitializationSettings('@drawable/ic_notification');
-    const iOSInitialize = DarwinInitializationSettings();
+    const androidInitialize = AndroidInitializationSettings('ic_notification');
+    const iOSInitialize = DarwinInitializationSettings(
+      requestBadgePermission: true,
+      defaultPresentBadge: true,
+    );
     const initializationSettings = InitializationSettings(
       android: androidInitialize,
       iOS: iOSInitialize,
@@ -39,6 +51,8 @@ class NotificationService {
             // Push Notification Click Handling
             final Map<String, dynamic> payloadData = Map<String, dynamic>.from(json.decode(payload.replaceAll("'", '"')));
             handleNotificationRedirect(payloadData);
+            await FlutterNewBadger.setBadge(int.parse(payloadData["unreadCounts"]));
+            // setBadgeCount();
           } else {
             // File Download Click Handling
             openDownloadedFile(payload);
@@ -49,7 +63,7 @@ class NotificationService {
 
     enableIOSNotifications();
     registerFirebaseListeners();
-    await setBadgeCount();
+    // await setBadgeCount();
   }
 
   /// ✅ Handles navigation when user clicks on push notification
@@ -93,7 +107,8 @@ class NotificationService {
           ),
         );
       }
-      await setBadgeCount();
+      await FlutterNewBadger.setBadge(int.parse(data["unreadCounts"]));
+      // setBadgeCount();
     } catch (e) {
       print("Error in handleNotificationRedirect: $e");
     }
@@ -131,11 +146,14 @@ class NotificationService {
     });
 
     // ✅ Handle notifications when the app is killed and then opened
-    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) async{
       if (message != null) {
         print("Handling notification from terminated state: ${message.data}");
+       // setBadgeCount();
         // Store the notification data to be handled after app initialization
         pendingNotification = message.data;
+        await FlutterNewBadger.setBadge(int.parse(pendingNotification?["unreadCounts"]));
+
       }
     });
   }
@@ -161,14 +179,22 @@ class NotificationService {
             playSound: true,
             enableVibration: true,
             styleInformation: BigTextStyleInformation(notification.body!),
-            icon: '@drawable/ic_notification',
+            icon: 'ic_notification',
+            sound: RawResourceAndroidNotificationSound('sound'),
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+            badgeNumber: int.parse(message.data["unreadCounts"]),
           ),
         ),
         payload: json.encode(message.data),
       );
 
       // Update badge count when notification is received
-      await setBadgeCount();
+      // await setBadgeCount();
+      await FlutterNewBadger.setBadge(int.parse(message.data["unreadCounts"]));
     }
   }
 
@@ -213,7 +239,7 @@ class NotificationService {
   static Future<void> enableIOSNotifications() async {
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: true,
-      badge: true,
+      badge: false,
       sound: true,
     );
   }

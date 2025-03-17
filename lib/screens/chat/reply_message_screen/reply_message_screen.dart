@@ -7,6 +7,7 @@ import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:html/parser.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/rendering.dart';
@@ -749,7 +750,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   currentUserId: messageList.senderId?.sId ?? "",
                   onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
                   onPin: () => chatProvider.pinUnPinMessageForReply(receiverId: widget.receiverId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
-                  onCopy: () => copyToClipboard(context, message),
+                  onCopy: () => copyToClipboard(context, parse(message).body?.text ?? ""),
                   onEdit: () => setState(() {
                     _messageController.clear();
                     FocusScope.of(context).requestFocus(_focusNode);
@@ -826,17 +827,26 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                     // ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () => FileServiceProvider.instance.pickFiles(AppString.singleChatReply),
+                                      onTap: () {
+                                        _focusNode.unfocus();
+                                        FileServiceProvider.instance.pickFiles(AppString.singleChatReply);
+                                      },
                                       child: const Icon(Icons.attach_file, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  FileServiceProvider.instance.pickImages(AppString.singleChatReply),
+                                      onTap: () {
+                                        _focusNode.unfocus();
+                                        FileServiceProvider.instance.pickImages(AppString.singleChatReply);
+                                      },
                                       child: const Icon(Icons.image, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
                                     GestureDetector(
-                                      onTap: () =>  showCameraOptionsBottomSheet(context,AppString.singleChatReply),
+                                      onTap: () {
+                                        _focusNode.unfocus();
+                                        showCameraOptionsBottomSheet(context,AppString.singleChatReply);
+                                      },
                                       child: const Icon(Icons.camera_alt, color: Colors.white),
                                     ),
                                     const SizedBox(width: 8),
