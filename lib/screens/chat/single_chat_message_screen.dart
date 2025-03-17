@@ -182,10 +182,20 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer2<CommonProvider,ChatProvider>(builder: (context, commonProvider,chatProvider, child) {
-      return PopScope(
-        canPop: true,
-        onPopInvokedWithResult: (didPop, result) {
-          channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
+      return WillPopScope(
+        onWillPop: () async {
+          if (widget.isFromNotification ?? false) {
+            pushAndRemoveUntil(screen: HomeScreen());
+            return false;
+          } else {
+            channelListProvider.readUnreadMessages(
+              oppositeUserId: oppositeUserId,
+              isCalledForFav: widget.calledForFavorite ?? false,
+              isCallForReadMessage: true,
+            );
+            Provider.of<SocketIoProvider>(context, listen: false).connectSocket();
+            return true;
+          }
         },
         child: Scaffold(
           appBar: buildAppBar(commonProvider, chatProvider),
@@ -273,6 +283,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 isCallForReadMessage: true,
               );
             }
+            Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
           },
         ),
       ),

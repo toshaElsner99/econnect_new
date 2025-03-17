@@ -18,6 +18,8 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
+  static Map<String, dynamic>? pendingNotification;
+
   static Future<void> initializeNotifications() async {
     const androidInitialize = AndroidInitializationSettings('@drawable/ic_notification');
     const iOSInitialize = DarwinInitializationSettings();
@@ -51,32 +53,50 @@ class NotificationService {
   }
 
   /// ✅ Handles navigation when user clicks on push notification
-  static void handleNotificationRedirect(Map<String, dynamic> data) async{
+  static void handleNotificationRedirect(Map<String, dynamic> data) async {
     print("Handling Notification Click: $data");
-    if (data['type'] == 'message') {
-      if(signInModel.data?.user?.id != null || signInModel.data?.user?.id != ""){
-        Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false).connectSocket();
-      }
-      pushScreen(
-        screen: SingleChatMessageScreen(
-            userName: "",
-            oppositeUserId: data['senderId'],
-            needToCallAddMessage: false,
-            isFromNotification: true
-        ),
-      );
-    } else if (data['type'] == 'channel') {
-      if(signInModel.data?.user?.id != null || signInModel.data?.user?.id != "") {
-        Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
-      }
-      pushScreen(
-        screen: ChannelChatScreen(
-          channelId: data['senderId'],
-          isFromNotification: true,
-        ),
-      );
+
+    // Wait for the app to be fully initialized
+    await Future.delayed(const Duration(milliseconds: 1000));
+
+    if (navigatorKey.currentState == null) {
+      print("Navigator key is not initialized yet");
+      return;
     }
-    await setBadgeCount();
+
+    try {
+      // Clear any existing routes to prevent navigation stack issues
+      if (navigatorKey.currentState!.canPop()) {
+        navigatorKey.currentState!.popUntil((route) => route.isFirst);
+      }
+
+      if (data['type'] == 'message') {
+        if(signInModel.data?.user?.id != null && signInModel.data?.user?.id != ""){
+          Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
+        }
+        await pushScreen(
+          screen: SingleChatMessageScreen(
+              userName: "",
+              oppositeUserId: data['senderId'],
+              needToCallAddMessage: false,
+              isFromNotification: true
+          ),
+        );
+      } else if (data['type'] == 'channel') {
+        if(signInModel.data?.user?.id != null && signInModel.data?.user?.id != "") {
+          Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
+        }
+        await pushScreen(
+          screen: ChannelChatScreen(
+            channelId: data['senderId'],
+            isFromNotification: true,
+          ),
+        );
+      }
+      await setBadgeCount();
+    } catch (e) {
+      print("Error in handleNotificationRedirect: $e");
+    }
   }
 
   /// ✅ Handles opening a downloaded file when user clicks on download notification
@@ -109,26 +129,16 @@ class NotificationService {
       print("Firebase Notification Received: ${message.data}");
       _showPushNotification(message);
     });
+
+    // ✅ Handle notifications when the app is killed and then opened
+    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+      if (message != null) {
+        print("Handling notification from terminated state: ${message.data}");
+        // Store the notification data to be handled after app initialization
+        pendingNotification = message.data;
+      }
+    });
   }
-  // static Future<void> registerFirebaseListeners() async {
-  //   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-  //     print("onMessageOpenedApp: ${message.data}");
-  //     handleNotificationRedirect(message.data);
-  //   });
-  //
-  //   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-  //     print("Firebase Notification Received: ${message.data}");
-  //     _showPushNotification(message);
-  //   });
-  //
-  //   // ✅ Handle notifications when the app is killed and then opened
-  //   FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
-  //     if (message != null) {
-  //       print("Handling notification from terminated state: ${message.data}");
-  //       handleNotificationRedirect(message.data);
-  //     }
-  //   });
-  // }
 
   /// ✅ Shows push notifications
   static Future<void> _showPushNotification(RemoteMessage message) async {

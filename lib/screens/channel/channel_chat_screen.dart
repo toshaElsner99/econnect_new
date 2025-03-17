@@ -659,23 +659,31 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-      return PopScope(
-        canPop: true,
-        onPopInvokedWithResult: (didPop, result) {
-          if(widget.isFromNotification ?? false){
+      return WillPopScope(
+        onWillPop: () async {
+          if (widget.isFromNotification ?? false) {
             pushAndRemoveUntil(screen: HomeScreen());
+            return false;
+          } else {
+            Provider.of<SocketIoProvider>(context, listen: false).connectSocket();
+            return true;
           }
         },
         child: Scaffold(
           appBar: AppBar(
             toolbarHeight: 60,
             titleSpacing: 0,
-            leading:
-            (widget.isFromNotification ?? false) ?
-            IconButton(
-              icon: const Icon(CupertinoIcons.back,color: Colors.white,),
-              color: Colors.white,
-              onPressed: () => pushAndRemoveUntil(screen: HomeScreen())) : commonBackButton(),
+            leading: IconButton(
+              icon: Icon(CupertinoIcons.back, color: Colors.white),
+              onPressed: () {
+                if(widget.isFromNotification ?? false) {
+                  pushAndRemoveUntil(screen: HomeScreen());
+                }else{
+                  pop();
+                }
+                Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
+              },
+            ),
             title: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

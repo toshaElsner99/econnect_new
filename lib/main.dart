@@ -30,36 +30,27 @@ late SignInModel signInModel;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
-    if (message != null) {
-      print("App opened from terminated state: ${message.data}");
-      NotificationService.handleNotificationRedirect(message.data);
-    }
-  });
   await NotificationService.initializeNotifications();
   await NotificationService.registerFirebaseListeners();
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-  if (initialMessage != null) {
-    // App received a notification when it was killed
-    print("App opened from terminated state: ${initialMessage.data}");
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      NotificationService.handleNotificationRedirect(initialMessage.data);
-    });
-  }
   await Permission.notification.isDenied.then(
-        (bool value) {
+    (bool value) {
       if (value) {
         Permission.notification.request();
       }
     },
   );
   NetworkStatusService();
-  SystemChrome.setPreferredOrientations([
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
-  ]).then((value)async{
-    runApp(const MyApp());
-  },);
+  ]);
+  // RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  // if (initialMessage != null) {
+  //   print("App opened from terminated state: ${initialMessage.data}");
+  //   // Store the notification data to be handled after app initialization
+  //   NotificationService.pendingNotification = initialMessage.data;
+  // }
+  runApp(const MyApp());
 }
 
 

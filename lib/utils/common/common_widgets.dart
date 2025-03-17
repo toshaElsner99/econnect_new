@@ -1472,7 +1472,7 @@ Widget commonBackButton() {
   return IconButton(
     icon: const Icon(CupertinoIcons.back,color: Colors.white,),
     color: Colors.white,
-    onPressed: () => pop(),);
+    onPressed: () => pop());
 }
 
 Widget commonLogoutDialog() {
