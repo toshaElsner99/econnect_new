@@ -2420,7 +2420,7 @@ Widget commonButtonForHeaderFavoriteInfoCallMute(
       height: 60,
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-          color: isSelected ? AppColor.redColor : AppColor.boxBgColor
+          // color: isSelected ? AppColor.redColor : AppColor.boxBgColor
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -2469,7 +2469,7 @@ void showChatSettingsBottomSheet({required String userId}) {
         // print("userID>>>>> $userID");
         return Container(
           decoration: BoxDecoration(
-            color: AppColor.dialogBgColor,
+            color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.dialogBgColor : AppColor.appBarColor,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             boxShadow: [
               BoxShadow(
@@ -2774,7 +2774,7 @@ Widget selectedFilesWidget({required String screenName}) {
 void showCameraOptionsBottomSheet(BuildContext context,String screenName) {
   showModalBottomSheet(
     context: context,
-    backgroundColor: AppColor.appBarColor,
+    backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray: AppColor.appBarColor,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
