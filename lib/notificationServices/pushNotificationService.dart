@@ -459,8 +459,8 @@ class NotificationService {
 
   static Future<void> _registerFirebaseListeners() async {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket(true);
       handleNotificationRedirect(message.data);
+      Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket(true);
     });
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {

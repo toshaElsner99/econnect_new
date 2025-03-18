@@ -61,9 +61,7 @@ class SplashProvider extends ChangeNotifier {
     Timer(const Duration(seconds: 3), () {
       if (isLoggedIn) {
         if (NotificationService.pendingNotification != null) {
-          // if(Platform.isAndroid){
           //   NotificationService.handleNotificationRedirect(NotificationService.pendingNotification!);
-          // }
           // NotificationService.pendingNotification = null;
         } else {
           pushReplacement(screen: const HomeScreen());
