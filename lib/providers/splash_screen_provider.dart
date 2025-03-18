@@ -53,6 +53,7 @@ import '../notificationServices/pushNotificationService.dart';
 import 'package:http/http.dart' as http;
 
 class SplashProvider extends ChangeNotifier {
+  bool isForceUpdate = false;
   whereToGO() async {
     signInModel = (await SignInModel.loadFromPrefs()) ?? SignInModel();
     final isLoggedIn = await getBool(AppPreferenceConstants.isLoginPrefs) ?? false;
@@ -60,8 +61,10 @@ class SplashProvider extends ChangeNotifier {
     Timer(const Duration(seconds: 3), () {
       if (isLoggedIn) {
         if (NotificationService.pendingNotification != null) {
-          // NotificationService.handleNotificationRedirect(NotificationService.pendingNotification!);
-          NotificationService.pendingNotification = null;
+          // if(Platform.isAndroid){
+          //   NotificationService.handleNotificationRedirect(NotificationService.pendingNotification!);
+          // }
+          // NotificationService.pendingNotification = null;
         } else {
           pushReplacement(screen: const HomeScreen());
         }
@@ -85,7 +88,7 @@ class SplashProvider extends ChangeNotifier {
     print("latestVersio>>>>n $latestVersion");
 
     if (latestVersion != null && isUpdateRequired(currentVersion, latestVersion)) {
-      showForceUpdateDialog(context);
+      showForceUpdateDialog(context,isForceUpdate);
     } else {
       whereToGO();
     }
@@ -98,6 +101,7 @@ class SplashProvider extends ChangeNotifier {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        isForceUpdate = data['data']['is_force_update'] ?? false;
         return platform == 'android' ? data['data']['android_version'] : data['data']['ios_version'];
       } else {
         print("Failed to fetch version: ${response.statusCode}");
@@ -121,7 +125,7 @@ class SplashProvider extends ChangeNotifier {
     }
     return false;
   }
-  void showForceUpdateDialog(BuildContext context) {
+  void showForceUpdateDialog(BuildContext context, bool isForceUpdate) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -134,11 +138,18 @@ class SplashProvider extends ChangeNotifier {
               commonText(text: 'Update Required', fontSize: 17),
             ],
           ),
-          content: commonText(text: 'A new version of the app is available. Please update to continue using the app.', fontSize: 15),
+          content: commonText(text: isForceUpdate ? 'A new version of the app is available. Please update to continue using the app.' : 'A new version of the app is available. Would you like to update now?', fontSize: 15),
           actions: [
             TextButton(
-                onPressed: () => exit(0),
-                child:  commonText(text: 'Cancel', fontSize: 15,color: Colors.black,fontWeight: FontWeight.w500)
+                onPressed: () {
+                  if(isForceUpdate){
+                    exit(0);
+                  }else {
+                    pop();
+                    whereToGO();
+                  }
+                },
+                child:  commonText(text: isForceUpdate ? 'Cancel' : "Later", fontSize: 15,color: Colors.black,fontWeight: FontWeight.w500)
             ),
             TextButton(
               style: ButtonStyle(

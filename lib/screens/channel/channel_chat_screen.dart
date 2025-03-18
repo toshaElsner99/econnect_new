@@ -671,11 +671,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
       return WillPopScope(
         onWillPop: () async {
+          Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
           if (widget.isFromNotification ?? false) {
             pushAndRemoveUntil(screen: HomeScreen());
             return false;
           } else {
-            Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
             return true;
           }
         },
@@ -689,9 +689,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 if(widget.isFromNotification ?? false) {
                   pushAndRemoveUntil(screen: HomeScreen());
                 }else{
-                  Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
                   pop();
                 }
+                Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
               },
             ),
             title: Column(

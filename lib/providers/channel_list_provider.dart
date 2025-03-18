@@ -53,7 +53,7 @@ class ChannelListProvider extends ChangeNotifier{
     if(statusCode200Check(response)){
       favoriteListModel = FavoriteListModel.fromJson(response);
     }
-    // NotificationService.setBadgeCount();
+    NotificationService.setBadgeCount();
     notifyListeners();
   }
   /// GET CHANNEL LIST IN HOME SCREEN ///
@@ -63,7 +63,7 @@ class ChannelListProvider extends ChangeNotifier{
     if(statusCode200Check(response)){
       channelListModel = ChannelListModel.fromJson(response);
     }
-    // NotificationService.setBadgeCount();
+    NotificationService.setBadgeCount();
     notifyListeners();
   }
   /// GET DIRECT MESSAGE IN HOME SCREEN ///
@@ -77,7 +77,7 @@ class ChannelListProvider extends ChangeNotifier{
       directMessageListModel = DirectMessageListModel.fromJson(response);
       // emit(ChannelListInitial());
     }
-    // NotificationService.setBadgeCount();
+    NotificationService.setBadgeCount();
     notifyListeners();
   }
   /// CREATE A NRE CHANNEL ///
@@ -340,7 +340,7 @@ Future<void> leaveChannel({
       await getFavoriteList();
       await getChannelList();
       await getDirectMessageList();
-      // await NotificationService.setBadgeCount();
+      await NotificationService.setBadgeCount();
     }
     notifyListeners();
   }
@@ -357,7 +357,7 @@ Future<void> leaveChannel({
       await getFavoriteList();
       await getChannelList();
       await getDirectMessageList();
-      // await NotificationService.setBadgeCount();
+      await NotificationService.setBadgeCount();
     }
     notifyListeners();
   }

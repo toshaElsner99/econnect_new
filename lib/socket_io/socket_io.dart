@@ -200,7 +200,7 @@ class SocketIoProvider extends ChangeNotifier{
       Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getFavoriteList();
       Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getChannelList();
       Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getDirectMessageList();
-      // NotificationService.setBadgeCount();
+      NotificationService.setBadgeCount();
     });
   }
 

@@ -99,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   setBadge() async{
-    // await NotificationService.setBadgeCount();
+    await NotificationService.setBadgeCount();
   }
 
   @override

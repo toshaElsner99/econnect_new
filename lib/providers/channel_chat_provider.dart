@@ -551,7 +551,7 @@ class ChannelChatProvider extends ChangeNotifier{
     if(statusCode200Check(response)){
       getChannelInfo = GetChannelInfo.fromJson(response);
       if(callFroHome == true && getChannelInfo != null){
-        addChannelApiCall(channelName: getChannelInfo?.data?.name ?? "", isPrivate: getChannelInfo?.data?.isPrivate ?? false, description: getChannelInfo?.data?.description ?? "");
+        // addChannelApiCall(channelName: getChannelInfo?.data?.name ?? "", isPrivate: getChannelInfo?.data?.isPrivate ?? false, description: getChannelInfo?.data?.description ?? "");
       }
       notifyListeners();
     }

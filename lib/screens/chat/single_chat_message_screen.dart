@@ -185,15 +185,15 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     return Consumer2<CommonProvider,ChatProvider>(builder: (context, commonProvider,chatProvider, child) {
       return WillPopScope(
         onWillPop: () async {
+          channelListProvider.readUnreadMessages(
+            oppositeUserId: oppositeUserId,
+            isCalledForFav: widget.calledForFavorite ?? false,
+            isCallForReadMessage: true,
+          );
           if (widget.isFromNotification ?? false) {
             pushAndRemoveUntil(screen: HomeScreen());
             return false;
           } else {
-            channelListProvider.readUnreadMessages(
-              oppositeUserId: oppositeUserId,
-              isCalledForFav: widget.calledForFavorite ?? false,
-              isCallForReadMessage: true,
-            );
             return true;
           }
         },
@@ -277,12 +277,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               pushAndRemoveUntil(screen: HomeScreen());
             }else{
               pop();
-              channelListProvider.readUnreadMessages(
-                oppositeUserId: oppositeUserId,
-                isCalledForFav: widget.calledForFavorite ?? false,
-                isCallForReadMessage: true,
-              );
             }
+            channelListProvider.readUnreadMessages(
+              oppositeUserId: oppositeUserId,
+              isCalledForFav: widget.calledForFavorite ?? false,
+              isCallForReadMessage: true,
+            );
           },
         ),
       ),
@@ -659,7 +659,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     // print("user = ${(user?.data!.user!)}");
     // print("DATa = ${jsonEncode(user?.data!.user!)}");
     // print("NAME = ${user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown'}");
-    print("Sender Info => ${messageList.senderOfForward}");
+    // print("Sender Info => ${messageList.senderOfForward}");
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
       // if (!userCache.containsKey(userId) && commonProvider.getUserModel!.data!.user!.sId! == userId) {
       //   commonProvider.getUserByIDCall2(userId: userId);

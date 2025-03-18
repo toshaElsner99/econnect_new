@@ -178,6 +178,7 @@
 //   }
 // }
 // /
+import 'package:e_connect/providers/common_provider.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -196,8 +197,8 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).checkForForceUpdate(context);
-    Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).whereToGO();
+    Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).checkForForceUpdate(context);
+    // Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).whereToGO();
   }
 
   @override

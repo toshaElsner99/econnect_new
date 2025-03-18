@@ -1671,7 +1671,7 @@ Widget commonText({
   );
 }
 
-Widget commonHTMLTextOld({required String message,String userId = "", bool isLog = false,String userName = ""}) {
+Widget commonHTMLText({required String message,String userId = "", bool isLog = false,String userName = ""})  {
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
   final currentUserId = signInModel.data?.user?.id ?? "";
   // First process @mentions
@@ -1832,7 +1832,7 @@ Widget commonHTMLTextOld({required String message,String userId = "", bool isLog
     enableCaching: true,
   );
 }
-Widget commonHTMLText({
+Widget commonHTMLTextNew({
   required String message,
   String userId = "",
   bool isLog = false,
