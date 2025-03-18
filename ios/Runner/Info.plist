@@ -33,20 +33,31 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to take pictures.</string>
+	<key>NSDocumentsDirectoryUsageDescription</key>
+	<string>We need access to save and open downloaded files.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need access to your microphone for audio recording.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need permission to save images to your gallery.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library to pick images.</string>
+	<key>NSUserNotificationAlert</key>
+	<string>YES</string>
+	<key>NSUserNotificationBadge</key>
+	<string>YES</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIApplicationSupportsRemoteNotifications</key>
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
 		<string>audio</string>
 		<string>remote-notification</string>
+		<string>processing</string>
 	</array>
-	<key>NSUserNotificationAlert</key>
-    <string>YES</string>
-    <key>NSUserNotificationBadge</key>
-    <string>YES</string>
-	<key>UIApplicationSupportsRemoteNotifications</key>
-    <true/>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -68,25 +79,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSPhotoLibraryUsageDescription</key>
-    <string>We need access to your photo library to pick images.</string>
-
-    <key>NSCameraUsageDescription</key>
-    <string>We need access to your camera to take pictures.</string>
-
-    <key>NSMicrophoneUsageDescription</key>
-    <string>We need access to your microphone for audio recording.</string>
-
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>We need permission to save images to your gallery.</string>
-
-    <key>NSDocumentsDirectoryUsageDescription</key>
-    <string>We need access to save and open downloaded files.</string>
-
-    <key>NSAppTransportSecurity</key>
-    <dict>
-        <key>NSAllowsArbitraryLoads</key>
-        <true/>
-    </dict>
 </dict>
 </plist>

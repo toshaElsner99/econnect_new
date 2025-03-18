@@ -1,3 +1,336 @@
+// import 'dart:convert';
+// import 'dart:io';
+// import 'package:device_info_plus/device_info_plus.dart';
+// import 'package:firebase_messaging/firebase_messaging.dart';
+// import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+// import 'package:flutter_new_badger/flutter_new_badger.dart';
+// import 'package:open_file/open_file.dart';
+// import 'package:permission_handler/permission_handler.dart';
+// import 'package:provider/provider.dart';
+// import '../main.dart';
+// import '../providers/channel_list_provider.dart';
+// import '../screens/chat/single_chat_message_screen.dart';
+// import '../screens/channel/channel_chat_screen.dart';
+// import '../socket_io/socket_io.dart';
+// import '../utils/common/common_function.dart';
+//
+// class NotificationService {
+//   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+//   FlutterLocalNotificationsPlugin();
+//
+//   static void requestPermissions() {
+//     flutterLocalNotificationsPlugin
+//         .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
+//         ?.requestPermissions(
+//       sound: true,
+//       alert: true,
+//       badge: true,
+//     );
+//   }
+//   static Map<String, dynamic>? pendingNotification;
+//
+//   static Future<void> initializeNotifications() async {
+//     const androidInitialize = AndroidInitializationSettings('ic_notification');
+//     const iOSInitialize = DarwinInitializationSettings(
+//       requestBadgePermission: true,
+//       defaultPresentBadge: true,
+//     );
+//     const initializationSettings = InitializationSettings(
+//       android: androidInitialize,
+//       iOS: iOSInitialize,
+//     );
+//
+//     await flutterLocalNotificationsPlugin.initialize(
+//       initializationSettings,
+//       onDidReceiveNotificationResponse: (NotificationResponse response) async {
+//         final String? payload = response.payload;
+//         print("Notification Click Payload: $payload");
+//
+//         if (payload != null && payload.isNotEmpty) {
+//           if (payload.contains('{')) {
+//             // Push Notification Click Handling
+//             final Map<String, dynamic> payloadData = Map<String, dynamic>.from(json.decode(payload.replaceAll("'", '"')));
+//             handleNotificationRedirect(payloadData);
+//             await FlutterNewBadger.setBadge(int.parse(payloadData["unreadCounts"]));
+//             // setBadgeCount();
+//           } else {
+//             // File Download Click Handling
+//             openDownloadedFile(payload);
+//           }
+//         }
+//       },
+//     );
+//
+//     enableIOSNotifications();
+//     registerFirebaseListeners();
+//     // await setBadgeCount();
+//   }
+//
+//   /// ✅ Handles navigation when user clicks on push notification
+//   static void handleNotificationRedirect(Map<String, dynamic> data) async {
+//     print("Handling Notification Click: $data");
+//
+//     // Wait for the app to be fully initialized
+//     await Future.delayed(const Duration(milliseconds: 1000));
+//
+//     if (navigatorKey.currentState == null) {
+//       print("Navigator key is not initialized yet");
+//       return;
+//     }
+//
+//     try {
+//       // Clear any existing routes to prevent navigation stack issues
+//       if (navigatorKey.currentState!.canPop()) {
+//         navigatorKey.currentState!.popUntil((route) => route.isFirst);
+//       }
+//
+//       if (data['type'] == 'message') {
+//         if(signInModel.data?.user?.id != null && signInModel.data?.user?.id != ""){
+//           Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
+//         }
+//         await pushScreen(
+//           screen: SingleChatMessageScreen(
+//               userName: "",
+//               oppositeUserId: data['senderId'],
+//               needToCallAddMessage: false,
+//               isFromNotification: true
+//           ),
+//         );
+//       } else if (data['type'] == 'channel') {
+//         if(signInModel.data?.user?.id != null && signInModel.data?.user?.id != "") {
+//           Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
+//         }
+//         await pushScreen(
+//           screen: ChannelChatScreen(
+//             channelId: data['senderId'],
+//             isFromNotification: true,
+//           ),
+//         );
+//       }
+//       await FlutterNewBadger.setBadge(int.parse(data["unreadCounts"]));
+//       // setBadgeCount();
+//     } catch (e) {
+//       print("Error in handleNotificationRedirect: $e");
+//     }
+//   }
+//
+//   /// ✅ Handles opening a downloaded file when user clicks on download notification
+//   static Future<void> openDownloadedFile(String filePath) async {
+//     try {
+//       final file = File(filePath);
+//       if (await file.exists()) {
+//         final result = await OpenFile.open(filePath);
+//         if (result.type != ResultType.done) {
+//           print("Error opening file: ${result.message}");
+//         }
+//       } else {
+//         print("File does not exist.");
+//       }
+//     } catch (e) {
+//       print("Error opening file: $e");
+//     }
+//   }
+//
+//   /// ✅ Registers Firebase Messaging Listeners
+//   static Future<void> registerFirebaseListeners() async {
+//     FirebaseMessaging.onMessageOpenedApp.listen(
+//           (RemoteMessage message) {
+//         print("onMessageOpenedApp: ${message.data}");
+//         handleNotificationRedirect(message.data);
+//       },
+//     );
+//
+//     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+//       print("Firebase Notification Received: ${message.data}");
+//       _showPushNotification(message);
+//     });
+//
+//     // ✅ Handle notifications when the app is killed and then opened
+//     FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) async{
+//       if (message != null) {
+//         print("Handling notification from terminated state: ${message.data}");
+//        // setBadgeCount();
+//         // Store the notification data to be handled after app initialization
+//         pendingNotification = message.data;
+//         await FlutterNewBadger.setBadge(int.parse(pendingNotification?["unreadCounts"]));
+//
+//       }
+//     });
+//   }
+//
+//   /// ✅ Shows push notifications
+//   static Future<void> _showPushNotification(RemoteMessage message) async {
+//     final RemoteNotification? notification = message.notification;
+//     final AndroidNotification? android = message.notification?.android;
+//
+//     if (notification != null && android != null) {
+//       final AndroidNotificationChannel channel = _androidNotificationChannel();
+//       await flutterLocalNotificationsPlugin.show(
+//         notification.hashCode,
+//         notification.title,
+//         notification.body,
+//         NotificationDetails(
+//           android: AndroidNotificationDetails(
+//             channel.id,
+//             channel.name,
+//             channelDescription: channel.description,
+//             importance: Importance.high,
+//             priority: Priority.high,
+//             playSound: true,
+//             enableVibration: true,
+//             styleInformation: BigTextStyleInformation(notification.body!),
+//             icon: 'ic_notification',
+//             sound: RawResourceAndroidNotificationSound('sound'),
+//           ),
+//           iOS: DarwinNotificationDetails(
+//             presentAlert: true,
+//             presentBadge: true,
+//             presentSound: true,
+//             badgeNumber: int.parse(message.data["unreadCounts"]),
+//           ),
+//         ),
+//         payload: json.encode(message.data),
+//       );
+//
+//       // Update badge count when notification is received
+//       // await setBadgeCount();
+//       await FlutterNewBadger.setBadge(int.parse(message.data["unreadCounts"]));
+//     }
+//   }
+//
+//   /// ✅ Shows file download notifications
+//   static Future<void> showDownloadNotification({
+//     required String fileName,
+//     required String filePath,
+//     required int notificationId,
+//     required bool isCompleted,
+//   }) async {
+//     AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+//       'download_channel',
+//       'File Download',
+//       channelDescription: 'Shows file download progress',
+//       importance: Importance.high,
+//       priority: Priority.high,
+//       ongoing: !isCompleted,
+//       autoCancel: isCompleted,
+//     );
+//
+//     DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+//       presentAlert: true,
+//       presentBadge: true,
+//       presentSound: true,
+//     );
+//
+//     NotificationDetails platformChannelSpecifics = NotificationDetails(
+//       android: androidDetails,
+//       iOS: iOSDetails,
+//     );
+//
+//     await flutterLocalNotificationsPlugin.show(
+//       notificationId,
+//       isCompleted ? 'Download Complete' : 'Downloading...',
+//       isCompleted ? 'Tap to open $fileName' : 'Downloading $fileName...',
+//       platformChannelSpecifics,
+//       payload: isCompleted ? filePath : null,
+//     );
+//   }
+//
+//   /// ✅ Enable iOS Notifications
+//   static Future<void> enableIOSNotifications() async {
+//     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+//       alert: true,
+//       badge: false,
+//       sound: true,
+//     );
+//   }
+//
+//   /// ✅ Create Android Notification Channel
+//   static AndroidNotificationChannel _androidNotificationChannel() => const AndroidNotificationChannel(
+//     'econnect',
+//     'Econnect',
+//     showBadge: true,
+//     groupId: 'chat',
+//     importance: Importance.high,
+//     playSound: true,
+//     enableVibration: true,
+//   );
+//
+//   /// ✅ Request Storage Permission for Android
+//   static Future<bool> requestStoragePermission() async {
+//     if (Platform.isAndroid) {
+//       int sdkInt = await getDeviceSdkForAndroid();
+//       if (sdkInt >= 30) {
+//         if (await Permission.manageExternalStorage.isGranted) {
+//           return true;
+//         } else {
+//           PermissionStatus status = await Permission.manageExternalStorage.request();
+//           return status == PermissionStatus.granted;
+//         }
+//       } else {
+//         PermissionStatus status = await Permission.storage.request();
+//         return status == PermissionStatus.granted;
+//       }
+//     }
+//     return true;
+//   }
+//
+//   /// ✅ Get Android SDK Version
+//   static Future<int> getDeviceSdkForAndroid() async {
+//     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+//     AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+//     return androidInfo.version.sdkInt;
+//   }
+//
+//   /// Calculate and set badge count based on unread messages
+//   // static Future<void> setBadgeCount() async {
+//   //   try {
+//   //     final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context, listen: false);
+//   //
+//   //     // Get unread counts from favorites
+//   //     int favoritesUnreadCount = 0;
+//   //     channelListProvider.favoriteListModel?.data?.chatList?.forEach((chat) {
+//   //       favoritesUnreadCount += (chat.unseenMessagesCount ?? 0).toInt();
+//   //     });
+//   //     channelListProvider.favoriteListModel?.data?.favouriteChannels?.forEach((channel) {
+//   //       favoritesUnreadCount += (channel.unseenMessagesCount ?? 0).toInt();
+//   //     });
+//   //
+//   //     // Get unread counts from channels
+//   //     int channelsUnreadCount = 0;
+//   //     channelListProvider.channelListModel?.data?.forEach((channel) {
+//   //       channelsUnreadCount += (channel.unreadCount ?? 0).toInt();
+//   //     });
+//   //
+//   //     // Get unread counts from direct messages
+//   //     int directMessagesUnreadCount = 0;
+//   //     channelListProvider.directMessageListModel?.data?.chatList?.forEach((chat) {
+//   //       directMessagesUnreadCount += (chat.unseenMessagesCount ?? 0).toInt();
+//   //     });
+//   //
+//   //     // Calculate total unread count
+//   //     int totalUnreadCount = favoritesUnreadCount + channelsUnreadCount + directMessagesUnreadCount;
+//   //
+//   //     // Update the badge count
+//   //     if (totalUnreadCount > 0) {
+//   //       await FlutterNewBadger.setBadge(totalUnreadCount);
+//   //     } else {
+//   //       await FlutterNewBadger.removeBadge();
+//   //     }
+//   //   } catch (e) {
+//   //     print("Error setting badge count: $e");
+//   //   }
+//   // }
+//
+//   static clearBadgeCount() async{
+//     await FlutterNewBadger.setBadge(0);
+//     await FlutterNewBadger.removeBadge();
+//   }
+//
+//   static Future<void> clearAllNotifications() async {
+//     await flutterLocalNotificationsPlugin.cancelAll();
+//     print("✅ All notifications cleared!");
+//   }
+// }
 import 'dart:convert';
 import 'dart:io';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -8,7 +341,6 @@ import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
-import '../providers/channel_list_provider.dart';
 import '../screens/chat/single_chat_message_screen.dart';
 import '../screens/channel/channel_chat_screen.dart';
 import '../socket_io/socket_io.dart';
@@ -18,18 +350,15 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
-  static void requestPermissions() {
-    flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
-        ?.requestPermissions(
-      sound: true,
-      alert: true,
-      badge: true,
-    );
-  }
   static Map<String, dynamic>? pendingNotification;
 
   static Future<void> initializeNotifications() async {
+    await _initializeLocalNotifications();
+    await _enableIOSNotifications();
+    await _registerFirebaseListeners();
+  }
+
+  static Future<void> _initializeLocalNotifications() async {
     const androidInitialize = AndroidInitializationSettings('ic_notification');
     const iOSInitialize = DarwinInitializationSettings(
       requestBadgePermission: true,
@@ -44,121 +373,104 @@ class NotificationService {
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
         final String? payload = response.payload;
-        print("Notification Click Payload: $payload");
-
         if (payload != null && payload.isNotEmpty) {
-          if (payload.contains('{')) {
-            // Push Notification Click Handling
-            final Map<String, dynamic> payloadData = Map<String, dynamic>.from(json.decode(payload.replaceAll("'", '"')));
-            handleNotificationRedirect(payloadData);
-            await FlutterNewBadger.setBadge(int.parse(payloadData["unreadCounts"]));
-            // setBadgeCount();
-          } else {
-            // File Download Click Handling
-            openDownloadedFile(payload);
-          }
+          await _handleNotificationResponse(payload);
         }
       },
     );
-
-    enableIOSNotifications();
-    registerFirebaseListeners();
-    // await setBadgeCount();
   }
 
-  /// ✅ Handles navigation when user clicks on push notification
-  static void handleNotificationRedirect(Map<String, dynamic> data) async {
-    print("Handling Notification Click: $data");
+  static Future<void> _handleNotificationResponse(String payload) async {
+    if (payload.contains('{')) {
+      final Map<String, dynamic> payloadData = json.decode(payload);
+      await _handleNotificationRedirect(payloadData);
+      await FlutterNewBadger.setBadge(int.parse(payloadData["unreadCounts"]));
+    } else {
+      await _openDownloadedFile(payload);
+    }
+  }
 
-    // Wait for the app to be fully initialized
+  static Future<void> _handleNotificationRedirect(Map<String, dynamic> data) async {
     await Future.delayed(const Duration(milliseconds: 1000));
 
-    if (navigatorKey.currentState == null) {
-      print("Navigator key is not initialized yet");
-      return;
-    }
+    if (navigatorKey.currentState == null) return;
 
     try {
-      // Clear any existing routes to prevent navigation stack issues
       if (navigatorKey.currentState!.canPop()) {
         navigatorKey.currentState!.popUntil((route) => route.isFirst);
       }
 
       if (data['type'] == 'message') {
-        if(signInModel.data?.user?.id != null && signInModel.data?.user?.id != ""){
-          Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
-        }
-        await pushScreen(
-          screen: SingleChatMessageScreen(
-              userName: "",
-              oppositeUserId: data['senderId'],
-              needToCallAddMessage: false,
-              isFromNotification: true
-          ),
-        );
+        await _navigateToChatScreen(data['senderId']);
       } else if (data['type'] == 'channel') {
-        if(signInModel.data?.user?.id != null && signInModel.data?.user?.id != "") {
-          Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
-        }
-        await pushScreen(
-          screen: ChannelChatScreen(
-            channelId: data['senderId'],
-            isFromNotification: true,
-          ),
-        );
+        await _navigateToChannelScreen(data['senderId']);
       }
       await FlutterNewBadger.setBadge(int.parse(data["unreadCounts"]));
-      // setBadgeCount();
     } catch (e) {
       print("Error in handleNotificationRedirect: $e");
     }
   }
 
-  /// ✅ Handles opening a downloaded file when user clicks on download notification
-  static Future<void> openDownloadedFile(String filePath) async {
-    try {
-      final file = File(filePath);
-      if (await file.exists()) {
-        final result = await OpenFile.open(filePath);
-        if (result.type != ResultType.done) {
-          print("Error opening file: ${result.message}");
-        }
-      } else {
-        print("File does not exist.");
+  static Future<void> _navigateToChatScreen(String senderId) async {
+    if (_isUserSignedIn()) {
+    Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
+    }
+    await pushScreen(
+    screen: SingleChatMessageScreen(
+    userName: "",
+    oppositeUserId: senderId,
+    needToCallAddMessage: false,
+    isFromNotification: true,
+    ),
+    );
+    }
+
+  static Future<void> _navigateToChannelScreen(String channelId) async {
+    if (_isUserSignedIn()) {
+    Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
+    }
+    await pushScreen(
+    screen: ChannelChatScreen(
+    channelId: channelId,
+    isFromNotification: true,
+    ),
+    );
+    }
+
+  static bool _isUserSignedIn() {
+    return signInModel.data?.user?.id != null && signInModel.data?.user?.id != "";
+  }
+
+  static Future<void> _openDownloadedFile(String filePath) async {
+    final file = File(filePath);
+    if (await file.exists()) {
+      final result = await OpenFile.open(filePath);
+      if (result.type != ResultType.done) {
+        print("Error opening file: ${result.message}");
       }
-    } catch (e) {
-      print("Error opening file: $e");
+    } else {
+      print("File does not exist.");
     }
   }
 
-  /// ✅ Registers Firebase Messaging Listeners
-  static Future<void> registerFirebaseListeners() async {
-    FirebaseMessaging.onMessageOpenedApp.listen(
-          (RemoteMessage message) {
-        print("onMessageOpenedApp: ${message.data}");
-        handleNotificationRedirect(message.data);
-      },
-    );
+  static Future<void> _registerFirebaseListeners() async {
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      _handleNotificationRedirect(message.data);
+    });
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print("Firebase Notification Received: ${message.data}");
       _showPushNotification(message);
     });
 
-    // ✅ Handle notifications when the app is killed and then opened
-    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) async{
+    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) async {
       if (message != null) {
-        print("Handling notification from terminated state: ${message.data}");
-       // setBadgeCount();
-        // Store the notification data to be handled after app initialization
         pendingNotification = message.data;
         await FlutterNewBadger.setBadge(int.parse(pendingNotification?["unreadCounts"]));
-
+        await _handleNotificationRedirect(pendingNotification!);
       }
     });
   }
 
-  /// ✅ Shows push notifications
   static Future<void> _showPushNotification(RemoteMessage message) async {
     final RemoteNotification? notification = message.notification;
     final AndroidNotification? android = message.notification?.android;
@@ -174,7 +486,7 @@ class NotificationService {
             channel.id,
             channel.name,
             channelDescription: channel.description,
-            importance: Importance.high,
+            importance: Importance.max,
             priority: Priority.high,
             playSound: true,
             enableVibration: true,
@@ -192,13 +504,10 @@ class NotificationService {
         payload: json.encode(message.data),
       );
 
-      // Update badge count when notification is received
-      // await setBadgeCount();
       await FlutterNewBadger.setBadge(int.parse(message.data["unreadCounts"]));
     }
   }
 
-  /// ✅ Shows file download notifications
   static Future<void> showDownloadNotification({
     required String fileName,
     required String filePath,
@@ -235,27 +544,26 @@ class NotificationService {
     );
   }
 
-  /// ✅ Enable iOS Notifications
-  static Future<void> enableIOSNotifications() async {
+  static Future<void> _enableIOSNotifications() async {
     await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: true,
-      badge: false,
+      badge: true,
       sound: true,
     );
   }
 
-  /// ✅ Create Android Notification Channel
-  static AndroidNotificationChannel _androidNotificationChannel() => const AndroidNotificationChannel(
-    'econnect',
-    'Econnect',
-    showBadge: true,
-    groupId: 'chat',
-    importance: Importance.high,
-    playSound: true,
-    enableVibration: true,
-  );
+  static AndroidNotificationChannel _androidNotificationChannel() {
+    return const AndroidNotificationChannel(
+      'econnect',
+      'Econnect',
+      showBadge: true,
+      groupId: 'chat',
+      importance: Importance.high,
+      playSound: true,
+      enableVibration: true,
+    );
+  }
 
-  /// ✅ Request Storage Permission for Android
   static Future<bool> requestStoragePermission() async {
     if (Platform.isAndroid) {
       int sdkInt = await getDeviceSdkForAndroid();
@@ -274,60 +582,19 @@ class NotificationService {
     return true;
   }
 
-  /// ✅ Get Android SDK Version
   static Future<int> getDeviceSdkForAndroid() async {
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
     return androidInfo.version.sdkInt;
   }
 
-  /// Calculate and set badge count based on unread messages
-  static Future<void> setBadgeCount() async {
-    try {
-      final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context, listen: false);
-
-      // Get unread counts from favorites
-      int favoritesUnreadCount = 0;
-      channelListProvider.favoriteListModel?.data?.chatList?.forEach((chat) {
-        favoritesUnreadCount += (chat.unseenMessagesCount ?? 0).toInt();
-      });
-      channelListProvider.favoriteListModel?.data?.favouriteChannels?.forEach((channel) {
-        favoritesUnreadCount += (channel.unseenMessagesCount ?? 0).toInt();
-      });
-
-      // Get unread counts from channels
-      int channelsUnreadCount = 0;
-      channelListProvider.channelListModel?.data?.forEach((channel) {
-        channelsUnreadCount += (channel.unreadCount ?? 0).toInt();
-      });
-
-      // Get unread counts from direct messages
-      int directMessagesUnreadCount = 0;
-      channelListProvider.directMessageListModel?.data?.chatList?.forEach((chat) {
-        directMessagesUnreadCount += (chat.unseenMessagesCount ?? 0).toInt();
-      });
-
-      // Calculate total unread count
-      int totalUnreadCount = favoritesUnreadCount + channelsUnreadCount + directMessagesUnreadCount;
-
-      // Update the badge count
-      if (totalUnreadCount > 0) {
-        await FlutterNewBadger.setBadge(totalUnreadCount);
-      } else {
-        await FlutterNewBadger.removeBadge();
-      }
-    } catch (e) {
-      print("Error setting badge count: $e");
-    }
-  }
-
-  static clearBadgeCount() async{
-    await FlutterNewBadger.setBadge(0);
-    await FlutterNewBadger.removeBadge();
-  }
-
   static Future<void> clearAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();
     print("✅ All notifications cleared!");
+  }
+
+  static Future<void> clearBadgeCount() async {
+    await FlutterNewBadger.setBadge(0);
+    await FlutterNewBadger.removeBadge();
   }
 }

@@ -31,8 +31,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await NotificationService.initializeNotifications();
-  await NotificationService.registerFirebaseListeners();
-  NotificationService.requestPermissions();
+  // await NotificationService.registerFirebaseListeners();
+  // NotificationService.requestPermissions();
   await Permission.notification.isDenied.then(
     (bool value) {
       if (value) {
