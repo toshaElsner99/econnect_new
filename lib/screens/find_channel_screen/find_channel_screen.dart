@@ -119,7 +119,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Row(
                           children: [
-                            Image.asset(AppImage.globalIcon,width: 20,height: 20,),
+                            Image.asset(AppImage.globalIcon,width: 20,height: 20,color:  AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,),
                             SizedBox(width: 5,),
                             commonText(
                               text: 'Channels',

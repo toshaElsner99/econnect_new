@@ -237,7 +237,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           color: Colors.white,
           size: 25,
         ),
-        onPressed: () => pushScreenWithTransition(SettingScreen()),
+        onPressed: () => pushScreenWithTransition(SettingScreen()).then((value) async{
+          await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
+          await Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
+          await Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
+          await Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+        },),
       ),
     );
   }

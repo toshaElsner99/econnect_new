@@ -1075,7 +1075,7 @@ Widget profileIconWithStatus({
                   String name = signInModel.data?.user?.id == userID
                       ? signInModel.data?.user?.username ?? ''
                       : userName; // Ensure 'userName' is defined if it's for another user
-                  String firstLetter = name.isNotEmpty ? name[0].toUpperCase() : 'U'; // First letter or 'U' if empty
+                  String firstLetter = name.isNotEmpty ? name[0].toUpperCase() : '?'; // First letter or 'U' if empty
                   return Center(child: commonText(text: firstLetter)); // Display the first letter of the username
                 },
               ),
@@ -1729,7 +1729,7 @@ Widget commonHTMLText({required String message,String userId = "", bool isLog = 
     processedMessage = processedMessage.replaceAll(
         "added to the channel by", replacement);
   }
-
+  processedMessage = processedMessage.replaceAll("\n", "<br>");
 
   return HtmlWidget(
     processedMessage,

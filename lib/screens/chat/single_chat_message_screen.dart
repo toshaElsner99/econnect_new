@@ -240,7 +240,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         textAlign: TextAlign.center,
                         text: TextSpan(
                           style: TextStyle(
-                            color: Colors.black, // Default text color
+                            color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, // Default text color
                             fontSize: 16, // Default font size
                           ),
                           children: <TextSpan>[
@@ -1002,6 +1002,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                       String originalFileName = getFileName(messageList.forwardInfo!.files[index]);
                                       String formattedFileName = formatFileName(originalFileName);
                                       String fileType = getFileExtension(originalFileName);
+                                      print("FILENAME :- ${messageList.forwardInfo!.files[index]}");
+                                      print("FILENAME :- $originalFileName");
+                                      print("FILENAME :- $formattedFileName");
                                       return Container(
                                         margin: EdgeInsets.only(top: 5,right: 10),
                                         padding: EdgeInsets.symmetric(horizontal: 20,vertical: 15),

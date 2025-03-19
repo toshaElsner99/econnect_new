@@ -213,7 +213,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                                   } else {
                                     itemInfo.add({
                                       'type': "channel",
-                                      'name': list['name'],
+                                      'name': list['name'] ?? "",
                                       'id': list['id'],
                                     });
                                   }
@@ -229,7 +229,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                                   children: [
                                     if (list['type'] == 'user') ...{
                                       profileIconWithStatus(
-                                        userName: list['name'],
+                                        userName: list['name'] ?? "",
                                         userID: list['userId'],
                                         status: "",
                                         needToShowIcon: false,
