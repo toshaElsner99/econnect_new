@@ -34,15 +34,13 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to your camera to take pictures.</string>
+    <string>The app requires access to your camera to allow you to take photos or videos for uploading in chat, such as uploading your profile picture.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app needs access to your photo library to upload and manage images.</string>
 	<key>NSDocumentsDirectoryUsageDescription</key>
 	<string>We need access to save and open downloaded files.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>We need access to your microphone for audio recording.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>We need permission to save images to your gallery.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>We need access to your photo library to pick images.</string>
 	<key>NSUserNotificationAlert</key>
 	<string>YES</string>
 	<key>NSUserNotificationBadge</key>
