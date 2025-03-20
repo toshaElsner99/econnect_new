@@ -802,149 +802,128 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         // Put Reacted emojis list here
                       if (messageList.reactions?.isNotEmpty ?? false)
                         Container(
-                          margin: const EdgeInsets.only(top: 4,right: 10),
+                          margin: const EdgeInsets.only(top: 6, bottom: 6),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Show first two unique users who reacted
-                              Stack(
-                                children: [
-                                  // Get unique users who reacted
-                                  Builder(builder: (context) {
-                                    final uniqueUsers = messageList.reactions!
-                                      .map((r) => r.userId)
-                                      .toSet()
-                                      .take(2)
-                                      .toList();
+                              // Reaction avatars section
+                              Builder(builder: (context) {
+                                // Get unique users who reacted
+                                final uniqueUsers = messageList.reactions!
+                                  .map((r) => r.userId)
+                                  .where((id) => id != null)
+                                  .toSet()
+                                  .toList();
 
-                                    return Stack(
-                                      children: [
-                                        if (uniqueUsers.length >= 2)
-                                          Padding(
-                                            padding: const EdgeInsets.only(left: 15.0),
-                                            child: profileIconWithStatus(
-                                              userID: uniqueUsers[1] ?? "",
-                                              status: "",
-                                              needToShowIcon: false,
-                                              radius: 15,
-                                              otherUserProfile: userCache[uniqueUsers[1]]?.data?.user?.thumbnailAvatarUrl ?? '',
-                                              borderColor: AppColor.blueColor,
-                                              onTap: () => _showReactionsList(context, messageList.reactions!),
-                                              userName: userCache[uniqueUsers[1]]?.data?.user?.username ?? userCache[uniqueUsers[1]]?.data?.user?.fullName ?? "Unknown"
-                                            ),
-                                          ),
-                                        if (uniqueUsers.isNotEmpty)
-                                          profileIconWithStatus(
-                                            userID: uniqueUsers[0] ?? "",
-                                            status: "",
-                                            needToShowIcon: false,
-                                            radius: 15,
-                                            otherUserProfile: userCache[uniqueUsers[0]]?.data?.user?.thumbnailAvatarUrl ?? '',
-                                            borderColor: AppColor.blueColor,
+                                // Count total unique users for the counter
+                                final totalUniqueUsers = uniqueUsers.length;
+
+                                // Get usernames for the visible avatars (show at most 2 for direct chat)
+                                final visibleUsers = uniqueUsers.take(2).toList();
+                                
+                                // Calculate the width needed based on number of avatars
+                                final double stackWidth = visibleUsers.isEmpty ? 0 : 
+                                                        (visibleUsers.length == 1 ? 30 : 50);
+
+                                // Create container with avatars
+                                return Container(
+                                  height: 32,
+                                  width: stackWidth,
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      for (int i = 0; i < visibleUsers.length; i++)
+                                        Positioned(
+                                          left: i * 20.0, // Offset each avatar by 20 pixels
+                                          child: GestureDetector(
                                             onTap: () => _showReactionsList(context, messageList.reactions!),
-                                            userName: userCache[uniqueUsers[0]]?.data?.user?.username ?? userCache[uniqueUsers[0]]?.data?.user?.fullName ?? "Unknown"
-                                          ),
-                                        if (uniqueUsers.length > 2)
-                                          Positioned(
-                                            left: 30,
-                                            top: 5,
-                                            child: GestureDetector(
-                                              onTap: () => _showReactionsList(context, messageList.reactions!),
-                                              child: Container(
-                                                height: 20,
-                                                width: 20,
-                                                alignment: Alignment.center,
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  color: AppColor.white,
-                                                  border: Border.all(
-                                                    color: AppColor.blackColor,
-                                                    width: 1.5,
-                                                  ),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.black.withOpacity(0.3),
-                                                      spreadRadius: 1,
-                                                      blurRadius: 3,
-                                                      offset: Offset(0, 1),
-                                                    ),
-                                                  ],
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: AppPreferenceConstants.themeModeBoolValueGet ? 
+                                                    Colors.grey.shade900 : Colors.white,
+                                                  width: 1.5,
                                                 ),
-                                                child: Icon(
-                                                  Icons.add,
-                                                  color: Colors.black,
-                                                  size: 15,
-                                                ),
-                                              )
+                                              ),
+                                              child: profileIconWithStatus(
+                                                userID: visibleUsers[i] ?? "",
+                                                status: "",
+                                                needToShowIcon: false,
+                                                radius: 14,
+                                                otherUserProfile: userCache[visibleUsers[i]]?.data?.user?.thumbnailAvatarUrl ?? '',
+                                                borderColor: AppColor.blueColor,
+                                                userName: userCache[visibleUsers[i]]?.data?.user?.username ?? userCache[visibleUsers[i]]?.data?.user?.fullName ?? 'Unknown',
+                                                onTap: () => _showReactionsList(context, messageList.reactions!)
+                                              ),
                                             ),
-                                          ),
-                                      ],
-                                    );
-                                  }),
-                                ],
-                              ),
-                              SizedBox(width: 10,),
-                              Expanded(
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    maxWidth: MediaQuery.of(context).size.width * 0.7,
-                                  ),
-                                  child: Wrap(
-                                    spacing: 4,
-                                    runSpacing: 4,
-                                    alignment: WrapAlignment.start,
-                                    children: groupReactions(messageList.reactions!).entries.map((entry) {
-                                      bool hasUserReacted = messageList.reactions!.any((reaction) =>
-                                        reaction.userId == signInModel.data?.user?.id &&
-                                        reaction.emoji == entry.key);
-
-                                      return GestureDetector(
-                                        onTap: () {
-                                          if (hasUserReacted) {
-                                            context.read<ChatProvider>().reactionRemove(
-                                              messageId: messageList.sId!,
-                                              reactUrl: entry.key,
-                                              receiverId: oppositeUserId,
-                                              isFrom: "Chat"
-                                            );
-                                          } else {
-                                            context.read<ChatProvider>().reactMessage(
-                                              messageId: messageList.sId!,
-                                              reactUrl: entry.key,
-                                              receiverId: oppositeUserId,
-                                              isFrom: "Chat"
-                                            );
-                                          }
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              CachedNetworkImage(
-                                                imageUrl: entry.key,
-                                                height: 20,
-                                                width: 20,
-                                                errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
-                                              ),
-                                              SizedBox(width: 4),
-                                              Text(
-                                                entry.value.toString(),
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: hasUserReacted ? Colors.blue : null,
-                                                ),
-                                              ),
-                                            ],
                                           ),
                                         ),
-                                      );
-                                    }).toList(),
+                                    ],
                                   ),
+                                );
+                              }),
+                              
+                              SizedBox(width: 8),
+                              
+                              // Reaction emojis section - keep this part to maintain functionality
+                              Flexible(
+                                child: Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  alignment: WrapAlignment.start,
+                                  children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                    bool hasUserReacted = messageList.reactions!.any((reaction) =>
+                                      reaction.userId == signInModel.data?.user?.id &&
+                                      reaction.emoji == entry.key);
+
+                                    return GestureDetector(
+                                      onTap: () {
+                                        if (hasUserReacted) {
+                                          context.read<ChatProvider>().reactionRemove(
+                                            messageId: messageList.sId!,
+                                            reactUrl: entry.key,
+                                            receiverId: oppositeUserId,
+                                            isFrom: "Chat"
+                                          );
+                                        } else {
+                                          context.read<ChatProvider>().reactMessage(
+                                            messageId: messageList.sId!,
+                                            reactUrl: entry.key,
+                                            receiverId: oppositeUserId,
+                                            isFrom: "Chat"
+                                          );
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            CachedNetworkImage(
+                                              imageUrl: entry.key,
+                                              height: 20,
+                                              width: 20,
+                                              errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              entry.value.toString(),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: hasUserReacted ? Colors.blue : null,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
                                 ),
                               ),
                             ],

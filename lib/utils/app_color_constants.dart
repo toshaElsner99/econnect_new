@@ -11,6 +11,7 @@ class AppColor {
   static const appBarColor = Color(0xFF002742);
   static const darkAppBarColor = Color(0xFF121317);
   static const lightBlueColor = Color(0xFF3778bd);
+  static final lightBlueBgColor = Colors.lightBlue[300];
   static const lightColor = Color(0xFF264765);
   static const borderColor = Color(0xFFA1A1A1);
   static const greenColor = Color(0xFF3DB887);

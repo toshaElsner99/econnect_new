@@ -57,6 +57,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     'DIRECT MESSAGE': true,
   };
   bool _isInitialized = false;
+  
+  // Selected tab index
+  int _selectedTabIndex = 0;
+  final List<String> _tabTitles = ['All', 'Channels', 'Favourites'];
+  
   @override
   void initState() {
     super.initState();
@@ -117,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? null : AppColor.appBarColor,
           floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
           appBar: AppBar(
-            bottom: PreferredSize(preferredSize: Size(double.infinity, MediaQuery.of(context).size.height *0.1), child: Padding(
+            bottom: PreferredSize(preferredSize: Size(double.infinity, MediaQuery.of(context).size.height *0.2), child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 15.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -127,96 +132,220 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     children: [
                       _buildHeader(),
                       Spacer(),
-                      buildOpenSetting(),
+                      // buildOpenSetting(),
                       _buildAddButton()
                     ],
                   ),
                   _buildSearchField(),
+                  _buildTabsSection(),
                 ],),
             )),
           ),
-          body: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildExpansionSection(
-                    title: "FAVORITES",
-                    index: 0,
-                    itemCount: _getTotalFavoritesCount(channelListProvider: channelListProvider),
-                    itemBuilder: (context, index) {
-                      final userCount = channelListProvider.favoriteListModel?.data?.chatList?.length ?? 0;
-
-                      if (index < userCount) {
-                        final favorite = channelListProvider.favoriteListModel?.data?.chatList?[index];
-                        return _buildUserRow(
-                            index: 0,
-                            muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite?.sId ?? "") ?? false,
-                            imageUrl: favorite?.thumbnailAvatarUrl ?? "",
-                            username: favorite?.username ?? "",
-                            status: favorite?.status ?? "",
-                            userId: favorite?.sId ?? "",
-                            customStatusEmoji: favorite?.customStatusEmoji ?? "",
-                            unSeenMsgCount: favorite?.unseenMessagesCount,
-                            children: [
-                              _buildPopupMenuForFavorite(favorite: channelListProvider.favoriteListModel?.data?.chatList?[index]),
-                            ]
-                        );
-                      }
-                      else {
-                        final channelIndex = index - userCount;
-                        final favoriteChannels = channelListProvider.favoriteListModel?.data?.favouriteChannels ?? [];
-                        if (channelIndex < favoriteChannels.length) {
-                          final favoriteChannel = favoriteChannels[channelIndex] ;
-                          return _buildFavoriteChannelRow(favoriteChannel,
-                              [
-                                _buildPopupMenuForFavChannel(favouriteChannels: favoriteChannels[channelIndex])
-                              ]
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      }
-                    },
-                  ),
-                  _buildExpansionSection(
-                    title: "CHANNEL",
-                    index: 1,
-                    itemCount: channelListProvider.channelListModel?.data?.length ?? 0,
-                    itemBuilder: (context, index) {
-                      final channel = channelListProvider.channelListModel!.data![index];
-                      return _buildChannelRow(channel);
-                    },
-                  ),
-                  _buildExpansionSection(
-                    index: 2,
-                    title: "DIRECT MESSAGE",
-                    itemCount: channelListProvider.directMessageListModel?.data?.chatList?.length ?? 0,
-                    itemBuilder: (context, index) {
-                      final directMessage = channelListProvider.directMessageListModel?.data?.chatList?[index];
-                      return _buildUserRow(
-                          muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(directMessage?.sId ?? "") ?? false,
-                          index: 2,
-                          imageUrl: directMessage?.thumbnailAvatarUrl ?? "",
-                          username: directMessage?.username ?? "",
-                          status: directMessage?.status ?? "",
-                          userId: directMessage?.sId ?? "",
-                          customStatusEmoji: directMessage?.customStatusEmoji ?? "",
-                          unSeenMsgCount: directMessage?.unseenMessagesCount ?? 0,
-                          children: [
-                            _buildPopupMenuForDirectMessage(chatLisDirectMessage: channelListProvider.directMessageListModel?.data?.chatList?[index]),
-                          ]
-
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
+          body: _buildScreenContent(channelListProvider, commonProvider),
         );
       },),
     );
+  }
+
+  // Custom tabs widget
+  Widget _buildTabsSection() {
+    return Container(
+      margin: EdgeInsets.only(top: 16, bottom: 8),
+      child: Row(
+        children: List.generate(
+          _tabTitles.length,
+          (index) => Padding(
+            padding: EdgeInsets.only(right: index < _tabTitles.length - 1 ? 8 : 0),
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedTabIndex = index;
+                });
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: _tabTitles[index] == 'All' ? 16 : 20, 
+                  vertical: 10
+                ),
+                decoration: BoxDecoration(
+                  color: _selectedTabIndex == index 
+                      ? AppColor.white
+                      : AppColor.blueColor.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: commonText(
+                 text: _tabTitles[index],
+                    color: _selectedTabIndex != index
+                        ? AppColor.white
+                        : AppColor.blueColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  // Content based on selected tab
+  Widget _buildScreenContent(ChannelListProvider channelListProvider, CommonProvider commonProvider) {
+    switch (_selectedTabIndex) {
+      case 0: // All tab - show current home screen content
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildExpansionSection(
+                  title: "FAVORITES",
+                  index: 0,
+                  itemCount: _getTotalFavoritesCount(channelListProvider: channelListProvider),
+                  itemBuilder: (context, index) {
+                    final userCount = channelListProvider.favoriteListModel?.data?.chatList?.length ?? 0;
+
+                    if (index < userCount) {
+                      final favorite = channelListProvider.favoriteListModel?.data?.chatList?[index];
+                      return _buildUserRow(
+                          index: 0,
+                          muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite?.sId ?? "") ?? false,
+                          imageUrl: favorite?.thumbnailAvatarUrl ?? "",
+                          username: favorite?.username ?? "",
+                          status: favorite?.status ?? "",
+                          userId: favorite?.sId ?? "",
+                          customStatusEmoji: favorite?.customStatusEmoji ?? "",
+                          unSeenMsgCount: favorite?.unseenMessagesCount,
+                          children: [
+                            _buildPopupMenuForFavorite(favorite: channelListProvider.favoriteListModel?.data?.chatList?[index]),
+                          ]
+                      );
+                    }
+                    else {
+                      final channelIndex = index - userCount;
+                      final favoriteChannels = channelListProvider.favoriteListModel?.data?.favouriteChannels ?? [];
+                      if (channelIndex < favoriteChannels.length) {
+                        final favoriteChannel = favoriteChannels[channelIndex] ;
+                        return _buildFavoriteChannelRow(favoriteChannel,
+                            [
+                              _buildPopupMenuForFavChannel(favouriteChannels: favoriteChannels[channelIndex])
+                            ]
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }
+                  },
+                ),
+                _buildExpansionSection(
+                  title: "CHANNEL",
+                  index: 1,
+                  itemCount: channelListProvider.channelListModel?.data?.length ?? 0,
+                  itemBuilder: (context, index) {
+                    final channel = channelListProvider.channelListModel!.data![index];
+                    return _buildChannelRow(channel);
+                  },
+                ),
+                _buildExpansionSection(
+                  index: 2,
+                  title: "DIRECT MESSAGE",
+                  itemCount: channelListProvider.directMessageListModel?.data?.chatList?.length ?? 0,
+                  itemBuilder: (context, index) {
+                    final directMessage = channelListProvider.directMessageListModel?.data?.chatList?[index];
+                    return _buildUserRow(
+                        muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(directMessage?.sId ?? "") ?? false,
+                        index: 2,
+                        imageUrl: directMessage?.thumbnailAvatarUrl ?? "",
+                        username: directMessage?.username ?? "",
+                        status: directMessage?.status ?? "",
+                        userId: directMessage?.sId ?? "",
+                        customStatusEmoji: directMessage?.customStatusEmoji ?? "",
+                        unSeenMsgCount: directMessage?.unseenMessagesCount ?? 0,
+                        children: [
+                          _buildPopupMenuForDirectMessage(chatLisDirectMessage: channelListProvider.directMessageListModel?.data?.chatList?[index]),
+                        ]
+
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      
+      case 1: // Channels tab
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.groups_outlined,
+                size: 60,
+                color: Colors.grey,
+              ),
+              SizedBox(height: 16),
+              Text(
+                "Channels View",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: Text(
+                  "This tab will display only channels",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      
+      case 2: // Favourites tab
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.star_outline,
+                size: 60,
+                color: Colors.grey,
+              ),
+              SizedBox(height: 16),
+              Text(
+                "Favourites View",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: Text(
+                  "This tab will display only your favourites",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      
+      default:
+        return SizedBox.shrink();
+    }
   }
 
   Container buildOpenSetting() {
@@ -653,9 +782,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           // borderRadius: BorderRadius.circular(8),
         ),
         child: Row(children: [
-          Icon(CupertinoIcons.search,color: Colors.white,),
+          Icon(CupertinoIcons.search,
+            color: AppColor.white,size: 20),
           SizedBox(width: 10),
-          commonText(text: "Find Channel",color: Colors.white)
+          commonText(text: "Search...",color: AppColor.white,fontWeight: FontWeight.w400)
         ],),
       ),
     );
@@ -672,8 +802,75 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ),
       ),
-      child: Image.asset(AppImage.appLogo, width: 30, height: 30),
+      child: userHeader()
     );
+  }
+
+  userHeader(){
+    return Consumer<CommonProvider>(
+      builder: (context, commonProvider, _) {
+        return GestureDetector(
+          onTap: () => openSettings(),
+          child: Row(
+            children: [
+              // User profile image
+              profileIconWithStatus(
+                  userID: "${commonProvider.getUserModel?.data!.user!.sId}",
+                  status: "${commonProvider.getUserModel?.data!.user!.status}",
+                  otherUserProfile: commonProvider.getUserModel?.data!.user!.thumbnailAvatarUrl ?? '',
+                  radius: 17,
+                  needToShowIcon: true,
+                  borderColor: AppColor.blueColor,
+                  onTap: () => openSettings(),
+                  userName: commonProvider.getUserModel?.data!.user!.username ??  commonProvider.getUserModel?.data!.user!.fullName ?? ""
+              ),
+              SizedBox(width: 12),
+              // User name and status
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      commonText(
+                        text: (commonProvider.getUserModel?.data!.user!.fullName ?? commonProvider.getUserModel?.data!.user!.username ?? ""),
+                          color: AppColor.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                      ),
+                      SizedBox(width: 10),
+                      Visibility(
+                        visible: commonProvider.getUserModel?.data!.user!.customStatusEmoji != null &&
+                        commonProvider.getUserModel?.data!.user!.customStatusEmoji != "",
+                        child: CachedNetworkImage(imageUrl: (commonProvider.getUserModel?.data!.user!.customStatusEmoji ?? ""),
+                        width: 20),
+                      )
+                    ],
+                  ),
+                  SizedBox(height: 2),
+                  commonText(
+                   text: commonProvider.getUserModel?.data!.user!.status ?? "",
+                    color: AppColor.whiteColor.withOpacity(0.7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400
+                  ),
+                ],
+              )
+
+            ],
+          ),
+        );
+      }
+    );
+  }
+
+  openSettings(){
+    pushScreenWithTransition(SettingScreen()).then((value) async{
+      await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
+      await Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
+      await Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
+      await Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+    });
   }
 
   Widget _buildExpansionSection({
@@ -732,12 +929,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Widget _buildAddButton() {
     return Container(
-      height: 35,
-      width: 35,
+      height: 30,
+      width: 30,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: AppColor.borderColor.withOpacity(0.05),
+        color: AppColor.lightBlueBgColor
       ),
       child: IconButton(
         constraints: const BoxConstraints(),
@@ -745,7 +942,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         icon: Icon(
           CupertinoIcons.plus,
           color: Colors.white,
-          size: 25,
+          size: 20
         ),
         onPressed: () => showOptionsBottomSheet(context: context, options: options),
       ),
