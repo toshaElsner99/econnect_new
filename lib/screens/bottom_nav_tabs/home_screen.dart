@@ -164,9 +164,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   vertical: 10
                 ),
                 decoration: BoxDecoration(
+                  border: _selectedTabIndex == index ? null : Border.all(color: AppColor.borderColor,width: 0.2),
                   color: _selectedTabIndex == index 
                       ? AppColor.white
-                      : AppColor.blueColor.withOpacity(0.5),
+                      : AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.blueColor.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: commonText(

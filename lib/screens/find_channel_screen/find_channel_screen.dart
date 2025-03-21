@@ -185,8 +185,9 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
+          shape: BoxShape.circle,
           color: AppColor.borderColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(6),
+          // borderRadius: BorderRadius.circular(6),
         ),
         child: Center(
           child: Image.asset(

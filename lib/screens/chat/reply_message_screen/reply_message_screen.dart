@@ -218,50 +218,53 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
       },
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: Scaffold(
-          bottomNavigationBar: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-            inputTextFieldWithEditor()
-          ],),
-          appBar: AppBar(
-            leading: IconButton(onPressed: (){
-              pop(popValue: true);
-              chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
-            },
-            icon: Icon(CupertinoIcons.back,color: Colors.white,)),
-            bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
-            titleSpacing: 0,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: SafeArea(
+          child: Scaffold(
+            resizeToAvoidBottomInset: true,
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                commonText(text: "Thread", fontSize: 16,),
-              Consumer<ChatProvider>(builder: (context, value, child) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 1.5),
-                  child: commonText(text:
-                  (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
-                      ? "Typing..." : widget.userName,
-                      fontSize: 12,fontWeight: FontWeight.w400),
+              inputTextFieldWithEditor()
+            ],),
+            appBar: AppBar(
+              leading: IconButton(onPressed: (){
+                pop(popValue: true);
+                chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
+              },
+              icon: Icon(CupertinoIcons.back,color: Colors.white,)),
+              bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
+              titleSpacing: 0,
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  commonText(text: "Thread", fontSize: 16,),
+                Consumer<ChatProvider>(builder: (context, value, child) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 1.5),
+                    child: commonText(text:
+                    (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
+                        ? "Typing..." : widget.userName,
+                        fontSize: 12,fontWeight: FontWeight.w400),
 
-                );
-              },),
+                  );
+                },),
+                ],
+              ),
+            ),
+            body: Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    reverse: true,
+                    children: [
+                      dateHeaders(),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 20,),
               ],
             ),
-          ),
-          body: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  reverse: true,
-                  children: [
-                    dateHeaders(),
-                  ],
-                ),
-              ),
-              SizedBox(height: 20,),
-            ],
           ),
         ),
       ),

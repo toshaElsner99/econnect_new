@@ -115,77 +115,80 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
       },
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: Scaffold(
-          appBar: AppBar(
-            leading: IconButton(onPressed: () {
-              pop(popValue: true);
-              channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
-            } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
-            bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
-            titleSpacing: 0,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                commonText(text: "Thread", fontSize: 16,),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 1.5),
-                  child: commonText(text: widget.channelName, fontSize: 12,fontWeight: FontWeight.w400),
-                ),
-              ],
-            ),
-          ),
-          bottomNavigationBar: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-            inputTextFieldWithEditor()
-          ],),
-          body: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  reverse: true,
-                  children: [
-                    dateHeaders(),
-                  ],
-                ),
+        child: SafeArea(
+          child: Scaffold(
+            resizeToAvoidBottomInset: true,
+            appBar: AppBar(
+              leading: IconButton(onPressed: () {
+                pop(popValue: true);
+                channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
+              } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
+              bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
+              titleSpacing: 0,
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  commonText(text: "Thread", fontSize: 16,),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 1.5),
+                    child: commonText(text: widget.channelName, fontSize: 12,fontWeight: FontWeight.w400),
+                  ),
+                ],
               ),
-              Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-                var filteredTypingUsers = channelChatProvider.typingUsers
-                    .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                    && user['routeId'] == widget.channelId
-                    && user['isReply'] == true
-                    && user['parentId'] == widget.msgID).toList();
-
-                String typingMessage;
-
-                if (filteredTypingUsers.isEmpty) {
-                  typingMessage = "";
-                } else if (filteredTypingUsers.length == 1) {
-                  typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-                } else {
-                  var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-                  var lastUser  = usernames.removeLast();
-                  typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
-                }
-
-                return Container(
-                  margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
-                  alignment: Alignment.centerLeft,
-                  child: Column(
+            ),
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+              inputTextFieldWithEditor()
+            ],),
+            body: Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    reverse: true,
                     children: [
-                      if (typingMessage.isNotEmpty)
-                        commonText(
-                          text: typingMessage,
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w400,
-                        ),
+                      dateHeaders(),
                     ],
                   ),
-                );
-              },),
-            ],
+                ),
+                Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+                  var filteredTypingUsers = channelChatProvider.typingUsers
+                      .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                      && user['routeId'] == widget.channelId
+                      && user['isReply'] == true
+                      && user['parentId'] == widget.msgID).toList();
+
+                  String typingMessage;
+
+                  if (filteredTypingUsers.isEmpty) {
+                    typingMessage = "";
+                  } else if (filteredTypingUsers.length == 1) {
+                    typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+                  } else {
+                    var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+                    var lastUser  = usernames.removeLast();
+                    typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
+                  }
+
+                  return Container(
+                    margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      children: [
+                        if (typingMessage.isNotEmpty)
+                          commonText(
+                            text: typingMessage,
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w400,
+                          ),
+                      ],
+                    ),
+                  );
+                },),
+              ],
+            ),
           ),
         ),
       ),
