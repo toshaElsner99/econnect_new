@@ -284,7 +284,7 @@ class NoLeadingSpacesFormatter extends TextInputFormatter {
 // }
 
 Future<dynamic> pushScreen({required Widget screen}) async {
-  Navigator.push(
+ return Navigator.push(
     navigatorKey.currentState!.context,
     MaterialPageRoute(builder: (context) => screen,),
   ).then((_) {});
