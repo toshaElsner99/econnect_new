@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:math' show min;
 
 import 'package:e_connect/model/browse_and_search_channel_model.dart';
 import 'package:e_connect/model/channel_chat_model.dart';
@@ -42,6 +43,9 @@ class ChannelListProvider extends ChangeNotifier{
   BrowseAndSearchChannelModel? browseAndSearchChannelModel;
   GetUserSuggestions? getUserSuggestions;
   SearchUserModel? searchUserModel;
+  
+  // New property for combined list
+  List<Map<String, dynamic>> combinedAllItems = [];
 
   /// GET FAVORITE LIST IN HOME SCREEN ///
   Future<void> getFavoriteList()async{
@@ -54,6 +58,7 @@ class ChannelListProvider extends ChangeNotifier{
       favoriteListModel = FavoriteListModel.fromJson(response);
     }
     NotificationService.setBadgeCount();
+    combineAllLists(); // Add this call to combine lists
     notifyListeners();
   }
   /// GET CHANNEL LIST IN HOME SCREEN ///
@@ -62,8 +67,25 @@ class ChannelListProvider extends ChangeNotifier{
     final response = await ApiService.instance.request(endPoint: ApiString.channelList, method: Method.GET,);
     if(statusCode200Check(response)){
       channelListModel = ChannelListModel.fromJson(response);
+      
+      // Debug channel data to verify lastmessage timestamps
+      print("=== Channel List Debug ===");
+      if (channelListModel?.data != null) {
+        for (var channel in channelListModel!.data!) {
+          print("Channel: ${channel.name}");
+          print("  - lastmessage: ${channel.lastmessage != null ? 'exists' : 'null'}");
+          if (channel.lastmessage != null) {
+            print("  - lastmessage.createdAt: ${channel.lastmessage!.createdAt}");
+          }
+          print("  - updatedAt: ${channel.updatedAt}");
+          print("  - createdAt: ${channel.createdAt}");
+          print("  - unreadCount: ${channel.unreadCount}");
+          print("---------------------");
+        }
+      }
     }
     NotificationService.setBadgeCount();
+    combineAllLists(); // Add this call to combine lists
     notifyListeners();
   }
   /// GET DIRECT MESSAGE IN HOME SCREEN ///
@@ -78,6 +100,7 @@ class ChannelListProvider extends ChangeNotifier{
       // emit(ChannelListInitial());
     }
     NotificationService.setBadgeCount();
+    combineAllLists(); // Add this call to combine lists
     notifyListeners();
   }
   /// CREATE A NRE CHANNEL ///
@@ -450,9 +473,9 @@ Future<void> toggleAdminAndMember(
       Uri.parse(
           ApiString.baseUrl + ApiString.toggleAdminAndMember(channelId)));
   request.body = json.encode({"memberId": userId});
-  log(
+  print(
       "URL = ${ApiString.baseUrl + ApiString.toggleAdminAndMember(channelId)}");
-  log("memberId: $userId");
+  print("memberId: $userId");
   request.headers.addAll(headers);
 
   http.StreamedResponse response = await request.send();
@@ -482,23 +505,23 @@ Future<void> removeMember(
       'PUT',
       Uri.parse(
           ApiString.baseUrl + ApiString.removeMember(channelId, userId)));
-  log(
+  print(
       "URL = ${ApiString.baseUrl + ApiString.removeMember(channelId, userId)}");
   request.headers.addAll(headers);
 
   http.StreamedResponse response = await request.send();
-  log("response status code =${response.statusCode}");
+  print("response status code =${response.statusCode}");
   
   if (response.statusCode == 200) {
     final responseString = await response.stream.bytesToString();
     final responseData = json.decode(responseString);
-    log("Response data: $responseData");
+    print("Response data: $responseData");
     List<String> memberIds = [];
     // Extract and print member IDs
     if (responseData['data'] != null && responseData['data']['members'] != null) {
       final members = responseData['data']['members'] as List;
       memberIds = members.map((member) => member['id'].toString()).toList();
-      log("Member IDs: $memberIds");
+      print("Member IDs: $memberIds");
     }
     
     await channelChatProvider.getChannelMembersList(channelId);
@@ -551,5 +574,152 @@ Future<void> renameChannel({
   }
 }
 
+/// COMBINE ALL LISTS INTO ONE LIST FOR ALL TAB ///
+void combineAllLists() {
+  combinedAllItems.clear();
+  
+  // Add favorite users
+  if (favoriteListModel?.data?.chatList != null) {
+    for (var item in favoriteListModel!.data!.chatList!) {
+      // Get the most recent message timestamp for favorite users
+      String timestamp = '';
+      if (item.latestMessageCreatedAt != null && item.latestMessageCreatedAt!.isNotEmpty) {
+        timestamp = item.latestMessageCreatedAt!;
+        print("Favorite User ${item.username}: Using latestMessageCreatedAt: $timestamp");
+      } else {
+        timestamp = item.updatedAt ?? item.lastActiveTime ?? item.createdAt ?? '';
+        print("Favorite User ${item.username}: No latestMessageCreatedAt, using: $timestamp");
+      }
+      
+      combinedAllItems.add({
+        'type': 'favoriteUser',
+        'data': item,
+        'unreadCount': item.unseenMessagesCount ?? 0,
+        'timestamp': timestamp
+      });
+    }
+  }
+  
+  // Add favorite channels
+  if (favoriteListModel?.data?.favouriteChannels != null) {
+    for (var item in favoriteListModel!.data!.favouriteChannels!) {
+      // Use lastMessage for favorite channels if available
+      String timestamp = '';
+      if (item.lastMessage != null && item.lastMessage!.isNotEmpty) {
+        timestamp = item.lastMessage!;
+        print("Favorite Channel ${item.name}: Using lastMessage: $timestamp");
+      } else {
+        timestamp = item.updatedAt ?? item.createdAt ?? '';
+        print("Favorite Channel ${item.name}: No lastMessage, using: $timestamp");
+      }
+      
+      combinedAllItems.add({
+        'type': 'favoriteChannel',
+        'data': item,
+        'unreadCount': item.unseenMessagesCount ?? 0,
+        'timestamp': timestamp
+      });
+    }
+  }
+  
+  // Add channels
+  if (channelListModel?.data != null) {
+    for (var item in channelListModel!.data!) {
+      // Check if channel is already in favorites
+      bool alreadyInFavorites = favoriteListModel?.data?.favouriteChannels
+          ?.any((favChannel) => favChannel.sId == item.sId) ?? false;
+      
+      if (!alreadyInFavorites) {
+        // Always prioritize lastmessage.createdAt as it's the best indicator of recent activity
+        String timestamp = '';
+        if (item.lastmessage?.createdAt != null && item.lastmessage!.createdAt!.isNotEmpty) {
+          timestamp = item.lastmessage!.createdAt!;
+          print("Channel ${item.name}: Using lastmessage timestamp: $timestamp");
+        } else {
+          timestamp = item.updatedAt ?? item.createdAt ?? '';
+          print("Channel ${item.name}: No lastmessage, using: $timestamp");
+        }
+        
+        combinedAllItems.add({
+          'type': 'channel',
+          'data': item,
+          'unreadCount': item.unreadCount ?? 0,
+          'timestamp': timestamp
+        });
+      }
+    }
+  }
+  
+  // Add direct messages
+  if (directMessageListModel?.data?.chatList != null) {
+    for (var item in directMessageListModel!.data!.chatList!) {
+      // Check if user is already in favorites
+      bool alreadyInFavorites = favoriteListModel?.data?.chatList
+          ?.any((favUser) => favUser.sId == item.sId) ?? false;
+      
+      if (!alreadyInFavorites) {
+        // For direct messages, prioritize latestMessageCreatedAt if available
+        String timestamp = '';
+        if (item.latestMessageCreatedAt != null && item.latestMessageCreatedAt!.isNotEmpty) {
+          timestamp = item.latestMessageCreatedAt!;
+          print("DM ${item.username}: Using latestMessageCreatedAt: $timestamp");
+        } else {
+          timestamp = item.updatedAt ?? item.lastActiveTime ?? item.createdAt ?? '';
+          print("DM ${item.username}: No latestMessageCreatedAt, using: $timestamp");
+        }
+        
+        combinedAllItems.add({
+          'type': 'directMessage',
+          'data': item,
+          'unreadCount': item.unseenMessagesCount ?? 0,
+          'timestamp': timestamp
+        });
+      }
+    }
+  }
+  
+  // Sort purely by timestamp in descending order (newest first)
+  combinedAllItems.sort((a, b) {
+    String timestampA = a['timestamp'] as String;
+    String timestampB = b['timestamp'] as String;
+    
+    // Handle empty timestamps by treating them as oldest
+    if (timestampA.isEmpty) return 1;
+    if (timestampB.isEmpty) return -1;
+    
+    // For debugging
+    print("Comparing timestamps - Item A: ${a['type']} - ${a['timestamp']}");
+    print("Comparing timestamps - Item B: ${b['type']} - ${b['timestamp']}");
+    
+    // Compare timestamps - most recent first
+    return timestampB.compareTo(timestampA);
+  });
+  
+  // Debug the final order
+  for (int i = 0; i < min(5, combinedAllItems.length); i++) {
+    var item = combinedAllItems[i];
+    String name = '';
+    if (item['type'] == 'channel' || item['type'] == 'favoriteChannel') {
+      name = item['data'].name ?? 'Unknown channel';
+    } else {
+      name = item['data'].username ?? 'Unknown user';
+    }
+    print("Final order #$i: $name - ${item['timestamp']}");
+  }
+  
+  notifyListeners();
+}
+
+// Call this method after refreshes or app start
+Future<void> refreshAllLists() async {
+  print("Refreshing all lists...");
+  await getFavoriteList();
+  await getChannelList();
+  await getDirectMessageList();
+  
+  // Make sure to combine lists explicitly after all are fetched
+  combineAllLists();
+  print("All lists refreshed and combined.");
+}
 
 }

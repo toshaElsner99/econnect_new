@@ -108,6 +108,9 @@ class SocketIoProvider extends ChangeNotifier{
       print("connected>>>> ${socket.connected}");
       print("Received event: $event >>> $data");
     });
+
+    // Remove duplicate listeners and implement a single optimized handler
+    listenForNotifications();
   }
 
   joinRoomEvent(){
@@ -194,13 +197,39 @@ class SocketIoProvider extends ChangeNotifier{
   }
 
   void listenForNotifications() {
+    // Remove any existing listeners to avoid duplicates
+    socket.off(notification);
+    
     socket.on(notification, (data) {
       print("Received Notification >>> $data");
-      Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false).getUserByIDCall();
-      Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getFavoriteList();
-      Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getChannelList();
-      Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false).getDirectMessageList();
-      NotificationService.setBadgeCount();
+      
+      // Refresh the list with the latest data
+      final channelListProvider = Provider.of<ChannelListProvider>(
+        navigatorKey.currentState!.context, 
+        listen: false
+      );
+      
+      // Explicitly refresh all lists in sequence to ensure we have the latest data with timestamps
+      print("Socket notification received - refreshing lists...");
+      
+      // Make sure all lists are refreshed before combining
+      Future.wait([
+        channelListProvider.getFavoriteList(),
+        channelListProvider.getChannelList(),
+        channelListProvider.getDirectMessageList()
+      ]).then((_) {
+        // Explicitly combine lists after all data is fetched to ensure proper sorting
+        channelListProvider.combineAllLists();
+        print("All lists refreshed and combined after socket notification");
+        
+        // Also update user data and badge count
+        Provider.of<CommonProvider>(
+          navigatorKey.currentState!.context,
+          listen: false
+        ).getUserByIDCall();
+        
+        NotificationService.setBadgeCount();
+      });
     });
   }
 

@@ -11,7 +11,7 @@ class SearchMessageProvider extends ChangeNotifier{
   bool isLoading = false;
 
   Future<void> browseAndSearchMessages({required String search}) async {
-
+    messageGroups.clear();
     notifyListeners();
     final requestBody = {
       "search": search
@@ -20,13 +20,12 @@ class SearchMessageProvider extends ChangeNotifier{
     try{
       final response = await ApiService.instance.request(endPoint: ApiString.searchMessages, method: Method.POST, reqBody: requestBody,needLoader: true);
       if (statusCode200Check(response)) {
-      print("Response>> $response");
+        print("Response>> $response");
 
-      messageGroups.clear();
-      messageGroups.clear();
-      messageGroups.addAll((response['data'] as List).map((message) {
-        return SearchMessage.fromJson(message);
-      }).toList());
+        messageGroups.clear();
+        messageGroups.addAll((response['data'] as List).map((message) {
+          return SearchMessage.fromJson(message);
+        }).toList());
       }
     }catch (e){
       print("eroor>> $e");
@@ -35,9 +34,22 @@ class SearchMessageProvider extends ChangeNotifier{
     }
   }
 
-  Future<int> getPageNumber({required String messageId,required String senderId,required String receiverId}) async {
+  Future<int> getPageNumber({required String messageId,required String senderId,required String? receiverId,required bool isForChannel,required String? channelId}) async {
     notifyListeners();
-    final requestBody = {"messageId": messageId, "senderId": senderId,"receiverId":receiverId};
+
+    dynamic requestBody;
+    if(isForChannel){
+      requestBody = {
+        "messageId": messageId,
+        "senderId": senderId,
+        "channelId": channelId
+      };}else{
+      requestBody = {
+        "messageId": messageId,
+        "senderId": senderId,
+        "receiverId": receiverId
+      };
+    }
     print("Request $requestBody");
     try{
       final response = await ApiService.instance.request(endPoint: ApiString.messageJump, method: Method.POST, reqBody: requestBody,needLoader: true);

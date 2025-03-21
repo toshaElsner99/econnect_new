@@ -36,6 +36,7 @@ class ChannelChatProvider extends ChangeNotifier{
   List<msg.MessageGroup> messageGroups = [];
   int currentPage = 1;
   int totalPages = 0;
+  int firstInitialPageNo = 0;
 
   void incrementPinnedMessagesCountModel() {
     getChannelInfo?.data?.pinnedMessagesCount = (getChannelInfo?.data?.pinnedMessagesCount ?? 0) + 1;
@@ -450,13 +451,40 @@ class ChannelChatProvider extends ChangeNotifier{
       notifyListeners();
     }
   }
+  void downStreamPaginationAPICall({required String channelId}) {
+    print("object aaaa");
+    // print("object currentPagea $currentPagea");
+    print("object totalPages $totalPages");
+    if(firstInitialPageNo <= totalPages) {
+      if(firstInitialPageNo != 1){
+        firstInitialPageNo --;
+        // print("Page no paginationAPICall in down $firstInitialPageNo $oppositeUserId");
+        getChannelChatApiCall(channelId: channelId,pageNo: firstInitialPageNo,isFromMsgListen: true);
+        // getMessagesList(oppositeUserId: oppositeUserId, currentPage: firstInitialPageNo,isFromMsgListen: true);
+        notifyListeners();
+      }
 
-  Future<void> getChannelChatApiCall({required String channelId,required int pageNo,bool isFromMsgListen = false})async {
+    }
+  }
+  void changeCurrentPageValue(int pageNo) {
+    // Check if the pinned message count is greater than 0 before decrementing
+    currentPage = pageNo;
+    firstInitialPageNo = pageNo;
+    notifyListeners();
+  }
+  Future<void> getChannelChatApiCall({required String channelId,required int pageNo,bool isFromMsgListen = false,bool? isFromJump})async {
    try{
+     if(isFromJump ?? false){
+       currentPage = pageNo;
+       messageGroups.clear();
+       print("CCCCCC >>>>> $pageNo");
+     }
      if (lastOpenedChannelId != channelId) {
        messageGroups.clear();
        totalPages = 0;
-       currentPage = 1;
+       // currentPage = 1;
+       currentPage =isFromJump ?? false ? pageNo :  1;
+
        isChannelChatLoading = true;
      }
      final requestBody = {

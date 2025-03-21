@@ -38,18 +38,16 @@ import '../../widgets/chat_profile_header.dart';
 import '../bottom_nav_tabs/home_screen.dart';
 import '../channel/channel_chat_screen.dart';
 import '../find_message_screen/find_message_screen.dart';
-
-
-
-
 class SingleChatMessageScreen extends StatefulWidget {
   final String userName;
   final String oppositeUserId;
   final bool? calledForFavorite;
   final bool? needToCallAddMessage;
   final bool? isFromNotification;
+  final bool? isFromJump;
+  final dynamic jumpData;
 
-  const SingleChatMessageScreen({super.key, required this.userName, required this.oppositeUserId, this.calledForFavorite, this.needToCallAddMessage, this.isFromNotification});
+  const SingleChatMessageScreen({super.key, required this.userName, required this.oppositeUserId, this.calledForFavorite, this.needToCallAddMessage, this.isFromNotification,this.isFromJump,this.jumpData});
 
   @override
   State<SingleChatMessageScreen> createState() => _SingleChatMessageScreenState();
@@ -74,10 +72,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final TextEditingController _messageController = TextEditingController();
   bool _isTextFieldEmpty = true;
   late FileServiceProvider _fileServiceProvider;
-  final ScrollController scrollController = ScrollController();
+  ScrollController scrollController = ScrollController();
+  ScrollController scrollController1 = ScrollController();
   double? _savedScrollPosition;
   String oppositeUserId = "";
   String userName = "";
+  bool NeedTocallJumpToMessage = false;
+  String messageGroupId = "";
+  String messageId = "";
 
 
   @override
@@ -85,17 +87,27 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     super.initState();
     oppositeUserId = widget.oppositeUserId;
     userName = widget.userName ?? "";
-    initializeScreen();
+    bool isFromJump = widget.isFromJump ?? false;
+    if(isFromJump && widget.jumpData != null){
+      initializeScreen(widget.jumpData['pageNO'],true,widget.jumpData['messageGroupId'],"");
+    }else{
+      initializeScreen(1,isFromJump,"","");
+    }
   }
 
-  initializeScreen(){
+
+  initializeScreen(int pageNo,bool isfromJump,String msgGroup,String msgId){
     scrollController.addListener(() {_saveScrollPosition();});
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print("inside post frame $oppositeUserId");
+      messageGroupId = msgGroup;
+      messageId = msgId;
       socketProvider.userTypingEvent(oppositeUserId: oppositeUserId, isReplyMsg: false, isTyping: 0,);
       _fetchAndCacheUserDetails();
       print("oppositeUserId in init==> ${oppositeUserId}");
       /// this is for pagination ///
       pagination(oppositeUserId: oppositeUserId);
+      downStreamPagination(oppositeUserId: oppositeUserId);
       commonProvider.updateStatusCall(status: "online");
       /// opposite user typing listen ///
       chatProvider.getTypingUpdate();
@@ -111,11 +123,15 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       /// this is for read message ///
       channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
       /// this is default call with page 1 for chat listing ///
-      chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,);
+      Provider.of<ChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
+      chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromJump: isfromJump);
       /// this is for fetch other user details and store it to cache memory ///
       /// this is for get user mention listing api ///
       commonProvider.getUserApi(id: oppositeUserId);
-      chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
+      if(isfromJump){
+        Future.delayed(Duration(seconds: 5),()=> jumpToMessage(sortedGroups: chatProvider.messageGroups,messageGroupId: msgGroup,messageId: msgId));
+      }
+      // chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
     },);
     _messageController.addListener(_onTextChanged);
   }
@@ -169,6 +185,28 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       }
     });
   }
+  void downStreamPagination({required String oppositeUserId}) {
+    scrollController.addListener(() {
+
+      if (scrollController.position.pixels == 0) {
+        Provider.of<ChatProvider>(context,listen: false).downStreamPaginationAPICall(oppositeUserId: oppositeUserId);
+      }
+    });
+  }
+  void jumpToMessage({required List<MessageGroups> sortedGroups,required String messageGroupId,required String messageId}){
+    final  index = sortedGroups.indexWhere((test)=> test.sId == messageGroupId.split(" ")[0]);
+    print(index);
+    print("IDD $messageId");
+    final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.sId == messageId);
+    print("IDD $msgIndex");
+
+    if(scrollController1.hasClients && scrollController.hasClients){
+      scrollController.jumpTo(index*800.0);
+      scrollController1.jumpTo(msgIndex*50.0);
+    }
+    // Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
+  }
+
   void _saveScrollPosition() => setState(() {
     _savedScrollPosition = scrollController.position.pixels;
   });
@@ -183,8 +221,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer2<CommonProvider,ChatProvider>(builder: (context, commonProvider,chatProvider, child) {
-      return WillPopScope(
-        onWillPop: () async {
+      return PopScope(
+        canPop: true,
+        onPopInvokedWithResult: (didPop, result) {
           channelListProvider.readUnreadMessages(
             oppositeUserId: oppositeUserId,
             isCalledForFav: widget.calledForFavorite ?? false,
@@ -192,74 +231,81 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           );
           if (widget.isFromNotification ?? false) {
             pushAndRemoveUntil(screen: HomeScreen());
-            return false;
-          } else {
-            return true;
           }
         },
-        child: Scaffold(
-          appBar: buildAppBar(commonProvider, chatProvider),
-          body: Column(
-            children: [
-              Divider(
-                color: Colors.grey.shade800,
-                height: 1,
-              ),
-              if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
-                  Flexible(child: customLoading())
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Scaffold(
+            appBar: buildAppBar(commonProvider, chatProvider),
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+              if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == false)...{
+                inputTextFieldWithEditor()
               }else...{
-                if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
-                  Expanded(
-                        child: Center(
-                            child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',
-                            userImageUrl: userDetails?.data?.user?.thumbnailAvatarUrl ?? '',
-                            userId: userDetails?.data?.user?.sId ?? "",
-                            userStatus: userDetails?.data?.user?.status ?? "offline",
-                    ))),
-                  }else...{
-                  Expanded(
-                    child: ListView(
-                      controller: scrollController,
-                      reverse: true,
-                      children: [
-                        dateHeaders(),
+                Container(
+                  decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: AppColor.borderColor))
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 30,vertical: 20),
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: TextStyle(
+                        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, // Default text color
+                        fontSize: 16, // Default font size
+                      ),
+                      children: <TextSpan>[
+                        TextSpan(text: 'You are viewing an archived channel with a '),
+                        TextSpan(
+                          text: 'deactivated user',
+                          style: TextStyle(
+                            fontWeight:
+                            FontWeight.bold, // Make this part bold
+                          ),
+                        ),
+                        TextSpan(text: '. New messages cannot be posted.'),
                       ],
                     ),
                   ),
-                  SizedBox(height: 20,),
-                },
-                if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == false)...{
-                  inputTextFieldWithEditor()
+                )
+              }
+            ],),
+            body: Column(
+              children: [
+                Divider(
+                  color: Colors.grey.shade800,
+                  height: 1,
+                ),
+                if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
+                    Flexible(child: customLoading())
                 }else...{
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: AppColor.borderColor))
-                      ),
-                      padding: EdgeInsets.symmetric(horizontal: 30,vertical: 20),
-                      child: RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
-                          style: TextStyle(
-                            color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, // Default text color
-                            fontSize: 16, // Default font size
-                          ),
-                          children: <TextSpan>[
-                            TextSpan(text: 'You are viewing an archived channel with a '),
-                            TextSpan(
-                              text: 'deactivated user',
-                              style: TextStyle(
-                                fontWeight:
-                                    FontWeight.bold, // Make this part bold
-                              ),
-                            ),
-                            TextSpan(text: '. New messages cannot be posted.'),
-                          ],
-                        ),
-                      ),
-                    )
-                }
-              },
-            ],
+                  if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
+                    Expanded(
+                          child: Center(
+                              child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',
+                              userImageUrl: userDetails?.data?.user?.thumbnailAvatarUrl ?? '',
+                              userId: userDetails?.data?.user?.sId ?? "",
+                              userStatus: userDetails?.data?.user?.status ?? "offline",
+                      ))),
+                    }else...{
+                    // Expanded(
+                    //   child: ListView(
+                    //     controller: scrollController,
+                    //     reverse: true,
+                    //     children: [
+                    //       dateHeaders(),
+                    //     ],
+                    //   ),
+                    // ),
+                    Expanded(
+                        child: dateHeaders()
+                    ),
+                    SizedBox(height: 20,),
+                  },
+                },
+              ],
+            ),
           ),
         ),
       );
@@ -395,22 +441,50 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               print("value>>> $value");
               if(value != null){
                 if(!value['needToOpenChannelChat']){
-                  if(!(oppositeUserId == value['id'])){
-                    setState(() {
-                      oppositeUserId = signInModel.data!.user!.id == value['id'] ? value['oppositeUserID'] : value['id'] ;
-                      userName = signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'];
-                      initializeScreen();
-                      // chatProvider.messageGroups.indexWhere((test)=> test.)
-                    });
+                  // if(!(oppositeUserId == value['id'])){
+                  setState(() {
+                    oppositeUserId = signInModel.data!.user!.id == value['id'] ? value['oppositeUserID'] : value['id'] ;
+                    print("UserId ${oppositeUserId}");
+                    userName = signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'];
+                    // NeedTocallJumpToMessage = true;
+                    scrollController.dispose();
+                    scrollController = ScrollController();
+                    print("PageNoooo ${value['pageNO']}");
+                    print("messageGroupId ${value['messageGroupId']}");
+                    print("messageId ${value['messageId']}");
+                    initializeScreen(value['pageNO'],true,value['messageGroupId'],value['messageId']);
+                    NeedTocallJumpToMessage = true;
+                    messageGroupId =value['messageGroupId'];
+                  });
 
-                  }
+                  // }
 
                 }else{
                   print("Channel Id : ${value['channelId']}");
-                  pushReplacement(screen: ChannelChatScreen(channelId: value['channelId'] ?? ""));
+                  pushReplacement(screen: ChannelChatScreen(channelId: value['channelId'] ?? "",isFromJump: true,jumpData: value));
                 }
                 print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
               }
+
+              // if(value != null){
+              //   if(!value['needToOpenChannelChat']){
+              //     if(!(oppositeUserId == value['id'])){
+              //       setState(() {
+              //         oppositeUserId = signInModel.data!.user!.id == value['id'] ? value['oppositeUserID'] : value['id'] ;
+              //         userName = signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'];
+              //         initializeScreen();
+              //         // chatProvider.messageGroups.indexWhere((test)=> test.)
+              //       });
+              //
+              //     }
+              //
+              //   }else{
+              //     print("Channel Id : ${value['channelId']}");
+              //     pushReplacement(screen: ChannelChatScreen(channelId: value['channelId'] ?? ""));
+              //   }
+              //   print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
+              // }
+
             });
             // showChatSettingsBottomSheet(userId: oppositeUserId);
           },
@@ -566,7 +640,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       return value.messageGroups.isEmpty ? SizedBox.shrink() : ListView.builder(
         shrinkWrap: true,
         reverse: true,
-        physics: NeverScrollableScrollPhysics(),
+        controller: scrollController,
+        // physics: NeverScrollableScrollPhysics(),
         itemCount: sortedGroups.length + 1,
         itemBuilder: (itemContext, index) {
           if(index == sortedGroups.length){
@@ -615,6 +690,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               ),
               ListView.builder(
                 itemCount: sortedMessages.length,
+                controller:scrollController1,
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -39,7 +40,10 @@ class ChannelChatScreen extends StatefulWidget {
   final String channelId;
   final bool? isFromNotification;
   // final String channelName;
-  const ChannelChatScreen({super.key,required this.channelId, this.isFromNotification/*required this.channelName*/});
+  final bool? isFromJump;
+  final dynamic jumpData;
+
+  const ChannelChatScreen({super.key,required this.channelId, this.isFromNotification,this.isFromJump,this.jumpData});
 
   @override
   State<ChannelChatScreen> createState() => _ChannelChatScreenState();
@@ -55,12 +59,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   final fileServiceProvider = Provider.of<FileServiceProvider>(navigatorKey.currentState!.context,listen: false);
   String currentUserMessageId = "";
   String channelID = "";
-  final ScrollController _scrollController = ScrollController();
+  ScrollController _scrollController = ScrollController();
   final _textFieldKey = GlobalKey();
   OverlayEntry? _overlayEntry;
   bool _showMentionList = false;
   int _mentionCursorPosition = 0;
   bool _isTextFieldEmpty = true;
+  bool NeedTocallJumpToMessage = false;
+  String messageGroupId = "";
 
   void pagination({required String channelId}) {
     _scrollController.addListener(() {
@@ -70,6 +76,25 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     });
   }
 
+  void downStreamPagination({required String oppositeUserId}) {
+    _scrollController.addListener(() {
+
+      if (_scrollController.position.pixels == 0) {
+        Provider.of<ChatProvider>(context,listen: false).downStreamPaginationAPICall(oppositeUserId: oppositeUserId);
+      }
+    });
+  }
+  void jumpToMessage({required List<MessageGroup> sortedGroups,required String messageGroupId}){
+    print("messageGroupId $messageGroupId");
+    log("messageGroupId $sortedGroups");
+    final  index = sortedGroups.indexWhere((test)=> test.id == messageGroupId.split(" ")[0]);
+    print("indexindexindexindexindex $index");
+    if(_scrollController.hasClients){
+      _scrollController.jumpTo(index*8000.0);
+    }
+
+    // Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
+  }
   void _onTextChanged() {
     final text = _messageController.text;
     final cursorPosition = _messageController.selection.baseOffset;
@@ -378,25 +403,34 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   void initState() {
     super.initState();
     channelID = widget.channelId;
-    initializedScreen();
+    bool isFromJump = widget.isFromJump ?? false;
+
+    if(isFromJump && widget.jumpData != null){
+      initializedScreen(widget.jumpData['pageNO'],true,widget.jumpData['messageGroupId']);
+    }else{
+      initializedScreen(1,isFromJump,"");
+    }
   }
 
-  initializedScreen(){
+  initializedScreen(int pageNo,bool isfromJump,String msgGroup){
     _messageController.addListener(_onTextChanged);
     print("CHANNELID>>> ${channelID}");
+    print("CHANNELID>>> ${pageNo}");
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       socketProvider.userTypingEventChannel(channelId: channelID, isReplyMsg: false, isTyping:  0);
       channelChatProviderInit.getTypingUpdate(true);
+      messageGroupId = msgGroup;
 
       /// this for socket listen in channel chat for new message and delete //
       socketProvider.listenForChannelChatScreen(channelId: widget.channelId);
-      pagination(channelId: widget.channelId);
-      channelChatProviderInit.getChannelInfoApiCall(channelId: widget.channelId,callFroHome: true);
-      Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
-      channelChatProviderInit.getChannelChatApiCall(channelId: widget.channelId,pageNo: 1);
+      pagination(channelId: channelID);
+      downStreamPagination(oppositeUserId: channelID);
+      channelChatProviderInit.getChannelInfoApiCall(channelId: channelID,callFroHome: true);
+      Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
+      channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: 1,isFromJump: isfromJump);
       channelChatProviderInit.getChannelMembersList(widget.channelId);
-      channelChatProviderInit.getFileListingInChannelChat(channelId: widget.channelId);
+      channelChatProviderInit.getFileListingInChannelChat(channelId: channelID);
     },);
   }
 
@@ -679,244 +713,270 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
             return true;
           }
         },
-        child: Scaffold(
-          appBar: AppBar(
-            toolbarHeight: 60,
-            titleSpacing: 0,
-            leading: IconButton(
-              icon: Icon(CupertinoIcons.back, color: Colors.white),
-              onPressed: () {
-                if(widget.isFromNotification ?? false) {
-                  pushAndRemoveUntil(screen: HomeScreen());
-                }else{
-                  pop();
-                }
-                Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
-              },
-            ),
-            title: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: commonText(
-                        text: channelChatProvider.isChannelChatLoading ? "Loading..." :  channelChatProvider.getChannelInfo?.data?.name ?? "",
-                        maxLines: 1,
-                        fontSize: 14,
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Scaffold(
+            appBar: AppBar(
+              toolbarHeight: 60,
+              titleSpacing: 0,
+              leading: IconButton(
+                icon: Icon(CupertinoIcons.back, color: Colors.white),
+                onPressed: () {
+                  if(widget.isFromNotification ?? false) {
+                    pushAndRemoveUntil(screen: HomeScreen());
+                  }else{
+                    pop();
+                  }
+                  Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
+                },
+              ),
+              title: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: commonText(
+                          text: channelChatProvider.isChannelChatLoading ? "Loading..." :  channelChatProvider.getChannelInfo?.data?.name ?? "",
+                          maxLines: 1,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                    if (channelChatProvider.getChannelInfo?.data?.ownerId?.sId == signInModel.data?.user?.id)
-                      ...{
-                        SizedBox(width: 10),
-                        GestureDetector(
-                          onTap: () => _showRenameChannelDialog(),
-                          child: Image.asset(
-                            AppImage.editIcon,
-                            height: 15,
-                            width: 15,
-                            color: AppColor.borderColor,
+                      if (channelChatProvider.getChannelInfo?.data?.ownerId?.sId == signInModel.data?.user?.id)
+                        ...{
+                          SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: () => _showRenameChannelDialog(),
+                            child: Image.asset(
+                              AppImage.editIcon,
+                              height: 15,
+                              width: 15,
+                              color: AppColor.borderColor,
+                            ),
+                          ),
+                        }
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center, // Ensures proper alignment
+                    children: [
+                      /// User Count & Navigation ///
+                      GestureDetector(
+                        onTap: () {
+                          if (channelChatProvider.getChannelInfo?.data?.members?.isNotEmpty ?? false) {
+                            pushScreen(
+                              screen: ChannelMembersInfo(
+                                channelId: channelID,
+                                channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                              ),
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: Row(
+                            children: [
+                              Image.asset(AppImage.person, height: 18, width: 18, color: AppColor.white),
+                              SizedBox(width: 4),
+                              commonText(
+                                text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",
+                                fontSize: 15,
+                                color: AppColor.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ],
                           ),
                         ),
-                      }
-                  ],
-                ),
-                SizedBox(height: 10),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center, // Ensures proper alignment
-                  children: [
-                    /// User Count & Navigation ///
-                    GestureDetector(
-                      onTap: () {
-                        if (channelChatProvider.getChannelInfo?.data?.members?.isNotEmpty ?? false) {
-                          pushScreen(
-                            screen: ChannelMembersInfo(
-                              channelId: channelID,
-                              channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                            ),
-                          );
+                      ),
+                      /// Pin Messages & Navigation ///
+                      GestureDetector(
+                        onTap: () => pushScreen(
+                          screen: ChannelPinnedPostsScreen(
+                            channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                            channelId: channelID,
+                          ),
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: Row(
+                            children: [
+                              Image.asset(AppImage.pinIcon, height: 18, width: 18, color: Colors.white),
+                              SizedBox(width: 4),
+                              commonText(
+                                text: "${channelChatProvider.getChannelInfo?.data?.pinnedMessagesCount ?? 0}",
+                                fontSize: 15,
+                                color: AppColor.white,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      /// File & Navigation ///
+                      GestureDetector(
+                        onTap: () => pushScreen(
+                          screen: FilesListingScreen(
+                            channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                            channelId: channelID,
+                          ),
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4), // Consistent padding
+                          child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: AppColor.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.search, color: AppColor.whiteColor),
+                  onPressed: () {
+                    pushScreenWithTransition(FindMessageScreen()).then((value) {
+                      print("value>>> $value");
+                      // if(value != null){
+                      //   if(value['needToOpenChannelChat']){
+                      //     if(!(channelID == value['channelId'])){
+                      //       setState(() {
+                      //         channelID = value['channelId'];
+                      //         initializedScreen();
+                      //       });
+                      //     }
+                      //   }else{
+                      //     print("userName : ${value['name']} && userId ${value['id']}");
+                      //     pushReplacement(screen: SingleChatMessageScreen(userName: value['name'], oppositeUserId: value['id'],));
+                      //   }
+                      //   print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
+                      // }
+                      if(value != null){
+                        if(value['needToOpenChannelChat']){
+                          // if(!(channelID == value['channelId'])){
+                          setState(() {
+                            channelID = value['channelId'];
+                            _scrollController.dispose();
+                            _scrollController = ScrollController();
+                            initializedScreen(value['pageNO'],true,value['messageGroupId']);
+                            NeedTocallJumpToMessage = true;
+                            messageGroupId =value['messageGroupId'];
+                          });
+                          // }
+                        }else{
+                          print("userName : ${value['name']} && userId ${value['id']}");
+                          pushReplacement(screen: SingleChatMessageScreen(userName: signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'], oppositeUserId:signInModel.data!.user!.id == value['id'] ?value['oppositeUserID'] : value['id'],isFromJump: true,jumpData: value,));
                         }
-                      },
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                        child: Row(
-                          children: [
-                            Image.asset(AppImage.person, height: 18, width: 18, color: AppColor.white),
-                            SizedBox(width: 4),
-                            commonText(
-                              text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",
-                              fontSize: 15,
-                              color: AppColor.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ],
-                        ),
-                      ),
+                        print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
+                      }
+
+                    });
+                    // showChatSettingsBottomSheet(userId: oppositeUserId);
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.info, color: AppColor.whiteColor),
+                  onPressed: () => pushScreen(
+                    screen: ChannelInfoScreen(
+                      channelId: channelID,
+                      channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                      isPrivate: false,
                     ),
-                    /// Pin Messages & Navigation ///
-                    GestureDetector(
-                      onTap: () => pushScreen(
-                        screen: ChannelPinnedPostsScreen(
-                          channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                          channelId: channelID,
-                        ),
-                      ),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                        child: Row(
-                          children: [
-                            Image.asset(AppImage.pinIcon, height: 18, width: 18, color: Colors.white),
-                            SizedBox(width: 4),
-                            commonText(
-                              text: "${channelChatProvider.getChannelInfo?.data?.pinnedMessagesCount ?? 0}",
-                              fontSize: 15,
-                              color: AppColor.white,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    /// File & Navigation ///
-                    GestureDetector(
-                      onTap: () => pushScreen(
-                        screen: FilesListingScreen(
-                          channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                          channelId: channelID,
-                        ),
-                      ),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4), // Consistent padding
-                        child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: AppColor.white),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.search, color: AppColor.whiteColor),
-                onPressed: () {
-                  pushScreenWithTransition(FindMessageScreen()).then((value) {
-                    print("value>>> $value");
-                    if(value != null){
-                      if(value['needToOpenChannelChat']){
-                        if(!(channelID == value['channelId'])){
-                          setState(() {
-                            channelID = value['channelId'];
-                            initializedScreen();
-                          });
-                        }
-                      }else{
-                        print("userName : ${value['name']} && userId ${value['id']}");
-                        pushReplacement(screen: SingleChatMessageScreen(userName: value['name'], oppositeUserId: value['id'],));
-                      }
-                      print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
-                    }
-                  });
-                  // showChatSettingsBottomSheet(userId: oppositeUserId);
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+              inputTextFieldWithEditor(channelChatProvider)
+            ],),
+            body: Column(
+              children: [
+                Divider(color: Colors.grey.shade800, height: 1,),
+                if(channelChatProvider.isChannelChatLoading )...{
+                  Flexible(child: customLoading())
+                }else...{
+                  Expanded(
+                    child: ListView(
+                      controller: _scrollController,
+                      reverse: true,
+                      children: [
+                        dateHeaders(),
+                      ],
+                    ),
+                  ),
                 },
-              ),
-              IconButton(
-                icon: Icon(Icons.info, color: AppColor.whiteColor),
-                onPressed: () => pushScreen(
-                  screen: ChannelInfoScreen(
-                    channelId: channelID,
-                    channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                    isPrivate: false,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          body: Column(
-            children: [
-              Divider(color: Colors.grey.shade800, height: 1,),
-              if(channelChatProvider.isChannelChatLoading )...{
-                Flexible(child: customLoading())
-              }else...{
-                Expanded(
-                  child: ListView(
-                    controller: _scrollController,
-                    reverse: true,
-                    children: [
-                      dateHeaders(),
-                    ],
-                  ),
-                ),
-              },
-              // SizedBox(height: 20),
-              // Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-              //   var filteredTypingUsers = channelChatProvider.typingUsers
-              //       .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-              //       && user['routeId'] == channelID).toList();
-              //   String typingMessage;
-              //
-              //   if (filteredTypingUsers.isEmpty) {
-              //     typingMessage = "";
-              //   } else if (filteredTypingUsers.length == 1) {
-              //     typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-              //   } else {
-              //     var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-              //     var lastUser  = usernames.removeLast(); // Get the last username
-              //     typingMessage = "${usernames.join(', ')}, and $lastUser  are Typing..."; // Join the rest with commas
-              //   }
-              //
-              //   return Container(
-              //     margin: EdgeInsets.only(right: 20,left : 20, top: 15,bottom: 6),
-              //     alignment: Alignment.centerLeft,
-              //     child: Column(
-              //       children: [
-              //         // Other widgets...
-              //         if (typingMessage.isNotEmpty)
-              //           commonText(text:
-              //             typingMessage,
-              //               fontSize: 14,
-              //               color: Colors.grey.shade600,
-              //               fontWeight: FontWeight.w400,
-              //           ),
-              //       ],
-              //     ),
-              //   );
-              // },),
-              Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-                var filteredTypingUsers = channelChatProvider.typingUsers
-                    .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                    && user['routeId'] == channelID
-                    && user['isReply'] == false).toList();
+                // SizedBox(height: 20),
+                // Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+                //   var filteredTypingUsers = channelChatProvider.typingUsers
+                //       .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                //       && user['routeId'] == channelID).toList();
+                //   String typingMessage;
+                //
+                //   if (filteredTypingUsers.isEmpty) {
+                //     typingMessage = "";
+                //   } else if (filteredTypingUsers.length == 1) {
+                //     typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+                //   } else {
+                //     var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+                //     var lastUser  = usernames.removeLast(); // Get the last username
+                //     typingMessage = "${usernames.join(', ')}, and $lastUser  are Typing..."; // Join the rest with commas
+                //   }
+                //
+                //   return Container(
+                //     margin: EdgeInsets.only(right: 20,left : 20, top: 15,bottom: 6),
+                //     alignment: Alignment.centerLeft,
+                //     child: Column(
+                //       children: [
+                //         // Other widgets...
+                //         if (typingMessage.isNotEmpty)
+                //           commonText(text:
+                //             typingMessage,
+                //               fontSize: 14,
+                //               color: Colors.grey.shade600,
+                //               fontWeight: FontWeight.w400,
+                //           ),
+                //       ],
+                //     ),
+                //   );
+                // },),
+                Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+                  var filteredTypingUsers = channelChatProvider.typingUsers
+                      .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                      && user['routeId'] == channelID
+                      && user['isReply'] == false).toList();
 
-                String typingMessage;
+                  String typingMessage;
 
-                if (filteredTypingUsers.isEmpty) {
-                  typingMessage = "";
-                } else if (filteredTypingUsers.length == 1) {
-                  typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-                } else {
-                  var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-                  var lastUser  = usernames.removeLast();
-                  typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
-                }
+                  if (filteredTypingUsers.isEmpty) {
+                    typingMessage = "";
+                  } else if (filteredTypingUsers.length == 1) {
+                    typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+                  } else {
+                    var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+                    var lastUser  = usernames.removeLast();
+                    typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
+                  }
 
-                return Container(
-                  margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
-                  alignment: Alignment.centerLeft,
-                  child: Column(
-                    children: [
-                      if (typingMessage.isNotEmpty)
-                        commonText(
-                          text: typingMessage,
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w400,
-                        ),
-                    ],
-                  ),
-                );
-              },),
+                  return Container(
+                    margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      children: [
+                        if (typingMessage.isNotEmpty)
+                          commonText(
+                            text: typingMessage,
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w400,
+                          ),
+                      ],
+                    ),
+                  );
+                },),
 
-              inputTextFieldWithEditor(channelChatProvider),
-            ],
+              ],
+            ),
           ),
         ),
       );

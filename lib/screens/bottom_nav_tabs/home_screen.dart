@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
+import 'package:e_connect/model/direct_message_list_model.dart';
+import 'package:e_connect/model/channel_list_model.dart';
 import 'package:e_connect/screens/bottom_nav_tabs/setting_screen.dart';
 import 'package:e_connect/screens/browse_and_search_channel/browse_and_search_channel.dart';
 import 'package:e_connect/screens/channel/channel_chat_screen.dart';
@@ -69,9 +71,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
     if(!_isInitialized) {
       Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
-      Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
-      Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
-      Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+      Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
     }
     getFCM();
     Future.delayed(Duration(seconds: 5),(){
@@ -85,9 +85,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
-      Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
-      Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+      Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
       Provider.of<SocketIoProvider>(context, listen: false).connectSocket(true);
     }
   }
@@ -111,10 +109,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: () async {
+        await Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
         await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
-        await Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
-        await Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
-        await Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
       },
       child: Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
         setBadge();
@@ -193,203 +189,115 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildScreenContent(ChannelListProvider channelListProvider, CommonProvider commonProvider) {
     switch (_selectedTabIndex) {
       case 0:
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
+        return channelListProvider.combinedAllItems.isEmpty
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: AppColor.blueColor,
+                ),
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 5,vertical: 10),
+                      padding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        // color: AppColor.borderColor.withOpacity(0.05),
+                      ),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                        child: ListView.builder(
+                          physics: NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          itemCount: channelListProvider.combinedAllItems.length,
+                          itemBuilder: (context, index) {
+                            final item = channelListProvider.combinedAllItems[index];
+                            return _buildListItem(item, commonProvider);
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+      
+      case 1: // Channels tab
+        // If no channels, show empty state
+        if (channelListProvider.channelListModel?.data == null || channelListProvider.channelListModel!.data!.isEmpty) {
+          return Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildExpansionSection(
-                  title: "FAVORITES",
-                  index: 0,
-                  itemCount: _getTotalFavoritesCount(channelListProvider: channelListProvider),
-                  itemBuilder: (context, index) {
-                    final userCount = channelListProvider.favoriteListModel?.data?.chatList?.length ?? 0;
-
-                    if (index < userCount) {
-                      final favorite = channelListProvider.favoriteListModel?.data?.chatList?[index];
-                      return _buildUserRow(
-                          index: 0,
-                          muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite?.sId ?? "") ?? false,
-                          imageUrl: favorite?.thumbnailAvatarUrl ?? "",
-                          username: favorite?.username ?? "",
-                          status: favorite?.status ?? "",
-                          userId: favorite?.sId ?? "",
-                          customStatusEmoji: favorite?.customStatusEmoji ?? "",
-                          unSeenMsgCount: favorite?.unseenMessagesCount,
-                          children: [
-                            _buildPopupMenuForFavorite(favorite: channelListProvider.favoriteListModel?.data?.chatList?[index]),
-                          ]
-                      );
-                    }
-                    else {
-                      final channelIndex = index - userCount;
-                      final favoriteChannels = channelListProvider.favoriteListModel?.data?.favouriteChannels ?? [];
-                      if (channelIndex < favoriteChannels.length) {
-                        final favoriteChannel = favoriteChannels[channelIndex] ;
-                        return _buildFavoriteChannelRow(favoriteChannel,
-                            [
-                              _buildPopupMenuForFavChannel(favouriteChannels: favoriteChannels[channelIndex])
-                            ]
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    }
-                  },
+                Icon(
+                  Icons.groups_outlined,
+                  size: 60,
+                  color: Colors.grey,
                 ),
-                _buildExpansionSection(
-                  title: "CHANNEL",
-                  index: 1,
-                  itemCount: channelListProvider.channelListModel?.data?.length ?? 0,
-                  itemBuilder: (context, index) {
-                    final channel = channelListProvider.channelListModel!.data![index];
-                    return _buildChannelRow(channel);
-                  },
+                SizedBox(height: 16),
+                Text(
+                  "Channels View",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                _buildExpansionSection(
-                  index: 2,
-                  title: "DIRECT MESSAGE",
-                  itemCount: channelListProvider.directMessageListModel?.data?.chatList?.length ?? 0,
-                  itemBuilder: (context, index) {
-                    final directMessage = channelListProvider.directMessageListModel?.data?.chatList?[index];
-                    return _buildUserRow(
-                        muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(directMessage?.sId ?? "") ?? false,
-                        index: 2,
-                        imageUrl: directMessage?.thumbnailAvatarUrl ?? "",
-                        username: directMessage?.username ?? "",
-                        status: directMessage?.status ?? "",
-                        userId: directMessage?.sId ?? "",
-                        customStatusEmoji: directMessage?.customStatusEmoji ?? "",
-                        unSeenMsgCount: directMessage?.unseenMessagesCount ?? 0,
-                        children: [
-                          _buildPopupMenuForDirectMessage(chatLisDirectMessage: channelListProvider.directMessageListModel?.data?.chatList?[index]),
-                        ]
-
-                    );
-                  },
+                SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  child: Text(
+                    "Your channels will appear here",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ],
+            ),
+          );
+        }
+        
+        // Extract channels from combinedAllItems to maintain the timestamp sorting
+        final channelItems = channelListProvider.combinedAllItems
+            .where((item) => item['type'] == 'channel' || item['type'] == 'favoriteChannel')
+            .toList();
+        
+        if (channelItems.isEmpty) {
+          return Center(child: Text("No channels found"));
+        }
+        
+        return SingleChildScrollView(
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 5,vertical: 10),
+            padding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              // color: AppColor.borderColor.withOpacity(0.05),
+            ),
+            child: Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ListView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: channelItems.length,
+                itemBuilder: (context, index) {
+                  final item = channelItems[index];
+                  return _buildListItem(item, commonProvider);
+                },
+              ),
             ),
           ),
         );
       
-      case 1: // Channels tab
-      return  channelListProvider.channelListModel?.data?.length != 0 ? _buildExpansionSection(
-        title: "CHANNEL",
-        index: 1,
-        itemCount: channelListProvider.channelListModel?.data?.length ?? 0,
-        itemBuilder: (context, index) {
-          final channel = channelListProvider.channelListModel!.data![index];
-          return _buildChannelRow(channel);
-        },
-      ) : Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.groups_outlined,
-            size: 60,
-            color: Colors.grey,
-          ),
-          SizedBox(height: 16),
-          Text(
-            "Channels View",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Text(
-              "This tab will display only channels",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+      case 2: // Favorites tab
+        return _buildFavoritesTab(channelListProvider, commonProvider);
       
-      case 2: // Favourites tab
-        // return Center(
-        //   child: Column(
-        //     mainAxisAlignment: MainAxisAlignment.center,
-        //     children: [
-        //       Icon(
-        //         Icons.star_outline,
-        //         size: 60,
-        //         color: Colors.grey,
-        //       ),
-        //       SizedBox(height: 16),
-        //       Text(
-        //         "Favourites View",
-        //         style: TextStyle(
-        //           color: Colors.white,
-        //           fontSize: 18,
-        //           fontWeight: FontWeight.bold,
-        //         ),
-        //       ),
-        //       SizedBox(height: 8),
-        //       Padding(
-        //         padding: const EdgeInsets.symmetric(horizontal: 32.0),
-        //         child: Text(
-        //           "This tab will display only your favourites",
-        //           textAlign: TextAlign.center,
-        //           style: TextStyle(
-        //             color: Colors.grey,
-        //             fontSize: 16,
-        //           ),
-        //         ),
-        //       ),
-        //     ],
-        //   ),
-        // );
-      return   _buildExpansionSection(
-        title: "FAVORITES",
-        index: 0,
-        itemCount: _getTotalFavoritesCount(channelListProvider: channelListProvider),
-        itemBuilder: (context, index) {
-          final userCount = channelListProvider.favoriteListModel?.data?.chatList?.length ?? 0;
-
-          if (index < userCount) {
-            final favorite = channelListProvider.favoriteListModel?.data?.chatList?[index];
-            return _buildUserRow(
-                index: 0,
-                muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite?.sId ?? "") ?? false,
-                imageUrl: favorite?.thumbnailAvatarUrl ?? "",
-                username: favorite?.username ?? "",
-                status: favorite?.status ?? "",
-                userId: favorite?.sId ?? "",
-                customStatusEmoji: favorite?.customStatusEmoji ?? "",
-                unSeenMsgCount: favorite?.unseenMessagesCount,
-                children: [
-                  _buildPopupMenuForFavorite(favorite: channelListProvider.favoriteListModel?.data?.chatList?[index]),
-                ]
-            );
-          }
-          else {
-            final channelIndex = index - userCount;
-            final favoriteChannels = channelListProvider.favoriteListModel?.data?.favouriteChannels ?? [];
-            if (channelIndex < favoriteChannels.length) {
-              final favoriteChannel = favoriteChannels[channelIndex] ;
-              return _buildFavoriteChannelRow(favoriteChannel,
-                  [
-                    _buildPopupMenuForFavChannel(favouriteChannels: favoriteChannels[channelIndex])
-                  ]
-              );
-            }
-            return const SizedBox.shrink();
-          }
-        },
-      );
       default:
-        return SizedBox.shrink();
+        return Center(child: Text("Tab not implemented"));
     }
   }
 
@@ -413,9 +321,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
         onPressed: () => pushScreenWithTransition(SettingScreen()).then((value) async{
           await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
-          await Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
-          await Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
-          await Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+          await Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
         },),
       ),
     );
@@ -892,13 +798,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       )
                     ],
                   ),
-                  SizedBox(height: 2),
-                  commonText(
-                   text: commonProvider.getUserModel?.data!.user!.status ?? "",
-                    color: AppColor.whiteColor.withOpacity(0.7),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400
-                  ),
+                  if ((commonProvider.getUserModel?.data?.user?.customStatus ?? "").isNotEmpty) ...[
+                    SizedBox(height: 4),
+                    commonText(
+                      text: commonProvider.getUserModel?.data?.user?.customStatus ?? "",
+                      color: AppColor.whiteColor.withOpacity(0.7),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ]
                 ],
               )
 
@@ -912,9 +820,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   openSettings(){
     pushScreenWithTransition(SettingScreen()).then((value) async{
       await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
-      await Provider.of<ChannelListProvider>(context,listen: false).getFavoriteList();
-      await Provider.of<ChannelListProvider>(context,listen: false).getChannelList();
-      await Provider.of<ChannelListProvider>(context,listen: false).getDirectMessageList();
+      await Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
     });
   }
 
@@ -1148,13 +1054,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  // Add helper method to get total count
-  int _getTotalFavoritesCount({required ChannelListProvider channelListProvider}) {
-    final userCount = channelListProvider.favoriteListModel?.data?.chatList?.length ?? 0;
-    final channelCount = channelListProvider.favoriteListModel?.data?.favouriteChannels?.length ?? 0;
-    return userCount + channelCount;
-  }
-
   // Add new method for favorite channels
   Widget _buildFavoriteChannelRow(FavouriteChannels channel,List<Widget> children) {
     final isPrivate = channel.isPrivate;
@@ -1199,6 +1098,197 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
+  // Add these helper methods to separate items with and without unread messages
+  Widget _buildItemsWithUnreadMessages(ChannelListProvider channelListProvider, CommonProvider commonProvider) {
+    // Filter items with unread messages
+    final itemsWithUnreadMessages = channelListProvider.combinedAllItems
+        .where((item) => (item['unreadCount'] as int) > 0)
+        .toList();
+    
+    if (itemsWithUnreadMessages.isEmpty) {
+      return SizedBox.shrink();
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListView.builder(
+          physics: NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: itemsWithUnreadMessages.length,
+          itemBuilder: (context, index) {
+            final item = itemsWithUnreadMessages[index];
+            return _buildListItem(item, commonProvider);
+          },
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildItemsWithNoUnreadMessages(ChannelListProvider channelListProvider, CommonProvider commonProvider) {
+    // Filter items with no unread messages
+    final itemsWithNoUnreadMessages = channelListProvider.combinedAllItems
+        .where((item) => (item['unreadCount'] as int) == 0)
+        .toList();
+    
+    if (itemsWithNoUnreadMessages.isEmpty) {
+      return SizedBox.shrink();
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListView.builder(
+          physics: NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: itemsWithNoUnreadMessages.length,
+          itemBuilder: (context, index) {
+            final item = itemsWithNoUnreadMessages[index];
+            return _buildListItem(item, commonProvider);
+          },
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildListItem(Map<String, dynamic> item, CommonProvider commonProvider) {
+    final itemType = item['type'];
+    final itemData = item['data'];
+    
+    switch (itemType) {
+      case 'favoriteUser':
+        final favorite = itemData as ChatList;
+        return _buildUserRow(
+          index: 0,
+          muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite.sId ?? "") ?? false,
+          imageUrl: favorite.thumbnailAvatarUrl ?? "",
+          username: favorite.username ?? "",
+          status: favorite.status ?? "",
+          userId: favorite.sId ?? "",
+          customStatusEmoji: favorite.customStatusEmoji ?? "",
+          unSeenMsgCount: favorite.unseenMessagesCount,
+          children: [
+            _buildPopupMenuForFavorite(favorite: favorite),
+          ]
+        );
+      
+      case 'favoriteChannel':
+        final favoriteChannel = itemData as FavouriteChannels;
+        return _buildFavoriteChannelRow(
+          favoriteChannel,
+          [
+            _buildPopupMenuForFavChannel(favouriteChannels: favoriteChannel)
+          ]
+        );
+      
+      case 'channel':
+        final channel = itemData as ChannelList;
+        return _buildChannelRow(channel);
+      
+      case 'directMessage':
+        final directMessage = itemData as ChatListDirectMessage;
+        return _buildUserRow(
+          muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(directMessage.sId ?? "") ?? false,
+          index: 2,
+          imageUrl: directMessage.thumbnailAvatarUrl ?? "",
+          username: directMessage.username ?? "",
+          status: directMessage.status ?? "",
+          userId: directMessage.sId ?? "",
+          customStatusEmoji: directMessage.customStatusEmoji ?? "",
+          unSeenMsgCount: directMessage.unseenMessagesCount ?? 0,
+          children: [
+            _buildPopupMenuForDirectMessage(chatLisDirectMessage: directMessage),
+          ]
+        );
+      
+      default:
+        return SizedBox.shrink();
+    }
+  }
+
+  // Add method to build the favorites tab
+  Widget _buildFavoritesTab(ChannelListProvider channelListProvider, CommonProvider commonProvider) {
+    // Filter only favorite items (favorite users and favorite channels)
+    final favoriteItems = channelListProvider.combinedAllItems
+        .where((item) => item['type'] == 'favoriteUser' || item['type'] == 'favoriteChannel')
+        .toList();
+    
+    if (favoriteItems.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.star_outline,
+              size: 60,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 16),
+            Text(
+              "No Favorites",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Text(
+                "Add favorites to see them here",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // We don't need to sort here as the favorites are already sorted by timestamp in the provider
+    
+    // Items with unread messages
+    final itemsWithUnreadMessages = favoriteItems
+        .where((item) => (item['unreadCount'] as int) > 0)
+        .toList();
+    
+    // Items with no unread messages
+    final itemsWithNoUnreadMessages = favoriteItems
+        .where((item) => (item['unreadCount'] as int) == 0)
+        .toList();
+    
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 5,vertical: 10),
+            padding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              // color: AppColor.borderColor.withOpacity(0.05),
+            ),
+            child: Theme(
+              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              child: ListView.builder(
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: favoriteItems.length,
+                itemBuilder: (context, index) {
+                  final item = favoriteItems[index];
+                  return _buildListItem(item, commonProvider);
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
 }
 

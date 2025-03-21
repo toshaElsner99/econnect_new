@@ -2160,11 +2160,12 @@ void _openUrl(String url) async {
 // }
 Widget commonChannelIcon({required bool isPrivate , bool? isShowPersons = false, Color? color, bool isMuted = false}){
   return Container(
-    width: 32,
-    height: 32,
+    width: 35,
+    height: 35,
     decoration: BoxDecoration(
       color: AppColor.borderColor.withOpacity(0.1),
-      borderRadius: BorderRadius.circular(6),
+      // borderRadius: BorderRadius.circular(6),
+      shape: BoxShape.circle
     ),
     child: Center(
       child: Image.asset(

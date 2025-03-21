@@ -39,6 +39,7 @@ class ChatProvider extends  ChangeNotifier {
   reply.GetReplyMessageModel? getReplyMessageModel;
   FilesListingInChatModel? filesListingInChatModel;
   bool isGettingListFalse = false;
+  int firstInitialPageNo = 0;
 
 
   void pinMessageModelUpdate() {
@@ -70,15 +71,19 @@ class ChatProvider extends  ChangeNotifier {
     }
   }
 
-  Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false}) async {
+  Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false,bool? isFromJump}) async {
     print("oppositeUserId in getMessagesList==> $oppositeUserId");
 
     try {
+      if(isFromJump ?? false){
+        messageGroups.clear();
+        currentPagea = currentPage;
+      }
       if (lastOpenedUserId != oppositeUserId) {
         messageGroups.clear();
         totalPages = 0;
-        currentPage = 1;
-        currentPagea = 1;
+        // currentPage = 1;
+        currentPagea = isFromJump?? false ? currentPage : 1;
         idChatListLoading = true;
         print("List Length ${messageGroups.length}");
       }
@@ -124,10 +129,27 @@ class ChatProvider extends  ChangeNotifier {
       notifyListeners();
     }
   }
-  // 42["user_typing",{"message":"","type":"userTyping",
-  // "data":[{"sender":"676d5d2de010e883aec47240","receivers":"677b7adc3f5bb1fd3416ca3e"}],
-  // "time":"2025-03-11T09:41:10.040Z","message_type":"message","routeId":"676d5d2de010e883aec47240","tagged_users":[],"msgLength":1,
-  // "userData":{},"isChannel":false,"isReply":true,"parentId":""}]
+  void downStreamPaginationAPICall({required String oppositeUserId}) {
+    print("object aaaa");
+    print("object currentPagea $currentPagea");
+    print("object totalPages $totalPages");
+    if(firstInitialPageNo <= totalPages) {
+      if(firstInitialPageNo != 1){
+        firstInitialPageNo --;
+        print("Page no paginationAPICall in down $firstInitialPageNo $oppositeUserId");
+        getMessagesList(oppositeUserId: oppositeUserId, currentPage: firstInitialPageNo,isFromMsgListen: true);
+        notifyListeners();
+      }
+
+    }
+  }
+  void changeCurrentPageValue(int pageNo) {
+    // Check if the pinned message count is greater than 0 before decrementing
+    currentPagea = pageNo;
+    firstInitialPageNo = pageNo;
+    notifyListeners();
+  }
+
   getTypingUpdate() {
     try {
       socketProvider.socket.onAny((event, data) {

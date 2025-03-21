@@ -339,6 +339,7 @@ class ChatList {
   bool? isLeft;
   String? elsnerEmail;
   int? unseenMessagesCount;
+  String? latestMessageCreatedAt;
   String? position;
 
   ChatList(
@@ -368,6 +369,7 @@ class ChatList {
         this.isLeft,
         this.elsnerEmail,
         this.unseenMessagesCount,
+        this.latestMessageCreatedAt,
         this.position});
 
   ChatList.fromJson(Map<String, dynamic> json) {
@@ -401,6 +403,7 @@ class ChatList {
     isLeft = json['isLeft'];
     elsnerEmail = json['elsner_email'];
     unseenMessagesCount = json['unseenMessagesCount'] ?? 0;
+    latestMessageCreatedAt = json['latestMessageCreatedAt'] ?? "";
     position = json['position'];
   }
 
@@ -438,6 +441,7 @@ class ChatList {
     data['isLeft'] = this.isLeft;
     data['elsner_email'] = this.elsnerEmail;
     data['unseenMessagesCount'] = this.unseenMessagesCount ?? 0;
+    data['latestMessageCreatedAt'] = this.latestMessageCreatedAt ?? 0;
     data['position'] = this.position;
     return data;
   }
@@ -510,6 +514,7 @@ class FavouriteChannels {
   String? updatedAt;
   int? iV;
   int? unseenMessagesCount;
+  String? lastMessage;
   String? ownerId;
 
   FavouriteChannels(
@@ -527,6 +532,7 @@ class FavouriteChannels {
         this.updatedAt,
         this.iV,
         this.unseenMessagesCount,
+        this.lastMessage,
         this.ownerId});
 
   FavouriteChannels.fromJson(Map<String, dynamic> json) {
@@ -548,6 +554,7 @@ class FavouriteChannels {
     updatedAt = json['updatedAt'];
     iV = json['__v'];
     unseenMessagesCount = json['unseenMessagesCount'];
+    lastMessage = json['lastMessage'];
     ownerId = json['ownerId'];
   }
 
@@ -571,6 +578,7 @@ class FavouriteChannels {
     data['updatedAt'] = this.updatedAt;
     data['__v'] = this.iV;
     data['unseenMessagesCount'] = this.unseenMessagesCount;
+    data['lastMessage'] = this.lastMessage;
     data['ownerId'] = this.ownerId;
     return data;
   }

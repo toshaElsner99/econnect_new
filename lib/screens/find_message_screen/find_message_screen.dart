@@ -27,7 +27,6 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
   final _searchController = TextEditingController();
   final ScrollController scrollController = ScrollController();
 
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -37,8 +36,13 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
           elevation: 0,
           titleSpacing: 0,
           leading: IconButton(
-            icon: const Icon(Icons.close,color: Colors.white,),
-            onPressed: () => Navigator.pop(context,),
+            icon: const Icon(
+              Icons.close,
+              color: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(
+              context,
+            ),
           ),
           title: commonText(
             text: 'Find Messages',
@@ -57,40 +61,47 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                 hintText: 'Search Messages',
                 prefixIcon: const Icon(CupertinoIcons.search),
                 fieldSubmitted: (value) {
-                  context.read<SearchMessageProvider>().browseAndSearchMessages(search: value!);
+                  context
+                      .read<SearchMessageProvider>()
+                      .browseAndSearchMessages(search: value!);
                 },
               ),
             ),
             Expanded(
               child: Consumer<SearchMessageProvider>(
-                builder: (context,value,a){
+                builder: (context, value, a) {
                   print("value.messageGroups.length");
                   print(value.messageGroups.length);
-                  if(value.messageGroups.length == 0){
-                    return Center(child: commonText(text: "No data found"),);
+                  if (value.messageGroups.length == 0) {
+                    return Center(
+                      child: commonText(text: "No data found"),
+                    );
                   }
                   return ListView.builder(
                     itemCount: value.messageGroups.length,
                     itemBuilder: (context, index) {
                       final messageData = value.messageGroups[index];
-                      final dateFormatted =formatDateTime(DateTime.parse(messageData.date.toString()));
+                      final dateFormatted = formatDateTime(
+                          DateTime.parse(messageData.date.toString()));
 
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 15.0,top: 8),
+                        padding: const EdgeInsets.only(bottom: 15.0, top: 8),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 8.0),
                               child: Row(
                                 children: [
                                   Expanded(child: Divider()), // Left side line
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0),
                                     child: commonText(
-                                      text: dateFormatted,
-                                        fontSize: 13,color: Colors.grey
-                                    ),
+                                        text: dateFormatted,
+                                        fontSize: 13,
+                                        color: Colors.grey),
                                   ),
                                   Expanded(child: Divider()), // Right side line
                                 ],
@@ -108,59 +119,135 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                 final isForwarded = message.isForwarded;
 
                                 return Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12.0),
                                   child: InkWell(
-                                    onTap: ()async{
+                                    onTap: () async {
                                       // print("Is From Channel ${message.channelInfo != null ? true : false}");
-                                      await value.getPageNumber(messageId: message.id, senderId: message.senderId,receiverId: message.receiverId!).then((int pageNumber) {
+                                      await value
+                                          .getPageNumber(
+                                          messageId: message.id,
+                                          senderId: message.senderId,
+                                          receiverId:message.channelInfo != null ? '' : message.receiverId!, isForChannel: message.channelInfo != null, channelId: message.channelInfo != null ? message.channelInfo?.id : "")
+                                          .then((int pageNumber) {
                                         print("Page number $pageNumber");
-                                        Navigator.pop(context,{"id":message.senderInfo?.id,"oppositeUserID":message.oppositeUserInfo?.id,"oppositeUserName":message.oppositeUserInfo!.username,"name":message.senderInfo!.username,"needToOpenChannelChat":message.channelInfo != null ? true : false,"channelId":message.channelInfo != null ? message.channelInfo?.id : "","pageNO":pageNumber});
+                                        print(
+                                            "Message group id ${messageData.id}");
+                                        print("Message id ${message.id}");
+                                        Navigator.pop(context, {
+                                          "id": message.senderInfo?.id,
+                                          "oppositeUserID":
+                                          message.oppositeUserInfo?.id,
+                                          "oppositeUserName": message
+                                              .oppositeUserInfo!.username,
+                                          "name": message.senderInfo!.username,
+                                          "needToOpenChannelChat":
+                                          message.channelInfo != null
+                                              ? true
+                                              : false,
+                                          "channelId":
+                                          message.channelInfo != null
+                                              ? message.channelInfo?.id
+                                              : "",
+                                          "pageNO": pageNumber,
+                                          "messageGroupId":
+                                          messageData.id.toString(),
+                                          "messageId": message.id.toString()
+                                        });
                                       });
                                     },
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
                                       children: [
-                                        SizedBox(height: 8,),
-                                        commonText(text : channel != "" ? channel :"Direct Message (With ${message.oppositeUserInfo?.username})",fontSize: 18,color: Colors.grey),
-                                        SizedBox(height: 10,),
+                                        SizedBox(
+                                          height: 8,
+                                        ),
+                                        commonText(
+                                            text: channel != ""
+                                                ? channel
+                                                : "Direct Message (With ${message.oppositeUserInfo?.username})",
+                                            fontSize: 18,
+                                            color: Colors.grey),
+                                        SizedBox(
+                                          height: 10,
+                                        ),
                                         Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                           children: [
                                             Stack(
                                               alignment: Alignment.bottomRight,
                                               children: [
                                                 CircleAvatar(
                                                   radius: 25,
-                                                  backgroundColor: Colors.grey[200],
+                                                  backgroundColor:
+                                                  Colors.grey[200],
                                                   child: ClipOval(
                                                     child: CachedNetworkImage(
-                                                      imageUrl: signInModel.data?.user?.id == message.senderInfo?.id
-                                                          ? ApiString.profileBaseUrl + (signInModel.data!.user!.thumbnailAvatarUrl ?? '')
-                                                          : ApiString.profileBaseUrl + (message.senderInfo?.thumbnailAvatarUrl ?? ''),
+                                                      imageUrl: signInModel.data
+                                                          ?.user?.id ==
+                                                          message.senderInfo
+                                                              ?.id
+                                                          ? ApiString
+                                                          .profileBaseUrl +
+                                                          (signInModel
+                                                              .data!
+                                                              .user!
+                                                              .thumbnailAvatarUrl ??
+                                                              '')
+                                                          : ApiString
+                                                          .profileBaseUrl +
+                                                          (message.senderInfo
+                                                              ?.thumbnailAvatarUrl ??
+                                                              ''),
                                                       width: 25 * 2,
                                                       height: 25 * 2,
                                                       fit: BoxFit.cover,
-                                                      placeholder: (context, url) => CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                      ),
-                                                      errorWidget: (context, url, error) => Icon(Icons.error, size: 25),
+                                                      placeholder: (context,
+                                                          url) =>
+                                                          CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                          ),
+                                                      errorWidget: (context,
+                                                          url, error) =>
+                                                          Icon(Icons.error,
+                                                              size: 25),
                                                     ),
                                                   ),
                                                 ),
-                                                  Stack(
-                                                    alignment: Alignment.center,
-                                                    children: [
-                                                      Container(
-                                                        height: 20,
-                                                        width: 20,
-                                                        decoration: BoxDecoration(
-                                                          color:message.senderInfo == null ? Colors.white : message.senderInfo!.status.name.contains("offline") ? Colors.transparent : Colors.white,
-                                                          shape: BoxShape.circle,
-                                                        ),
+                                                Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
+                                                    Container(
+                                                      height: 20,
+                                                      width: 20,
+                                                      decoration: BoxDecoration(
+                                                        color: message
+                                                            .senderInfo ==
+                                                            null
+                                                            ? Colors.white
+                                                            : message
+                                                            .senderInfo!
+                                                            .status
+                                                            .name
+                                                            .contains(
+                                                            "offline")
+                                                            ? Colors
+                                                            .transparent
+                                                            : Colors.white,
+                                                        shape: BoxShape.circle,
                                                       ),
-                                                      getCommonStatusIcons(status: message.senderInfo!.status.name, size: 20, assetIcon: false),
-                                                    ],
-                                                  ),
+                                                    ),
+                                                    getCommonStatusIcons(
+                                                        status: message
+                                                            .senderInfo!
+                                                            .status
+                                                            .name,
+                                                        size: 20,
+                                                        assetIcon: false),
+                                                  ],
+                                                ),
                                               ],
                                             ),
                                             // profileIconWithStatus(
@@ -174,11 +261,15 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                             SizedBox(width: 10),
                                             Expanded(
                                               child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                                 children: [
-                                                  commonText(text : sender!,fontSize: 18),
+                                                  commonText(
+                                                      text: sender!,
+                                                      fontSize: 18),
                                                   SizedBox(height: 10),
-                                                  commonHTMLText(message: content),
+                                                  commonHTMLText(
+                                                      message: content),
                                                 ],
                                               ),
                                             ),
@@ -213,13 +304,10 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                   );
                 },
               ),
-
             ),
           ],
         ),
       ),
     );
   }
-
-
 }
