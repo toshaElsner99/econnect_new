@@ -14,6 +14,7 @@ import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
+import 'package:e_connect/utils/common/shimmer_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
@@ -29,7 +30,6 @@ import '../../socket_io/socket_io.dart';
 import '../../utils/api_service/api_string_constants.dart';
 import '../../utils/app_color_constants.dart';
 import '../../utils/app_preference_constants.dart';
-import '../../utils/common/shimmer_loading.dart';
 import '../chat/forward_message/forward_message_screen.dart';
 import '../chat/reply_message_screen/reply_message_screen.dart';
 import '../chat/single_chat_message_screen.dart';
@@ -344,7 +344,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   void _removeMentionOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
-     setState(() => _showMentionList = false);
+    setState(() => _showMentionList = false);
   }
 
 
@@ -394,7 +394,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     if (searchQuery?.isEmpty ?? true) {
       // Add current user first
       final currentUser = allMembers.firstWhere(
-        (member) => member.sId == signInModel.data?.user?.id,
+            (member) => member.sId == signInModel.data?.user?.id,
         orElse: () => allMembers.isNotEmpty ? allMembers[0] : MemberDetails(),
       );
       initialUsers.add(currentUser);
@@ -402,7 +402,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       // Add first member who is not the current user
       if (allMembers.length > 1) {
         final otherMember = allMembers.firstWhere(
-          (member) => member.sId != signInModel.data?.user?.id,
+              (member) => member.sId != signInModel.data?.user?.id,
           orElse: () => allMembers[0],
         );
         if (otherMember.sId != currentUser.sId) {
@@ -415,8 +415,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     // Filter members based on search query
     final query = searchQuery!.toLowerCase();
     final matchingMembers = allMembers.where((member) =>
-      ((member.username?.toLowerCase().contains(query) ?? false) ||
-      (member.fullName?.toLowerCase().contains(query) ?? false))
+    ((member.username?.toLowerCase().contains(query) ?? false) ||
+        (member.fullName?.toLowerCase().contains(query) ?? false))
     ).toList();
 
     return matchingMembers;
@@ -571,12 +571,12 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       final newName = _nameController.text.trim();
                       if (newName.isNotEmpty) {
                         Provider.of<ChannelListProvider>(context, listen: false)
-                          .renameChannel(
+                            .renameChannel(
                             channelId: channelID,
                             name: newName,
                             isPrivate: false
-                          )
-                          .then((_) => pop());
+                        )
+                            .then((_) => pop());
                       }else {
                         commonShowToast("Add channel name to proceed");
                       }
@@ -741,239 +741,162 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         },
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
-          child: Scaffold(
-            appBar: AppBar(
-              toolbarHeight: 60,
-              titleSpacing: 0,
-              leading: IconButton(
-                icon: Icon(CupertinoIcons.back, color: Colors.white),
-                onPressed: () {
-                  if(widget.isFromNotification ?? false) {
-                    pushAndRemoveUntil(screen: HomeScreen());
-                  }else{
-                    pop();
-                  }
-                  Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
-                },
-              ),
-              title: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: commonText(
-                          text: channelChatProvider.isChannelChatLoading ? "Loading..." :  channelChatProvider.getChannelInfo?.data?.name ?? "",
-                          maxLines: 1,
-                          fontSize: 14,
-                        ),
-                      ),
-                      if (channelChatProvider.getChannelInfo?.data?.ownerId?.sId == signInModel.data?.user?.id)
-                        ...{
-                          SizedBox(width: 10),
-                          GestureDetector(
-                            onTap: () => _showRenameChannelDialog(),
-                            child: Image.asset(
-                              AppImage.editIcon,
-                              height: 15,
-                              width: 15,
-                              color: AppColor.borderColor,
-                            ),
-                          ),
-                        }
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center, // Ensures proper alignment
-                    children: [
-                      /// User Count & Navigation ///
-                      GestureDetector(
-                        onTap: () {
-                          if (channelChatProvider.getChannelInfo?.data?.members?.isNotEmpty ?? false) {
-                            pushScreen(
-                              screen: ChannelMembersInfo(
-                                channelId: channelID,
-                                channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                              ),
-                            );
-                          }
-                        },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          child: Row(
-                            children: [
-                              Image.asset(AppImage.person, height: 18, width: 18, color: AppColor.white),
-                              SizedBox(width: 4),
-                              commonText(
-                                text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",
-                                fontSize: 15,
-                                color: AppColor.white,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      /// Pin Messages & Navigation ///
-                      GestureDetector(
-                        onTap: () => pushScreen(
-                          screen: ChannelPinnedPostsScreen(
-                            channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                            channelId: channelID,
-                          ),
-                        ),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                          child: Row(
-                            children: [
-                              Image.asset(AppImage.pinIcon, height: 18, width: 18, color: Colors.white),
-                              SizedBox(width: 4),
-                              commonText(
-                                text: "${channelChatProvider.getChannelInfo?.data?.pinnedMessagesCount ?? 0}",
-                                fontSize: 15,
-                                color: AppColor.white,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      /// File & Navigation ///
-                      GestureDetector(
-                        onTap: () => pushScreen(
-                          screen: FilesListingScreen(
-                            channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                            channelId: channelID,
-                          ),
-                        ),
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4), // Consistent padding
-                          child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: AppColor.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.search, color: AppColor.whiteColor),
+          child: SafeArea(
+            child: Scaffold(
+              resizeToAvoidBottomInset: true,
+              appBar: AppBar(
+                toolbarHeight: 60,
+                titleSpacing: 0,
+                leading: IconButton(
+                  icon: Icon(CupertinoIcons.back, color: Colors.white),
                   onPressed: () {
-                    pushScreen(screen:FindMessageScreen()).then((value) {
-                      print("value>>> $value");
-                      // if(value != null){
-                      //   if(value['needToOpenChannelChat']){
-                      //     if(!(channelID == value['channelId'])){
-                      //       setState(() {
-                      //         channelID = value['channelId'];
-                      //         initializedScreen();
-                      //       });
-                      //     }
-                      //   }else{
-                      //     print("userName : ${value['name']} && userId ${value['id']}");
-                      //     pushReplacement(screen: SingleChatMessageScreen(userName: value['name'], oppositeUserId: value['id'],));
-                      //   }
-                      //   print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
-                      // }
-                      if(value != null){
-                        if(value['needToOpenChannelChat']){
-                          // if(!(channelID == value['channelId'])){
-                          setState(() {
-                            channelID = value['channelId'];
-                            _scrollController.dispose();
-                            _scrollController = ScrollController();
-                            initializedScreen(value['pageNO'],true,value['messageGroupId'],value['messageId']);
-                            NeedTocallJumpToMessage = true;
-                            messageGroupId =value['messageGroupId'];
-                          });
-                          // }
-                        }else{
-                          print("userName : ${value['name']} && userId ${value['id']}");
-                          pushReplacement(screen: SingleChatMessageScreen(userName: signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'], oppositeUserId:signInModel.data!.user!.id == value['id'] ?value['oppositeUserID'] : value['id'],isFromJump: true,jumpData: value,));
-                        }
-                        print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
-                      }
-
-                    });
-                    // showChatSettingsBottomSheet(userId: oppositeUserId);
+                    if(widget.isFromNotification ?? false) {
+                      pushAndRemoveUntil(screen: HomeScreen());
+                    }else{
+                      pop();
+                    }
+                    Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
                   },
                 ),
-                IconButton(
-                  icon: Icon(Icons.info, color: AppColor.whiteColor),
-                  onPressed: () => pushScreen(
-                    screen: ChannelInfoScreen(
-                      channelId: channelID,
-                      channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                      isPrivate: false,
+                title: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: commonText(
+                            text: channelChatProvider.isChannelChatLoading ? "Loading..." :  channelChatProvider.getChannelInfo?.data?.name ?? "",
+                            maxLines: 1,
+                            fontSize: 14,
+                          ),
+                        ),
+                        if (channelChatProvider.getChannelInfo?.data?.ownerId?.sId == signInModel.data?.user?.id)
+                          ...{
+                            SizedBox(width: 10),
+                            GestureDetector(
+                              onTap: () => _showRenameChannelDialog(),
+                              child: Image.asset(
+                                AppImage.editIcon,
+                                height: 15,
+                                width: 15,
+                                color: AppColor.borderColor,
+                              ),
+                            ),
+                          }
+                      ],
                     ),
-                  ),
+                    SizedBox(height: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center, // Ensures proper alignment
+                      children: [
+                        /// User Count & Navigation ///
+                        GestureDetector(
+                          onTap: () {
+                            if (channelChatProvider.getChannelInfo?.data?.members?.isNotEmpty ?? false) {
+                              pushScreen(
+                                screen: ChannelMembersInfo(
+                                  channelId: channelID,
+                                  channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                                ),
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            child: Row(
+                              children: [
+                                Image.asset(AppImage.person, height: 18, width: 18, color: AppColor.white),
+                                SizedBox(width: 4),
+                                commonText(
+                                  text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",
+                                  fontSize: 15,
+                                  color: AppColor.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        /// Pin Messages & Navigation ///
+                        GestureDetector(
+                          onTap: () => pushScreen(
+                            screen: ChannelPinnedPostsScreen(
+                              channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                              channelId: channelID,
+                            ),
+                          ),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            child: Row(
+                              children: [
+                                Image.asset(AppImage.pinIcon, height: 18, width: 18, color: Colors.white),
+                                SizedBox(width: 4),
+                                commonText(
+                                  text: "${channelChatProvider.getChannelInfo?.data?.pinnedMessagesCount ?? 0}",
+                                  fontSize: 15,
+                                  color: AppColor.white,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        /// File & Navigation ///
+                        GestureDetector(
+                          onTap: () => pushScreen(
+                            screen: FilesListingScreen(
+                              channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                              channelId: channelID,
+                            ),
+                          ),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4), // Consistent padding
+                            child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: AppColor.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            bottomNavigationBar: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              inputTextFieldWithEditor(channelChatProvider)
-            ],),
-            body: Column(
-              children: [
-                Divider(color: Colors.grey.shade800, height: 1,),
-                if(channelChatProvider.isChannelChatLoading )...{
-                  Flexible(child: ShimmerLoading.chatShimmer(context))
-                }else...{
-                  // Expanded(
-                  //   child: ListView(
-                  //     controller: _scrollController,
-                  //     reverse: true,
-                  //     children: [
-                  //       dateHeaders(),
-                  //     ],
-                  //   ),
-                  // ),
-                  Expanded(
-                      child: dateHeaders()
-                  ),
-                },
-                // SizedBox(height: 20),
-                // Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-                //   var filteredTypingUsers = channelChatProvider.typingUsers
-                //       .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                //       && user['routeId'] == channelID).toList();
-                //   String typingMessage;
-                //
-                //   if (filteredTypingUsers.isEmpty) {
-                //     typingMessage = "";
-                //   } else if (filteredTypingUsers.length == 1) {
-                //     typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-                //   } else {
-                //     var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-                //     var lastUser  = usernames.removeLast(); // Get the last username
-                //     typingMessage = "${usernames.join(', ')}, and $lastUser  are Typing..."; // Join the rest with commas
-                //   }
-                //
-                //   return Container(
-                //     margin: EdgeInsets.only(right: 20,left : 20, top: 15,bottom: 6),
-                //     alignment: Alignment.centerLeft,
-                //     child: Column(
-                //       children: [
-                //         // Other widgets...
-                //         if (typingMessage.isNotEmpty)
-                //           commonText(text:
-                //             typingMessage,
-                //               fontSize: 14,
-                //               color: Colors.grey.shade600,
-                //               fontWeight: FontWeight.w400,
-                //           ),
-                //       ],
-                //     ),
-                //   );
-                // },),
-                Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-                  var filteredTypingUsers = channelChatProvider.typingUsers
-                      .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                      && user['routeId'] == channelID
-                      && user['isReply'] == false).toList();
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.search, color: AppColor.whiteColor),
+                    onPressed: () {
+                      pushScreen(screen:FindMessageScreen()).then((value) {
+                        print("value>>> $value");
+                        // if(value != null){
+                        //   if(value['needToOpenChannelChat']){
+                        //     if(!(channelID == value['channelId'])){
+                        //       setState(() {
+                        //         channelID = value['channelId'];
+                        //         initializedScreen();
+                        //       });
+                        //     }
+                        //   }else{
+                        //     print("userName : ${value['name']} && userId ${value['id']}");
+                        //     pushReplacement(screen: SingleChatMessageScreen(userName: value['name'], oppositeUserId: value['id'],));
+                        //   }
+                        //   print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
+                        // }
+                        if(value != null){
+                          if(value['needToOpenChannelChat']){
+                            // if(!(channelID == value['channelId'])){
+                            setState(() {
+                              channelID = value['channelId'];
+                              _scrollController.dispose();
+                              _scrollController = ScrollController();
+                              initializedScreen(value['pageNO'],true,value['messageGroupId'],value['messageId']);
+                              NeedTocallJumpToMessage = true;
+                              messageGroupId =value['messageGroupId'];
+                            });
+                            // }
+                          }else{
+                            print("userName : ${value['name']} && userId ${value['id']}");
+                            pushReplacement(screen: SingleChatMessageScreen(userName: signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'], oppositeUserId:signInModel.data!.user!.id == value['id'] ?value['oppositeUserID'] : value['id'],isFromJump: true,jumpData: value,));
+                          }
+                          print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
+                        }
+
                       });
                       // showChatSettingsBottomSheet(userId: oppositeUserId);
                     },
@@ -993,13 +916,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               bottomNavigationBar: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                inputTextFieldWithEditor(channelChatProvider)
-              ],),
+                  inputTextFieldWithEditor(channelChatProvider)
+                ],),
               body: Column(
                 children: [
                   Divider(color: Colors.grey.shade800, height: 1,),
                   if(channelChatProvider.isChannelChatLoading )...{
-                    Flexible(child: customLoading())
+                    Flexible(child: ShimmerLoading.chatShimmer(context))
                   }else...{
                     // Expanded(
                     //   child: ListView(
@@ -1054,36 +977,37 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         && user['routeId'] == channelID
                         && user['isReply'] == false).toList();
 
-                  String typingMessage;
+                    String typingMessage;
 
-                  if (filteredTypingUsers.isEmpty) {
-                    typingMessage = "";
-                  } else if (filteredTypingUsers.length == 1) {
-                    typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-                  } else {
-                    var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-                    var lastUser  = usernames.removeLast();
-                    typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
-                  }
+                    if (filteredTypingUsers.isEmpty) {
+                      typingMessage = "";
+                    } else if (filteredTypingUsers.length == 1) {
+                      typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+                    } else {
+                      var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+                      var lastUser  = usernames.removeLast();
+                      typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
+                    }
 
-                  return Container(
-                    margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      children: [
-                        if (typingMessage.isNotEmpty)
-                          commonText(
-                            text: typingMessage,
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                            fontWeight: FontWeight.w400,
-                          ),
-                      ],
-                    ),
-                  );
-                },),
+                    return Container(
+                      margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        children: [
+                          if (typingMessage.isNotEmpty)
+                            commonText(
+                              text: typingMessage,
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w400,
+                            ),
+                        ],
+                      ),
+                    );
+                  },),
 
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1167,7 +1091,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
                     SizedBox(height: 10),
                     commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
-                    fontSize: 14,height: 1.35),
+                        fontSize: 14,height: 1.35),
                     Visibility(
                       visible: isCurrentUserAdmin,
                       child: Padding(
@@ -1342,7 +1266,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         ),
                       SizedBox(height: 5),
                       Visibility(
-                      visible: message.isNotEmpty,
+                        visible: message.isNotEmpty,
                         child: Wrap(
                           direction: Axis.horizontal,
                           children: [
@@ -1402,11 +1326,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               Builder(builder: (context) {
                                 // Get unique users who reacted
                                 final uniqueUsers = messageList.reactions!
-                                  .map((r) => r.userId)
-                                  .where((id) => id != null)
-                                  .map((id) => id as String)
-                                  .toSet()
-                                  .toList();
+                                    .map((r) => r.userId)
+                                    .where((id) => id != null)
+                                    .map((id) => id as String)
+                                    .toSet()
+                                    .toList();
 
                                 // Count total unique users for the counter
                                 final totalUniqueUsers = uniqueUsers.length;
@@ -1414,22 +1338,22 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                 // Get usernames for the visible avatars (show at most 3)
                                 final visibleUsers = uniqueUsers.take(3).toList();
                                 final remainingUsers = totalUniqueUsers > 2 ? totalUniqueUsers - 2 : 0;
-                                
+
                                 // Get usernames for the visible avatars
                                 List<String> usernames = [];
                                 for (int i = 0; i < visibleUsers.length && i < messageList.reactions!.length; i++) {
                                   String? username = messageList.reactions!
-                                    .firstWhere((r) => r.userId == visibleUsers[i], 
+                                      .firstWhere((r) => r.userId == visibleUsers[i],
                                       orElse: () => Message().reactions!.first)
-                                    .username;
-                                    
+                                      .username;
+
                                   usernames.add(username ?? "");
                                 }
 
                                 // Calculate the width needed based on number of avatars
-                                final double stackWidth = visibleUsers.isEmpty ? 0 : 
-                                                        (visibleUsers.length == 1 ? 30 : 
-                                                        (visibleUsers.length == 2 ? 50 : 70));
+                                final double stackWidth = visibleUsers.isEmpty ? 0 :
+                                (visibleUsers.length == 1 ? 30 :
+                                (visibleUsers.length == 2 ? 50 : 70));
 
                                 // Create container with avatars
                                 return Container(
@@ -1447,40 +1371,40 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                               decoration: BoxDecoration(
                                                 shape: BoxShape.circle,
                                                 border: Border.all(
-                                                  color: AppPreferenceConstants.themeModeBoolValueGet ? 
-                                                    Colors.grey.shade900 : Colors.white,
+                                                  color: AppPreferenceConstants.themeModeBoolValueGet ?
+                                                  Colors.grey.shade900 : Colors.white,
                                                   width: 1.5,
                                                 ),
                                               ),
-                                              child: i < 2 || remainingUsers == 0 ? 
-                                                profileIconWithStatus(
-                                                  userID: visibleUsers[i],
-                                                  userName: i < usernames.length ? usernames[i] : "",
-                                                  status: "",
-                                                  needToShowIcon: false,
-                                                  radius: 14,
-                                                  otherUserProfile: channelChatProvider.getUserById(visibleUsers[i])?.thumbnailAvatarUrl ?? '',
-                                                  borderColor: AppColor.blueColor,
-                                                ) :
-                                                // Last avatar with +X indicator
-                                                Container(
-                                                  width: 30,
-                                                  height: 30,
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: Colors.white,
-                                                    // border: Border.all(color: AppColor.blackColor),
-                                                  ),
-                                                  alignment: Alignment.center,
-                                                  child: Text(
-                                                    "+$remainingUsers",
-                                                    style: TextStyle(
-                                                      color: Colors.black,
-                                                      fontSize: 14,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
+                                              child: i < 2 || remainingUsers == 0 ?
+                                              profileIconWithStatus(
+                                                userID: visibleUsers[i],
+                                                userName: i < usernames.length ? usernames[i] : "",
+                                                status: "",
+                                                needToShowIcon: false,
+                                                radius: 14,
+                                                otherUserProfile: channelChatProvider.getUserById(visibleUsers[i])?.thumbnailAvatarUrl ?? '',
+                                                borderColor: AppColor.blueColor,
+                                              ) :
+                                              // Last avatar with +X indicator
+                                              Container(
+                                                width: 30,
+                                                height: 30,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Colors.white,
+                                                  // border: Border.all(color: AppColor.blackColor),
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: Text(
+                                                  "+$remainingUsers",
+                                                  style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -1488,9 +1412,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   ),
                                 );
                               }),
-                              
+
                               SizedBox(width: 8),
-                              
+
                               // Reaction emojis section - keep this part to maintain functionality
                               Flexible(
                                 child: Wrap(
@@ -1669,7 +1593,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           onTap: () {
                             print("Simple Passing = ${messageId.toString()}");
                             pushScreen(screen:
-                              ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)
+                            ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)
                             ).then((value) {
                               print("value>>> $value");
                               if (messageList.replies != null && messageList.replies!.isNotEmpty) {
@@ -1743,13 +1667,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                         messageList.replies!.any((reply) =>
                                         !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) &&
                                             (reply.isSeen ?? false) == false)
-                                            ? 10 : 0,
+                                        ? 10 : 0,
                                     height: messageList.replies != null &&
                                         messageList.replies!.isNotEmpty &&
                                         messageList.replies!.any((reply) =>
                                         !(reply.readBy?.contains(signInModel.data?.user!.id) ?? false) &&
                                             (reply.isSeen ?? false) == false)
-                                            ? 10 : 0,
+                                        ? 10 : 0,
                                     decoration: const BoxDecoration(
                                       color: Colors.red,
                                       shape: BoxShape.circle,

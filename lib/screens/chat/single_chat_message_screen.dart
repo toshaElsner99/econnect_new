@@ -236,77 +236,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         },
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
-          child: Scaffold(
-            appBar: buildAppBar(commonProvider, chatProvider),
-            bottomNavigationBar: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == false)...{
-                inputTextFieldWithEditor()
-              }else...{
-                Container(
-                  decoration: BoxDecoration(
-                      border: Border(top: BorderSide(color: AppColor.borderColor))
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 30,vertical: 20),
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: TextStyle(
-                        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, // Default text color
-                        fontSize: 16, // Default font size
-                      ),
-                      children: <TextSpan>[
-                        TextSpan(text: 'You are viewing an archived channel with a '),
-                        TextSpan(
-                          text: 'deactivated user',
-                          style: TextStyle(
-                            fontWeight:
-                            FontWeight.bold, // Make this part bold
-                          ),
-                        ),
-                        TextSpan(text: '. New messages cannot be posted.'),
-                      ],
-                    ),
-                  ),
-                )
-              }
-            ],),
-            body: Column(
-              children: [
-                Divider(
-                  color: Colors.grey.shade800,
-                  height: 1,
-                ),
-                if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
-                    Flexible(child: ShimmerLoading.chatShimmer(context))
-                }else...{
-                  if((!chatProvider.idChatListLoading && !commonProvider.isLoadingGetUser ) && userDetails != null && chatProvider.messageGroups.isEmpty )...{
-                    Expanded(
-                          child: Center(
-                              child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',
-                              userImageUrl: userDetails?.data?.user?.thumbnailAvatarUrl ?? '',
-                              userId: userDetails?.data?.user?.sId ?? "",
-                              userStatus: userDetails?.data?.user?.status ?? "offline",
-                      ))),
-                    }else...{
-                    // Expanded(
-                    //   child: ListView(
-                    //     controller: scrollController,
-                    //     reverse: true,
-                    //     children: [
-                    //       dateHeaders(),
-                    //     ],
-                    //   ),
-                    // ),
-                    Expanded(
-                        child: dateHeaders()
-                    ),
-                    SizedBox(height: 20,),
-                  },
-                },
-              ],
-          child: SafeArea(
+          child:  SafeArea(
             child: Scaffold(
               appBar: buildAppBar(commonProvider, chatProvider),
               resizeToAvoidBottomInset: true,
