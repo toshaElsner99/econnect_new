@@ -60,9 +60,22 @@ class SplashProvider extends ChangeNotifier {
 
     Timer(const Duration(seconds: 3), () {
       if (isLoggedIn) {
-        if (NotificationService.pendingNotification != null) {
-          //   NotificationService.handleNotificationRedirect(NotificationService.pendingNotification!);
-          // NotificationService.pendingNotification = null;
+        if (NotificationService.pendingNotification != null && 
+            NotificationService.pendingNotification!.isNotEmpty && 
+            (NotificationService.pendingNotification!.containsKey('type') && 
+            NotificationService.pendingNotification!.containsKey('senderId'))) {
+          pushReplacement(screen: const HomeScreen());
+          // Delay notification processing to ensure app is fully initialized
+          Timer(const Duration(milliseconds: 500), () {
+            try {
+              NotificationService.handleNotificationRedirect(NotificationService.pendingNotification!);
+              NotificationService.pendingNotification = null;
+            } catch (e) {
+              print("Error handling pending notification: $e");
+              // Reset pendingNotification to prevent infinite attempts
+              NotificationService.pendingNotification = null;
+            }
+          });
         } else {
           pushReplacement(screen: const HomeScreen());
         }

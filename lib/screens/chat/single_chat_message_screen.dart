@@ -241,35 +241,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               bottomNavigationBar: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == false)...{
-                  inputTextFieldWithEditor()
+                if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == true)...{
+                  userLeftedText()
                 }else...{
-                  Container(
-                    decoration: BoxDecoration(
-                        border: Border(top: BorderSide(color: AppColor.borderColor))
-                    ),
-                    padding: EdgeInsets.symmetric(horizontal: 30,vertical: 20),
-                    child: RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: TextStyle(
-                          color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, // Default text color
-                          fontSize: 16, // Default font size
-                        ),
-                        children: <TextSpan>[
-                          TextSpan(text: 'You are viewing an archived channel with a '),
-                          TextSpan(
-                            text: 'deactivated user',
-                            style: TextStyle(
-                              fontWeight:
-                              FontWeight.bold, // Make this part bold
-                            ),
-                          ),
-                          TextSpan(text: '. New messages cannot be posted.'),
-                        ],
-                      ),
-                    ),
-                  )
+                  inputTextFieldWithEditor()
                 }
               ],),
               body: Column(
@@ -312,6 +287,35 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         ),
       );
     },);
+  }
+
+  Container userLeftedText() {
+    return Container(
+                  decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: AppColor.borderColor))
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 30,vertical: 20),
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: TextStyle(
+                        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, // Default text color
+                        fontSize: 16, // Default font size
+                      ),
+                      children: <TextSpan>[
+                        TextSpan(text: 'You are viewing an archived channel with a '),
+                        TextSpan(
+                          text: 'deactivated user',
+                          style: TextStyle(
+                            fontWeight:
+                            FontWeight.bold, // Make this part bold
+                          ),
+                        ),
+                        TextSpan(text: '. New messages cannot be posted.'),
+                      ],
+                    ),
+                  ),
+                );
   }
   AppBar buildAppBar(CommonProvider commonProvider, ChatProvider chatProvider) {
     return AppBar(

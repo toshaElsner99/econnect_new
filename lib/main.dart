@@ -45,12 +45,6 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-  if (initialMessage != null) {
-    print("App opened from terminated state: ${initialMessage.data}");
-    // Store the notification data to be handled after app initialization
-    NotificationService.pendingNotification = initialMessage.data;
-  }
   runApp(const MyApp());
 }
 
