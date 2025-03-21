@@ -38,6 +38,8 @@ import '../../widgets/chat_profile_header.dart';
 import '../bottom_nav_tabs/home_screen.dart';
 import '../channel/channel_chat_screen.dart';
 import '../find_message_screen/find_message_screen.dart';
+import 'package:e_connect/utils/common/shimmer_loading.dart';
+
 class SingleChatMessageScreen extends StatefulWidget {
   final String userName;
   final String oppositeUserId;
@@ -278,9 +280,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   height: 1,
                 ),
                 if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
-                    Flexible(child: customLoading())
+                    Flexible(child: ShimmerLoading.chatShimmer(context))
                 }else...{
-                  if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
+                  if((!chatProvider.idChatListLoading && !commonProvider.isLoadingGetUser ) && userDetails != null && chatProvider.messageGroups.isEmpty )...{
                     Expanded(
                           child: Center(
                               child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',

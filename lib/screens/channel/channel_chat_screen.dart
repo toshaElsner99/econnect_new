@@ -29,6 +29,7 @@ import '../../socket_io/socket_io.dart';
 import '../../utils/api_service/api_string_constants.dart';
 import '../../utils/app_color_constants.dart';
 import '../../utils/app_preference_constants.dart';
+import '../../utils/common/shimmer_loading.dart';
 import '../chat/forward_message/forward_message_screen.dart';
 import '../chat/reply_message_screen/reply_message_screen.dart';
 import '../chat/single_chat_message_screen.dart';
@@ -920,7 +921,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               children: [
                 Divider(color: Colors.grey.shade800, height: 1,),
                 if(channelChatProvider.isChannelChatLoading )...{
-                  Flexible(child: customLoading())
+                  Flexible(child: ShimmerLoading.chatShimmer(context))
                 }else...{
                   // Expanded(
                   //   child: ListView(
