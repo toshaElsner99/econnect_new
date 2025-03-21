@@ -22,6 +22,7 @@ import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 
@@ -34,6 +35,7 @@ import '../../providers/channel_list_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/common_provider.dart';
 import '../../screens/chat/media_preview_screen.dart';
+import '../../utils/theme/theme_cubit.dart';
 import '../../widgets/chat_profile_header.dart';
 import '../bottom_nav_tabs/home_screen.dart';
 import '../channel/channel_chat_screen.dart';
@@ -220,8 +222,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
+    setTransparentStatusBar();
     return Consumer2<CommonProvider,ChatProvider>(builder: (context, commonProvider,chatProvider, child) {
       return PopScope(
         onPopInvokedWithResult: (x, y) {
@@ -240,15 +244,18 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             child: Scaffold(
               appBar: buildAppBar(commonProvider, chatProvider),
               resizeToAvoidBottomInset: true,
-              bottomNavigationBar: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == true)...{
-                  userLeftedText()
-                }else...{
-                  inputTextFieldWithEditor()
-                }
-              ],),
+              bottomNavigationBar: Padding(
+                padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                  if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == true)...{
+                    userLeftedText()
+                  }else...{
+                    inputTextFieldWithEditor()
+                  }
+                ],),
+              ),
               body: Column(
                 children: [
                   Divider(
@@ -256,7 +263,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     height: 1,
                   ),
                   if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
-                      Flexible(child: customLoading())
+                      Flexible(child: ShimmerLoading.chatShimmer(context))
                   }else...{
                     if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
                       Expanded(

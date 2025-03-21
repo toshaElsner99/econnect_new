@@ -56,8 +56,10 @@ void updateSystemUiChrome(BuildContext context) {
     statusBarColor: Colors.transparent,
     systemNavigationBarColor: themeProvider.themeData.appBarTheme.backgroundColor,
     statusBarIconBrightness: Brightness.dark,
+    systemNavigationBarIconBrightness: Brightness.light
   ));
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

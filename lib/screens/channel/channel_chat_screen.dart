@@ -729,6 +729,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    setTransparentStatusBar();
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
       return PopScope(
         onPopInvokedWithResult: (x, y) {
@@ -913,11 +914,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   ),
                 ],
               ),
-              bottomNavigationBar: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  inputTextFieldWithEditor(channelChatProvider)
-                ],),
+              bottomNavigationBar: Padding(
+                padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    inputTextFieldWithEditor(channelChatProvider)
+                  ],),
+              ),
               body: Column(
                 children: [
                   Divider(color: Colors.grey.shade800, height: 1,),

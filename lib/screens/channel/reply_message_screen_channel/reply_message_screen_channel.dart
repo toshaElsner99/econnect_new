@@ -107,6 +107,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
 
   @override
   Widget build(BuildContext context) {
+    setTransparentStatusBar();
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
@@ -136,11 +137,14 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                 ],
               ),
             ),
-            bottomNavigationBar: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              inputTextFieldWithEditor()
-            ],),
+            bottomNavigationBar: Padding(
+              padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                inputTextFieldWithEditor()
+              ],),
+            ),
             body: Column(
               children: [
                 Expanded(

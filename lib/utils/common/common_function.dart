@@ -12,9 +12,12 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:http/http.dart' as http;
 import 'package:insta_image_viewer/insta_image_viewer.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../main.dart';
 import '../../providers/file_service_provider.dart';
+import '../app_preference_constants.dart';
+import '../theme/theme_cubit.dart';
 
 clearSelectedFiles(){
 
@@ -289,6 +292,16 @@ Future<dynamic> pushScreen({required Widget screen}) async {
     MaterialPageRoute(builder: (context) => screen,),
   ).then((_) {});
 }
+
+void setTransparentStatusBar() {
+  final themeProvider = Provider.of<ThemeProvider>(navigatorKey.currentState!.context, listen: false);
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    statusBarColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+    systemNavigationBarColor: themeProvider.themeData.appBarTheme.backgroundColor,
+    systemNavigationBarIconBrightness: Brightness.light,
+  ));
+}
+
 
 Future<void> pushReplacement({required Widget screen}) async {
   Navigator.pushReplacement(

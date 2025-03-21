@@ -210,6 +210,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
   @override
   Widget build(BuildContext context) {
+    setTransparentStatusBar();
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
@@ -221,11 +222,14 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
         child: SafeArea(
           child: Scaffold(
             resizeToAvoidBottomInset: true,
-            bottomNavigationBar: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-              inputTextFieldWithEditor()
-            ],),
+            bottomNavigationBar: Padding(
+              padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                inputTextFieldWithEditor()
+              ],),
+            ),
             appBar: AppBar(
               leading: IconButton(onPressed: (){
                 pop(popValue: true);
