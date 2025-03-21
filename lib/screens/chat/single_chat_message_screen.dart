@@ -222,8 +222,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   Widget build(BuildContext context) {
     return Consumer2<CommonProvider,ChatProvider>(builder: (context, commonProvider,chatProvider, child) {
       return PopScope(
-        canPop: true,
-        onPopInvokedWithResult: (didPop, result) {
+        onPopInvokedWithResult: (x, y) {
           channelListProvider.readUnreadMessages(
             oppositeUserId: oppositeUserId,
             isCalledForFav: widget.calledForFavorite ?? false,
@@ -437,7 +436,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         IconButton(
           icon: const Icon(Icons.search, color: AppColor.whiteColor),
           onPressed: () {
-            pushScreenWithTransition(FindMessageScreen()).then((value) {
+            pushScreen(screen: FindMessageScreen()).then((value) {
               print("value>>> $value");
               if(value != null){
                 if(!value['needToOpenChannelChat']){
@@ -1130,7 +1129,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           child: GestureDetector(
                             onTap: () {
                               print("Simple Passing = ${messageId.toString()}");
-                              pushScreenWithTransition(
+                              pushScreen(screen:
                               ReplyMessageScreen(
                                 userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
                                 messageId: messageId.toString(),
