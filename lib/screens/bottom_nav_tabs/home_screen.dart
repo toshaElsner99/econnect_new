@@ -192,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   // Content based on selected tab
   Widget _buildScreenContent(ChannelListProvider channelListProvider, CommonProvider commonProvider) {
     switch (_selectedTabIndex) {
-      case 0: // All tab - show current home screen content
+      case 0:
         return Padding(
           padding: const EdgeInsets.all(16.0),
           child: SingleChildScrollView(
@@ -274,75 +274,120 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         );
       
       case 1: // Channels tab
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.groups_outlined,
-                size: 60,
-                color: Colors.grey,
-              ),
-              SizedBox(height: 16),
-              Text(
-                "Channels View",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                child: Text(
-                  "This tab will display only channels",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ],
+      return  channelListProvider.channelListModel?.data?.length != 0 ? _buildExpansionSection(
+        title: "CHANNEL",
+        index: 1,
+        itemCount: channelListProvider.channelListModel?.data?.length ?? 0,
+        itemBuilder: (context, index) {
+          final channel = channelListProvider.channelListModel!.data![index];
+          return _buildChannelRow(channel);
+        },
+      ) : Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.groups_outlined,
+            size: 60,
+            color: Colors.grey,
           ),
-        );
+          SizedBox(height: 16),
+          Text(
+            "Channels View",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Text(
+              "This tab will display only channels",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
       
       case 2: // Favourites tab
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.star_outline,
-                size: 60,
-                color: Colors.grey,
-              ),
-              SizedBox(height: 16),
-              Text(
-                "Favourites View",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                child: Text(
-                  "This tab will display only your favourites",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      
+        // return Center(
+        //   child: Column(
+        //     mainAxisAlignment: MainAxisAlignment.center,
+        //     children: [
+        //       Icon(
+        //         Icons.star_outline,
+        //         size: 60,
+        //         color: Colors.grey,
+        //       ),
+        //       SizedBox(height: 16),
+        //       Text(
+        //         "Favourites View",
+        //         style: TextStyle(
+        //           color: Colors.white,
+        //           fontSize: 18,
+        //           fontWeight: FontWeight.bold,
+        //         ),
+        //       ),
+        //       SizedBox(height: 8),
+        //       Padding(
+        //         padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        //         child: Text(
+        //           "This tab will display only your favourites",
+        //           textAlign: TextAlign.center,
+        //           style: TextStyle(
+        //             color: Colors.grey,
+        //             fontSize: 16,
+        //           ),
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // );
+      return   _buildExpansionSection(
+        title: "FAVORITES",
+        index: 0,
+        itemCount: _getTotalFavoritesCount(channelListProvider: channelListProvider),
+        itemBuilder: (context, index) {
+          final userCount = channelListProvider.favoriteListModel?.data?.chatList?.length ?? 0;
+
+          if (index < userCount) {
+            final favorite = channelListProvider.favoriteListModel?.data?.chatList?[index];
+            return _buildUserRow(
+                index: 0,
+                muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite?.sId ?? "") ?? false,
+                imageUrl: favorite?.thumbnailAvatarUrl ?? "",
+                username: favorite?.username ?? "",
+                status: favorite?.status ?? "",
+                userId: favorite?.sId ?? "",
+                customStatusEmoji: favorite?.customStatusEmoji ?? "",
+                unSeenMsgCount: favorite?.unseenMessagesCount,
+                children: [
+                  _buildPopupMenuForFavorite(favorite: channelListProvider.favoriteListModel?.data?.chatList?[index]),
+                ]
+            );
+          }
+          else {
+            final channelIndex = index - userCount;
+            final favoriteChannels = channelListProvider.favoriteListModel?.data?.favouriteChannels ?? [];
+            if (channelIndex < favoriteChannels.length) {
+              final favoriteChannel = favoriteChannels[channelIndex] ;
+              return _buildFavoriteChannelRow(favoriteChannel,
+                  [
+                    _buildPopupMenuForFavChannel(favouriteChannels: favoriteChannels[channelIndex])
+                  ]
+              );
+            }
+            return const SizedBox.shrink();
+          }
+        },
+      );
       default:
         return SizedBox.shrink();
     }
@@ -877,50 +922,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     required String title,
     required int itemCount,
     required IndexedWidgetBuilder itemBuilder,
-    Widget? trailing = const SizedBox.shrink(),
     required int index,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 15,vertical: 10),
+      padding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         color: AppColor.borderColor.withOpacity(0.05),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-      dense: true,
-          maintainState: true,
-          initiallyExpanded: _isExpanded[title] ?? false,
-          onExpansionChanged: (expanded) {
-            setState(() => _isExpanded[title] = expanded);
-          },
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(8)),
-          ),
-          leading: AnimatedRotation(
-            duration: const Duration(milliseconds: 200),
-            turns: _isExpanded[title] ?? false ? 0.25 : 0,
-            child: Icon(
-              CupertinoIcons.chevron_right,
-              color: Colors.white.withOpacity(0.8),
-              size: 16,
-            ),
-          ),
-          title: commonText(
-            text: title,
-            color: Colors.white.withOpacity(0.9),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-          ),
-          trailing: trailing,
-          children: [
-            Column(
-              children: List.generate(itemCount, (index) => itemBuilder(context, index)),
-            ),
-          ],
+        child: Column(
+          children: List.generate(itemCount, (index) => itemBuilder(context, index)),
         ),
       ),
     );
