@@ -89,7 +89,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     userName = widget.userName ?? "";
     bool isFromJump = widget.isFromJump ?? false;
     if(isFromJump && widget.jumpData != null){
-      initializeScreen(widget.jumpData['pageNO'],true,widget.jumpData['messageGroupId'],"");
+      initializeScreen(widget.jumpData['pageNO'],true,widget.jumpData['messageGroupId'],widget.jumpData['messageId']);
     }else{
       initializeScreen(1,isFromJump,"","");
     }

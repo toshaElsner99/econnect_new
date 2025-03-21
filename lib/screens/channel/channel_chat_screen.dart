@@ -60,6 +60,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   String currentUserMessageId = "";
   String channelID = "";
   ScrollController _scrollController = ScrollController();
+  ScrollController _scrollController1 = ScrollController();
   final _textFieldKey = GlobalKey();
   OverlayEntry? _overlayEntry;
   bool _showMentionList = false;
@@ -76,22 +77,43 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     });
   }
 
-  void downStreamPagination({required String oppositeUserId}) {
+  void downStreamPagination({required String channelId}) {
     _scrollController.addListener(() {
 
       if (_scrollController.position.pixels == 0) {
-        Provider.of<ChatProvider>(context,listen: false).downStreamPaginationAPICall(oppositeUserId: oppositeUserId);
+        Provider.of<ChannelChatProvider>(context,listen: false).downStreamPaginationAPICall(channelId: channelId);
       }
     });
   }
-  void jumpToMessage({required List<MessageGroup> sortedGroups,required String messageGroupId}){
+  void jumpToMessage({required List<MessageGroup> sortedGroups,required String messageGroupId,required String messageId}){
+
+
+
+
+    // final  index = sortedGroups.indexWhere((test)=> test.sId == messageGroupId.split(" ")[0]);
+    // print(index);
+    // print("IDD $messageId");
+    // final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.sId == messageId);
+    // print("IDD $msgIndex");
+    //
+    // if(scrollController1.hasClients && scrollController.hasClients){
+    //   scrollController.jumpTo(index*800.0);
+    //   scrollController1.jumpTo(msgIndex*50.0);
+    // }
+
     print("messageGroupId $messageGroupId");
     log("messageGroupId $sortedGroups");
     final  index = sortedGroups.indexWhere((test)=> test.id == messageGroupId.split(" ")[0]);
+    final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.id == messageId);
     print("indexindexindexindexindex $index");
-    if(_scrollController.hasClients){
-      _scrollController.jumpTo(index*8000.0);
+
+    if(_scrollController.hasClients && _scrollController1.hasClients){
+      _scrollController.jumpTo(index*800.0);
+      _scrollController1.jumpTo(msgIndex*50.0);
     }
+    // if(_scrollController.hasClients){
+    //   _scrollController.jumpTo(index*8000.0);
+    // }
 
     // Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
   }
@@ -406,13 +428,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     bool isFromJump = widget.isFromJump ?? false;
 
     if(isFromJump && widget.jumpData != null){
-      initializedScreen(widget.jumpData['pageNO'],true,widget.jumpData['messageGroupId']);
+      initializedScreen(widget.jumpData['pageNO'],true,widget.jumpData['messageGroupId'],widget.jumpData['messageId']);
     }else{
-      initializedScreen(1,isFromJump,"");
+      initializedScreen(1,isFromJump,"","");
     }
   }
 
-  initializedScreen(int pageNo,bool isfromJump,String msgGroup){
+  initializedScreen(int pageNo,bool isfromJump,String msgGroup,String msgId){
     _messageController.addListener(_onTextChanged);
     print("CHANNELID>>> ${channelID}");
     print("CHANNELID>>> ${pageNo}");
@@ -425,12 +447,16 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       /// this for socket listen in channel chat for new message and delete //
       socketProvider.listenForChannelChatScreen(channelId: widget.channelId);
       pagination(channelId: channelID);
-      downStreamPagination(oppositeUserId: channelID);
+      downStreamPagination(channelId: channelID);
       channelChatProviderInit.getChannelInfoApiCall(channelId: channelID,callFroHome: true);
       Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
+      Provider.of<ChannelChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
       channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: 1,isFromJump: isfromJump);
       channelChatProviderInit.getChannelMembersList(widget.channelId);
       channelChatProviderInit.getFileListingInChannelChat(channelId: channelID);
+      if(isfromJump){
+        Future.delayed(Duration(seconds: 5),()=> jumpToMessage(sortedGroups: channelChatProviderInit.messageGroups,messageGroupId: msgGroup,messageId: msgId));
+      }
     },);
   }
 
@@ -857,7 +883,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             channelID = value['channelId'];
                             _scrollController.dispose();
                             _scrollController = ScrollController();
-                            initializedScreen(value['pageNO'],true,value['messageGroupId']);
+                            initializedScreen(value['pageNO'],true,value['messageGroupId'],value['messageId']);
                             NeedTocallJumpToMessage = true;
                             messageGroupId =value['messageGroupId'];
                           });
@@ -896,14 +922,17 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 if(channelChatProvider.isChannelChatLoading )...{
                   Flexible(child: customLoading())
                 }else...{
+                  // Expanded(
+                  //   child: ListView(
+                  //     controller: _scrollController,
+                  //     reverse: true,
+                  //     children: [
+                  //       dateHeaders(),
+                  //     ],
+                  //   ),
+                  // ),
                   Expanded(
-                    child: ListView(
-                      controller: _scrollController,
-                      reverse: true,
-                      children: [
-                        dateHeaders(),
-                      ],
-                    ),
+                      child: dateHeaders()
                   ),
                 },
                 // SizedBox(height: 20),
@@ -1039,7 +1068,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       ) : ListView.builder(
         shrinkWrap: true,
         reverse: true,
-        physics: NeverScrollableScrollPhysics(),
+        controller: _scrollController,
+        // physics: NeverScrollableScrollPhysics(),
         itemCount: sortedGroups.length + 1,
         itemBuilder: (itemContext, index) {
           if(index == sortedGroups.length){
@@ -1130,6 +1160,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               ListView.builder(
                 itemCount: sortedMessages.length,
                 shrinkWrap: true,
+                controller: _scrollController1,
                 physics: NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   Message message = sortedMessages[index];
