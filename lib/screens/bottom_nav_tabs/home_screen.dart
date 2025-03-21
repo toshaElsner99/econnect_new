@@ -40,17 +40,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     OptionItem(
       icon: Icons.add,
       title: "Create New Channel",
-      onTap: () => pushScreenWithTransition(CreateChannelScreen()),
+      onTap: () => pushScreen(screen: CreateChannelScreen()),
     ),
     OptionItem(
       icon: Icons.public,
       title: "Browse Channels",
-      onTap: () => pushScreenWithTransition(BrowseAndSearchChannel()),
+      onTap: () => pushScreen(screen:BrowseAndSearchChannel()),
     ),
     OptionItem(
       icon: Icons.message,
       title: "Open a Direct Message",
-      onTap: () => pushScreenWithTransition(OpenDirectMessage()),
+      onTap: () => pushScreen(screen:OpenDirectMessage()),
     ),
   ];
   final Map<String, bool> _isExpanded = {
@@ -327,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           color: Colors.white,
           size: 25,
         ),
-        onPressed: () => pushScreenWithTransition(SettingScreen()).then((value) async{
+        onPressed: () => pushScreen(screen: SettingScreen()).then((value) async{
           await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
           await Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
         },),
@@ -731,7 +731,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   // Add this widget after _buildHeader
   Widget _buildSearchField() {
     return GestureDetector(
-      onTap: () => pushScreenWithTransition(FindChannelScreen()),
+      onTap: () => pushScreen(screen:FindChannelScreen()),
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12,horizontal: 12),
         margin: const EdgeInsets.symmetric(vertical: 16),
@@ -826,7 +826,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   openSettings(){
-    pushScreenWithTransition(SettingScreen()).then((value) async{
+    pushScreen(screen: SettingScreen()).then((value) async{
       await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
       await Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
     });

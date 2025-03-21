@@ -359,7 +359,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                         child: GestureDetector(
                           onTap: () {
                             print("Simple Passing = ${messageId.toString()}");
-                              pushScreenWithTransition(
+                            pushScreen(screen:
                               ReplyMessageScreenChannel(channelId: widget.channelId, channelName: widget.channelName, msgID: messageId,),
                             ).then((value) {
                               print("value>>> $value");

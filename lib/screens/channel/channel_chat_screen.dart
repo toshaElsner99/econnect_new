@@ -730,14 +730,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-      return WillPopScope(
-        onWillPop: () async {
+      return PopScope(
+        onPopInvokedWithResult: (x, y) {
           Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
           if (widget.isFromNotification ?? false) {
             pushAndRemoveUntil(screen: HomeScreen());
-            return false;
           } else {
-            return true;
+            // return true;
           }
         },
         child: GestureDetector(
@@ -861,7 +860,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 IconButton(
                   icon: const Icon(Icons.search, color: AppColor.whiteColor),
                   onPressed: () {
-                    pushScreenWithTransition(FindMessageScreen()).then((value) {
+                    pushScreen(screen:FindMessageScreen()).then((value) {
                       print("value>>> $value");
                       // if(value != null){
                       //   if(value['needToOpenChannelChat']){
@@ -1590,7 +1589,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         child: GestureDetector(
                           onTap: () {
                             print("Simple Passing = ${messageId.toString()}");
-                            pushScreenWithTransition(
+                            pushScreen(screen:
                               ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)
                             ).then((value) {
                               print("value>>> $value");
