@@ -429,3 +429,33 @@ Widget getFileIcon(String? extension, String? filePath) {
     child: Image.asset(iconPath, fit: BoxFit.contain,width: 30,height: 20,),
   );
 }
+
+String formatDateTime2(String dateTimeStr) {
+  if(dateTimeStr == " "){
+    return "";
+  }else if(dateTimeStr == null){
+    return "";
+  }else if(dateTimeStr == "null"){
+    return "";
+  }else if(dateTimeStr == ""){
+    return "";
+  }
+  DateTime parsedDate = DateTime.parse(dateTimeStr).toLocal(); // Convert to local time
+  DateTime now = DateTime.now();
+  DateTime yesterday = now.subtract(Duration(days: 1));
+
+  if (parsedDate.year == now.year &&
+      parsedDate.month == now.month &&
+      parsedDate.day == now.day) {
+    // Show time with AM/PM if it's today
+    return DateFormat('hh:mm a').format(parsedDate);
+  } else if (parsedDate.year == yesterday.year &&
+      parsedDate.month == yesterday.month &&
+      parsedDate.day == yesterday.day) {
+    // Show "Yesterday" if it was yesterday
+    return "Yesterday";
+  } else {
+    // Show in dd-MM-yyyy format for other dates
+    return DateFormat('dd-MM-yyyy').format(parsedDate);
+  }
+}

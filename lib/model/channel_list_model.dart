@@ -115,7 +115,7 @@ class Lastmessage {
   Lastmessage({this.createdAt});
 
   Lastmessage.fromJson(Map<String, dynamic> json) {
-    createdAt = json['createdAt'];
+    createdAt = json['createdAt'] ?? "";
   }
 
   Map<String, dynamic> toJson() {

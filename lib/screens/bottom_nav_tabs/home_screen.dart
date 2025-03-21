@@ -209,7 +209,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       ),
                       child: Theme(
                         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                        child: ListView.builder(
+                        child: ListView.separated(
+                          separatorBuilder: (BuildContext context, int index) {
+                            return  Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Divider(
+                                  color: AppColor.white.withAlpha(15)
+                              ),
+                            );
+                          },
                           physics: NeverScrollableScrollPhysics(),
                           shrinkWrap: true,
                           itemCount: channelListProvider.combinedAllItems.length,
@@ -882,23 +890,63 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     int? unSeenMsgCount = 0,
     List<Widget>? children,
   }) {
+    // Determine item type based on index
+    final itemType = index == 0 ? 'favoriteUser' : 'user';
+    
     return Container(
-     color: muteConversation ? AppColor.borderColor.withOpacity(0.05) : null,
+     // color: muteConversation ? AppColor.borderColor.withOpacity(0.05) : null,
      margin: const EdgeInsets.symmetric(vertical: 6),
      child: InkWell(
        onTap: () => pushScreen(screen: SingleChatMessageScreen(userName: username, oppositeUserId: userId,calledForFavorite: true,)),
+       onLongPress: () {
+         // Get the appropriate provider data based on the type
+         dynamic itemData;
+         if (itemType == 'favoriteUser') {
+           final favorites = Provider.of<ChannelListProvider>(context, listen: false)
+               .favoriteListModel?.data?.chatList ?? [];
+           
+           for (var fav in favorites) {
+             if (fav.sId == userId) {
+               itemData = fav;
+               break;
+             }
+           }
+         } else {
+           final directMessages = Provider.of<ChannelListProvider>(context, listen: false)
+               .directMessageListModel?.data?.chatList ?? [];
+               
+           for (var dm in directMessages) {
+             if (dm.sId == userId) {
+               itemData = dm;
+               break;
+             }
+           }
+         }
+         
+         // Show the options dialog with the options from our helper method
+         showOptionsDialog(
+           context: context,
+           title: username,
+           options: _getOptionsForItem(
+             itemType: itemType, 
+             item: itemData,
+             itemId: userId,
+             itemName: username
+           ),
+         );
+       },
        borderRadius: BorderRadius.circular(8),
        child: Padding(
          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-      child: Row(
-        children: [
-          profileIconWithStatus(
-            userName: username,
-            userID: userId,
-            otherUserProfile: imageUrl,
-            status: status,
-            isMuted: muteConversation,
-          ),
+         child: Row(
+           children: [
+             profileIconWithStatus(
+               userName: username,
+               userID: userId,
+               otherUserProfile: imageUrl,
+               status: status,
+               isMuted: muteConversation,
+             ),
              const SizedBox(width: 12),
              ConstrainedBox(
                constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
@@ -910,65 +958,83 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                ),
              ),
              Visibility(
-                 visible: userId == signInModel.data?.user?.id,
-                 child: Padding(
-                   padding: const EdgeInsets.only(left: 5.0),
-                   child: commonText(text: "(you)",color: muteConversation ? AppColor.borderColor : Colors.white),
-                 )),
+               visible: userId == signInModel.data?.user?.id,
+               child: Padding(
+                 padding: const EdgeInsets.only(left: 5.0),
+                 child: commonText(text: "(you)",color: muteConversation ? AppColor.borderColor : Colors.white),
+               )
+             ),
              Visibility(
-                 visible: customStatusEmoji != "",
-                 child: Padding(
-                   padding: const EdgeInsets.only(left: 8.0),
-                   child: CachedNetworkImage(imageUrl: customStatusEmoji!,height: 20,width: 20,),
-                 )),
-             countMsgContainer(count : unSeenMsgCount ?? 0,isMuted: muteConversation),
+               visible: customStatusEmoji != "",
+               child: Padding(
+                 padding: const EdgeInsets.only(left: 8.0),
+                 child: CachedNetworkImage(imageUrl: customStatusEmoji!,height: 20,width: 20,),
+               )
+             ),
+             // countMsgContainer(count : unSeenMsgCount ?? 0,isMuted: muteConversation),
              Spacer(),
-             Visibility(
-                 visible: muteConversation,
-                 child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteConversation ? AppColor.borderColor : Colors.white,)),
+             // Visibility(
+             //   visible: muteConversation,
+             //   child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteConversation ? AppColor.borderColor : Colors.white,)
+             // ),
              ...?children,
            ],
          ),
        ),
      ),
-       );
+    );
   }
 
   Widget _buildChannelRow(ChannelList channel) {
     print("channelID _buildChannelRow >>> ${channel.sId}");
     final muteChannel = signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false;
     return Container(
-      color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
+      // color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
       margin: const EdgeInsets.symmetric(vertical: 6),
       child: InkWell(
         onTap: () {
           print("Channel Tapped");
           pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", /*channelName: channel.name!*/));
-          },
+        },
+        onLongPress: () {
+          showOptionsDialog(
+            context: context,
+            title: channel.name ?? "Channel",
+            options: _getOptionsForItem(
+              itemType: 'channel',
+              item: channel,
+              itemId: channel.sId ?? "",
+              itemName: channel.name ?? "Channel"
+            ),
+          );
+        },
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-      child: Row(
-        children: [
-          commonChannelIcon(isPrivate: channel.isPrivate == true ? true : false,isMuted: muteChannel),
+          child: Row(
+            children: [
+              commonChannelIcon(isPrivate: channel.isPrivate == true ? true : false,isMuted: muteChannel),
               const SizedBox(width: 12),
               ConstrainedBox(
                 constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
-            child: commonText(
-              text: channel.name ?? "",
+                child: commonText(
+                  text: channel.name ?? "",
                   color: muteChannel ? AppColor.borderColor : Colors.white.withOpacity(0.9),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          countMsgContainer(count : channel.unreadCount ?? 0,isMuted: muteChannel),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              // countMsgContainer(count : channel.unreadCount ?? 0,isMuted: muteChannel),
               Spacer(),
-              Visibility(
-                  visible: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false,
-                  child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteChannel ? AppColor.borderColor : Colors.white,)),
-              _buildPopupMenuForChannel(channelListModel: channel,),
+              dateAndColumnWidget(date: channel.lastmessage?.createdAt ?? "",unSeenMsgCount: channel.unreadCount ?? 0,mutedConversation: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false),
+              // Visibility(
+              //   visible: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false,
+              //   child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteChannel ? AppColor.borderColor : Colors.white,)
+              // ),
+              // Comment out popup menu button
+              // _buildPopupMenuForChannel(channelListModel: channel,),
             ],
           ),
         ),
@@ -1064,9 +1130,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
-      color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
+      // color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
       child: InkWell(
         onTap: ()=> pushScreen(screen: ChannelChatScreen(channelId: channel.sId!, /*channelName: channel.name!*/)),
+        onLongPress: () {
+          showOptionsDialog(
+            context: context,
+            title: name ?? "Channel",
+            options: _getOptionsForItem(
+              itemType: 'favoriteChannel',
+              item: channel,
+              itemId: channel.sId ?? "",
+              itemName: name ?? "Channel"
+            ),
+          );
+        },
         borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
@@ -1078,24 +1156,44 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
                 child: commonText(
                   text: name!,
-                  color: muteChannel  ? AppColor.borderColor : Colors.white.withOpacity(0.9),
+                  color: muteChannel ? AppColor.borderColor : Colors.white.withOpacity(0.9),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              countMsgContainer(count : unSeenCount ?? 0,isMuted: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false),
+              // countMsgContainer(count : unSeenCount ?? 0,isMuted: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false),
 
               Spacer(),
-              Visibility(
-                  visible: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false,
-                  child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteChannel  ? AppColor.borderColor : Colors.white,)),
+              // Visibility(
+              //   visible: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false,
+              //   child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteChannel ? AppColor.borderColor : Colors.white,)
+              // ),
               ...children,
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget dateAndColumnWidget({required String? date,required int unSeenMsgCount,required bool mutedConversation}){
+    print("dateAndColumnWidget>>>>> $date");
+    return Column(
+      children: [
+        Text(formatDateTime2(date!),style: TextStyle(color:mutedConversation ? AppColor.borderColor : Colors.white),),
+        mutedConversation ? Image.asset(AppImage.muteNotification,height: 20,width: 20,color: mutedConversation ? AppColor.borderColor : Colors.white,) :
+        Visibility(
+          visible: unSeenMsgCount > 0,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10,vertical: 1),
+            decoration: BoxDecoration(color:AppColor.lightBlueColor,shape: BoxShape.circle),
+            child: Center(child: Text(unSeenMsgCount.toString(),style: TextStyle(color: Colors.white,fontSize: 10),)),
+
+          ),
+        )
+      ],
     );
   }
 
@@ -1168,8 +1266,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           userId: favorite.sId ?? "",
           customStatusEmoji: favorite.customStatusEmoji ?? "",
           unSeenMsgCount: favorite.unseenMessagesCount,
+          // Removed popup menu button
           children: [
-            _buildPopupMenuForFavorite(favorite: favorite),
+            dateAndColumnWidget(date: favorite.latestMessageCreatedAt.toString(),unSeenMsgCount: favorite.unseenMessagesCount ?? 0,mutedConversation:commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite.sId ?? "") ?? false )
           ]
         );
       
@@ -1177,8 +1276,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         final favoriteChannel = itemData as FavouriteChannels;
         return _buildFavoriteChannelRow(
           favoriteChannel,
+          // Removed popup menu button
           [
-            _buildPopupMenuForFavChannel(favouriteChannels: favoriteChannel)
+            dateAndColumnWidget(date: favoriteChannel.lastMessage.toString(),unSeenMsgCount: favoriteChannel.unseenMessagesCount ?? 0,mutedConversation:signInModel.data?.user?.muteChannels?.contains(favoriteChannel.sId) ?? false)
           ]
         );
       
@@ -1197,8 +1297,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           userId: directMessage.sId ?? "",
           customStatusEmoji: directMessage.customStatusEmoji ?? "",
           unSeenMsgCount: directMessage.unseenMessagesCount ?? 0,
+          // Removed popup menu button
           children: [
-            _buildPopupMenuForDirectMessage(chatLisDirectMessage: directMessage),
+            dateAndColumnWidget(date: directMessage.latestMessageCreatedAt.toString(),unSeenMsgCount: directMessage.unseenMessagesCount ?? 0,mutedConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(directMessage.sId ?? "") ?? false)
           ]
         );
       
@@ -1289,6 +1390,201 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ],
       ),
     );
+  }
+
+  // Enhanced function to show options dialog with attractive UI
+  void showOptionsDialog({
+    required BuildContext context,
+    required String title,
+    required List<Map<String, dynamic>> options,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        // backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.symmetric(horizontal: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppPreferenceConstants.themeModeBoolValueGet 
+                ? CupertinoColors.darkBackgroundGray 
+                : AppColor.appBarColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColor.whiteColor)
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: options.map((option) {
+              return InkWell(
+                onTap: () {
+                  pop();
+                  option['onTap']?.call();
+                },
+                child: Container(
+                  alignment: Alignment.center,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: AppColor.borderColor.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: option['color'] == Colors.red
+                              ? Colors.red.withOpacity(0.1)
+                              : AppColor.blueColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: option['icon'],
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: commonText(
+                          text: option['title'] ?? '',
+                          color: option['color'] ?? Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Generic function to get options for any item type
+  List<Map<String, dynamic>> _getOptionsForItem({
+    required String itemType,
+    required dynamic item,
+    required String itemId,
+    required String itemName,
+  }) {
+    final channelListProvider = Provider.of<ChannelListProvider>(context, listen: false);
+    final commonProvider = Provider.of<CommonProvider>(context, listen: false);
+    
+    // Common options structure
+    final options = <Map<String, dynamic>>[];
+    
+    // Add mark as read/unread option
+    if (itemType == 'user' || itemType == 'favoriteUser') {
+      final unseenCount = item?.unseenMessagesCount ?? 0;
+      options.add({
+        'icon': Icon(Icons.mark_chat_unread_outlined, size: 20, color: Colors.white),
+        'title': unseenCount > 0 ? "Mark as read" : "Mark as unread",
+        'onTap': () {
+          channelListProvider.readUnreadMessages(
+            oppositeUserId: itemId,
+            isCalledForFav: itemType == 'favoriteUser',
+            isCallForReadMessage: unseenCount > 0
+          );
+        }
+      });
+    } else {
+      // Channel options
+      final unreadCount = itemType == 'channel' ? item?.unreadCount : item?.unseenMessagesCount;
+      options.add({
+        'icon': Icon(Icons.mark_chat_unread_outlined, size: 20, color: Colors.white),
+        'title': (unreadCount ?? 0) > 0 ? "Mark as read" : "Mark as unread",
+        'onTap': () {
+          channelListProvider.readUnReadChannelMessage(
+            oppositeUserId: itemId,
+            isCallForReadMessage: (unreadCount ?? 0) > 0
+          );
+        }
+      });
+    }
+    
+    // Add favorite/unfavorite option
+    if (itemType == 'favoriteUser') {
+      options.add({
+        'icon': Icon(Icons.star, size: 20, color: Colors.white),
+        'title': "Unfavorite",
+        'onTap': () => channelListProvider.removeFromFavorite(favouriteUserId: itemId)
+      });
+    } else if (itemType == 'user') {
+      options.add({
+        'icon': Icon(Icons.star_border, size: 20, color: Colors.white),
+        'title': "Favorite", 
+        'onTap': () => channelListProvider.addUserToFavorite(favouriteUserId: itemId)
+      });
+    } else if (itemType == 'favoriteChannel') {
+      options.add({
+        'icon': Icon(Icons.star, size: 20, color: Colors.white),
+        'title': "Unfavorite",
+        'onTap': () => channelListProvider.removeChannelFromFavorite(favoriteChannelID: itemId)
+      });
+    } else if (itemType == 'channel') {
+      options.add({
+        'icon': Icon(Icons.star_border, size: 20, color: Colors.white),
+        'title': "Favorite",
+        'onTap': () => channelListProvider.addChannelToFavorite(channelId: itemId)
+      });
+    }
+    
+    // Add mute/unmute option
+    if (itemType == 'user' || itemType == 'favoriteUser') {
+      final isMuted = commonProvider.getUserModel?.data?.user?.muteUsers?.contains(itemId) ?? false;
+      options.add({
+        'icon': Icon(
+          isMuted ? Icons.notifications_none : Icons.notifications_off_outlined,
+          size: 20,
+          color: Colors.white
+        ),
+        'title': isMuted ? "Unmute Conversation" : "Mute Conversation",
+        'onTap': () => channelListProvider.muteUser(
+          userIdToMute: itemId,
+          isForMute: isMuted
+        )
+      });
+    } else {
+      final isMuted = signInModel.data?.user?.muteChannels?.contains(itemId) ?? false;
+      options.add({
+        'icon': Icon(
+          isMuted ? Icons.notifications_none : Icons.notifications_off_outlined,
+          size: 20,
+          color: Colors.white
+        ),
+        'title': isMuted ? "Unmute Channel" : "Mute Channel",
+        'onTap': () => channelListProvider.muteUnMuteChannels(
+          channelId: itemId,
+          isMutedChannel: isMuted
+        )
+      });
+    }
+    
+    // Add leave/close option
+    if (itemType == 'user' || itemType == 'favoriteUser') {
+      options.add({
+        'icon': Icon(Icons.exit_to_app, size: 20, color: Colors.red),
+        'title': "Close Conversation",
+        'color': Colors.red,
+        'onTap': () => channelListProvider.closeConversation(
+          conversationUserId: itemId,
+          isCalledForFav: itemType == 'favoriteUser'
+        )
+      });
+    } else {
+      options.add({
+        'icon': Icon(Icons.exit_to_app, size: 20, color: Colors.red),
+        'title': "Leave Channel",
+        'color': Colors.red,
+        'onTap': () => leaveChannelDialog(itemId)
+      });
+    }
+    
+    return options;
   }
 
 }
