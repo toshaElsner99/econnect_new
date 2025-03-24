@@ -54,6 +54,7 @@ class Data {
 class ChatListDirectMessage {
   String? sId;
   String? username;
+  String? fullName;
   String? email;
   String? status;
   bool? isActive;
@@ -81,6 +82,7 @@ class ChatListDirectMessage {
   ChatListDirectMessage({
     this.sId,
     this.username,
+    this.fullName,
     this.email,
     this.status,
     this.isActive,
@@ -109,6 +111,7 @@ class ChatListDirectMessage {
   ChatListDirectMessage.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     username = json['username'];
+    fullName = json['fullName'];
     email = json['email'];
     status = json['status'];
     isActive = json['isActive'];
@@ -138,6 +141,7 @@ class ChatListDirectMessage {
     return {
       '_id': sId,
       'username': username,
+      'fullName': fullName,
       'email': email,
       'status': status,
       'isActive': isActive,

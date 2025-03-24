@@ -31,12 +31,15 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
 
   @override
   void initState() {
-    Provider.of<CommonProvider>(context,listen: false).updatesCustomStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CommonProvider>().updatesCustomStatus();
+    });
     super.initState();
   }
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.9,
       ),

@@ -350,8 +350,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           onSelected: (value) {
             print("Selected: $value");
             if (value == "unread") {
-              print("unREADMESSAGE>>>>> ${favorite!.unseenMessagesCount}");
-              channelListProvider.readUnreadMessages(oppositeUserId: favorite.sId ?? "", isCalledForFav: true, isCallForReadMessage: favorite.unseenMessagesCount! > 0 ? true : false);
+              // print("unREADMESSAGE>>>>> ${favorite!.unseenMessagesCount}");
+              channelListProvider.readUnreadMessages(oppositeUserId: favorite?.sId ?? "", isCalledForFav: true, isCallForReadMessage: (favorite?.unseenMessagesCount ?? 0) > 0 ? true : false);
             } else if (value == "favorite") {
               channelListProvider.removeFromFavorite(favouriteUserId: favorite?.sId ?? "");
             } else if (value == "mute") {
@@ -369,7 +369,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   Icon(Icons.mark_chat_unread_outlined, size: 20),
                   SizedBox(width: 10),
                   commonText(
-                      text: favorite!.unseenMessagesCount! > 0
+                      text: (favorite?.unseenMessagesCount ?? 0) > 0
                           ? "Mark as read"
                           : "Mark as unread"),
                 ],
@@ -392,13 +392,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               child: Row(
                 children: [
                   Icon(
-                      commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite.sId) ?? false != true
+                      commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite?.sId) ?? false != true
                           ? Icons.notifications_none
                           : Icons.notifications_off_outlined,
                       size: 20),
                   SizedBox(width: 10),
                   commonText(
-                      text: commonProvider.getUserModel?.data?.user!.muteUsers!.contains(favorite.sId) !=
+                      text: commonProvider.getUserModel?.data?.user!.muteUsers!.contains(favorite?.sId) !=
                           true
                           ? "Mute Conversation"
                           : "Unmute Conversation"),
@@ -433,12 +433,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           onSelected: (value) {
             print("Selected: $value");
             if (value == "unread") {
-              print("unREADMESSAGE>>>>> ${chatLisDirectMessage!.unseenMessagesCount}");
+              // print("unREADMESSAGE>>>>> ${chatLisDirectMessage!.unseenMessagesCount}");
               channelListProvider.readUnreadMessages(
-                  oppositeUserId: chatLisDirectMessage.sId ?? "",
+                  oppositeUserId: chatLisDirectMessage?.sId ?? "",
                   isCalledForFav: true,
                   isCallForReadMessage:
-                  chatLisDirectMessage.unseenMessagesCount! > 0 ? true : false);
+                  (chatLisDirectMessage?.unseenMessagesCount ?? 0) > 0 ? true : false);
             } else if (value == "favorite") {
               channelListProvider.addUserToFavorite(favouriteUserId: chatLisDirectMessage?.sId ?? "");
             } else if (value == "mute") {
@@ -775,14 +775,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             children: [
               // User profile image
               profileIconWithStatus(
-                  userID: "${commonProvider.getUserModel?.data!.user!.sId}",
-                  status: "${commonProvider.getUserModel?.data!.user!.status}",
-                  otherUserProfile: commonProvider.getUserModel?.data!.user!.thumbnailAvatarUrl ?? '',
+                  userID: commonProvider.getUserModel?.data?.user?.sId ?? "",
+                  status: commonProvider.getUserModel?.data?.user?.status ?? "offline",
+                  otherUserProfile: commonProvider.getUserModel?.data?.user?.thumbnailAvatarUrl ?? '',
                   radius: 17,
                   needToShowIcon: true,
                   borderColor: AppColor.blueColor,
                   onTap: () => openSettings(),
-                  userName: commonProvider.getUserModel?.data!.user!.username ??  commonProvider.getUserModel?.data!.user!.fullName ?? ""
+                  userName: commonProvider.getUserModel?.data?.user?.username ??  commonProvider.getUserModel?.data?.user?.fullName ?? ""
               ),
               SizedBox(width: 12),
               // User name and status
@@ -793,16 +793,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   Row(
                     children: [
                       commonText(
-                        text: (commonProvider.getUserModel?.data!.user!.fullName ?? commonProvider.getUserModel?.data!.user!.username ?? ""),
+                        text: (commonProvider.getUserModel?.data?.user?.fullName ?? commonProvider.getUserModel?.data?.user?.username ?? ""),
                           color: AppColor.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                       ),
                       SizedBox(width: 10),
                       Visibility(
-                        visible: commonProvider.getUserModel?.data!.user!.customStatusEmoji != null &&
-                        commonProvider.getUserModel?.data!.user!.customStatusEmoji != "",
-                        child: CachedNetworkImage(imageUrl: (commonProvider.getUserModel?.data!.user!.customStatusEmoji ?? ""),
+                        visible: commonProvider.getUserModel?.data?.user?.customStatusEmoji != null &&
+                        commonProvider.getUserModel?.data?.user?.customStatusEmoji != "",
+                        child: CachedNetworkImage(imageUrl: (commonProvider.getUserModel?.data?.user?.customStatusEmoji ?? ""),
                         width: 20),
                       )
                     ],
@@ -968,7 +968,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                visible: customStatusEmoji != "",
                child: Padding(
                  padding: const EdgeInsets.only(left: 8.0),
-                 child: CachedNetworkImage(imageUrl: customStatusEmoji!,height: 20,width: 20,),
+                 child: CachedNetworkImage(imageUrl: customStatusEmoji ?? "",height: 20,width: 20,),
                )
              ),
              // countMsgContainer(count : unSeenMsgCount ?? 0,isMuted: muteConversation),
@@ -1132,7 +1132,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       margin: const EdgeInsets.symmetric(vertical: 6),
       // color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
       child: InkWell(
-        onTap: ()=> pushScreen(screen: ChannelChatScreen(channelId: channel.sId!, /*channelName: channel.name!*/)),
+        onTap: ()=> pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", /*channelName: channel.name!*/)),
         onLongPress: () {
           showOptionsDialog(
             context: context,
@@ -1150,12 +1150,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           child: Row(
             children: [
-              commonChannelIcon(isPrivate: isPrivate!,isMuted: muteChannel),
+              commonChannelIcon(isPrivate: isPrivate ?? false,isMuted: muteChannel),
               const SizedBox(width: 12),
               ConstrainedBox(
                 constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
                 child: commonText(
-                  text: name!,
+                  text: name ?? "",
                   color: muteChannel ? AppColor.borderColor : Colors.white.withOpacity(0.9),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -1178,21 +1178,65 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget dateAndColumnWidget({required String? date,required int unSeenMsgCount,required bool mutedConversation}){
+  // Widget dateAndColumnWidget({required String? date,required int unSeenMsgCount,required bool mutedConversation}){
+  //   print("dateAndColumnWidget>>>>> $date");
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.end,
+  //     children: [
+  //       Text(formatDateTime2(date ?? ""),style: TextStyle(color:mutedConversation ? AppColor.borderColor : Colors.white),),
+  //       mutedConversation ? Image.asset(AppImage.muteNotification,height: 20,width: 20,color: mutedConversation ? AppColor.borderColor : Colors.white,) :
+  //       Visibility(
+  //         visible: unSeenMsgCount > 0,
+  //         child: Container(
+  //           padding: EdgeInsets.all(5),
+  //           decoration: BoxDecoration(color:AppColor.lightBlueColor,shape: BoxShape.circle),
+  //           child: Center(child: commonText(text: unSeenMsgCount.toString(),color: Colors.white,fontSize: 15)),
+  //         ),
+  //       )
+  //     ],
+  //   );
+  // }
+  Widget dateAndColumnWidget({
+    required String? date,
+    required int unSeenMsgCount,
+    required bool mutedConversation,
+  }) {
     print("dateAndColumnWidget>>>>> $date");
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(formatDateTime2(date!),style: TextStyle(color:mutedConversation ? AppColor.borderColor : Colors.white),),
-        mutedConversation ? Image.asset(AppImage.muteNotification,height: 20,width: 20,color: mutedConversation ? AppColor.borderColor : Colors.white,) :
-        Visibility(
+        Text(
+          formatDateTime2(date ?? ""),
+          style: TextStyle(
+            color: mutedConversation ? AppColor.borderColor : Colors.white,
+          ),
+        ),
+        // SizedBox(height: 5), // Adds spacing
+        mutedConversation
+            ? Image.asset(
+          AppImage.muteNotification,
+          height: 20,
+          width: 20,
+          color: AppColor.borderColor,
+        )
+            : Visibility(
           visible: unSeenMsgCount > 0,
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 10,vertical: 1),
-            decoration: BoxDecoration(color:AppColor.lightBlueColor,shape: BoxShape.circle),
-            child: Center(child: Text(unSeenMsgCount.toString(),style: TextStyle(color: Colors.white,fontSize: 10),)),
-
+            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColor.lightBlueColor,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: commonText(
+                text: unSeenMsgCount.toString(),
+                color: Colors.white,
+                fontSize: 15, // Increased font size
+                fontWeight: FontWeight.bold, // Makes it more readable
+              ),
+            ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -1261,7 +1305,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           index: 0,
           muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(favorite.sId ?? "") ?? false,
           imageUrl: favorite.thumbnailAvatarUrl ?? "",
-          username: favorite.username ?? "",
+          username: favorite.fullName ?? favorite.username ?? "",
           status: favorite.status ?? "",
           userId: favorite.sId ?? "",
           customStatusEmoji: favorite.customStatusEmoji ?? "",
@@ -1292,7 +1336,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           muteConversation: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(directMessage.sId ?? "") ?? false,
           index: 2,
           imageUrl: directMessage.thumbnailAvatarUrl ?? "",
-          username: directMessage.username ?? "",
+          username: directMessage.fullName ?? directMessage.username ?? "",
           status: directMessage.status ?? "",
           userId: directMessage.sId ?? "",
           customStatusEmoji: directMessage.customStatusEmoji ?? "",

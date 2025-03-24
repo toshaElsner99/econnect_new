@@ -249,12 +249,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                  if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == true)...{
-                    userLeftedText()
-                  }else...{
-                    inputTextFieldWithEditor()
-                  }
-                ],),
+                    if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == true)...{
+                      userLeftedText()
+                    }else...{
+                      inputTextFieldWithEditor()
+                    }
+                  ],),
               ),
               body: Column(
                 children: [
@@ -263,17 +263,17 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     height: 1,
                   ),
                   if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
-                      Flexible(child: ShimmerLoading.chatShimmer(context))
+                    Flexible(child: ShimmerLoading.chatShimmer(context))
                   }else...{
                     if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
                       Expanded(
-                            child: Center(
-                                child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',
+                          child: Center(
+                              child: ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',
                                 userImageUrl: userDetails?.data?.user?.thumbnailAvatarUrl ?? '',
                                 userId: userDetails?.data?.user?.sId ?? "",
                                 userStatus: userDetails?.data?.user?.status ?? "offline",
-                        ))),
-                      }else...{
+                              ))),
+                    }else...{
                       // Expanded(
                       //   child: ListView(
                       //     controller: scrollController,
@@ -300,31 +300,31 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
   Container userLeftedText() {
     return Container(
-                  decoration: BoxDecoration(
-                      border: Border(top: BorderSide(color: AppColor.borderColor))
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 30,vertical: 20),
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: TextStyle(
-                        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, // Default text color
-                        fontSize: 16, // Default font size
-                      ),
-                      children: <TextSpan>[
-                        TextSpan(text: 'You are viewing an archived channel with a '),
-                        TextSpan(
-                          text: 'deactivated user',
-                          style: TextStyle(
-                            fontWeight:
-                            FontWeight.bold, // Make this part bold
-                          ),
-                        ),
-                        TextSpan(text: '. New messages cannot be posted.'),
-                      ],
-                    ),
-                  ),
-                );
+      decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: AppColor.borderColor))
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 30,vertical: 20),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          style: TextStyle(
+            color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, // Default text color
+            fontSize: 16, // Default font size
+          ),
+          children: <TextSpan>[
+            TextSpan(text: 'You are viewing an archived channel with a '),
+            TextSpan(
+              text: 'deactivated user',
+              style: TextStyle(
+                fontWeight:
+                FontWeight.bold, // Make this part bold
+              ),
+            ),
+            TextSpan(text: '. New messages cannot be posted.'),
+          ],
+        ),
+      ),
+    );
   }
   AppBar buildAppBar(CommonProvider commonProvider, ChatProvider chatProvider) {
     return AppBar(
@@ -438,8 +438,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               GestureDetector(
                 onTap: () => pushScreen(
                   screen: FilesListingScreen(
-                    userName: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
-                    oppositeUserId: oppositeUserId
+                      userName: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
+                      oppositeUserId: oppositeUserId
                   ),
                 ),
                 child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: Colors.white),
@@ -662,9 +662,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           if(index == sortedGroups.length){
             if(value.totalPages > value.currentPagea) {
               return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: customLoading(),
-            );
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: customLoading(),
+              );
             }else if(value.totalPages == value.currentPagea){
               return ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',
                 userImageUrl: userDetails?.data?.user?.thumbnailAvatarUrl ?? '',
@@ -791,12 +791,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
                     child: profileIconWithStatus(
-                      userID: "${user?.data!.user!.sId}",
-                      status: "${user?.data!.user!.status}",
-                      otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',
-                      radius: 17,
-                      needToShowIcon: false,
-                      borderColor: AppColor.blueColor, userName: user?.data!.user!.username ?? user?.data!.user!.fullName
+                        userID: "${user?.data!.user!.sId}",
+                        status: "${user?.data!.user!.status}",
+                        otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',
+                        radius: 17,
+                        needToShowIcon: false,
+                        borderColor: AppColor.blueColor, userName: user?.data!.user!.username ?? user?.data!.user!.fullName
                     ),
                   )
                 } else ...{
@@ -823,13 +823,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 imageUrl: commonProvider.customStatusUrl,
                               ),
                             } else if (userDetails?.data?.user?.customStatusEmoji != "" && userDetails?.data?.user?.customStatusEmoji != null) ...{
-                            Padding(
-                            padding: const EdgeInsets.only(left: 5.0),
-                            child: CachedNetworkImage(
-                                width: 20,
-                                height: 20,
-                                imageUrl: userDetails?.data?.user?.customStatusEmoji  ?? "",
-                              ),),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 5.0),
+                                child: CachedNetworkImage(
+                                  width: 20,
+                                  height: 20,
+                                  imageUrl: userDetails?.data?.user?.customStatusEmoji  ?? "",
+                                ),),
                             },
                             Padding(
                               padding: const EdgeInsets.only(left: 5.0),
@@ -841,56 +841,56 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           ],
                         ),
                       SizedBox(height: 5),
-                        Visibility(
-                          visible: message.isNotEmpty,
-                          child: Wrap(
-                            direction: Axis.horizontal,
-                            children: [
-                              RichText(
-                                text: TextSpan(
-                                  children: [
+                      Visibility(
+                        visible: message.isNotEmpty,
+                        child: Wrap(
+                          direction: Axis.horizontal,
+                          children: [
+                            RichText(
+                              text: TextSpan(
+                                children: [
+                                  WidgetSpan(
+                                    alignment: PlaceholderAlignment.baseline,
+                                    baseline: TextBaseline.alphabetic,
+                                    child: commonHTMLText(message: message),
+                                  ),
+
+                                  if (isEdited)
                                     WidgetSpan(
                                       alignment: PlaceholderAlignment.baseline,
                                       baseline: TextBaseline.alphabetic,
-                                      child: commonHTMLText(message: message),
-                                    ),
-
-                                    if (isEdited)
-                                      WidgetSpan(
-                                        alignment: PlaceholderAlignment.baseline,
-                                        baseline: TextBaseline.alphabetic,
-                                        child: Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 4.0),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.edit_outlined,
-                                                size: 13,
-                                                color: AppColor.borderColor,
-                                              ),
-                                              const SizedBox(width: 2),
-                                              commonText(
-                                                text: "Edited",
-                                                fontSize: 10,
-                                                color: AppColor.borderColor,
-                                                fontStyle: FontStyle.italic,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ],
-                                          ),
+                                      child: Padding(
+                                        padding:
+                                        const EdgeInsets.only(left: 4.0),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.edit_outlined,
+                                              size: 13,
+                                              color: AppColor.borderColor,
+                                            ),
+                                            const SizedBox(width: 2),
+                                            commonText(
+                                              text: "Edited",
+                                              fontSize: 10,
+                                              color: AppColor.borderColor,
+                                              fontStyle: FontStyle.italic,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                  ],
-                                ),
+                                    ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                        // Put Reacted emojis list here
+                      ),
+                      // Put Reacted emojis list here
                       if (messageList.reactions?.isNotEmpty ?? false)
                         Container(
                           margin: const EdgeInsets.only(top: 6, bottom: 6),
@@ -902,20 +902,20 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               Builder(builder: (context) {
                                 // Get unique users who reacted
                                 final uniqueUsers = messageList.reactions!
-                                  .map((r) => r.userId)
-                                  .where((id) => id != null)
-                                  .toSet()
-                                  .toList();
+                                    .map((r) => r.userId)
+                                    .where((id) => id != null)
+                                    .toSet()
+                                    .toList();
 
                                 // Count total unique users for the counter
                                 final totalUniqueUsers = uniqueUsers.length;
 
                                 // Get usernames for the visible avatars (show at most 2 for direct chat)
                                 final visibleUsers = uniqueUsers.take(2).toList();
-                                
+
                                 // Calculate the width needed based on number of avatars
-                                final double stackWidth = visibleUsers.isEmpty ? 0 : 
-                                                        (visibleUsers.length == 1 ? 30 : 50);
+                                final double stackWidth = visibleUsers.isEmpty ? 0 :
+                                (visibleUsers.length == 1 ? 30 : 50);
 
                                 // Create container with avatars
                                 return Container(
@@ -933,20 +933,20 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                               decoration: BoxDecoration(
                                                 shape: BoxShape.circle,
                                                 border: Border.all(
-                                                  color: AppPreferenceConstants.themeModeBoolValueGet ? 
-                                                    Colors.grey.shade900 : Colors.white,
+                                                  color: AppPreferenceConstants.themeModeBoolValueGet ?
+                                                  Colors.grey.shade900 : Colors.white,
                                                   width: 1.5,
                                                 ),
                                               ),
                                               child: profileIconWithStatus(
-                                                userID: visibleUsers[i] ?? "",
-                                                status: "",
-                                                needToShowIcon: false,
-                                                radius: 14,
-                                                otherUserProfile: userCache[visibleUsers[i]]?.data?.user?.thumbnailAvatarUrl ?? '',
-                                                borderColor: AppColor.blueColor,
-                                                userName: userCache[visibleUsers[i]]?.data?.user?.username ?? userCache[visibleUsers[i]]?.data?.user?.fullName ?? 'Unknown',
-                                                onTap: () => _showReactionsList(context, messageList.reactions!)
+                                                  userID: visibleUsers[i] ?? "",
+                                                  status: "",
+                                                  needToShowIcon: false,
+                                                  radius: 14,
+                                                  otherUserProfile: userCache[visibleUsers[i]]?.data?.user?.thumbnailAvatarUrl ?? '',
+                                                  borderColor: AppColor.blueColor,
+                                                  userName: userCache[visibleUsers[i]]?.data?.user?.username ?? userCache[visibleUsers[i]]?.data?.user?.fullName ?? 'Unknown',
+                                                  onTap: () => _showReactionsList(context, messageList.reactions!)
                                               ),
                                             ),
                                           ),
@@ -955,9 +955,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   ),
                                 );
                               }),
-                              
+
                               SizedBox(width: 8),
-                              
+
                               // Reaction emojis section - keep this part to maintain functionality
                               Flexible(
                                 child: Wrap(
@@ -966,24 +966,24 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   alignment: WrapAlignment.start,
                                   children: groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
-                                      reaction.userId == signInModel.data?.user?.id &&
-                                      reaction.emoji == entry.key);
+                                    reaction.userId == signInModel.data?.user?.id &&
+                                        reaction.emoji == entry.key);
 
                                     return GestureDetector(
                                       onTap: () {
                                         if (hasUserReacted) {
                                           context.read<ChatProvider>().reactionRemove(
-                                            messageId: messageList.sId!,
-                                            reactUrl: entry.key,
-                                            receiverId: oppositeUserId,
-                                            isFrom: "Chat"
+                                              messageId: messageList.sId!,
+                                              reactUrl: entry.key,
+                                              receiverId: oppositeUserId,
+                                              isFrom: "Chat"
                                           );
                                         } else {
                                           context.read<ChatProvider>().reactMessage(
-                                            messageId: messageList.sId!,
-                                            reactUrl: entry.key,
-                                            receiverId: oppositeUserId,
-                                            isFrom: "Chat"
+                                              messageId: messageList.sId!,
+                                              reactUrl: entry.key,
+                                              receiverId: oppositeUserId,
+                                              isFrom: "Chat"
                                           );
                                         }
                                       },
@@ -1033,31 +1033,31 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                              commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                                child: Row(children: [
-                                  profileIconWithStatus(
-                                    userID: messageList.senderOfForward?.id ?? "" ,
-                                    status: messageList.senderOfForward?.status ?? "offline",
-                                    needToShowIcon: false,
-                                    otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl,
-                                    borderColor: AppColor.blueColor,
-                                      userName: messageList.senderOfForward?.username ?? ""
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        commonText(text: "${messageList.senderOfForward?.username}"),
-                                        SizedBox(height: 3),
-                                        commonText(text: formatDateString("${messageList.forwardInfo?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
-                                      ],
+                                commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                  child: Row(children: [
+                                    profileIconWithStatus(
+                                        userID: messageList.senderOfForward?.id ?? "" ,
+                                        status: messageList.senderOfForward?.status ?? "offline",
+                                        needToShowIcon: false,
+                                        otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl,
+                                        borderColor: AppColor.blueColor,
+                                        userName: messageList.senderOfForward?.username ?? ""
                                     ),
-                                  ),
-                                ],),
-                              ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          commonText(text: "${messageList.senderOfForward?.username}"),
+                                          SizedBox(height: 3),
+                                          commonText(text: formatDateString("${messageList.forwardInfo?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                        ],
+                                      ),
+                                    ),
+                                  ],),
+                                ),
                                 Visibility(
                                     visible: messageList.forwardInfo?.content != "",
                                     child: commonHTMLText(message: "${messageList.forwardInfo?.content}")),
@@ -1100,7 +1100,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                     },),
                                 ),
 
-                            ],),
+                              ],),
 
                           )
                       ),
@@ -1141,165 +1141,165 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           },),
                       ),
                       Visibility(
-                          visible: messageList.replies?.isNotEmpty ?? false,
-                          child: GestureDetector(
-                            onTap: () {
-                              print("Simple Passing = ${messageId.toString()}");
-                              pushScreen(screen:
-                              ReplyMessageScreen(
-                                userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
-                                messageId: messageId.toString(),
-                                receiverId: oppositeUserId,
-                              ),
+                        visible: messageList.replies?.isNotEmpty ?? false,
+                        child: GestureDetector(
+                          onTap: () {
+                            print("Simple Passing = ${messageId.toString()}");
+                            pushScreen(screen:
+                            ReplyMessageScreen(
+                              userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
+                              messageId: messageId.toString(),
+                              receiverId: oppositeUserId,
+                            ),
                             ).then((value) {
                               print("value>>> $value");
                               if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                                 for (var reply in messageList.replies!) {
                                   if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
-                                      setState(() =>
-                                        reply.isSeen = true);
+                                    setState(() =>
+                                    reply.isSeen = true);
                                   }
                                 }
                               }
                             });},
-                            child: Container(
-                              // color: Colors.red,
-                              margin: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  // 🖼️ Overlapping profile images
-                                  if (messageList.repliesSenderInfo != null && messageList.repliesSenderInfo!.isNotEmpty)
-                                    Container(
-                                      margin: EdgeInsets.only(right :messageList.repliesSenderInfo!.length > 1 ? 22 : 7),
-                                      // color: Colors.amber,
-                                      child: Row(
-                                        children: [
-                                          Stack(
-                                            clipBehavior: Clip.none,
-                                            children: [
-                                              profileIconWithStatus(
-                                                userName: messageList.repliesSenderInfo![0].username,
-                                                userID: messageList.repliesSenderInfo![0].id,
-                                                status: "",
-                                                needToShowIcon: false,
-                                                radius: 12,
-                                                otherUserProfile: messageList.repliesSenderInfo![0].thumbnailAvatarUrl,
-                                                borderColor: AppColor.blueColor,
-                                              ),
-                                              if (messageList.repliesSenderInfo!.length > 1)
-                                                Positioned(
-                                                  left: 16,
-                                                  child: profileIconWithStatus(
-                                                    userName: messageList.repliesSenderInfo![0].username,
-                                                    userID: messageList.repliesSenderInfo![1].id,
-                                                    status: "",
-                                                    needToShowIcon: false,
-                                                    radius: 12,
-                                                    otherUserProfile: messageList.repliesSenderInfo![1].thumbnailAvatarUrl,
-                                                  ),
+                          child: Container(
+                            // color: Colors.red,
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                // 🖼️ Overlapping profile images
+                                if (messageList.repliesSenderInfo != null && messageList.repliesSenderInfo!.isNotEmpty)
+                                  Container(
+                                    margin: EdgeInsets.only(right :messageList.repliesSenderInfo!.length > 1 ? 22 : 7),
+                                    // color: Colors.amber,
+                                    child: Row(
+                                      children: [
+                                        Stack(
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            profileIconWithStatus(
+                                              userName: messageList.repliesSenderInfo![0].username,
+                                              userID: messageList.repliesSenderInfo![0].id,
+                                              status: "",
+                                              needToShowIcon: false,
+                                              radius: 12,
+                                              otherUserProfile: messageList.repliesSenderInfo![0].thumbnailAvatarUrl,
+                                              borderColor: AppColor.blueColor,
+                                            ),
+                                            if (messageList.repliesSenderInfo!.length > 1)
+                                              Positioned(
+                                                left: 16,
+                                                child: profileIconWithStatus(
+                                                  userName: messageList.repliesSenderInfo![0].username,
+                                                  userID: messageList.repliesSenderInfo![1].id,
+                                                  status: "",
+                                                  needToShowIcon: false,
+                                                  radius: 12,
+                                                  otherUserProfile: messageList.repliesSenderInfo![1].thumbnailAvatarUrl,
                                                 ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-
-                                  // 🔴 Red dot circle
-                                  Visibility(
-                                    replacement: SizedBox.shrink(),
-                                    visible: messageList.replies != null && messageList.replies!.isNotEmpty &&
-                                    messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false),
-                                    child: Container(
-                                      margin:EdgeInsets.only(right: 5),
-                                      width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
-                                      height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
-                                      decoration: const BoxDecoration(
-                                        color: Colors.red,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                  ),
-
-                                  // 🔄 Reply icon and text
-                                  Padding(
-                                    padding: EdgeInsets.only(left: 0.0,right: 4.0),
-                                    child: Transform.flip(
-                                      flipX: true,
-                                      child: Image.asset(
-                                        AppImage.forwardIcon,
-                                        height: 15,
-                                        width: 15,
-                                        color: AppColor.borderColor,
-                                      ),
-                                    ),
-                                  ),
-
-                                  commonText(
-                                    text: "${messageList.replyCount} ${messageList.replyCount! > 1 ? 'replies' : 'reply'}",
-                                    fontSize: 12,
-                                    color: AppColor.borderColor,
-                                  ),
-
-                                  SizedBox(width: 6),
-                                  Flexible(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: commonText(
-                                        text: getTimeAgo(
-                                            (messageList.replies != null && messageList.replies!.isNotEmpty)
-                                                ? messageList.replies!.last.createdAt.toString()
-                                                : DateTime.now().toString()
+                                              ),
+                                          ],
                                         ),
-                                        fontSize: 10,
-                                        color: AppColor.borderColor.withOpacity(0.7),
-                                      ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
+
+
+                                // 🔴 Red dot circle
+                                Visibility(
+                                  replacement: SizedBox.shrink(),
+                                  visible: messageList.replies != null && messageList.replies!.isNotEmpty &&
+                                      messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false),
+                                  child: Container(
+                                    margin:EdgeInsets.only(right: 5),
+                                    width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                    height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+
+                                // 🔄 Reply icon and text
+                                Padding(
+                                  padding: EdgeInsets.only(left: 0.0,right: 4.0),
+                                  child: Transform.flip(
+                                    flipX: true,
+                                    child: Image.asset(
+                                      AppImage.forwardIcon,
+                                      height: 15,
+                                      width: 15,
+                                      color: AppColor.borderColor,
+                                    ),
+                                  ),
+                                ),
+
+                                commonText(
+                                  text: "${messageList.replyCount} ${messageList.replyCount! > 1 ? 'replies' : 'reply'}",
+                                  fontSize: 12,
+                                  color: AppColor.borderColor,
+                                ),
+
+                                SizedBox(width: 6),
+                                Flexible(
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: commonText(
+                                      text: getTimeAgo(
+                                          (messageList.replies != null && messageList.replies!.isNotEmpty)
+                                              ? messageList.replies!.last.createdAt.toString()
+                                              : DateTime.now().toString()
+                                      ),
+                                      fontSize: 10,
+                                      color: AppColor.borderColor.withOpacity(0.7),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        )
-                      ],
+                        ),
+                      )
+                    ],
                   ),
                 ),
                 Visibility(
-                  visible: userDetails?.data?.user?.isLeft == false,
-                  child: popMenu2(context,
-                    isPinned: pinnedMsg,
-                    onOpened: () {},
-                    onClosed: () {},
-                    onReact: () {
-                      showReactionBar(context, messageId.toString(), oppositeUserId, "Chat");
-                    },
-                    isForwarded: messageList.isForwarded! ? false : true,
-                    opened: false,
-                    createdAt: messageList.createdAt!,
-                    currentUserId: userId,
-                    onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,)),
-                    onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: oppositeUserId,)).then((value) {
-                      // print("value>>> $value");
-                      if (messageList.replies != null && messageList.replies!.isNotEmpty) {
-                        for (var reply in messageList.replies!) {
-                          if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
-                            setState(() =>
-                            reply.isSeen = true);
+                    visible: userDetails?.data?.user?.isLeft == false,
+                    child: popMenu2(context,
+                        isPinned: pinnedMsg,
+                        onOpened: () {},
+                        onClosed: () {},
+                        onReact: () {
+                          showReactionBar(context, messageId.toString(), oppositeUserId, "Chat");
+                        },
+                        isForwarded: messageList.isForwarded! ? false : true,
+                        opened: false,
+                        createdAt: messageList.createdAt!,
+                        currentUserId: userId,
+                        onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,)),
+                        onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: oppositeUserId,)).then((value) {
+                          // print("value>>> $value");
+                          if (messageList.replies != null && messageList.replies!.isNotEmpty) {
+                            for (var reply in messageList.replies!) {
+                              if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
+                                setState(() =>
+                                reply.isSeen = true);
+                              }
+                            }
                           }
-                        }
-                      }
-                    }),
-                    onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
-                    onCopy: () => copyToClipboard(context, parse(message).body?.text ?? ""),
-                    onEdit: () => setState(() {
-                      _messageController.clear();
-                      FocusScope.of(context).requestFocus(_focusNode);
-                      int position = _messageController.text.length;
-                      currentUserMessageId = messageId;
-                      print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
-                      _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
-                    }),
-                    onDelete: () => deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: oppositeUserId)))),
+                        }),
+                        onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
+                        onCopy: () => copyToClipboard(context, parse(message).body?.text ?? ""),
+                        onEdit: () => setState(() {
+                          _messageController.clear();
+                          FocusScope.of(context).requestFocus(_focusNode);
+                          int position = _messageController.text.length;
+                          currentUserMessageId = messageId;
+                          print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
+                          _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
+                        }),
+                        onDelete: () => deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: oppositeUserId)))),
               ],
             ),
           ],
@@ -1721,13 +1721,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       child: Row(
                         children: [
                           profileIconWithStatus(
-                            userID: userId,
-                            status: "",
-                            needToShowIcon: false,
-                            radius: 16,
-                            otherUserProfile: user?.thumbnailAvatarUrl ?? '',
-                            borderColor: AppColor.blueColor,
-                            userName: user?.username ?? "Unknown"
+                              userID: userId,
+                              status: "",
+                              needToShowIcon: false,
+                              radius: 16,
+                              otherUserProfile: user?.thumbnailAvatarUrl ?? '',
+                              borderColor: AppColor.blueColor,
+                              userName: user?.username ?? "Unknown"
                           ),
                           SizedBox(width: 12),
                           Expanded(
