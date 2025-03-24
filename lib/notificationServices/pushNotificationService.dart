@@ -189,7 +189,7 @@ class NotificationService {
             channel.id,
             channel.name,
             channelDescription: channel.description,
-            importance: Importance.max,
+            importance: Importance.high,
             priority: Priority.high,
             playSound: true,
             enableVibration: true,

@@ -16,7 +16,14 @@ void showCustomStatusSheet(BuildContext context) {
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    builder: (context) => const CustomStatusSheet(),
+    useSafeArea: true,
+    isDismissible: true,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: const CustomStatusSheet(),
+    ),
   );
 }
 
@@ -38,28 +45,29 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
   }
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-      ),
-      decoration: BoxDecoration(
-        color: AppColor.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          _buildHeader(context),
+    return SingleChildScrollView(
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColor.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            _buildHeader(context),
 
-          // Custom Status Input
-          _buildCustomStatusInput(),
+            // Custom Status Input
+            _buildCustomStatusInput(),
 
-          // Suggestions Section
-          _buildSuggestionsSection(),
-        ],
+            // Suggestions Section
+            _buildSuggestionsSection(),
+            
+            // Add extra padding at bottom for safe area
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
+          ],
+        ),
       ),
     );
   }
@@ -144,20 +152,20 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
             Expanded(
               child: TextFormField(
                 controller: commonProvider.setCustomTextController,
-                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14),
-                   decoration: InputDecoration(
-                       hintText: 'Set a custom status',
-                       suffixIcon: (commonProvider.customStatusUrl.isNotEmpty) ? GestureDetector(
-                         onTap: () => commonProvider.selectedIndexOfStatus != null ? commonProvider.clearUpdates() : commonProvider.updateCustomStatusCall(status: "", emojiUrl: ""),
-                         child: Container(
-                             margin: EdgeInsets.all(10),
-                             decoration: BoxDecoration(
-                               color: Colors.white,
-                               shape: BoxShape.circle,
-                             ),
-                             child: Icon(Icons.close,size: 22,color: Colors.red,)),
-                       ) : SizedBox.shrink()
-                   ),
+                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14),
+                decoration: InputDecoration(
+                    hintText: 'Set a custom status',
+                    suffixIcon: (commonProvider.customStatusUrl.isNotEmpty) ? GestureDetector(
+                      onTap: () => commonProvider.selectedIndexOfStatus != null ? commonProvider.clearUpdates() : commonProvider.updateCustomStatusCall(status: "", emojiUrl: ""),
+                      child: Container(
+                          margin: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.close,size: 22,color: Colors.red,)),
+                    ) : SizedBox.shrink()
+                ),
               ),
 
               // child: commonTextFormField(
@@ -253,9 +261,9 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   commonText(
-                    text: title,
-                    fontSize: 16,
-                    color: Colors.black
+                      text: title,
+                      fontSize: 16,
+                      color: Colors.black
                     // color: Colors.white,
                   ),
                 ],
@@ -270,15 +278,24 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
 
 Future showEmojiSheet(){
   return showModalBottomSheet(
-    context: navigatorKey.currentState!.context,
-    builder: (BuildContext subcontext) {
-      return EmojiPicker(
-          onEmojiSelected: (category, emoji) {
-            print("emojisss >> ${emoji.emoji}");
-            print("emojisss >> ${emoji.name}");
-          }
-       );
-});}
+      context: navigatorKey.currentState!.context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.white,
+      isDismissible: true,
+      builder: (BuildContext subcontext) {
+        return SizedBox(
+          height: MediaQuery.of(subcontext).size.height * 0.3,
+          child: EmojiPicker(
+              onEmojiSelected: (category, emoji) {
+                print("emojisss >> ${emoji.emoji}");
+                print("emojisss >> ${emoji.name}");
+              }
+          ),
+        );
+      }
+  );
+}
 
 
 ///

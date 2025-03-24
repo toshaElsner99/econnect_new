@@ -1,4 +1,3 @@
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
@@ -254,86 +253,91 @@ class _SettingScreenState extends State<SettingScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          // color: Color(0xFF1B1E23),
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: Consumer<CommonProvider>(builder: (context, commonProvider, child) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Bottom sheet indicator
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[600],
-                    borderRadius: BorderRadius.circular(2),
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => SingleChildScrollView(
+        child: Container(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          decoration: BoxDecoration(
+            // color: Color(0xFF1B1E23),
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          ),
+          child: Consumer<CommonProvider>(builder: (context, commonProvider, child) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Bottom sheet indicator
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[600],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
 
-              // Status text
-              Padding(
-                padding: EdgeInsets.only(left: 16, bottom: 16),
-                child: commonText(
-                  text: AppString.status,
-                  color: Colors.black,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                // Status text
+                Padding(
+                  padding: EdgeInsets.only(left: 16, bottom: 16),
+                  child: commonText(
+                    text: AppString.status,
+                    color: Colors.black,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
 
-              // Status options
-              _buildStatusOption(
-                commonProvider: commonProvider,
-                context,
-                icon: Icons.check_circle,
-                color: Colors.green,
-                text: AppString.online,
-                index: 0,
-              ),
-              _buildStatusOption(
-                commonProvider: commonProvider,
-                context,
-                icon: Icons.access_time_filled_outlined,
-                color: Colors.orange,
-                text: AppString.away,
-                index: 1,
-              ),
-              _buildStatusOption(
-                commonProvider: commonProvider,
-                context,
-                icon: Icons.remove_circle,
-                color: Colors.blue,
-                text: AppString.busy,
-                index: 2,
-              ),
-              _buildStatusOption(
-                commonProvider: commonProvider,
-                context,
-                icon: Icons.remove_circle,
-                color: Colors.red,
-                text: AppString.dnd,
-                index: 3,
-              ),
-              _buildStatusOption(
-                commonProvider: commonProvider,
-                context,
-                icon: Icons.circle_outlined,
-                color: AppColor.borderColor,
-                text: AppString.offline,
-                index: 4,
-              ),
-              const SizedBox(height: 16),
-            ],
-          );
-        },),
+                // Status options
+                _buildStatusOption(
+                  commonProvider: commonProvider,
+                  context,
+                  icon: Icons.check_circle,
+                  color: Colors.green,
+                  text: AppString.online,
+                  index: 0,
+                ),
+                _buildStatusOption(
+                  commonProvider: commonProvider,
+                  context,
+                  icon: Icons.access_time_filled_outlined,
+                  color: Colors.orange,
+                  text: AppString.away,
+                  index: 1,
+                ),
+                _buildStatusOption(
+                  commonProvider: commonProvider,
+                  context,
+                  icon: Icons.remove_circle,
+                  color: Colors.blue,
+                  text: AppString.busy,
+                  index: 2,
+                ),
+                _buildStatusOption(
+                  commonProvider: commonProvider,
+                  context,
+                  icon: Icons.remove_circle,
+                  color: Colors.red,
+                  text: AppString.dnd,
+                  index: 3,
+                ),
+                _buildStatusOption(
+                  commonProvider: commonProvider,
+                  context,
+                  icon: Icons.circle_outlined,
+                  color: AppColor.borderColor,
+                  text: AppString.offline,
+                  index: 4,
+                ),
+                const SizedBox(height: 16),
+              ],
+            );
+          },),
+        ),
       ),
     );
   }

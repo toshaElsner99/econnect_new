@@ -64,9 +64,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   int _selectedTabIndex = 0;
   final List<String> _tabTitles = ['All', 'Channels', 'Favourites'];
   
+  // PageController for swiping between tabs
+  late PageController _pageController;
+  
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _selectedTabIndex);
     WidgetsBinding.instance.addObserver(this);
     Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
     if(!_isInitialized) {
@@ -92,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   void dispose() {
+    _pageController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -116,28 +121,34 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         setBadge();
         return Scaffold(
           backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? null : AppColor.appBarColor,
-          floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
-          appBar: AppBar(
-            bottom: PreferredSize(preferredSize: Size(double.infinity, MediaQuery.of(context).size.height *0.2), child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildHeader(),
-                      Spacer(),
-                      // buildOpenSetting(),
-                      _buildAddButton()
-                    ],
-                  ),
-                  _buildSearchField(),
-                  _buildTabsSection(),
-                ],),
-            )),
+          appBar: AppBar(toolbarHeight: 0,),
+          body: Column(
+            children: [
+              // Header section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
+                child: Row(
+                  children: [
+                    _buildHeader(),
+                    Spacer(),
+                    _buildAddButton()
+                  ],
+                ),
+              ),
+              // Search and tabs section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                child: Column(
+                  children: [
+                    _buildSearchField(),
+                    _buildTabsSection(),
+                  ],
+                ),
+              ),
+              // Content section
+              Expanded(child: _buildScreenContent(channelListProvider, commonProvider)),
+            ],
           ),
-          body: _buildScreenContent(channelListProvider, commonProvider),
         );
       },),
     );
@@ -156,6 +167,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               onTap: () {
                 setState(() {
                   _selectedTabIndex = index;
+                  _pageController.animateToPage(
+                    index,
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
                 });
               },
               child: Container(
@@ -188,126 +204,137 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   
   // Content based on selected tab
   Widget _buildScreenContent(ChannelListProvider channelListProvider, CommonProvider commonProvider) {
-    switch (_selectedTabIndex) {
-      case 0:
-        return channelListProvider.combinedAllItems.isEmpty
-            ? Center(
-                child: CircularProgressIndicator(
-                  color: AppColor.blueColor,
+    return PageView(
+      controller: _pageController,
+      onPageChanged: (index) {
+        setState(() {
+          _selectedTabIndex = index;
+        });
+      },
+      children: [
+        _buildAllTab(channelListProvider, commonProvider),
+        _buildChannelsTab(channelListProvider, commonProvider),
+        _buildFavoritesTab(channelListProvider, commonProvider),
+      ],
+    );
+  }
+  
+  // All tab
+  Widget _buildAllTab(ChannelListProvider channelListProvider, CommonProvider commonProvider) {
+    return channelListProvider.combinedAllItems.isEmpty
+      ? Center(
+          child: CircularProgressIndicator(
+            color: AppColor.blueColor,
+          ),
+        )
+      : SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 5,vertical: 10),
+                padding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              )
-            : SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 5,vertical: 10),
-                      padding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        // color: AppColor.borderColor.withOpacity(0.05),
-                      ),
-                      child: Theme(
-                        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                        child: ListView.separated(
-                          separatorBuilder: (BuildContext context, int index) {
-                            return  Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Divider(
-                                  color: AppColor.white.withAlpha(15)
-                              ),
-                            );
-                          },
-                          physics: NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          itemCount: channelListProvider.combinedAllItems.length,
-                          itemBuilder: (context, index) {
-                            final item = channelListProvider.combinedAllItems[index];
-                            return _buildListItem(item, commonProvider);
-                          },
+                child: Theme(
+                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  child: ListView.separated(
+                    separatorBuilder: (BuildContext context, int index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Divider(
+                            color: AppColor.white.withAlpha(15)
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-      
-      case 1: // Channels tab
-        // If no channels, show empty state
-        if (channelListProvider.channelListModel?.data == null || channelListProvider.channelListModel!.data!.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.groups_outlined,
-                  size: 60,
-                  color: Colors.grey,
-                ),
-                SizedBox(height: 16),
-                Text(
-                  "Channels View",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                      );
+                    },
+                    physics: NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: channelListProvider.combinedAllItems.length,
+                    itemBuilder: (context, index) {
+                      final item = channelListProvider.combinedAllItems[index];
+                      return _buildListItem(item, commonProvider);
+                    },
                   ),
                 ),
-                SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                  child: Text(
-                    "Your channels will appear here",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-        
-        // Extract channels from combinedAllItems to maintain the timestamp sorting
-        final channelItems = channelListProvider.combinedAllItems
-            .where((item) => item['type'] == 'channel' || item['type'] == 'favoriteChannel')
-            .toList();
-        
-        if (channelItems.isEmpty) {
-          return Center(child: Text("No channels found"));
-        }
-        
-        return SingleChildScrollView(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 5,vertical: 10),
-            padding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              // color: AppColor.borderColor.withOpacity(0.05),
-            ),
-            child: Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-              child: ListView.builder(
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: channelItems.length,
-                itemBuilder: (context, index) {
-                  final item = channelItems[index];
-                  return _buildListItem(item, commonProvider);
-                },
               ),
-            ),
+            ],
           ),
         );
-      
-      case 2: // Favorites tab
-        return _buildFavoritesTab(channelListProvider, commonProvider);
-      
-      default:
-        return Center(child: Text("Tab not implemented"));
+  }
+  
+  // Channels tab
+  Widget _buildChannelsTab(ChannelListProvider channelListProvider, CommonProvider commonProvider) {
+    // Extract channels from combinedAllItems to maintain timestamp sorting
+    final channelItems = channelListProvider.combinedAllItems
+        .where((item) => item['type'] == 'channel' || item['type'] == 'favoriteChannel')
+        .toList();
+    
+    if (channelItems.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.groups_outlined,
+              size: 60,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 16),
+            Text(
+              "Channels View",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Text(
+                "Your channels will appear here",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
+    
+    return SingleChildScrollView(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 5,vertical: 10),
+        padding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ListView.separated(
+            separatorBuilder: (BuildContext context, int index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Divider(
+                    color: AppColor.white.withAlpha(15)
+                ),
+              );
+            },
+            physics: NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: channelItems.length,
+            itemBuilder: (context, index) {
+              final item = channelItems[index];
+              return _buildListItem(item, commonProvider);
+            },
+          ),
+        ),
+      ),
+    );
   }
 
   Container buildOpenSetting() {
@@ -754,14 +781,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppColor.borderColor.withOpacity(0.05),
-            width: 1,
-          ),
-        ),
-      ),
       child: userHeader()
     );
   }
@@ -1395,43 +1414,33 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       );
     }
     
-    // We don't need to sort here as the favorites are already sorted by timestamp in the provider
-    
-    // Items with unread messages
-    final itemsWithUnreadMessages = favoriteItems
-        .where((item) => (item['unreadCount'] as int) > 0)
-        .toList();
-    
-    // Items with no unread messages
-    final itemsWithNoUnreadMessages = favoriteItems
-        .where((item) => (item['unreadCount'] as int) == 0)
-        .toList();
-    
     return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 5,vertical: 10),
-            padding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              // color: AppColor.borderColor.withOpacity(0.05),
-            ),
-            child: Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-              child: ListView.builder(
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: favoriteItems.length,
-                itemBuilder: (context, index) {
-                  final item = favoriteItems[index];
-                  return _buildListItem(item, commonProvider);
-                },
-              ),
-            ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 5,vertical: 10),
+        padding: EdgeInsets.symmetric(vertical: 10,horizontal: 5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ListView.separated(
+            separatorBuilder: (BuildContext context, int index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Divider(
+                    color: AppColor.white.withAlpha(15)
+                ),
+              );
+            },
+            physics: NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: favoriteItems.length,
+            itemBuilder: (context, index) {
+              final item = favoriteItems[index];
+              return _buildListItem(item, commonProvider);
+            },
           ),
-        ],
+        ),
       ),
     );
   }

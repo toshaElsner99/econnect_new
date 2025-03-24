@@ -136,49 +136,76 @@ class SplashProvider extends ChangeNotifier {
     }
     return false;
   }
-  void showForceUpdateDialog(BuildContext context, bool isForceUpdate) {
-    showDialog(
+  Future<void> showForceUpdateDialog(BuildContext context, bool isForceUpdate) async {
+    return showDialog(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Image.asset(Platform.isAndroid ? AppImage.playStoreIcon : AppImage.appStoreIcon,height: 20,width: 20, ),
-              const SizedBox(width: 10),
-              commonText(text: 'Update Required', fontSize: 17),
-            ],
-          ),
-          content: commonText(text: isForceUpdate ? 'A new version of the app is available. Please update to continue using the app.' : 'A new version of the app is available. Would you like to update now?', fontSize: 15),
-          actions: [
-            TextButton(
+        return WillPopScope(
+          onWillPop: () async => false, // Prevents system back button dismissal
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+              side: BorderSide(color: Colors.white, width: 1),
+            ),
+            title: Row(
+              children: [
+                Image.asset(Platform.isAndroid ? AppImage.playStoreIcon : AppImage.appStoreIcon, height: 20, width: 20),
+                const SizedBox(width: 10),
+                commonText(text: 'Update Required', fontSize: 17),
+              ],
+            ),
+            content: commonText(
+              text: isForceUpdate
+                  ? 'A new version of the app is available. Please update to continue using the app.'
+                  : 'A new version of the app is available. Would you like to update now?',
+              fontSize: 15,
+            ),
+            actions: [
+              TextButton(
+                // style: AppPreferenceConstants.themeModeBoolValueGet ?  ButtonStyle(
+                //   shape: WidgetStatePropertyAll(
+                //     RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(6), // Same border radius as AlertDialog
+                //       side: BorderSide(color: Colors.white, width: 1), // White border
+                //     ),
+                //   ),
+                // ) : null,
                 onPressed: () {
-                  if(isForceUpdate){
+                  if (isForceUpdate) {
                     exit(0);
-                  }else {
+                  } else {
                     pop();
                     whereToGO();
                   }
                 },
-                child:  commonText(text: isForceUpdate ? 'Cancel' : "Later", fontSize: 15,color: Colors.black,fontWeight: FontWeight.w500)
-            ),
-            TextButton(
-              style: ButtonStyle(
-                backgroundColor: const WidgetStatePropertyAll(AppColor.appBarColor),
-                shape: WidgetStatePropertyAll(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
+                child: commonText(
+                  text: isForceUpdate ? 'Cancel' : "Later",
+                  fontSize: 15,
+                  color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white :Colors.black,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              onPressed: () => openStore(),
-              child: commonText(text: 'Update', fontSize: 15,color: Colors.white,fontWeight: FontWeight.w600),
-            ),
-          ],
+              TextButton(
+                style: ButtonStyle(
+                  backgroundColor: const WidgetStatePropertyAll(AppColor.appBarColor),
+                  shape: WidgetStatePropertyAll(
+                    RoundedRectangleBorder(
+                      side: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+                onPressed: () => openStore(),
+                child: commonText(text: 'Update', fontSize: 15, color: Colors.white, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
         );
       },
     );
   }
+
 
   void openStore() {
     final url = Platform.isAndroid
