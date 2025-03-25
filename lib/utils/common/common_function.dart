@@ -322,8 +322,12 @@ Future<void> pop({bool? popValue}) async {
   Navigator.pop(navigatorKey.currentState!.context,popValue);
 }
 
-bool statusCode200Check(Map<String, dynamic> response) {
-  return(response['statusCode'] == 200 || response['statusCode'] == 201);
+bool statusCode200Check(Map<String, dynamic> response, [bool checkForKarmaRes = false]) {
+  if(checkForKarmaRes = true) {
+    return (response['statusCode'] == 200 || response['statusCode'] == 201);
+  }else {
+    return(response['success'] == true);
+  }
 }
 
 String capitalizeFirstLetter(String input) {

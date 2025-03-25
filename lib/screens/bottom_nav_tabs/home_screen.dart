@@ -70,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    print("signInModel>>>> ${signInModel.data?.user?.muteChannels}");
     _pageController = PageController(initialPage: _selectedTabIndex);
     // WidgetsBinding.instance.addObserver(this);
     Provider.of<CommonProvider>(context, listen: false).updateStatusCall(status: "online");

@@ -45,7 +45,7 @@ class ApiService {
       return;
     }
 
-    Uri uri = Uri.parse(isKarmaUrl ? ApiString.karmaBaseUrl : ApiString.baseUrl + endPoint).replace(queryParameters: queryParams);
+    Uri uri = Uri.parse(isKarmaUrl ? ApiString.karmaBaseUrl + endPoint : ApiString.baseUrl + endPoint).replace(queryParameters: queryParams);
     http.Response? response;
     Map<String, String> requestHeaders = {};
     if (!endPoint.contains(ApiString.login) || !endPoint.contains(ApiString.getAppVersion)) {

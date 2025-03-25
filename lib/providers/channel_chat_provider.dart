@@ -22,6 +22,7 @@ import '../model/get_reply_message_channel_model.dart';
 import '../socket_io/socket_io.dart';
 import '../utils/api_service/api_service.dart';
 import '../utils/api_service/api_string_constants.dart';
+import '../utils/app_preference_constants.dart';
 import '../utils/common/common_function.dart';
 import '../utils/common/common_widgets.dart';
 import 'file_service_provider.dart';
@@ -470,6 +471,7 @@ class ChannelChatProvider extends ChangeNotifier{
     /// Karma Functionality ///
     bool shouldSendMessage = true;
 
+    // if (channelId == AppPreferenceConstants.elsnerChannelGetId && content is String) {
     if (channelId == "67d2a08db7b8f099e41e4dc4" && content is String) {
       // New pattern: Look for both @username and :karma anywhere in the content
       RegExp mentionRegex = RegExp(r'@([A-Za-z0-9_]+)');
@@ -480,123 +482,159 @@ class ChannelChatProvider extends ChangeNotifier{
 
       // Proceed if there's exactly one mention and :karma exists
       if (mentionMatches.length == 1 && karmaMatches.isNotEmpty) {
-        // Get the username mentioned
-        final mentionedUsername = mentionMatches.first.group(1);
+        try {
+          // Get the username mentioned
+          final mentionedUsername = mentionMatches.first.group(1);
 
-        // Remove both the @username and :karma from the content
-        String processedContent = content;
-        final mentionToRemove = mentionMatches.first.group(0)!;
-        final karmaToRemove = karmaMatches.first.group(0)!;
+          // Remove both the @username and :karma from the content
+          String processedContent = content;
+          final mentionToRemove = mentionMatches.first.group(0)!;
+          final karmaToRemove = karmaMatches.first.group(0)!;
 
-        processedContent = processedContent.replaceFirst(mentionToRemove, '');
-        processedContent = processedContent.replaceFirst(karmaToRemove, '');
-        final String contentWithoutMention = processedContent.trim();
+          processedContent = processedContent.replaceFirst(mentionToRemove, '');
+          processedContent = processedContent.replaceFirst(karmaToRemove, '');
+          final String contentWithoutMention = processedContent.trim();
 
-        // Debug prints to verify content processing
-        print("Original content: $content");
-        print("Mention to remove: $mentionToRemove");
-        print("Karma tag to remove: $karmaToRemove");
-        print("Extracted username: $mentionedUsername");
-        print("Content after processing: $contentWithoutMention");
+          // Debug prints to verify content processing
+          print("Original content: $content");
+          print("Mention to remove: $mentionToRemove");
+          print("Karma tag to remove: $karmaToRemove");
+          print("Extracted username: $mentionedUsername");
+          print("Content after processing: $contentWithoutMention");
 
-        if (contentWithoutMention.trim().isNotEmpty) {
-          // Find the member by username to get their email
-          MemberDetails? mentionedMember;
-          for (var member in channelMembersList) {
-            if (member.username == mentionedUsername) {
-              mentionedMember = member;
-              break;
+          if (contentWithoutMention.trim().isNotEmpty) {
+            // Find the member by username to get their email
+            MemberDetails? mentionedMember;
+            for (var member in channelMembersList) {
+              if (member.username == mentionedUsername) {
+                mentionedMember = member;
+                break;
+              }
             }
-          }
 
-          if (mentionedMember != null) {
-            // Check if user is not sending karma to themselves
-            if (mentionedMember.email != signInModel.data?.user?.email) {
-              final karmaRequestBody = {
-                "sender_email": signInModel.data?.user?.email ?? "",
-                "receiver_email": mentionedMember.email,
-                "transaction_type": "manualy_send",
-                "message": contentWithoutMention.trim(),
-              };
+            if (mentionedMember != null) {
+              // Check if user is not sending karma to themselves
+              if (mentionedMember.email != signInModel.data?.user?.email) {
+                final karmaRequestBody = {
+                  "sender_email": signInModel.data?.user?.email ?? "",
+                  "receiver_email": mentionedMember.email,
+                  "transaction_type": "manualy_send",
+                  "message": contentWithoutMention.trim(),
+                };
 
-              final karmaResponse = await ApiService.instance.request(
-                endPoint: ApiString.sendKarma,
-                method: Method.POST,
-                reqBody: karmaRequestBody
-              );
+                try {
+                  final karmaResponse = await ApiService.instance.request(
+                    endPoint: ApiString.sendKarma,
+                    method: Method.POST,
+                    isKarmaUrl: true,
+                    reqBody: karmaRequestBody
+                  );
 
-              // Check karma response
-              if (statusCode200Check(karmaResponse)) {
-                print("Karma sent successfully: ${karmaResponse['message']}");
-                commonShowToast("${karmaResponse['message']}", Colors.green);
-              } else {
-                // If karma API fails with specific messages, don't send the message
-                print("Karma send failed: ${karmaResponse['message']}");
-                if (karmaResponse['message'] == "You cannot send Waffle to yourself" ||
-                    karmaResponse['message'] == "Insufficient Waffle balance") {
+                  // Check karma response
+                  print("karmaResponse >>> ${karmaResponse}");
+                  
+                  // Check if the response has success field and it's true
+                  if (karmaResponse['success'] == true) {
+                    print("Karma sent successfully: ${karmaResponse['message']}");
+                    commonShowToast("${karmaResponse['message']}", Colors.green);
+                  } else {
+                    // If karma API fails with specific messages, don't send the message
+                    print("Karma send failed: ${karmaResponse['message']}");
+                    if (karmaResponse['message'] == "You cannot send Waffle to yourself" ||
+                        karmaResponse['message'] == "Insufficient Waffle balance") {
+                      shouldSendMessage = false;
+                      // Show error message to the user
+                      commonShowToast("${karmaResponse['message']}", Colors.red);
+                      return;
+                    } else {
+                      // Handle other error cases
+                      shouldSendMessage = false;
+                      commonShowToast("${karmaResponse['message']}", Colors.red);
+                      return;
+                    }
+                  }
+                } catch (e) {
+                  print("Error sending karma: $e");
+                  commonShowToast("Failed to send karma. Please try again.", Colors.red);
                   shouldSendMessage = false;
-                  // Show error message to the user
-                  commonShowToast("${karmaResponse['message']}", Colors.red);
                   return;
                 }
+              } else {
+                print("Cannot send Karma to yourself");
+                commonShowToast("You cannot send Waffle to yourself", Colors.red);
+                shouldSendMessage = false;
+                return;
               }
             } else {
-              print("Cannot send Karma to yourself");
-              commonShowToast("You cannot send Waffle to yourself", Colors.red);
+              print("User not found in channel members");
+              commonShowToast("User not found in channel members", Colors.red);
               shouldSendMessage = false;
               return;
             }
           }
+        } catch (e) {
+          print("Error processing karma message: $e");
+          commonShowToast("Error processing karma message", Colors.red);
+          shouldSendMessage = false;
+          return;
         }
       }
     }
-    if(shouldSendMessage == false){
-      return;
-    }
 
-    final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST, reqBody: requestBody);
+    if (shouldSendMessage == false) return;
 
-    if (statusCode200Check(response)) {
-      /// Socket Emit ///
-      socketProvider.sendMessagesSC(response: response['data'], emitReplyMsg: replyId != null ? true : false);
+    try {
+      final response = await ApiService.instance.request(
+        endPoint: ApiString.sendChannelMessage, 
+        method: Method.POST, 
+        reqBody: requestBody
+      );
 
-      /// find where to add ///
-      if (editMsgID != null && editMsgID.isNotEmpty) {
-        print("editMessageId>> $editMsgID $isEditFromReply");
-        if(isEditFromReply == true){
-          for (var message in getReplyMessageChannelModel!.data!.messagesList!) {
-            int groupMessageIndex = message.messagesGroupList!.indexWhere((msg) => msg.sId == editMsgID);
-            if (groupMessageIndex != -1) {
-              var groupMessage = message.messagesGroupList![groupMessageIndex];
-              groupMessage.content = content;
-              groupMessage.isEdited = true;
-              break;
+      if (statusCode200Check(response)) {
+        /// Socket Emit ///
+        socketProvider.sendMessagesSC(response: response['data'], emitReplyMsg: replyId != null ? true : false);
+
+        /// find where to add ///
+        if (editMsgID != null && editMsgID.isNotEmpty) {
+          print("editMessageId>> $editMsgID $isEditFromReply");
+          if(isEditFromReply == true){
+            for (var message in getReplyMessageChannelModel!.data!.messagesList!) {
+              int groupMessageIndex = message.messagesGroupList!.indexWhere((msg) => msg.sId == editMsgID);
+              if (groupMessageIndex != -1) {
+                var groupMessage = message.messagesGroupList![groupMessageIndex];
+                groupMessage.content = content;
+                groupMessage.isEdited = true;
+                break;
+              }
+            }
+          } else {
+            int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.id == editMsgID));
+            if (editIndex != -1) {
+              msg.Message editedMessage = msg.Message.fromJson(response['data']);
+              editedMessage.isEdited = true;
+              messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.id == editMsgID)] = editedMessage;
             }
           }
+        } else if (replyId != null && replyId.isNotEmpty) {
+          getReplyMessageListChannel(msgId: replyId, fromWhere: "Reply Send Channel");
         } else {
-          int editIndex = messageGroups.indexWhere((item) => item.messages!.any((msg) => msg.id == editMsgID));
-          if (editIndex != -1) {
-            msg.Message editedMessage = msg.Message.fromJson(response['data']);
-            editedMessage.isEdited = true;
-            messageGroups[editIndex].messages![messageGroups[editIndex].messages!.indexWhere((msg) => msg.id == editMsgID)] = editedMessage;
+          // Existing logic for adding new messages
+          int existingIndex = messageGroups.indexWhere((item) => item.id == todayDate);
+          if (existingIndex != -1) {
+            messageGroups[existingIndex].messages!.add(msg.Message.fromJson(response['data']));
+          } else {
+            final newListOfDate = response['data'];
+            messageGroups.add(msg.MessageGroup.fromJson({
+              "_id": todayDate,
+              'messages': [newListOfDate],
+              "count": 1,
+            }));
           }
         }
-      } else if (replyId != null && replyId.isNotEmpty) {
-        getReplyMessageListChannel(msgId: replyId, fromWhere: "Reply Send Channel");
-      } else {
-        // Existing logic for adding new messages
-        int existingIndex = messageGroups.indexWhere((item) => item.id == todayDate);
-        if (existingIndex != -1) {
-          messageGroups[existingIndex].messages!.add(msg.Message.fromJson(response['data']));
-        } else {
-          final newListOfDate = response['data'];
-          messageGroups.add(msg.MessageGroup.fromJson({
-            "_id": todayDate,
-            'messages': [newListOfDate],
-            "count": 1,
-          }));
-        }
       }
+    } catch (e) {
+      print("Error sending message: $e");
+      commonShowToast("Failed to send message. Please try again.", Colors.red);
     }
     notifyListeners();
   }

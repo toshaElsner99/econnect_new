@@ -11,8 +11,10 @@ import 'package:e_connect/providers/channel_chat_provider.dart';
 import 'package:e_connect/screens/channel/channel_chat_screen.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
+import 'package:e_connect/utils/common/prefrance_function.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -81,6 +83,23 @@ class ChannelListProvider extends ChangeNotifier{
           print("  - createdAt: ${channel.createdAt}");
           print("  - unreadCount: ${channel.unreadCount}");
           print("---------------------");
+        }
+
+        // Find the channel where isDefault = true
+        var defaultChannel = channelListModel!.data!.firstWhere(
+              (channel) => channel.isDefault == true,
+          // orElse: () => null,
+        );
+
+        if (defaultChannel != null) {
+          print("channelId : ${defaultChannel.sId} & channel : ${defaultChannel.name}");
+          AppPreferenceConstants.elsnerChannelGetId = defaultChannel.sId ?? "";
+          print("Default Channel ID stored: ${AppPreferenceConstants.elsnerChannelGetId}");
+
+          // Store the ID in SharedPreferences
+          await setData(AppPreferenceConstants.elsnerChannelKey, AppPreferenceConstants.elsnerChannelGetId);
+          AppPreferenceConstants.elsnerChannelGetId = await getData(AppPreferenceConstants.elsnerChannelKey);
+          print("Retrieved Default Channel ID: ${AppPreferenceConstants.elsnerChannelGetId}");
         }
       }
     }

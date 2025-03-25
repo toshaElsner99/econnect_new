@@ -5,4 +5,6 @@ class AppPreferenceConstants{
   static const String isDarkModePrefs = "isDarkMode";
   static const String fcmToken = "fcmToken";
   static bool themeModeBoolValueGet = false;
+  static const String elsnerChannelKey = "elsnerChannelKey";
+  static String elsnerChannelGetId = "";
 }

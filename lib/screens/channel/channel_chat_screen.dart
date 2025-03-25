@@ -1,7 +1,9 @@
 import 'dart:developer';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:confetti/confetti.dart';
 import 'package:e_connect/model/channel_chat_model.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
 import 'package:e_connect/providers/common_provider.dart';
@@ -51,6 +53,7 @@ class ChannelChatScreen extends StatefulWidget {
 }
 
 class _ChannelChatScreenState extends State<ChannelChatScreen> {
+  late ConfettiController _confettiController1,_confettiController2;
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   final channelChatProviderInit = Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false);
   // int? _selectedIndex;
@@ -103,7 +106,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     // }
 
     print("messageGroupId $messageGroupId");
-    log("messageGroupId $sortedGroups");
+    // log("messageGroupId $sortedGroups");
     final  index = sortedGroups.indexWhere((test)=> test.id == messageGroupId.split(" ")[0]);
     final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.id == messageId);
     print("indexindexindexindexindex $index");
@@ -422,9 +425,15 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     return matchingMembers;
   }
 
+
+
   @override
   void initState() {
     super.initState();
+    _confettiController1 = ConfettiController(duration: const Duration(seconds: 10));
+    _confettiController2 = ConfettiController(duration: const Duration(seconds: 10));
+    _confettiController1.play();
+    _confettiController2.play();
     Provider.of<CommonProvider>(context,listen: false).getUserApi(id: signInModel.data?.user?.id ?? "");
     channelID = widget.channelId;
     bool isFromJump = widget.isFromJump ?? false;
@@ -471,6 +480,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   }
   @override
   void dispose() {
+    _confettiController1.dispose();
+    _confettiController2.dispose();
     _messageController.removeListener(_onTextChanged);
     super.dispose();
     socketProvider.userTypingEventChannel(
@@ -594,6 +605,29 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         ),
       ),
     );
+  }
+  Path drawStar(Size size) {
+    // Method to convert degrees to radians
+    double degToRad(double deg) => deg * (pi / 180.0);
+
+    const numberOfPoints = 5;
+    final halfWidth = size.width / 2;
+    final externalRadius = halfWidth;
+    final internalRadius = halfWidth / 2.5;
+    final degreesPerStep = degToRad(360 / numberOfPoints);
+    final halfDegreesPerStep = degreesPerStep / 2;
+    final path = Path();
+    final fullAngle = degToRad(360);
+    path.moveTo(size.width, halfWidth);
+
+    for (double step = 0; step < fullAngle; step += degreesPerStep) {
+      path.lineTo(halfWidth + externalRadius * cos(step),
+          halfWidth + externalRadius * sin(step));
+      path.lineTo(halfWidth + internalRadius * cos(step + halfDegreesPerStep),
+          halfWidth + internalRadius * sin(step + halfDegreesPerStep));
+    }
+    path.close();
+    return path;
   }
 
   Widget inputTextFieldWithEditor(ChannelChatProvider channelChatProvider) {
@@ -924,93 +958,127 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   inputTextFieldWithEditor(channelChatProvider)
                 ],),
             ),
-            body: Column(
+            body: Stack(
               children: [
-                Divider(color: Colors.grey.shade800, height: 1,),
-                if(channelChatProvider.isChannelChatLoading )...{
-                  Flexible(child: ShimmerLoading.chatShimmer(context))
-                }else...{
-                  // Expanded(
-                  //   child: ListView(
-                  //     controller: _scrollController,
-                  //     reverse: true,
-                  //     children: [
-                  //       dateHeaders(),
-                  //     ],
-                  //   ),
-                  // ),
-                  Expanded(
-                      child: dateHeaders()
+                Column(
+                  children: [
+                    Divider(color: Colors.grey.shade800, height: 1,),
+                    if(channelChatProvider.isChannelChatLoading )...{
+                      Flexible(child: ShimmerLoading.chatShimmer(context))
+                    }else...{
+                      // Expanded(
+                      //   child: ListView(
+                      //     controller: _scrollController,
+                      //     reverse: true,
+                      //     children: [
+                      //       dateHeaders(),
+                      //     ],
+                      //   ),
+                      // ),
+                      Expanded(
+                          child: dateHeaders()
+                      ),
+                    },
+                    // SizedBox(height: 20),
+                    // Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+                    //   var filteredTypingUsers = channelChatProvider.typingUsers
+                    //       .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                    //       && user['routeId'] == channelID).toList();
+                    //   String typingMessage;
+                    //
+                    //   if (filteredTypingUsers.isEmpty) {
+                    //     typingMessage = "";
+                    //   } else if (filteredTypingUsers.length == 1) {
+                    //     typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+                    //   } else {
+                    //     var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+                    //     var lastUser  = usernames.removeLast(); // Get the last username
+                    //     typingMessage = "${usernames.join(', ')}, and $lastUser  are Typing..."; // Join the rest with commas
+                    //   }
+                    //
+                    //   return Container(
+                    //     margin: EdgeInsets.only(right: 20,left : 20, top: 15,bottom: 6),
+                    //     alignment: Alignment.centerLeft,
+                    //     child: Column(
+                    //       children: [
+                    //         // Other widgets...
+                    //         if (typingMessage.isNotEmpty)
+                    //           commonText(text:
+                    //             typingMessage,
+                    //               fontSize: 14,
+                    //               color: Colors.grey.shade600,
+                    //               fontWeight: FontWeight.w400,
+                    //           ),
+                    //       ],
+                    //     ),
+                    //   );
+                    // },),
+                    Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+                      var filteredTypingUsers = channelChatProvider.typingUsers
+                          .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                          && user['routeId'] == channelID
+                          && user['isReply'] == false).toList();
+
+                      String typingMessage;
+
+                      if (filteredTypingUsers.isEmpty) {
+                        typingMessage = "";
+                      } else if (filteredTypingUsers.length == 1) {
+                        typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+                      } else {
+                        var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+                        var lastUser  = usernames.removeLast();
+                        typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
+                      }
+
+                      return Container(
+                        margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          children: [
+                            if (typingMessage.isNotEmpty)
+                              commonText(
+                                text: typingMessage,
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                                fontWeight: FontWeight.w400,
+                              ),
+                          ],
+                        ),
+                      );
+                    },),
+
+                  ],
+                ),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController1,
+                    blastDirectionality: BlastDirectionality.explosive, // don't specify a direction, blast randomly
+                    shouldLoop: false,
+                    colors: const [
+                      Colors.green,
+                      Colors.blue,
+                      Colors.pink,
+                      Colors.orange,
+                      Colors.purple
+                    ], // manually specify the colors to be used
+                    createParticlePath: drawStar,
                   ),
-                },
-                // SizedBox(height: 20),
-                // Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-                //   var filteredTypingUsers = channelChatProvider.typingUsers
-                //       .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                //       && user['routeId'] == channelID).toList();
-                //   String typingMessage;
-                //
-                //   if (filteredTypingUsers.isEmpty) {
-                //     typingMessage = "";
-                //   } else if (filteredTypingUsers.length == 1) {
-                //     typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-                //   } else {
-                //     var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-                //     var lastUser  = usernames.removeLast(); // Get the last username
-                //     typingMessage = "${usernames.join(', ')}, and $lastUser  are Typing..."; // Join the rest with commas
-                //   }
-                //
-                //   return Container(
-                //     margin: EdgeInsets.only(right: 20,left : 20, top: 15,bottom: 6),
-                //     alignment: Alignment.centerLeft,
-                //     child: Column(
-                //       children: [
-                //         // Other widgets...
-                //         if (typingMessage.isNotEmpty)
-                //           commonText(text:
-                //             typingMessage,
-                //               fontSize: 14,
-                //               color: Colors.grey.shade600,
-                //               fontWeight: FontWeight.w400,
-                //           ),
-                //       ],
-                //     ),
-                //   );
-                // },),
-                Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-                  var filteredTypingUsers = channelChatProvider.typingUsers
-                      .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                      && user['routeId'] == channelID
-                      && user['isReply'] == false).toList();
-
-                  String typingMessage;
-
-                  if (filteredTypingUsers.isEmpty) {
-                    typingMessage = "";
-                  } else if (filteredTypingUsers.length == 1) {
-                    typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-                  } else {
-                    var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-                    var lastUser  = usernames.removeLast();
-                    typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
-                  }
-
-                  return Container(
-                    margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      children: [
-                        if (typingMessage.isNotEmpty)
-                          commonText(
-                            text: typingMessage,
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                            fontWeight: FontWeight.w400,
-                          ),
-                      ],
-                    ),
-                  );
-                },),
+                ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController2,
+                    shouldLoop: false,
+                    blastDirection: -pi / 2,
+                    emissionFrequency: 0.01,
+                    numberOfParticles: 20,
+                    maxBlastForce: 100,
+                    minBlastForce: 80,
+                    gravity: 0.3,
+                  ),
+                ),
 
               ],
             ),
@@ -1198,6 +1266,25 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     return isValidUser;
   }
 
+  bool shouldShowWaffle(String message,CommonProvider commonProvider) {
+    RegExp mentionRegex = RegExp(r"@(\w+)");
+    List<Match> mentionMatches = mentionRegex.allMatches(message).toList();
+
+    // Get the first mention (if any)
+    String? mentionedUsername = mentionMatches.isNotEmpty ? mentionMatches.first.group(1) : null;
+
+    bool hasOneWaffle = RegExp(r":waffle").allMatches(message).length == 1;
+    bool hasSingleMention = mentionMatches.length == 1; // Ensure only one mention
+    bool isUserValid = hasSingleMention && mentionedUsername != null && commonProvider.isUserInAllUsers(mentionedUsername);
+    bool hasAdditionalText = message
+        .replaceAll(RegExp(r":waffle|@\w+"), "")
+        .replaceAll(RegExp(r"[\s,]+"), "")
+        .isNotEmpty;
+
+    return hasOneWaffle && hasSingleMention && isUserValid && hasAdditionalText;
+  }
+
+
   Widget chatBubble({
     required int index,
     required Message messageList,
@@ -1211,6 +1298,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       final user = channelChatProvider.getUserById(userId);
       bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
+
       return Container(
         margin: EdgeInsets.only(top: 1),
         color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
@@ -1278,22 +1366,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       SizedBox(height: 5),
 
                       /// waffle ///
-                      // Visibility(
-                      //   visible: (() {
-                      //     RegExp mentionRegex = RegExp(r"@(\w+)");
-                      //     Match? mentionMatch = mentionRegex.firstMatch(message);
-                      //     String? mentionedUsername = mentionMatch?.group(1);
-                      //
-                      //     return RegExp(r":waffle").allMatches(message).length == 1 && // Exactly one ":waffle"
-                      //         mentionMatch != null && // Ensure a mention exists
-                      //         mentionedUsername != null && commonProvider.isUserInAllUsers(mentionedUsername) && // Validate user
-                      //         message.replaceAll(RegExp(r":waffle|@\w+"), "").replaceAll(RegExp(r"[\s,]+"), "").isNotEmpty; // Ensure additional text exists
-                      //   })(),
-                      //   child: Padding(
-                      //     padding: const EdgeInsets.symmetric(vertical: 5.0),
-                      //     child: Image.asset(AppImage.wafflePNG, height: 60, width: 60),
-                      //   ),
-                      // ),
+                      // if (widget.channelId == AppPreferenceConstants.elsnerChannelGetId)
+                        Visibility(
+                          visible: shouldShowWaffle( message, commonProvider),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 5.0),
+                            child: Image.asset(AppImage.wafflePNG, height: 60, width: 60),
+                          ),
+                        ),
                       Visibility(
                         visible: message.isNotEmpty,
                         child: Wrap(
