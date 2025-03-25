@@ -429,11 +429,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
 
   @override
   void initState() {
+      _confettiController1 = ConfettiController(duration: const Duration(seconds: 10));
+      _confettiController2 = ConfettiController(duration: const Duration(seconds: 10));
     super.initState();
-    _confettiController1 = ConfettiController(duration: const Duration(seconds: 10));
-    _confettiController2 = ConfettiController(duration: const Duration(seconds: 10));
-    _confettiController1.play();
-    _confettiController2.play();
     Provider.of<CommonProvider>(context,listen: false).getUserApi(id: signInModel.data?.user?.id ?? "");
     channelID = widget.channelId;
     bool isFromJump = widget.isFromJump ?? false;
@@ -480,8 +478,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   }
   @override
   void dispose() {
-    _confettiController1.dispose();
-    _confettiController2.dispose();
+      _confettiController1.dispose();
+      _confettiController2.dispose();
     _messageController.removeListener(_onTextChanged);
     super.dispose();
     socketProvider.userTypingEventChannel(
@@ -1050,33 +1048,39 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
 
                   ],
                 ),
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: ConfettiWidget(
-                    confettiController: _confettiController1,
-                    blastDirectionality: BlastDirectionality.explosive, // don't specify a direction, blast randomly
-                    shouldLoop: false,
-                    colors: const [
-                      Colors.green,
-                      Colors.blue,
-                      Colors.pink,
-                      Colors.orange,
-                      Colors.purple
-                    ], // manually specify the colors to be used
-                    createParticlePath: drawStar,
+                Visibility(
+                visible : channelID == "67d2a08db7b8f099e41e4dc4" ? true : false,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController1,
+                      blastDirectionality: BlastDirectionality.explosive, // don't specify a direction, blast randomly
+                      shouldLoop: false,
+                      colors: const [
+                        Colors.green,
+                        Colors.blue,
+                        Colors.pink,
+                        Colors.orange,
+                        Colors.purple
+                      ], // manually specify the colors to be used
+                      createParticlePath: drawStar,
+                    ),
                   ),
                 ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: ConfettiWidget(
-                    confettiController: _confettiController2,
-                    shouldLoop: false,
-                    blastDirection: -pi / 2,
-                    emissionFrequency: 0.01,
-                    numberOfParticles: 20,
-                    maxBlastForce: 100,
-                    minBlastForce: 80,
-                    gravity: 0.3,
+                Visibility(
+                  visible : channelID == "67d2a08db7b8f099e41e4dc4" ? true : false,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController2,
+                      shouldLoop: false,
+                      blastDirection: -pi / 2,
+                      emissionFrequency: 0.01,
+                      numberOfParticles: 20,
+                      maxBlastForce: 100,
+                      minBlastForce: 80,
+                      gravity: 0.3,
+                    ),
                   ),
                 ),
 
@@ -1299,6 +1303,16 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
 
+      if (channelID == "67d2a08db7b8f099e41e4dc4") {
+        final loggedInUserId = signInModel.data?.user?.id;
+        if (loggedInUserId != null &&
+            message.contains(":karma") &&
+            !(messageList.readBy?.contains(loggedInUserId) ?? false) &&
+            (messageList.taggedUsers?.contains(loggedInUserId) ?? false)) {
+            _confettiController1.play();
+            _confettiController2.play();
+        }
+      }
       return Container(
         margin: EdgeInsets.only(top: 1),
         color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
@@ -1366,7 +1380,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       SizedBox(height: 5),
 
                       /// waffle ///
-                      // if (widget.channelId == AppPreferenceConstants.elsnerChannelGetId)
+                      if (channelID == "67d2a08db7b8f099e41e4dc4")
                         Visibility(
                           visible: shouldShowWaffle( message, commonProvider),
                           child: Padding(
