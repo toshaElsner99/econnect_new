@@ -6,6 +6,7 @@ class ApiString{
   // static const String baseUrl= 'https://dev-econnect.elsnerdev.co/v1/'; /// THIS DEVELOPMENT URL
   static const String profileBaseUrl = 'https://e-connect.elsner.com/public/'; /// Profile Image
   ///
+  static const String karmaBaseUrl = "https://dev-hrms.elsner.com/";
 
   static const getAppVersion = "updateFCM_Mobile/get";
 
@@ -31,6 +32,7 @@ class ApiString{
   static const searchUser = "user/search-user";
   static const addDeviceToken = "user/deviceToken";
   static const removeDeviceToken = "user/removeDeviceToken";
+  static const sendKarma = "api/send-karma";
   // Chat
 
   static const getMessages = "messages/get-message";

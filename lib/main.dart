@@ -10,6 +10,7 @@ import 'package:e_connect/screens/bottom_navigation_screen/bottom_navigation_scr
 import 'package:e_connect/screens/splash_screen/splash_screen.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
+import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:e_connect/utils/loading_widget/loading_widget.dart';
 import 'package:e_connect/utils/network_connectivity/network_connectivity.dart';
@@ -26,11 +27,77 @@ import 'notificationServices/pushNotificationService.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 late SignInModel signInModel;
+/// CLear Notification Class ///
+/// Global App Lifecycle Observer
+class AppLifecycleObserver with WidgetsBindingObserver {
+  static final AppLifecycleObserver _instance = AppLifecycleObserver._internal();
+  factory AppLifecycleObserver() => _instance;
+  AppLifecycleObserver._internal();
+
+  void startObserving() {
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  void stopObserving() {
+    WidgetsBinding.instance.removeObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final commonProvider = Provider.of<CommonProvider>(context, listen: false);
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        NotificationService.clearAllNotifications();
+        // First check user's current status from getUserById
+        commonProvider.getUserByIDCall().then((_) {
+          final currentStatus = commonProvider.getUserModel?.data?.user?.status?.toLowerCase() ?? "";
+          // Only update to online if not busy or DND
+          if (currentStatus != AppString.busy.toLowerCase() && 
+              currentStatus != AppString.dnd.toLowerCase()) {
+            commonProvider.updateStatusCall(status: AppString.online.toLowerCase());
+          }
+        });
+        Provider.of<ChannelListProvider>(context, listen: false).refreshAllLists();
+        Provider.of<SocketIoProvider>(context, listen: false).connectSocket(true);
+        break;
+
+      case AppLifecycleState.paused:
+        // App is minimized or in background
+        // First check user's current status
+        commonProvider.getUserByIDCall().then((_) {
+          final currentStatus = commonProvider.getUserModel?.data?.user?.status?.toLowerCase() ?? "";
+          // Only update to away if not busy or DND
+          if (currentStatus != AppString.busy.toLowerCase() && 
+              currentStatus != AppString.dnd.toLowerCase()) {
+            commonProvider.updateStatusCall(status: AppString.away.toLowerCase());
+          }
+        });
+        break;
+
+      case AppLifecycleState.detached:
+        // App is terminated
+        commonProvider.updateStatusCall(status: AppString.offline.toLowerCase());
+        Provider.of<SocketIoProvider>(context, listen: false).dispose();
+        print("App is terminating...");
+        break;
+        
+      default:
+        break;
+    }
+  }
+}
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await NotificationService.initializeNotifications();
+  await NotificationService.clearAllNotifications();
+
   // await NotificationService.registerFirebaseListeners();
   // NotificationService.requestPermissions();
   await Permission.notification.isDenied.then(
@@ -45,6 +112,7 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  AppLifecycleObserver().startObserving();
   runApp(const MyApp());
 }
 

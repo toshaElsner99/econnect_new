@@ -210,7 +210,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
   @override
   Widget build(BuildContext context) {
-    setTransparentStatusBar();
+    // setTransparentStatusBar();
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
@@ -219,56 +219,54 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
       },
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: SafeArea(
-          child: Scaffold(
-            resizeToAvoidBottomInset: true,
-            bottomNavigationBar: Padding(
-              padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                inputTextFieldWithEditor()
-              ],),
-            ),
-            appBar: AppBar(
-              leading: IconButton(onPressed: (){
-                pop(popValue: true);
-                chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
-              },
-              icon: Icon(CupertinoIcons.back,color: Colors.white,)),
-              bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
-              titleSpacing: 0,
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  commonText(text: "Thread", fontSize: 16,),
-                Consumer<ChatProvider>(builder: (context, value, child) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 1.5),
-                    child: commonText(text:
-                    (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
-                        ? "Typing..." : widget.userName,
-                        fontSize: 12,fontWeight: FontWeight.w400),
-
-                  );
-                },),
-                ],
-              ),
-            ),
-            body: Column(
+        child: Scaffold(
+          resizeToAvoidBottomInset: true,
+          bottomNavigationBar: Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    reverse: true,
-                    children: [
-                      dateHeaders(),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 20,),
+              inputTextFieldWithEditor()
+            ],),
+          ),
+          appBar: AppBar(
+            leading: IconButton(onPressed: (){
+              pop(popValue: true);
+              chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
+            },
+            icon: Icon(CupertinoIcons.back,color: Colors.white,)),
+            bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
+            titleSpacing: 0,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                commonText(text: "Thread", fontSize: 16,),
+              Consumer<ChatProvider>(builder: (context, value, child) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 1.5),
+                  child: commonText(text:
+                  (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
+                      ? "Typing..." : widget.userName,
+                      fontSize: 12,fontWeight: FontWeight.w400),
+
+                );
+              },),
               ],
             ),
+          ),
+          body: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  reverse: true,
+                  children: [
+                    dateHeaders(),
+                  ],
+                ),
+              ),
+              SizedBox(height: 20,),
+            ],
           ),
         ),
       ),
@@ -728,146 +726,148 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
           ),
         ),
       ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      // color: Colors.grey.shade900,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: CompositedTransformTarget(
-                            link: _layerLink,
-                            child: TextField(
-                              maxLines: 5,
-                              minLines: 1,
-                              controller: _messageController,
-                              focusNode: _focusNode,
-                              keyboardType: TextInputType.multiline,
-                              textInputAction: TextInputAction.newline,
-                              style: TextStyle(color: AppColor.whiteColor),
-                              decoration: InputDecoration(
-                                hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
-                                hintMaxLines: 1,
-                                hintStyle: TextStyle(color: Colors.grey),
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                suffixIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // const SizedBox(width: 8),
-                                    // Container(
-                                    //   width: 1,
-                                    //   height: 25,
-                                    //   color: Colors.white
-                                    // ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        _focusNode.unfocus();
-                                        FileServiceProvider.instance.pickFiles(AppString.singleChatReply);
-                                      },
-                                      child: const Icon(Icons.attach_file, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        _focusNode.unfocus();
-                                        FileServiceProvider.instance.pickImages(AppString.singleChatReply);
-                                      },
-                                      child: const Icon(Icons.image, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        _focusNode.unfocus();
-                                        showCameraOptionsBottomSheet(context,AppString.singleChatReply);
-                                      },
-                                      child: const Icon(Icons.camera_alt, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 8),
-                                  ],
+      child: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      margin: EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        // color: Colors.grey.shade900,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: CompositedTransformTarget(
+                              link: _layerLink,
+                              child: TextField(
+                                maxLines: 5,
+                                minLines: 1,
+                                controller: _messageController,
+                                focusNode: _focusNode,
+                                keyboardType: TextInputType.multiline,
+                                textInputAction: TextInputAction.newline,
+                                style: TextStyle(color: AppColor.whiteColor),
+                                decoration: InputDecoration(
+                                  hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
+                                  hintMaxLines: 1,
+                                  hintStyle: TextStyle(color: Colors.grey),
+                                  border: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  suffixIcon: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // const SizedBox(width: 8),
+                                      // Container(
+                                      //   width: 1,
+                                      //   height: 25,
+                                      //   color: Colors.white
+                                      // ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _focusNode.unfocus();
+                                          FileServiceProvider.instance.pickFiles(AppString.singleChatReply);
+                                        },
+                                        child: const Icon(Icons.attach_file, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _focusNode.unfocus();
+                                          FileServiceProvider.instance.pickImages(AppString.singleChatReply);
+                                        },
+                                        child: const Icon(Icons.image, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _focusNode.unfocus();
+                                          showCameraOptionsBottomSheet(context,AppString.singleChatReply);
+                                        },
+                                        child: const Icon(Icons.camera_alt, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  ),
                                 ),
+                                textCapitalization: TextCapitalization.sentences,
                               ),
-                              textCapitalization: TextCapitalization.sentences,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColor.blueColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
-                    onPressed: () async {
-                      final plainText = _messageController.text.trim();
-                      if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty) {
-                        if(fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty){
-                          final filesOfList = await chatProvider.uploadFiles(AppString.singleChatReply);
-                          chatProvider.sendMessage(
-                                content: plainText,
-                                receiverId: widget.receiverId,
-                                files: filesOfList,
-                                replyId: widget.messageId,
-                                editMsgID: currentUserMessageId,
-                                isEditFromReply: true,
-                              )
-                              .then(
-                                (value) => setState(() {
-                                  currentUserMessageId = "";
-                                }),
-                              );
-                        } else {
-                          chatProvider
-                              .sendMessage(
-                                content: plainText,
-                                receiverId: widget.receiverId,
-                                editMsgID: currentUserMessageId,
-                                replyId: widget.messageId,
-                                isEditFromReply: true,
-                              )
-                              .then(
-                                (value) => setState(() {
-                                  currentUserMessageId = "";
-                                  socketProvider.userTypingEvent(
-                                    oppositeUserId: widget.receiverId,
-                                    isReplyMsg: true,
-                                    isTyping: 0,
-                                    msgId: widget.messageId,
-                                  );
-                                }),
-                              );
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColor.blueColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
+                      onPressed: () async {
+                        final plainText = _messageController.text.trim();
+                        if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty) {
+                          if(fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty){
+                            final filesOfList = await chatProvider.uploadFiles(AppString.singleChatReply);
+                            chatProvider.sendMessage(
+                                  content: plainText,
+                                  receiverId: widget.receiverId,
+                                  files: filesOfList,
+                                  replyId: widget.messageId,
+                                  editMsgID: currentUserMessageId,
+                                  isEditFromReply: true,
+                                )
+                                .then(
+                                  (value) => setState(() {
+                                    currentUserMessageId = "";
+                                  }),
+                                );
+                          } else {
+                            chatProvider
+                                .sendMessage(
+                                  content: plainText,
+                                  receiverId: widget.receiverId,
+                                  editMsgID: currentUserMessageId,
+                                  replyId: widget.messageId,
+                                  isEditFromReply: true,
+                                )
+                                .then(
+                                  (value) => setState(() {
+                                    currentUserMessageId = "";
+                                    socketProvider.userTypingEvent(
+                                      oppositeUserId: widget.receiverId,
+                                      isReplyMsg: true,
+                                      isTyping: 0,
+                                      msgId: widget.messageId,
+                                    );
+                                  }),
+                                );
+                          }
+                          _clearInputAndDismissKeyboard();
                         }
-                        _clearInputAndDismissKeyboard();
-                      }
-                    },
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if(Platform.isIOS)...{
-            SizedBox(height: 20)
-          },
-          selectedFilesWidget(screenName: AppString.singleChatReply),
-        ],
+            if(Platform.isIOS)...{
+              SizedBox(height: 20)
+            },
+            selectedFilesWidget(screenName: AppString.singleChatReply),
+          ],
+        ),
       ),
     );
   }

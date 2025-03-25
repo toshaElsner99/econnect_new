@@ -107,7 +107,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
 
   @override
   Widget build(BuildContext context) {
-    setTransparentStatusBar();
+    // setTransparentStatusBar();
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
@@ -116,83 +116,81 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
       },
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: SafeArea(
-          child: Scaffold(
-            resizeToAvoidBottomInset: true,
-            appBar: AppBar(
-              leading: IconButton(onPressed: () {
-                pop(popValue: true);
-                channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
-              } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
-              bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
-              titleSpacing: 0,
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  commonText(text: "Thread", fontSize: 16,),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 1.5),
-                    child: commonText(text: widget.channelName, fontSize: 12,fontWeight: FontWeight.w400),
-                  ),
-                ],
-              ),
-            ),
-            bottomNavigationBar: Padding(
-              padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                inputTextFieldWithEditor()
-              ],),
-            ),
-            body: Column(
+        child: Scaffold(
+          resizeToAvoidBottomInset: true,
+          appBar: AppBar(
+            leading: IconButton(onPressed: () {
+              pop(popValue: true);
+              channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
+            } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
+            bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
+            titleSpacing: 0,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    reverse: true,
-                    children: [
-                      dateHeaders(),
-                    ],
-                  ),
+                commonText(text: "Thread", fontSize: 16,),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 1.5),
+                  child: commonText(text: widget.channelName, fontSize: 12,fontWeight: FontWeight.w400),
                 ),
-                Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-                  var filteredTypingUsers = channelChatProvider.typingUsers
-                      .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                      && user['routeId'] == widget.channelId
-                      && user['isReply'] == true
-                      && user['parentId'] == widget.msgID).toList();
-
-                  String typingMessage;
-
-                  if (filteredTypingUsers.isEmpty) {
-                    typingMessage = "";
-                  } else if (filteredTypingUsers.length == 1) {
-                    typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-                  } else {
-                    var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-                    var lastUser  = usernames.removeLast();
-                    typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
-                  }
-
-                  return Container(
-                    margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      children: [
-                        if (typingMessage.isNotEmpty)
-                          commonText(
-                            text: typingMessage,
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                            fontWeight: FontWeight.w400,
-                          ),
-                      ],
-                    ),
-                  );
-                },),
               ],
             ),
+          ),
+          bottomNavigationBar: Padding(
+            padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+              inputTextFieldWithEditor()
+            ],),
+          ),
+          body: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  reverse: true,
+                  children: [
+                    dateHeaders(),
+                  ],
+                ),
+              ),
+              Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+                var filteredTypingUsers = channelChatProvider.typingUsers
+                    .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                    && user['routeId'] == widget.channelId
+                    && user['isReply'] == true
+                    && user['parentId'] == widget.msgID).toList();
+
+                String typingMessage;
+
+                if (filteredTypingUsers.isEmpty) {
+                  typingMessage = "";
+                } else if (filteredTypingUsers.length == 1) {
+                  typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+                } else {
+                  var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+                  var lastUser  = usernames.removeLast();
+                  typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
+                }
+
+                return Container(
+                  margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    children: [
+                      if (typingMessage.isNotEmpty)
+                        commonText(
+                          text: typingMessage,
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w400,
+                        ),
+                    ],
+                  ),
+                );
+              },),
+            ],
           ),
         ),
       ),
@@ -680,147 +678,149 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
           ),
         ),
       ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      // color: Colors.grey.shade900,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: CompositedTransformTarget(
-                            link: _layerLink,
-                            child: TextField(
-                              key: _textFieldKey,
-                              maxLines: 5,
-                              minLines: 1,
-                              controller: _messageController,
-                              focusNode: _focusNode,
-                              keyboardType: TextInputType.multiline,
-                              textInputAction: TextInputAction.newline,
-                              style: TextStyle(color: AppColor.whiteColor),
-                              decoration: InputDecoration(
-                                hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
-                                hintMaxLines: 1,
-                                hintStyle: TextStyle(color: Colors.grey),
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                suffixIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // const SizedBox(width: 8),
-                                    // Container(
-                                    //   width: 1,
-                                    //   height: 25,
-                                    //   color: Colors.white
-                                    // ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        _focusNode.unfocus();
-                                        FileServiceProvider.instance.pickFiles(AppString.channelChatReply);
-                                      },
-                                      child: const Icon(Icons.attach_file, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        _focusNode.unfocus();
-                                        FileServiceProvider.instance.pickImages(AppString.channelChatReply);
-                                      },
-                                      child: const Icon(Icons.image, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        _focusNode.unfocus();
-                                        showCameraOptionsBottomSheet(context,AppString.channelChatReply);
-                                      },
-                                      child: const Icon(Icons.camera_alt, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 8),
-                                  ],
+      child: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      margin: EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        // color: Colors.grey.shade900,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: CompositedTransformTarget(
+                              link: _layerLink,
+                              child: TextField(
+                                key: _textFieldKey,
+                                maxLines: 5,
+                                minLines: 1,
+                                controller: _messageController,
+                                focusNode: _focusNode,
+                                keyboardType: TextInputType.multiline,
+                                textInputAction: TextInputAction.newline,
+                                style: TextStyle(color: AppColor.whiteColor),
+                                decoration: InputDecoration(
+                                  hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
+                                  hintMaxLines: 1,
+                                  hintStyle: TextStyle(color: Colors.grey),
+                                  border: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  suffixIcon: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // const SizedBox(width: 8),
+                                      // Container(
+                                      //   width: 1,
+                                      //   height: 25,
+                                      //   color: Colors.white
+                                      // ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _focusNode.unfocus();
+                                          FileServiceProvider.instance.pickFiles(AppString.channelChatReply);
+                                        },
+                                        child: const Icon(Icons.attach_file, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _focusNode.unfocus();
+                                          FileServiceProvider.instance.pickImages(AppString.channelChatReply);
+                                        },
+                                        child: const Icon(Icons.image, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _focusNode.unfocus();
+                                          showCameraOptionsBottomSheet(context,AppString.channelChatReply);
+                                        },
+                                        child: const Icon(Icons.camera_alt, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  ),
                                 ),
+                                textCapitalization: TextCapitalization.sentences,
                               ),
-                              textCapitalization: TextCapitalization.sentences,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColor.blueColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
-                    onPressed: () async {
-                      final plainText = _messageController.text.trim();
-                      if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty) {
-                        if(fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty){
-                          final filesOfList = await chatProvider.uploadFiles(AppString.channelChatReply);
-                          await channelChatProvider.sendMessage(
-                            content: plainText,
-                            channelId: widget.channelId,
-                            files: filesOfList,
-                            replyId: widget.msgID,
-                            editMsgID: currentUserMessageId,
-                            isEditFromReply: true,
-                          );
-                        } else {
-                          await channelChatProvider.sendMessage(
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColor.blueColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
+                      onPressed: () async {
+                        final plainText = _messageController.text.trim();
+                        if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty) {
+                          if(fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty){
+                            final filesOfList = await chatProvider.uploadFiles(AppString.channelChatReply);
+                            await channelChatProvider.sendMessage(
                               content: plainText,
                               channelId: widget.channelId,
+                              files: filesOfList,
                               replyId: widget.msgID,
-                              editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
+                              editMsgID: currentUserMessageId,
                               isEditFromReply: true,
-                          ).then((value) {
-                            currentUserMessageId = "";
-                            socketProvider.userTypingEventChannel(
-                              channelId: widget.channelId,
-                              isReplyMsg: true,
-                              isTyping: 0,
-                              msgId: widget.msgID,
                             );
-                          },);
+                          } else {
+                            await channelChatProvider.sendMessage(
+                                content: plainText,
+                                channelId: widget.channelId,
+                                replyId: widget.msgID,
+                                editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
+                                isEditFromReply: true,
+                            ).then((value) {
+                              currentUserMessageId = "";
+                              socketProvider.userTypingEventChannel(
+                                channelId: widget.channelId,
+                                isReplyMsg: true,
+                                isTyping: 0,
+                                msgId: widget.msgID,
+                              );
+                            },);
+                          }
+
+                          // Update reply count in single chat screen
+                          ///////////////////////////////////////////////////////////
+                          // chatProvider.updateReplyCount(widget.messageId);
+
+                          setState(() {
+                            currentUserMessageId = "";
+                          });
+
+                          _clearInputAndDismissKeyboard();
                         }
-
-                        // Update reply count in single chat screen
-                        ///////////////////////////////////////////////////////////
-                        // chatProvider.updateReplyCount(widget.messageId);
-
-                        setState(() {
-                          currentUserMessageId = "";
-                        });
-
-                        _clearInputAndDismissKeyboard();
-                      }
-                    },
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if(Platform.isIOS)...{
-            SizedBox(height: 20)
-          },
-          selectedFilesWidget(screenName: AppString.channelChatReply),
-        ],
+            if(Platform.isIOS)...{
+              SizedBox(height: 20)
+            },
+            selectedFilesWidget(screenName: AppString.channelChatReply),
+          ],
+        ),
       ),
     );
   }

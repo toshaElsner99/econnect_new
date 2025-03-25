@@ -127,8 +127,11 @@ class ChannelListProvider extends ChangeNotifier{
 
 void combineUserDataWithChannels() {
  try{
+   // Clear the list once before adding items
+   combinedList.clear();
+   
+   // Add all users to the combined list
    browseAndSearchChannelModel?.data?.users?.forEach((user) {
-     combinedList.clear();
      combinedList.add({
        'type': 'user',
        'fullName': user.fullName,
@@ -139,6 +142,7 @@ void combineUserDataWithChannels() {
      });
    });
 
+   // Add all channels to the combined list
    browseAndSearchChannelModel?.data?.channels?.forEach((channel) {
      combinedList.add({
        'type': 'channel',
@@ -147,7 +151,7 @@ void combineUserDataWithChannels() {
        'isPrivate': channel.isPrivate,
      });
    });
-   print("combinedList>>>> ${combinedList}");
+   print("combinedList>>>> ${combinedList.length} items found");
  }catch (e){
    print("e>>> $e");
  }finally{

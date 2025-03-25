@@ -35,18 +35,20 @@ class CommonProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateIndexForCustomStatus(int index,String title){
+  void updateIndexForCustomStatus(int index, String title){
     selectedIndexOfStatus = index;
     setCustomTextController.text = title;
+    customStatusTitle = title;
     notifyListeners();
-    print("selectedIndexOfStatus>>>>> $selectedIndexOfStatus");
   }
 
- clearUpdates(){
-   selectedIndexOfStatus = null;
-   setCustomTextController.clear();
-   notifyListeners();
- }
+  void clearUpdates(){
+    selectedIndexOfStatus = null;
+    setCustomTextController.clear();
+    customStatusTitle = "";
+    customStatusUrl = "";
+    notifyListeners();
+  }
 
 
 
@@ -62,7 +64,7 @@ class CommonProvider extends ChangeNotifier {
   Future<void> updateStatusCall({required String status}) async {
     final requestBody = {
       "status": status,
-      "user_id": signInModel.data?.user?.id,
+      "user_id": signInModel.data?.user?.id ?? "",
       "isAutomatic": false.toString(),
       "is_status": true.toString(),
     };
@@ -75,20 +77,27 @@ class CommonProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
-  Future<void> updateCustomStatusCall({required String status,required String emojiUrl,}) async {
+  Future<void> updateCustomStatusCall({required String status, String emojiUrl = ""}) async {
     final requestBody = {
       "custom_status": status,
       "user_id": signInModel.data?.user?.id,
       "is_custom_status": "true",
-      "custom_status_emoji": emojiUrl,
+      if (emojiUrl.isNotEmpty) "custom_status_emoji": emojiUrl,
     };
+    
     final response = await ApiService.instance.request(
-        endPoint: ApiString.updateStatus,
-        method: Method.POST,
-        reqBody: requestBody,);
+      endPoint: ApiString.updateStatus,
+      method: Method.POST,
+      reqBody: requestBody,
+    );
+    
     if (statusCode200Check(response)) {
+      customStatusTitle = status;
+      customStatusUrl = emojiUrl;
       getUserByIDCall();
-      clearUpdates();
+      if (status.isEmpty && emojiUrl.isEmpty) {
+        clearUpdates();
+      }
     }
     notifyListeners();
   }
@@ -188,6 +197,7 @@ class CommonProvider extends ChangeNotifier {
   }
 
   bool isUserInAllUsers(String username) {
+    print("userName?????? $username");
     // First check for special mentions
     final specialMentions = ['here', 'channel', 'all'];
     if (specialMentions.contains(username.toLowerCase())) {
@@ -200,8 +210,8 @@ class CommonProvider extends ChangeNotifier {
     }
 
     print("Checking username/fullname: $username in ${getUserMentionModel?.data!.users!.length ?? 0} users");
-    return getUserMentionModel?.data!.users!.any((user) => 
-      user.username?.toLowerCase() == username.toLowerCase() || 
+    return getUserMentionModel?.data!.users!.any((user) =>
+      user.username?.toLowerCase() == username.toLowerCase() ||
       user.fullName?.toLowerCase() == username.toLowerCase()
     ) ?? false;
   }

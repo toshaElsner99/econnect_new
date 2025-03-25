@@ -294,12 +294,12 @@ Future<dynamic> pushScreen({required Widget screen}) async {
 }
 
 void setTransparentStatusBar() {
-  final themeProvider = Provider.of<ThemeProvider>(navigatorKey.currentState!.context, listen: false);
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-    statusBarColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
-    systemNavigationBarColor: themeProvider.themeData.appBarTheme.backgroundColor,
-    systemNavigationBarIconBrightness: Brightness.light,
-  ));
+//   final themeProvider = Provider.of<ThemeProvider>(navigatorKey.currentState!.context, listen: false);
+//   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+//     statusBarColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+//     systemNavigationBarColor: themeProvider.themeData.appBarTheme.backgroundColor,
+//     systemNavigationBarIconBrightness: Brightness.light,
+//   ));
 }
 
 

@@ -45,7 +45,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       provider.clearList();
       provider.searchController.addListener(() {
-        if (provider.searchController.text.isNotEmpty) {
+        if (provider.searchController.text.isNotEmpty && provider.searchController.text.length >= 2) {
           context.read<ChannelListProvider>().browseAndSearchChannel(search: provider.searchController.text,combineList: true);
         }else {
           context.read<ChannelListProvider>().browseAndSearchChannel(search: "",combineList: true);
@@ -137,69 +137,20 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                           border: Border.all(color: AppColor.borderColor),
                           borderRadius: BorderRadius.circular(5)
                         ),
-                        // child: ListView.separated(
-                        //   shrinkWrap: true,
-                        //   itemBuilder: (context, index) {
-                        //     return (index == 0 || index == channelListProvider.combinedList.length -1 ) ? null : Divider();
-                        //   },
-                        //   itemCount: channelListProvider.combinedList.length,
-                        //   padding: EdgeInsets.symmetric(horizontal: 10,vertical: 10),
-                        //   separatorBuilder: (context, index) {
-                        //     final list = channelListProvider.combinedList[index];
-                        //     print("list>>> ${list['fullName']}");
-                        //     return GestureDetector(
-                        //       onTap: () {
-                        //        setState(() {
-                        //          if(list['type'] == "user"){
-                        //            itemInfo.add({
-                        //              'type' : "user",
-                        //              'name': list['fullName'] ?? list['username'],
-                        //              'id': list['userId'],
-                        //            });
-                        //          }else{
-                        //            itemInfo.add({
-                        //              'type' : "channel",
-                        //              'name': list['name'],
-                        //              'id': list['id'],
-                        //            });
-                        //          }
-                        //          itemInfo.forEach((element) {
-                        //            print("element>>> $element");
-                        //          },);
-                        //          channelListProvider.clearList();
-                        //        });
-                        //       },
-                        //       child: Padding(
-                        //         padding: const EdgeInsets.only(bottom: 5.0),
-                        //         child: Row(children: [
-                        //           if(list['type'] == 'user')...{
-                        //             profileIconWithStatus(userID: list['userId'], status: "",needToShowIcon: false,otherUserProfile: list['avatarUrl']),
-                        //             SizedBox(width: 10,),
-                        //             commonText(text: "${list['username']}")
-                        //           }else...{
-                        //             Container(
-                        //               alignment: Alignment.center,
-                        //               padding: EdgeInsets.all(13),
-                        //               decoration: BoxDecoration(
-                        //                 color: Colors.green,
-                        //                 shape: BoxShape.circle,
-                        //               ),
-                        //               child: commonText(text: list['name'][0].toString().toUpperCase(),color: Colors.white),
-                        //             ),
-                        //             SizedBox(width: 10,),
-                        //             Flexible(child: commonText(text: "${list['name']}",maxLines: 1))
-                        //           },
-                        //
-                        //         ],),
-                        //       ),
-                        //     );
-                        //   },),
                         child: ListView.separated(
                           shrinkWrap: true,
                           itemCount: channelListProvider.combinedList.length,
                           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                           itemBuilder: (context, index) {
                             final list = channelListProvider.combinedList[index];
+                            String displayName = "";
+                            
+                            if (list['type'] == "user") {
+                              // Remove underscores from username for display
+                              displayName = (list['username'] ?? list['fullName'] ?? "Unknown User").toString().replaceAll("_", " ");
+                            } else {
+                              displayName = (list['name'] ?? "Unnamed Channel").toString();
+                            }
 
                             return GestureDetector(
                               onTap: () {
@@ -207,19 +158,16 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                                   if (list['type'] == "user") {
                                     itemInfo.add({
                                       'type': "user",
-                                      'name': list['fullName'] ?? list['username'],
+                                      'name': list['fullName'] ?? displayName,
                                       'id': list['userId'],
                                     });
                                   } else {
                                     itemInfo.add({
                                       'type': "channel",
-                                      'name': list['name'] ?? "",
+                                      'name': displayName,
                                       'id': list['id'],
                                     });
                                   }
-                                  itemInfo.forEach((element) {
-                                    print("element>>> $element");
-                                  });
                                   channelListProvider.clearList();
                                 });
                               },
@@ -229,14 +177,14 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                                   children: [
                                     if (list['type'] == 'user') ...{
                                       profileIconWithStatus(
-                                        userName: list['name'] ?? "",
+                                        userName: displayName,
                                         userID: list['userId'],
                                         status: "",
                                         needToShowIcon: false,
                                         otherUserProfile: list['avatarUrl'],
                                       ),
                                       SizedBox(width: 10),
-                                      commonText(text: "${list['username']}")
+                                      Expanded(child: commonText(text: displayName))
                                     } else ...{
                                       Container(
                                         alignment: Alignment.center,
@@ -246,12 +194,12 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                                           shape: BoxShape.circle,
                                         ),
                                         child: commonText(
-                                          text: list['name'][0].toString().toUpperCase(),
+                                          text: displayName.isNotEmpty ? displayName[0].toString().toUpperCase() : "#",
                                           color: Colors.white,
                                         ),
                                       ),
                                       SizedBox(width: 10),
-                                      Flexible(child: commonText(text: "${list['name']}", maxLines: 1))
+                                      Expanded(child: commonText(text: displayName, maxLines: 1))
                                     },
                                   ],
                                 ),
@@ -259,7 +207,6 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                             );
                           },
                           separatorBuilder: (context, index) {
-                            // You can customize the separator here
                             return Divider();
                           },
                         ),

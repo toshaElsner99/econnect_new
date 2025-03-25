@@ -163,14 +163,14 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
 
   Widget _buildUserTile(Users user) {
     return ListTile(
-      onTap: () => pushReplacement(screen: SingleChatMessageScreen(userName: user.username ?? "", oppositeUserId: user.userId ?? "",needToCallAddMessage: true,)),
+      onTap: () => pushReplacement(screen: SingleChatMessageScreen(userName:  user.fullName ?? user.username ?? "", oppositeUserId: user.userId ?? "",needToCallAddMessage: true,)),
       leading: CircleAvatar(
         backgroundImage: CachedNetworkImageProvider(
           ApiString.profileBaseUrl + (user.thumbnailAvatarUrl ?? ""),
         ),
       ),
       title: commonText(
-        text: user.username ?? "",
+        text: user.fullName ?? user.username ?? "",
         fontSize: 15,
         fontWeight: FontWeight.w500,
       ),

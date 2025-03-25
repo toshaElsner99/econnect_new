@@ -8,6 +8,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 
 import '../../model/sign_in_model.dart';
+import '../common/common_function.dart';
 import '../common/common_widgets.dart';
 import '../logger/logger.dart';
 import '../network_connectivity/network_connectivity.dart';
@@ -29,6 +30,7 @@ class ApiService {
     var reqBody,
     Map<String, dynamic>? queryParams,
     bool? needLoader = false,
+    bool isKarmaUrl = false,
   }) async {
     if (signInModel.data?.authToken != null ) {
       SignInModel? loadedModel = await SignInModel.loadFromPrefs();
@@ -43,7 +45,7 @@ class ApiService {
       return;
     }
 
-    Uri uri = Uri.parse(ApiString.baseUrl + endPoint).replace(queryParameters: queryParams);
+    Uri uri = Uri.parse(isKarmaUrl ? ApiString.karmaBaseUrl : ApiString.baseUrl + endPoint).replace(queryParameters: queryParams);
     http.Response? response;
     Map<String, String> requestHeaders = {};
     if (!endPoint.contains(ApiString.login) || !endPoint.contains(ApiString.getAppVersion)) {
@@ -70,6 +72,7 @@ class ApiService {
         final responseData = json.decode(response.body);
         _handleToastMessage(responseData);
       }
+      print("response>>>>>>>>>${jsonDecode(response.body)}");
 
       if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403 || response.statusCode == 404 ) {
         return json.decode(response.body);

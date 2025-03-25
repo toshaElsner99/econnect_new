@@ -102,7 +102,7 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
             ),
             TextButton(
               onPressed: () {
-                commonProvider.updateCustomStatusCall(status: commonProvider.setCustomTextController.text,emojiUrl: getEmojiAndText(commonProvider: commonProvider));
+                commonProvider.updateCustomStatusCall(status: commonProvider.setCustomTextController.text,emojiUrl: commonProvider.selectedIndexOfStatus == null ? "" : getEmojiAndText(commonProvider: commonProvider));
                 Navigator.pop(context);
               },
               child: commonText(
@@ -141,7 +141,7 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
         child: Row(
           children: [
             GestureDetector(
-              onTap: () => showEmojiSheet(),
+              // onTap: () => showEmojiSheet(),
               child: (commonProvider.customStatusUrl.isNotEmpty || commonProvider.selectedIndexOfStatus != null) ? CachedNetworkImage(imageUrl: getEmojiAndText(commonProvider: commonProvider),height: 24,width: 24,) : Icon(
                 Icons.sentiment_satisfied_alt,
                 color: AppColor.borderColor,
@@ -155,7 +155,7 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
                 style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 14),
                 decoration: InputDecoration(
                     hintText: 'Set a custom status',
-                    suffixIcon: (commonProvider.customStatusUrl.isNotEmpty) ? GestureDetector(
+                    suffixIcon: (commonProvider.customStatusTitle.isNotEmpty) ? GestureDetector(
                       onTap: () => commonProvider.selectedIndexOfStatus != null ? commonProvider.clearUpdates() : commonProvider.updateCustomStatusCall(status: "", emojiUrl: ""),
                       child: Container(
                           margin: EdgeInsets.all(10),

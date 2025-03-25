@@ -258,7 +258,7 @@ class User {
   final String? fullName;
   final String? username;
   final String? email;
-  final String? status;
+  String? status;
   final bool? isActive;
   final List<dynamic>? loginActivity;
   final String? customStatus;

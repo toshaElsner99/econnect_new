@@ -179,7 +179,11 @@
 // }
 // /
 import 'package:e_connect/providers/common_provider.dart';
+import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
+import 'package:e_connect/utils/theme/theme_cubit.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -198,22 +202,28 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).checkForForceUpdate(context);
-    // Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).whereToGO();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        height: double.infinity,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(AppImage.splashScreen),
-            fit: BoxFit.cover, // Use BoxFit.cover to fill the screen
+    return Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
+      return Scaffold(
+        backgroundColor: themeProvider.themeData.appBarTheme.backgroundColor,
+        body: Center(
+          child: Container(
+            // height: double.infinity,
+            // width: double.infinity,
+            height: 100,
+            width: 100,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(AppImage.appLogo,),
+                fit: BoxFit.contain, // Use BoxFit.cover to fill the screen
+              ),
+            ),
           ),
         ),
-      ),
-    );
+      );
+    },);
   }
 }

@@ -312,12 +312,6 @@ ToastFuture commonShowToast(String msg, [Color? bgColor]) {
 }
 
 
-updateSystemUiChrome() {
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      systemNavigationBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark));
-}
 
 Widget getCommonStatusIcons({required String status, double size = 25 , bool assetIcon = true}){
   print("getIconStatus>>> $status");

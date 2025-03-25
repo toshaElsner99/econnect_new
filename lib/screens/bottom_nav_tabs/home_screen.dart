@@ -35,7 +35,7 @@ class HomeScreen extends StatefulWidget  {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin/*, WidgetsBindingObserver */{
   List<OptionItem> options = [
     OptionItem(
       icon: Icons.add,
@@ -71,7 +71,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedTabIndex);
-    WidgetsBinding.instance.addObserver(this);
+    // WidgetsBinding.instance.addObserver(this);
+    Provider.of<CommonProvider>(context, listen: false).updateStatusCall(status: "online");
+
     Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
     if(!_isInitialized) {
       Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
@@ -89,15 +91,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
-      Provider.of<SocketIoProvider>(context, listen: false).connectSocket(true);
+      // Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
+      // Provider.of<SocketIoProvider>(context, listen: false).connectSocket(true);
     }
   }
+
 
   @override
   void dispose() {
     _pageController.dispose();
-    WidgetsBinding.instance.removeObserver(this);
+    // WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -112,46 +115,50 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        await Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
-        await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
-      },
-      child: Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
-        setBadge();
-        return Scaffold(
-          backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? null : AppColor.appBarColor,
-          appBar: AppBar(toolbarHeight: 0,),
-          body: Column(
-            children: [
-              // Header section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
-                child: Row(
-                  children: [
-                    _buildHeader(),
-                    Spacer(),
-                    _buildAddButton()
-                  ],
+
+    return Consumer2<ChannelListProvider,CommonProvider>(builder: (context, channelListProvider, commonProvider, child) {
+      setBadge();
+      return GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
+            await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
+          },
+          child: Scaffold(
+            backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? null : AppColor.appBarColor,
+            appBar: AppBar(toolbarHeight: 0,),
+            body: Column(
+              children: [
+                // Header section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 10),
+                  child: Row(
+                    children: [
+                      _buildHeader(),
+                      Spacer(),
+                      _buildAddButton()
+                    ],
+                  ),
                 ),
-              ),
-              // Search and tabs section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                child: Column(
-                  children: [
-                    _buildSearchField(),
-                    _buildTabsSection(),
-                  ],
+                // Search and tabs section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                  child: Column(
+                    children: [
+                      _buildSearchField(),
+                      _buildTabsSection(),
+                    ],
+                  ),
                 ),
-              ),
-              // Content section
-              Expanded(child: _buildScreenContent(channelListProvider, commonProvider)),
-            ],
+                // Content section
+                Expanded(child: _buildScreenContent(channelListProvider, commonProvider)),
+              ],
+            ),
           ),
-        );
-      },),
-    );
+        ),
+      );
+    },);
   }
 
   // Custom tabs widget

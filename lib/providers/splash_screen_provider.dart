@@ -36,6 +36,7 @@ import 'dart:io';
 import 'package:e_connect/screens/bottom_nav_tabs/home_screen.dart';
 import 'package:e_connect/screens/sign_in_screen/sign_in_Screen.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
+import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +52,9 @@ import '../utils/common/prefrance_function.dart';
 import '../model/sign_in_model.dart';
 import '../notificationServices/pushNotificationService.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+
+import 'common_provider.dart';
 
 class SplashProvider extends ChangeNotifier {
   bool isForceUpdate = false;
@@ -70,6 +74,8 @@ class SplashProvider extends ChangeNotifier {
             try {
               NotificationService.handleNotificationRedirect(NotificationService.pendingNotification!);
               NotificationService.pendingNotification = null;
+              // Check user status and update to online if not busy/dnd
+              _checkAndUpdateUserStatus();
             } catch (e) {
               print("Error handling pending notification: $e");
               // Reset pendingNotification to prevent infinite attempts
@@ -78,6 +84,8 @@ class SplashProvider extends ChangeNotifier {
           });
         } else {
           pushReplacement(screen: const HomeScreen());
+          // Check user status and update to online if not busy/dnd
+          _checkAndUpdateUserStatus();
         }
       } else {
         pushReplacement(screen: const SignInScreen());
@@ -85,6 +93,23 @@ class SplashProvider extends ChangeNotifier {
     });
     notifyListeners();
   }
+  
+  void _checkAndUpdateUserStatus() {
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      final commonProvider = Provider.of<CommonProvider>(context, listen: false);
+      // First get current user status
+      commonProvider.getUserByIDCall().then((_) {
+        final currentStatus = commonProvider.getUserModel?.data?.user?.status?.toLowerCase() ?? "";
+        // Only update to online if not busy or DND
+        if (currentStatus != AppString.busy.toLowerCase() && 
+            currentStatus != AppString.dnd.toLowerCase()) {
+          commonProvider.updateStatusCall(status: AppString.online.toLowerCase());
+        }
+      });
+    }
+  }
+
   Future<String> getAppVersion() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     return packageInfo.version;

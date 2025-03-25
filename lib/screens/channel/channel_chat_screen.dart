@@ -425,6 +425,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   @override
   void initState() {
     super.initState();
+    Provider.of<CommonProvider>(context,listen: false).getUserApi(id: signInModel.data?.user?.id ?? "");
     channelID = widget.channelId;
     bool isFromJump = widget.isFromJump ?? false;
 
@@ -606,118 +607,120 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
           ),
         ),
       ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      // color: Colors.grey.shade900,
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: CompositedTransformTarget(
-                            link: _layerLink,
-                            child: TextField(
-                              key: _textFieldKey,
-                              maxLines: 5,
-                              minLines: 1,
-                              controller: _messageController,
-                              focusNode: _focusNode,
-                              keyboardType: TextInputType.multiline,
-                              textInputAction: TextInputAction.newline,
-                              style: TextStyle(color: AppColor.whiteColor),
-                              decoration: InputDecoration(
-                                hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
-                                hintMaxLines: 1,
-                                hintStyle: TextStyle(color: Colors.grey),
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                suffixIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        _focusNode.unfocus();
-                                        FileServiceProvider.instance.pickFiles(AppString.channelChat);
-                                      },
-                                      child: const Icon(Icons.attach_file, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        _focusNode.unfocus();
-                                        FileServiceProvider.instance.pickImages(AppString.channelChat);
-                                      },
-                                      child: const Icon(Icons.image, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        _focusNode.unfocus();
-                                        showCameraOptionsBottomSheet(context,AppString.channelChat);
-                                      },
-                                      child: const Icon(Icons.camera_alt, color: Colors.white),
-                                    ),
-                                    const SizedBox(width: 8),
-                                  ],
+      child: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      margin: EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        // color: Colors.grey.shade900,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: CompositedTransformTarget(
+                              link: _layerLink,
+                              child: TextField(
+                                key: _textFieldKey,
+                                maxLines: 5,
+                                minLines: 1,
+                                controller: _messageController,
+                                focusNode: _focusNode,
+                                keyboardType: TextInputType.multiline,
+                                textInputAction: TextInputAction.newline,
+                                style: TextStyle(color: AppColor.whiteColor),
+                                decoration: InputDecoration(
+                                  hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
+                                  hintMaxLines: 1,
+                                  hintStyle: TextStyle(color: Colors.grey),
+                                  border: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  suffixIcon: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _focusNode.unfocus();
+                                          FileServiceProvider.instance.pickFiles(AppString.channelChat);
+                                        },
+                                        child: const Icon(Icons.attach_file, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _focusNode.unfocus();
+                                          FileServiceProvider.instance.pickImages(AppString.channelChat);
+                                        },
+                                        child: const Icon(Icons.image, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          _focusNode.unfocus();
+                                          showCameraOptionsBottomSheet(context,AppString.channelChat);
+                                        },
+                                        child: const Icon(Icons.camera_alt, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  ),
                                 ),
+                                textCapitalization: TextCapitalization.sentences,
                               ),
-                              textCapitalization: TextCapitalization.sentences,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColor.blueColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: IconButton(
-                    icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
-                    onPressed: () async {
-                      final plainText = _messageController.text.trim();
-                      if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty) {
-                        if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
-                          final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
-                          channelChatProvider.sendMessage(content: plainText, channelId: channelID, files: filesOfList);
-                        } else {
-                          channelChatProvider.sendMessage(content: plainText, channelId: channelID,editMsgID: currentUserMessageId).then((value) => setState(() {
-                            currentUserMessageId = "";
-                            socketProvider.userTypingEventChannel(
-                                channelId: channelID,
-                                isReplyMsg: false,
-                                isTyping:  0
-                            );
-                          }),);
+                  Container(
+                    margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColor.blueColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
+                      onPressed: () async {
+                        final plainText = _messageController.text.trim();
+                        if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty) {
+                          if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
+                            final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
+                            channelChatProvider.sendMessage(content: plainText, channelId: channelID, files: filesOfList);
+                          } else {
+                            channelChatProvider.sendMessage(content: plainText, channelId: channelID,editMsgID: currentUserMessageId).then((value) => setState(() {
+                              currentUserMessageId = "";
+                              socketProvider.userTypingEventChannel(
+                                  channelId: channelID,
+                                  isReplyMsg: false,
+                                  isTyping:  0
+                              );
+                            }),);
+                          }
+                          _clearInputAndDismissKeyboard();
                         }
-                        _clearInputAndDismissKeyboard();
-                      }
-                    },
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if(Platform.isIOS)...{
-            SizedBox(height: 20)
-          },
-          selectedFilesWidget(screenName: AppString.channelChat),
-        ],
+            if(Platform.isIOS)...{
+              SizedBox(height: 20)
+            },
+            selectedFilesWidget(screenName: AppString.channelChat),
+          ],
+        ),
       ),
     );
   }
@@ -729,8 +732,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    setTransparentStatusBar();
     return Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+      // setTransparentStatusBar();
       return PopScope(
         onPopInvokedWithResult: (x, y) {
           Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
@@ -742,276 +745,274 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         },
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
-          child: SafeArea(
-            child: Scaffold(
-              resizeToAvoidBottomInset: true,
-              appBar: AppBar(
-                toolbarHeight: 60,
-                titleSpacing: 0,
-                leading: IconButton(
-                  icon: Icon(CupertinoIcons.back, color: Colors.white),
-                  onPressed: () {
-                    if(widget.isFromNotification ?? false) {
-                      pushAndRemoveUntil(screen: HomeScreen());
-                    }else{
-                      pop();
-                    }
-                    Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
-                  },
-                ),
-                title: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: commonText(
-                            text: channelChatProvider.isChannelChatLoading ? "Loading..." :  channelChatProvider.getChannelInfo?.data?.name ?? "",
-                            maxLines: 1,
-                            fontSize: 14,
-                          ),
-                        ),
-                        if (channelChatProvider.getChannelInfo?.data?.ownerId?.sId == signInModel.data?.user?.id)
-                          ...{
-                            SizedBox(width: 10),
-                            GestureDetector(
-                              onTap: () => _showRenameChannelDialog(),
-                              child: Image.asset(
-                                AppImage.editIcon,
-                                height: 15,
-                                width: 15,
-                                color: AppColor.borderColor,
-                              ),
-                            ),
-                          }
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center, // Ensures proper alignment
-                      children: [
-                        /// User Count & Navigation ///
-                        GestureDetector(
-                          onTap: () {
-                            if (channelChatProvider.getChannelInfo?.data?.members?.isNotEmpty ?? false) {
-                              pushScreen(
-                                screen: ChannelMembersInfo(
-                                  channelId: channelID,
-                                  channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                                ),
-                              );
-                            }
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                            child: Row(
-                              children: [
-                                Image.asset(AppImage.person, height: 18, width: 18, color: AppColor.white),
-                                SizedBox(width: 4),
-                                commonText(
-                                  text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",
-                                  fontSize: 15,
-                                  color: AppColor.white,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        /// Pin Messages & Navigation ///
-                        GestureDetector(
-                          onTap: () => pushScreen(
-                            screen: ChannelPinnedPostsScreen(
-                              channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                              channelId: channelID,
-                            ),
-                          ),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                            child: Row(
-                              children: [
-                                Image.asset(AppImage.pinIcon, height: 18, width: 18, color: Colors.white),
-                                SizedBox(width: 4),
-                                commonText(
-                                  text: "${channelChatProvider.getChannelInfo?.data?.pinnedMessagesCount ?? 0}",
-                                  fontSize: 15,
-                                  color: AppColor.white,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        /// File & Navigation ///
-                        GestureDetector(
-                          onTap: () => pushScreen(
-                            screen: FilesListingScreen(
-                              channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                              channelId: channelID,
-                            ),
-                          ),
-                          child: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4), // Consistent padding
-                            child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: AppColor.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.search, color: AppColor.whiteColor),
-                    onPressed: () {
-                      pushScreen(screen:FindMessageScreen()).then((value) {
-                        print("value>>> $value");
-                        // if(value != null){
-                        //   if(value['needToOpenChannelChat']){
-                        //     if(!(channelID == value['channelId'])){
-                        //       setState(() {
-                        //         channelID = value['channelId'];
-                        //         initializedScreen();
-                        //       });
-                        //     }
-                        //   }else{
-                        //     print("userName : ${value['name']} && userId ${value['id']}");
-                        //     pushReplacement(screen: SingleChatMessageScreen(userName: value['name'], oppositeUserId: value['id'],));
-                        //   }
-                        //   print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
-                        // }
-                        if(value != null){
-                          if(value['needToOpenChannelChat']){
-                            // if(!(channelID == value['channelId'])){
-                            setState(() {
-                              channelID = value['channelId'];
-                              _scrollController.dispose();
-                              _scrollController = ScrollController();
-                              initializedScreen(value['pageNO'],true,value['messageGroupId'],value['messageId']);
-                              NeedTocallJumpToMessage = true;
-                              messageGroupId =value['messageGroupId'];
-                            });
-                            // }
-                          }else{
-                            print("userName : ${value['name']} && userId ${value['id']}");
-                            pushReplacement(screen: SingleChatMessageScreen(userName: signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'], oppositeUserId:signInModel.data!.user!.id == value['id'] ?value['oppositeUserID'] : value['id'],isFromJump: true,jumpData: value,));
-                          }
-                          print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
-                        }
-
-                      });
-                      // showChatSettingsBottomSheet(userId: oppositeUserId);
-                    },
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.info, color: AppColor.whiteColor),
-                    onPressed: () => pushScreen(
-                      screen: ChannelInfoScreen(
-                        channelId: channelID,
-                        channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
-                        isPrivate: false,
-                      ),
-                    ),
-                  ),
-                ],
+          child: Scaffold(
+            resizeToAvoidBottomInset: true,
+            appBar: AppBar(
+              toolbarHeight: 60,
+              titleSpacing: 0,
+              leading: IconButton(
+                icon: Icon(CupertinoIcons.back, color: Colors.white),
+                onPressed: () {
+                  if(widget.isFromNotification ?? false) {
+                    pushAndRemoveUntil(screen: HomeScreen());
+                  }else{
+                    pop();
+                  }
+                  Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
+                },
               ),
-              bottomNavigationBar: Padding(
-                padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    inputTextFieldWithEditor(channelChatProvider)
-                  ],),
-              ),
-              body: Column(
+              title: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Divider(color: Colors.grey.shade800, height: 1,),
-                  if(channelChatProvider.isChannelChatLoading )...{
-                    Flexible(child: ShimmerLoading.chatShimmer(context))
-                  }else...{
-                    // Expanded(
-                    //   child: ListView(
-                    //     controller: _scrollController,
-                    //     reverse: true,
-                    //     children: [
-                    //       dateHeaders(),
-                    //     ],
-                    //   ),
-                    // ),
-                    Expanded(
-                        child: dateHeaders()
-                    ),
-                  },
-                  // SizedBox(height: 20),
-                  // Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-                  //   var filteredTypingUsers = channelChatProvider.typingUsers
-                  //       .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                  //       && user['routeId'] == channelID).toList();
-                  //   String typingMessage;
-                  //
-                  //   if (filteredTypingUsers.isEmpty) {
-                  //     typingMessage = "";
-                  //   } else if (filteredTypingUsers.length == 1) {
-                  //     typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-                  //   } else {
-                  //     var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-                  //     var lastUser  = usernames.removeLast(); // Get the last username
-                  //     typingMessage = "${usernames.join(', ')}, and $lastUser  are Typing..."; // Join the rest with commas
-                  //   }
-                  //
-                  //   return Container(
-                  //     margin: EdgeInsets.only(right: 20,left : 20, top: 15,bottom: 6),
-                  //     alignment: Alignment.centerLeft,
-                  //     child: Column(
-                  //       children: [
-                  //         // Other widgets...
-                  //         if (typingMessage.isNotEmpty)
-                  //           commonText(text:
-                  //             typingMessage,
-                  //               fontSize: 14,
-                  //               color: Colors.grey.shade600,
-                  //               fontWeight: FontWeight.w400,
-                  //           ),
-                  //       ],
-                  //     ),
-                  //   );
-                  // },),
-                  Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
-                    var filteredTypingUsers = channelChatProvider.typingUsers
-                        .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
-                        && user['routeId'] == channelID
-                        && user['isReply'] == false).toList();
-
-                    String typingMessage;
-
-                    if (filteredTypingUsers.isEmpty) {
-                      typingMessage = "";
-                    } else if (filteredTypingUsers.length == 1) {
-                      typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
-                    } else {
-                      var usernames = filteredTypingUsers.map((user) => user['username']).toList();
-                      var lastUser  = usernames.removeLast();
-                      typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
-                    }
-
-                    return Container(
-                      margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
-                      alignment: Alignment.centerLeft,
-                      child: Column(
-                        children: [
-                          if (typingMessage.isNotEmpty)
-                            commonText(
-                              text: typingMessage,
-                              fontSize: 14,
-                              color: Colors.grey.shade600,
-                              fontWeight: FontWeight.w400,
-                            ),
-                        ],
+                  Row(
+                    children: [
+                      Flexible(
+                        child: commonText(
+                          text: channelChatProvider.isChannelChatLoading ? "Loading..." :  channelChatProvider.getChannelInfo?.data?.name ?? "",
+                          maxLines: 1,
+                          fontSize: 14,
+                        ),
                       ),
-                    );
-                  },),
-
+                      if (channelChatProvider.getChannelInfo?.data?.ownerId?.sId == signInModel.data?.user?.id)
+                        ...{
+                          SizedBox(width: 10),
+                          GestureDetector(
+                            onTap: () => _showRenameChannelDialog(),
+                            child: Image.asset(
+                              AppImage.editIcon,
+                              height: 15,
+                              width: 15,
+                              color: AppColor.borderColor,
+                            ),
+                          ),
+                        }
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center, // Ensures proper alignment
+                    children: [
+                      /// User Count & Navigation ///
+                      GestureDetector(
+                        onTap: () {
+                          if (channelChatProvider.getChannelInfo?.data?.members?.isNotEmpty ?? false) {
+                            pushScreen(
+                              screen: ChannelMembersInfo(
+                                channelId: channelID,
+                                channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                              ),
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: Row(
+                            children: [
+                              Image.asset(AppImage.person, height: 18, width: 18, color: AppColor.white),
+                              SizedBox(width: 4),
+                              commonText(
+                                text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",
+                                fontSize: 15,
+                                color: AppColor.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      /// Pin Messages & Navigation ///
+                      GestureDetector(
+                        onTap: () => pushScreen(
+                          screen: ChannelPinnedPostsScreen(
+                            channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                            channelId: channelID,
+                          ),
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          child: Row(
+                            children: [
+                              Image.asset(AppImage.pinIcon, height: 18, width: 18, color: Colors.white),
+                              SizedBox(width: 4),
+                              commonText(
+                                text: "${channelChatProvider.getChannelInfo?.data?.pinnedMessagesCount ?? 0}",
+                                fontSize: 15,
+                                color: AppColor.white,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      /// File & Navigation ///
+                      GestureDetector(
+                        onTap: () => pushScreen(
+                          screen: FilesListingScreen(
+                            channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                            channelId: channelID,
+                          ),
+                        ),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4), // Consistent padding
+                          child: Image.asset(AppImage.fileIcon, height: 18, width: 18, color: AppColor.white),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.search, color: AppColor.whiteColor),
+                  onPressed: () {
+                    pushScreen(screen:FindMessageScreen()).then((value) {
+                      print("value>>> $value");
+                      // if(value != null){
+                      //   if(value['needToOpenChannelChat']){
+                      //     if(!(channelID == value['channelId'])){
+                      //       setState(() {
+                      //         channelID = value['channelId'];
+                      //         initializedScreen();
+                      //       });
+                      //     }
+                      //   }else{
+                      //     print("userName : ${value['name']} && userId ${value['id']}");
+                      //     pushReplacement(screen: SingleChatMessageScreen(userName: value['name'], oppositeUserId: value['id'],));
+                      //   }
+                      //   print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
+                      // }
+                      if(value != null){
+                        if(value['needToOpenChannelChat']){
+                          // if(!(channelID == value['channelId'])){
+                          setState(() {
+                            channelID = value['channelId'];
+                            _scrollController.dispose();
+                            _scrollController = ScrollController();
+                            initializedScreen(value['pageNO'],true,value['messageGroupId'],value['messageId']);
+                            NeedTocallJumpToMessage = true;
+                            messageGroupId =value['messageGroupId'];
+                          });
+                          // }
+                        }else{
+                          print("userName : ${value['name']} && userId ${value['id']}");
+                          pushReplacement(screen: SingleChatMessageScreen(userName: signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'], oppositeUserId:signInModel.data!.user!.id == value['id'] ?value['oppositeUserID'] : value['id'],isFromJump: true,jumpData: value,));
+                        }
+                        print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
+                      }
+
+                    });
+                    // showChatSettingsBottomSheet(userId: oppositeUserId);
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.info, color: AppColor.whiteColor),
+                  onPressed: () => pushScreen(
+                    screen: ChannelInfoScreen(
+                      channelId: channelID,
+                      channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
+                      isPrivate: false,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            bottomNavigationBar: Padding(
+              padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  inputTextFieldWithEditor(channelChatProvider)
+                ],),
+            ),
+            body: Column(
+              children: [
+                Divider(color: Colors.grey.shade800, height: 1,),
+                if(channelChatProvider.isChannelChatLoading )...{
+                  Flexible(child: ShimmerLoading.chatShimmer(context))
+                }else...{
+                  // Expanded(
+                  //   child: ListView(
+                  //     controller: _scrollController,
+                  //     reverse: true,
+                  //     children: [
+                  //       dateHeaders(),
+                  //     ],
+                  //   ),
+                  // ),
+                  Expanded(
+                      child: dateHeaders()
+                  ),
+                },
+                // SizedBox(height: 20),
+                // Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+                //   var filteredTypingUsers = channelChatProvider.typingUsers
+                //       .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                //       && user['routeId'] == channelID).toList();
+                //   String typingMessage;
+                //
+                //   if (filteredTypingUsers.isEmpty) {
+                //     typingMessage = "";
+                //   } else if (filteredTypingUsers.length == 1) {
+                //     typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+                //   } else {
+                //     var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+                //     var lastUser  = usernames.removeLast(); // Get the last username
+                //     typingMessage = "${usernames.join(', ')}, and $lastUser  are Typing..."; // Join the rest with commas
+                //   }
+                //
+                //   return Container(
+                //     margin: EdgeInsets.only(right: 20,left : 20, top: 15,bottom: 6),
+                //     alignment: Alignment.centerLeft,
+                //     child: Column(
+                //       children: [
+                //         // Other widgets...
+                //         if (typingMessage.isNotEmpty)
+                //           commonText(text:
+                //             typingMessage,
+                //               fontSize: 14,
+                //               color: Colors.grey.shade600,
+                //               fontWeight: FontWeight.w400,
+                //           ),
+                //       ],
+                //     ),
+                //   );
+                // },),
+                Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
+                  var filteredTypingUsers = channelChatProvider.typingUsers
+                      .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                      && user['routeId'] == channelID
+                      && user['isReply'] == false).toList();
+
+                  String typingMessage;
+
+                  if (filteredTypingUsers.isEmpty) {
+                    typingMessage = "";
+                  } else if (filteredTypingUsers.length == 1) {
+                    typingMessage = "${filteredTypingUsers[0]['username']} is Typing...";
+                  } else {
+                    var usernames = filteredTypingUsers.map((user) => user['username']).toList();
+                    var lastUser  = usernames.removeLast();
+                    typingMessage = "${usernames.join(', ')}, and $lastUser are Typing...";
+                  }
+
+                  return Container(
+                    margin: EdgeInsets.only(right: 20, left: 20, top: 15, bottom: 6),
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      children: [
+                        if (typingMessage.isNotEmpty)
+                          commonText(
+                            text: typingMessage,
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w400,
+                          ),
+                      ],
+                    ),
+                  );
+                },),
+
+              ],
             ),
           ),
         ),
@@ -1191,6 +1192,12 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     },);
   }
 
+  bool isValid(username){
+    print("userName >>>>>$username");
+    bool isValidUser = Provider.of<CommonProvider>(context,listen: false).isUserInAllUsers(username);
+    return isValidUser;
+  }
+
   Widget chatBubble({
     required int index,
     required Message messageList,
@@ -1269,6 +1276,24 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           ],
                         ),
                       SizedBox(height: 5),
+
+                      /// waffle ///
+                      // Visibility(
+                      //   visible: (() {
+                      //     RegExp mentionRegex = RegExp(r"@(\w+)");
+                      //     Match? mentionMatch = mentionRegex.firstMatch(message);
+                      //     String? mentionedUsername = mentionMatch?.group(1);
+                      //
+                      //     return RegExp(r":waffle").allMatches(message).length == 1 && // Exactly one ":waffle"
+                      //         mentionMatch != null && // Ensure a mention exists
+                      //         mentionedUsername != null && commonProvider.isUserInAllUsers(mentionedUsername) && // Validate user
+                      //         message.replaceAll(RegExp(r":waffle|@\w+"), "").replaceAll(RegExp(r"[\s,]+"), "").isNotEmpty; // Ensure additional text exists
+                      //   })(),
+                      //   child: Padding(
+                      //     padding: const EdgeInsets.symmetric(vertical: 5.0),
+                      //     child: Image.asset(AppImage.wafflePNG, height: 60, width: 60),
+                      //   ),
+                      // ),
                       Visibility(
                         visible: message.isNotEmpty,
                         child: Wrap(
@@ -1280,7 +1305,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: commonHTMLText(message: message,userId: messageList.senderInfo?.id ?? "",isLog: messageList.isLog ?? false,userName: messageList.senderInfo?.username ?? ""),
+                                    child: commonHTMLText(message: message.replaceAll(":waffle", ""),userId: messageList.senderInfo?.id ?? "",isLog: messageList.isLog ?? false,userName: messageList.senderInfo?.username ?? ""),
                                   ),
                                   if (isEdited)
                                     WidgetSpan(

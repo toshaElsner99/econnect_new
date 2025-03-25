@@ -27,39 +27,42 @@ class _SettingScreenState extends State<SettingScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer2<CommonProvider,ThemeProvider>(builder: (context, commonProvider,themeProvider, child) {
-      return Scaffold(
-        backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
-        body: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: _buildProfileHeader(),
-            ),
-
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  _buildSection(
-                    children: [
-                      _buildStatusTile(commonProvider),
-                      _buildCustomStatusTile(commonProvider),
-                    ],
-                  ),
-                  _buildSection(
-                    children: [
-                      _buildProfileTile(),
-                      _buildThemeModeTile(themeProvider),
-                    ],
-                  ),
-                  _buildSection(
-                    children: [
-                      _buildLogoutTile(),
-                    ],
-                  ),
-                  closeScreen()
-                ],
+      return GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+          body: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: _buildProfileHeader(),
               ),
-            ),
-          ],
+
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    _buildSection(
+                      children: [
+                        _buildStatusTile(commonProvider),
+                        _buildCustomStatusTile(commonProvider),
+                      ],
+                    ),
+                    _buildSection(
+                      children: [
+                        _buildProfileTile(),
+                        _buildThemeModeTile(themeProvider),
+                      ],
+                    ),
+                    _buildSection(
+                      children: [
+                        _buildLogoutTile(),
+                      ],
+                    ),
+                    closeScreen()
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       );
     },);
@@ -155,8 +158,8 @@ class _SettingScreenState extends State<SettingScreen> {
             height: 24,
             color: Colors.white.withOpacity(0.8),
           ),
-          title: commonProvider.customStatusUrl.isNotEmpty ? commonProvider.customStatusTitle : AppString.setACustomStatus,
-          trailing: commonProvider.customStatusUrl.isNotEmpty ? GestureDetector(
+          title: commonProvider.customStatusTitle.isNotEmpty ? commonProvider.customStatusTitle : AppString.setACustomStatus,
+          trailing: commonProvider.customStatusTitle.isNotEmpty ? GestureDetector(
             onTap: () => commonProvider.updateCustomStatusCall(status: "", emojiUrl: ""),
             child: Container(
                 margin: EdgeInsets.all(10),
