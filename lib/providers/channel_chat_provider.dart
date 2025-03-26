@@ -451,6 +451,31 @@ class ChannelChatProvider extends ChangeNotifier{
       "content": content,
       "channelId": channelId,
     };
+    print("content>>>> $content");
+    // Check for user mentions in content if it's a string
+    if (content is String) {
+      // content = content.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
+      RegExp mentionRegex = RegExp(r'@([A-Za-z0-9_]+)');
+      final mentionMatches = mentionRegex.allMatches(content);
+      List<String> taggedUsers = [];
+
+      for (var match in mentionMatches) {
+        String username = match.group(1)!;
+        // Check if the mentioned user exists in channel members
+        bool isValidUser = channelMembersList.any((member) => member.username == username);
+        if (isValidUser) {
+          // Find the user ID from channel members
+          String? userId = channelMembersList.firstWhere((member) => member.username == username).sId;
+          if (userId != null) {
+            taggedUsers.add(userId);
+          }
+        }
+      }
+
+      if (taggedUsers.isNotEmpty) {
+        requestBody["tagged_users"] = taggedUsers;
+      }
+    }
 
     if (replyId != null && replyId.isNotEmpty) {
       requestBody['isReply'] = true;
@@ -686,7 +711,6 @@ class ChannelChatProvider extends ChangeNotifier{
      if (lastOpenedChannelId != channelId) {
        messageGroups.clear();
        totalPages = 0;
-       // currentPage = 1;
        currentPage =isFromJump ?? false ? pageNo :  1;
 
        isChannelChatLoading = true;
@@ -712,6 +736,22 @@ class ChannelChatProvider extends ChangeNotifier{
          }
        }else{
          messageGroups.addAll((response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList());
+       }
+
+       // Check for waffle messages in new messages
+       if (channelId == "67d2a08db7b8f099e41e4dc4") {
+         final loggedInUserId = signInModel.data?.user?.id;
+         for (var messageGroup in messageGroups) {
+           for (var message in messageGroup.messages ?? []) {
+             if (message.isSeen == false && 
+                 message.content?.contains(":waffle") == true &&
+                 !(message.readBy?.contains(loggedInUserId) ?? false) &&
+                 (message.taggedUsers?.contains(loggedInUserId) ?? false)) {
+               // Notify that confetti should be played
+               notifyListeners();
+             }
+           }
+         }
        }
      }
      totalPages = response['data']['totalPages'];

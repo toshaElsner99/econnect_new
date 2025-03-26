@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 import 'dart:math';
 
@@ -72,6 +71,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   bool _isTextFieldEmpty = true;
   bool NeedTocallJumpToMessage = false;
   String messageGroupId = "";
+  Set<String> _playedConfettiMessages = {};
 
   void pagination({required String channelId}) {
     _scrollController.addListener(() {
@@ -431,6 +431,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   void initState() {
       _confettiController1 = ConfettiController(duration: const Duration(seconds: 10));
       _confettiController2 = ConfettiController(duration: const Duration(seconds: 10));
+      // _confettiController1.play();
+      // _confettiController2.play();
     super.initState();
     Provider.of<CommonProvider>(context,listen: false).getUserApi(id: signInModel.data?.user?.id ?? "");
     channelID = widget.channelId;
@@ -724,7 +726,10 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     child: IconButton(
                       icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
                       onPressed: () async {
-                        final plainText = _messageController.text.trim();
+                         var plainText = _messageController.text.trim();
+                        if (plainText.contains(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'))) {
+                          plainText = plainText.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
+                        }
                         if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty) {
                           if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
                             final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
@@ -1303,14 +1308,16 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
 
-      if (channelID == "67d2a08db7b8f099e41e4dc4") {
+      // Check for waffle message and trigger confetti
+      if (channelID == "67d2a08db7b8f099e41e4dc4" && messageList.isSeen == false) {
         final loggedInUserId = signInModel.data?.user?.id;
-        if (loggedInUserId != null &&
-            message.contains(":karma") &&
+        if (message.contains(":waffle") &&
             !(messageList.readBy?.contains(loggedInUserId) ?? false) &&
-            (messageList.taggedUsers?.contains(loggedInUserId) ?? false)) {
+            (messageList.taggedUsers?.contains(loggedInUserId) ?? false) &&
+            !_playedConfettiMessages.contains(messageList.id)) {  // Check if confetti hasn't been played for this message
             _confettiController1.play();
             _confettiController2.play();
+            _playedConfettiMessages.add(messageList.id!);  // Mark this message as having played confetti
         }
       }
       return Container(
@@ -1716,8 +1723,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           onTap: () {
                             print("Simple Passing = ${messageId.toString()}");
                             pushScreen(screen:
-                            ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)
-                            ).then((value) {
+                            ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,))
+                            .then((value) {
                               print("value>>> $value");
                               if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                                 for (var reply in messageList.replies!) {
