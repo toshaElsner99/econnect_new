@@ -290,7 +290,7 @@ Future<dynamic> pushScreen({required Widget screen}) async {
  return Navigator.push(
     navigatorKey.currentState!.context,
     MaterialPageRoute(builder: (context) => screen,),
-  ).then((_) {});
+  )/*.then((_) {})*/;
 }
 
 void setTransparentStatusBar() {

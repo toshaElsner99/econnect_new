@@ -456,13 +456,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       messageGroupId = msgGroup;
 
       /// this for socket listen in channel chat for new message and delete //
-      socketProvider.listenForChannelChatScreen(channelId: widget.channelId);
+      socketProvider.listenForChannelChatScreen(channelId: channelID);
       pagination(channelId: channelID);
       downStreamPagination(channelId: channelID);
       channelChatProviderInit.getChannelInfoApiCall(channelId: channelID,callFroHome: true);
       Provider.of<ChannelChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
       channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: 1,isFromJump: isfromJump,onlyReadInChat: true);
-      channelChatProviderInit.getChannelMembersList(widget.channelId);
+      channelChatProviderInit.getChannelMembersList(channelID);
       channelChatProviderInit.getFileListingInChannelChat(channelId: channelID);
       if(isfromJump){
         Future.delayed(Duration(seconds: 5),()=> jumpToMessage(sortedGroups: channelChatProviderInit.messageGroups,messageGroupId: msgGroup,messageId: msgId));
@@ -773,7 +773,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       // setTransparentStatusBar();
       return PopScope(
         onPopInvokedWithResult: (x, y) {
-          Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
+          Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
           if (widget.isFromNotification ?? false) {
             pushAndRemoveUntil(screen: HomeScreen());
           } else {
@@ -795,7 +795,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   }else{
                     pop();
                   }
-                  Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: widget.channelId,isCallForReadMessage: true);
+                  Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
                 },
               ),
               title: Column(

@@ -1279,7 +1279,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             }
                           }
                         }),
-                        onPin: () => chatProvider.pinUnPinMessage(receiverId: widget.oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
+                        onPin: () => chatProvider.pinUnPinMessage(receiverId: oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
                         onCopy: () => copyToClipboard(context, parse(message).body?.text ?? ""),
                         onEdit: () => setState(() {
                           _messageController.clear();
