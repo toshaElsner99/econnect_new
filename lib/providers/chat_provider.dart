@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:e_connect/providers/channel_list_provider.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:file_picker/file_picker.dart';
@@ -26,6 +27,7 @@ import 'package:http/http.dart' as http;
 class ChatProvider extends  ChangeNotifier {
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false);
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
+  final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context, listen: false);
   List<msg.MessageGroups> messageGroups = [];
   String? lastOpenedUserId;
   String? lastOpenedUserMSGId;
@@ -71,7 +73,7 @@ class ChatProvider extends  ChangeNotifier {
     }
   }
 
-  Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false,bool? isFromJump}) async {
+  Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false,bool? isFromJump,bool? callForFav}) async {
     print("oppositeUserId in getMessagesList==> $oppositeUserId");
 
     try {
@@ -119,6 +121,7 @@ class ChatProvider extends  ChangeNotifier {
             return msg.MessageGroups.fromJson(message);
           }).toList());
         }
+        channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: callForFav ?? false,isCallForReadMessage: true);
           totalPages = response['data']['totalPages'];
           lastOpenedUserId = oppositeUserId;
       }

@@ -124,10 +124,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       }
 
       /// this is for read message ///
-      channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
+      // channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
       /// this is default call with page 1 for chat listing ///
       Provider.of<ChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
-      chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromJump: isfromJump);
+      chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromJump: isfromJump,callForFav: widget.calledForFavorite ?? false);
       /// this is for fetch other user details and store it to cache memory ///
       /// this is for get user mention listing api ///
       commonProvider.getUserApi(id: oppositeUserId);

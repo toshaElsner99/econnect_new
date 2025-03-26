@@ -460,7 +460,6 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       pagination(channelId: channelID);
       downStreamPagination(channelId: channelID);
       channelChatProviderInit.getChannelInfoApiCall(channelId: channelID,callFroHome: true);
-      Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
       Provider.of<ChannelChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
       channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: 1,isFromJump: isfromJump);
       channelChatProviderInit.getChannelMembersList(widget.channelId);

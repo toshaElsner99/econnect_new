@@ -25,6 +25,7 @@ import '../utils/api_service/api_string_constants.dart';
 import '../utils/app_preference_constants.dart';
 import '../utils/common/common_function.dart';
 import '../utils/common/common_widgets.dart';
+import 'channel_list_provider.dart';
 import 'file_service_provider.dart';
 
 class ChannelChatProvider extends ChangeNotifier{
@@ -754,7 +755,8 @@ class ChannelChatProvider extends ChangeNotifier{
          }
        }
      }
-     totalPages = response['data']['totalPages'];
+     await Provider.of<ChannelListProvider>(navigatorKey.currentState!.context, listen: false)
+         .readUnReadChannelMessage(oppositeUserId: channelId, isCallForReadMessage: true); totalPages = response['data']['totalPages'];
      lastOpenedChannelId = channelId;
    }catch (e){
      print("error >>> $e");
