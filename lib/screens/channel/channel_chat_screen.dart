@@ -479,19 +479,19 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   }
   @override
   void dispose() {
-      _confettiController1.dispose();
-      _confettiController2.dispose();
+    _confettiController1.dispose();
+    _confettiController2.dispose();
     _messageController.removeListener(_onTextChanged);
-    super.dispose();
-    socketProvider.userTypingEventChannel(
-        channelId: channelID,
-        isReplyMsg: false,
-        isTyping:  0
-    );
     _scrollController.dispose();
     _messageController.dispose();
     _focusNode.dispose();
     _fileServiceProvider.clearFilesForScreen(AppString.channelChat);
+    super.dispose();
+    // socketProvider.userTypingEventChannel(
+    //     channelId: channelID,
+    //     isReplyMsg: false,
+    //     isTyping:  0
+    // );
   }
 
   void _showRenameChannelDialog() {
