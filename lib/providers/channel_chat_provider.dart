@@ -455,7 +455,7 @@ class ChannelChatProvider extends ChangeNotifier{
     print("content>>>> $content");
     // Check for user mentions in content if it's a string
     if (content is String) {
-      // content = content.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
+      content = content.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
       RegExp mentionRegex = RegExp(r'@([A-Za-z0-9_]+)');
       final mentionMatches = mentionRegex.allMatches(content);
       List<String> taggedUsers = [];

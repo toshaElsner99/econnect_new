@@ -71,7 +71,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   bool _isTextFieldEmpty = true;
   bool NeedTocallJumpToMessage = false;
   String messageGroupId = "";
-  Set<String> _playedConfettiMessages = {};
+  final Set<String> _playedConfettiMessages = {};
 
   void pagination({required String channelId}) {
     _scrollController.addListener(() {
@@ -479,6 +479,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   }
   @override
   void dispose() {
+    _confettiController1.stop();
+    _confettiController2.stop();
     _confettiController1.dispose();
     _confettiController2.dispose();
     _messageController.removeListener(_onTextChanged);
@@ -928,6 +930,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             initializedScreen(value['pageNO'],true,value['messageGroupId'],value['messageId']);
                             NeedTocallJumpToMessage = true;
                             messageGroupId =value['messageGroupId'];
+                            // Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
                           });
                           // }
                         }else{
@@ -1275,24 +1278,73 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     return isValidUser;
   }
 
-  bool shouldShowWaffle(String message,CommonProvider commonProvider) {
-    RegExp mentionRegex = RegExp(r"@(\w+)");
+  // bool shouldShowWaffle(String message,CommonProvider commonProvider) {
+  //   RegExp mentionRegex = RegExp(r"@(\w+)");
+  //   List<Match> mentionMatches = mentionRegex.allMatches(message).toList();
+  //
+  //   // Get the first mention (if any)
+  //   String? mentionedUsername = mentionMatches.isNotEmpty ? mentionMatches.first.group(1) : null;
+  //
+  //   bool hasOneWaffle = RegExp(r":waffle").allMatches(message).length == 1;
+  //   bool hasSingleMention = mentionMatches.length == 1; // Ensure only one mention
+  //   bool isUserValid = hasSingleMention && mentionedUsername != null && commonProvider.isUserInAllUsers(mentionedUsername);
+  //   bool hasAdditionalText = message
+  //       .replaceAll(RegExp(r":waffle|@\w+"), "")
+  //       .replaceAll(RegExp(r"[\s,]+"), "")
+  //       .isNotEmpty;
+  //
+  //   return hasOneWaffle && hasSingleMention && isUserValid && hasAdditionalText;
+  // }
+  bool shouldShowWaffle(String message, CommonProvider commonProvider) {
+    // Check for exactly one :waffle in lowercase
+    // bool hasOneWaffle = RegExp(r':waffle').allMatches(message).length == 1;
+    bool hasOneWaffle = RegExp(r':waffle', caseSensitive: false).allMatches(message).length == 1;
+
+    // Check for exactly one user mention
+    // RegExp mentionRegex = RegExp(r'@(\w+)');
+    RegExp mentionRegex = RegExp(r'@(\w+)'); // Supports usernames like @bhavik_maru
     List<Match> mentionMatches = mentionRegex.allMatches(message).toList();
+    bool hasSingleMention = mentionMatches.length == 1;
 
-    // Get the first mention (if any)
+    // Check if mentioned user exists
     String? mentionedUsername = mentionMatches.isNotEmpty ? mentionMatches.first.group(1) : null;
-
-    bool hasOneWaffle = RegExp(r":waffle").allMatches(message).length == 1;
-    bool hasSingleMention = mentionMatches.length == 1; // Ensure only one mention
     bool isUserValid = hasSingleMention && mentionedUsername != null && commonProvider.isUserInAllUsers(mentionedUsername);
+
+    // Check for additional text (not just whitespace)
+    // bool hasAdditionalText = message
+    //     .replaceAll(RegExp(r':waffle|@\w+'), '') // Remove waffle and mention
+    //     .replaceAll(RegExp(r'[\s,]+'), '') // Remove whitespace and commas
+    //     .isNotEmpty;
     bool hasAdditionalText = message
-        .replaceAll(RegExp(r":waffle|@\w+"), "")
-        .replaceAll(RegExp(r"[\s,]+"), "")
+        .replaceAll(RegExp(r':waffle', caseSensitive: false), '') // Remove waffle
+        .replaceAll(mentionRegex, '') // Remove @username
+        .trim() // Remove leading/trailing spaces
         .isNotEmpty;
 
     return hasOneWaffle && hasSingleMention && isUserValid && hasAdditionalText;
   }
+  bool shouldShowWaffleChatGpt(String message, CommonProvider commonProvider) {
+    // Check for exactly one :waffle (case-insensitive)
+    bool hasOneWaffle = RegExp(r':waffle', caseSensitive: false).allMatches(message).length == 1;
 
+    // Check for exactly one user mention
+    RegExp mentionRegex = RegExp(r'@([\w.-]+)'); // Support dots and hyphens in usernames
+    List<Match> mentionMatches = mentionRegex.allMatches(message).toList();
+    bool hasSingleMention = mentionMatches.length == 1;
+
+    // Extract and validate mentioned username
+    String? mentionedUsername = mentionMatches.isNotEmpty ? mentionMatches.first.group(1) : null;
+    bool isUserValid = hasSingleMention && mentionedUsername != null && commonProvider.isUserInAllUsers(mentionedUsername);
+
+    // Ensure there is meaningful additional text
+    bool hasAdditionalText = message
+        .replaceAll(RegExp(r':waffle', caseSensitive: false), '') // Remove waffle
+        .replaceAll(mentionRegex, '') // Remove @username
+        .trim() // Trim extra spaces
+        .isNotEmpty;
+
+    return hasOneWaffle && hasSingleMention && isUserValid && hasAdditionalText;
+  }
 
   Widget chatBubble({
     required int index,
@@ -1308,18 +1360,41 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
 
-      // Check for waffle message and trigger confetti
       if (channelID == "67d2a08db7b8f099e41e4dc4" && messageList.isSeen == false) {
         final loggedInUserId = signInModel.data?.user?.id;
-        if (message.contains(":waffle") &&
+
+        // Ensure exactly one :waffle is present
+        bool hasOneWaffle = RegExp(r':waffle', caseSensitive: false).allMatches(message).length == 1;
+
+        // Ensure at least one user mention (@username)
+        RegExp mentionRegex = RegExp(r'@[\w_]+'); // Supports usernames like @bhavik_maru
+        List<Match> mentionMatches = mentionRegex.allMatches(message).toList();
+        bool hasAtLeastOneMention = mentionMatches.length >= 1; // Must have at least one mention
+
+        // Ensure additional text exists besides :waffle and mentions
+        String cleanedMessage = message
+            .replaceAll(RegExp(r':waffle', caseSensitive: false), '') // Remove :waffle
+            .replaceAll(mentionRegex, '') // Remove mentions
+            .replaceAll(RegExp(r'[\s,]+'), '') // Remove extra spaces or commas
+            .trim();
+
+        bool hasAdditionalText = cleanedMessage.isNotEmpty; // Ensure some text is left
+
+        if (hasOneWaffle &&
+            hasAtLeastOneMention &&
+            hasAdditionalText &&
             !(messageList.readBy?.contains(loggedInUserId) ?? false) &&
-            (messageList.taggedUsers?.contains(loggedInUserId) ?? false) &&
-            !_playedConfettiMessages.contains(messageList.id)) {  // Check if confetti hasn't been played for this message
-            _confettiController1.play();
-            _confettiController2.play();
-            _playedConfettiMessages.add(messageList.id!);  // Mark this message as having played confetti
+            (messageList.taggedUsers?.length == 1 && messageList.taggedUsers?.first == loggedInUserId) && // Ensure only one tag, and it's the current user
+            !_playedConfettiMessages.contains(messageList.id)) {
+          _confettiController1.play();
+          _confettiController2.play();
+          messageList.isSeen = true;
+          messageList.readBy?.add(loggedInUserId!);
+          _playedConfettiMessages.add(messageList.id!);
         }
       }
+
+
       return Container(
         margin: EdgeInsets.only(top: 1),
         color:  pinnedMsg == true ? AppPreferenceConstants.themeModeBoolValueGet ? Colors.greenAccent.withOpacity(0.15) : AppColor.pinnedColorLight : null,
@@ -1387,7 +1462,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       SizedBox(height: 5),
 
                       /// waffle ///
-                      if (channelID == "67d2a08db7b8f099e41e4dc4")
+                      if (channelID == "67d2a08db7b8f099e41e4dc4")...{
                         Visibility(
                           visible: shouldShowWaffle( message, commonProvider),
                           child: Padding(
@@ -1395,6 +1470,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             child: Image.asset(AppImage.wafflePNG, height: 60, width: 60),
                           ),
                         ),
+                      },
                       Visibility(
                         visible: message.isNotEmpty,
                         child: Wrap(

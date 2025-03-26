@@ -201,7 +201,8 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).checkForForceUpdate(context);
+    // Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).checkForForceUpdate(context);
+    Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).whereToGO();
   }
 
   @override
