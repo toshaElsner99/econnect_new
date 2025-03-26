@@ -215,7 +215,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
         // pop(popValue: true);
-        chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
+        chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: false,onlyReadInChat: false);
       },
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -232,7 +232,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
           appBar: AppBar(
             leading: IconButton(onPressed: (){
               pop(popValue: true);
-              chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: true);
+              chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: false,onlyReadInChat: false);
             },
             icon: Icon(CupertinoIcons.back,color: Colors.white,)),
             bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),

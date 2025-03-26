@@ -127,7 +127,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       // channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
       /// this is default call with page 1 for chat listing ///
       Provider.of<ChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
-      chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromJump: isfromJump,callForFav: widget.calledForFavorite ?? false);
+      chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromJump: isfromJump,callForFav: widget.calledForFavorite ?? false,onlyReadInChat: false);
       /// this is for fetch other user details and store it to cache memory ///
       /// this is for get user mention listing api ///
       commonProvider.getUserApi(id: oppositeUserId);
@@ -159,15 +159,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
   @override
   void dispose() {
+    _messageController.removeListener(_onTextChanged);
+    _messageController.dispose();
+    _focusNode.dispose();
+    _fileServiceProvider.clearFilesForScreen(AppString.singleChat);
     socketProvider.userTypingEvent(
       oppositeUserId: oppositeUserId,
       isReplyMsg: false,
       isTyping: 0,
     );
-    _messageController.removeListener(_onTextChanged);
-    _messageController.dispose();
-    _focusNode.dispose();
-    _fileServiceProvider.clearFilesForScreen(AppString.singleChat);
+    socketProvider.connectSocket();
     super.dispose();
   }
   void _clearInputAndDismissKeyboard() {

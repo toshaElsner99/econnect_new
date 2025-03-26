@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer';
 
 import 'package:e_connect/main.dart';
@@ -247,28 +246,28 @@ class SocketIoProvider extends ChangeNotifier{
 
     socket.on(notification, (data) {
       print("listSingleChatScreen >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true,onlyReadInChat: false);
     });
 
     socket.on((deleteMessageForListen), (data) {
       print("deleteMessageForListen >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1, isFromMsgListen: true);
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1, isFromMsgListen: true,onlyReadInChat: false);
     });
 
     socket.on(notificationForPinMessagesListen, (data) {
       print("listSingleChatScreen >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true,onlyReadInChat: false);
       getSecondUserCall.call();
     });
 
     socket.on(replyNotification, (data) {
       print("listSingleChatScreen >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true,onlyReadInChat: false);
     });
 
     socket.on(notificationForMessageReacting, (data) {
       print("messageReaction >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true);
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromMsgListen: true,onlyReadInChat: false);
     });
   }
   /// This is for channel chat screen ///
@@ -286,33 +285,33 @@ class SocketIoProvider extends ChangeNotifier{
 
     socket.on(notification, (data) {
       print("listSingleChatScreen >>> $data");
-      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true);
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true,onlyReadInChat: false);
     });
 
     socket.on((deleteMessageChannelListen), (data) {
       print("deleteMessageForListen >>> $data");
-      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true);
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true,onlyReadInChat: false);
     });
 
     socket.on(notificationForPinMessagesChannelListen, (data) {
       print("listSingleChatScreen >>> $data");
-      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true);
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true,onlyReadInChat: false);
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelInfoApiCall(channelId: channelId, callFroHome: false);
     });
 
     socket.on(renameChannel, (data) {
       print("listSingleChatScreen >>> $data");
-      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true);
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true,onlyReadInChat: false);
     });
 
     socket.on(replyNotification, (data) {
       print("listSingleChatScreen >>> $data");
-      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true);
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true,onlyReadInChat: false);
     });
 
     socket.on(notificationForMessageReactionChannel, (data) {
       print("messageReaction >>> $data");
-      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true);
+      Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context, listen: false).getChannelChatApiCall(channelId: channelId, pageNo: 1, isFromMsgListen: true,onlyReadInChat: false);
     });
   }
 
@@ -338,7 +337,7 @@ class SocketIoProvider extends ChangeNotifier{
     socket.off(notificationForPinMessagesListen);
     socket.on(notificationForPinMessagesListen, (data) {
       print("listSingleChatScreen >>> $data");
-      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getReplyMessageList(msgId: msgId!, fromWhere: "PIN_MSG_SOCKET_LISTEN_SINGLE_CHAT");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context, listen: false).getReplyMessageList(msgId: msgId, fromWhere: "PIN_MSG_SOCKET_LISTEN_SINGLE_CHAT");
     });
   }
   /// channel Chat reply pin listen ///

@@ -81,7 +81,7 @@ class AppLifecycleObserver with WidgetsBindingObserver {
       case AppLifecycleState.detached:
         // App is terminated
         commonProvider.updateStatusCall(status: AppString.offline.toLowerCase());
-        Provider.of<SocketIoProvider>(context, listen: false).dispose();
+        // Provider.of<SocketIoProvider>(context, listen: false).dispose();
         print("App is terminating...");
         break;
         

@@ -35,7 +35,7 @@ class HomeScreen extends StatefulWidget  {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin/*, WidgetsBindingObserver */{
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   List<OptionItem> options = [
     OptionItem(
       icon: Icons.add,
@@ -70,12 +70,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    print("signInModel>>>> ${signInModel.data?.user?.muteChannels}");
-    _pageController = PageController(initialPage: _selectedTabIndex);
-    // WidgetsBinding.instance.addObserver(this);
-    Provider.of<CommonProvider>(context, listen: false).updateStatusCall(status: "online");
-
+    // print("signInModel>>>> ${signInModel.data?.user?.muteChannels}");
+    WidgetsBinding.instance.addObserver(this);
     Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
+    _pageController = PageController(initialPage: _selectedTabIndex);
+    Provider.of<CommonProvider>(context, listen: false).updateStatusCall(status: "online");
     if(!_isInitialized) {
       Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
       Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
@@ -92,8 +91,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
-      // Provider.of<SocketIoProvider>(context, listen: false).connectSocket(true);
+      Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
+      Provider.of<SocketIoProvider>(context, listen: false).connectSocket(true);
     }
   }
 
@@ -101,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   void dispose() {
     _pageController.dispose();
-    // WidgetsBinding.instance.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 

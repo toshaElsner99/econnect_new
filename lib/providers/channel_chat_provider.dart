@@ -270,7 +270,7 @@ class ChannelChatProvider extends ChangeNotifier{
   unPinOnlyFromPinnedMessages({required String channelID,required String messageId,}) async {
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, false), method: Method.PUT);
     if(statusCode200Check(response)){
-      getChannelChatApiCall(channelId: channelID, pageNo: 1);
+      getChannelChatApiCall(channelId: channelID, pageNo: 1,onlyReadInChat: true);
       getChannelPinnedMessage(channelID: channelID,needLoader: false);
       getChannelInfoApiCall(channelId: channelID, callFroHome: false);
     }
@@ -669,7 +669,7 @@ class ChannelChatProvider extends ChangeNotifier{
     if(currentPage < totalPages) {
       currentPage++;
       notifyListeners();
-      getChannelChatApiCall(channelId: channelId,pageNo: currentPage);
+      getChannelChatApiCall(channelId: channelId,pageNo: currentPage,onlyReadInChat: false);
     }
   }
 
@@ -689,7 +689,7 @@ class ChannelChatProvider extends ChangeNotifier{
       if(firstInitialPageNo != 1){
         firstInitialPageNo --;
         // print("Page no paginationAPICall in down $firstInitialPageNo $oppositeUserId");
-        getChannelChatApiCall(channelId: channelId,pageNo: firstInitialPageNo,isFromMsgListen: true);
+        getChannelChatApiCall(channelId: channelId,pageNo: firstInitialPageNo,isFromMsgListen: true,onlyReadInChat: false);
         // getMessagesList(oppositeUserId: oppositeUserId, currentPage: firstInitialPageNo,isFromMsgListen: true);
         notifyListeners();
       }
@@ -702,7 +702,7 @@ class ChannelChatProvider extends ChangeNotifier{
     firstInitialPageNo = pageNo;
     notifyListeners();
   }
-  Future<void> getChannelChatApiCall({required String channelId,required int pageNo,bool isFromMsgListen = false,bool? isFromJump})async {
+  Future<void> getChannelChatApiCall({required String channelId,required int pageNo,bool isFromMsgListen = false,bool? isFromJump,bool onlyReadInChat = false})async {
    try{
      if(isFromJump ?? false){
        currentPage = pageNo;
@@ -755,8 +755,10 @@ class ChannelChatProvider extends ChangeNotifier{
          }
        }
      }
-     await Provider.of<ChannelListProvider>(navigatorKey.currentState!.context, listen: false)
-         .readUnReadChannelMessage(oppositeUserId: channelId, isCallForReadMessage: true); totalPages = response['data']['totalPages'];
+     if(onlyReadInChat == true){
+       await Provider.of<ChannelListProvider>(navigatorKey.currentState!.context, listen: false)
+           .readUnReadChannelMessage(oppositeUserId: channelId, isCallForReadMessage: true); totalPages = response['data']['totalPages'];
+     }
      lastOpenedChannelId = channelId;
    }catch (e){
      print("error >>> $e");
@@ -813,7 +815,7 @@ class ChannelChatProvider extends ChangeNotifier{
       };
       getChannelMembersList(channelId);
       getChannelInfoApiCall(channelId: channelId, callFroHome: false);
-      getChannelChatApiCall(channelId: channelId, pageNo: 1);
+      getChannelChatApiCall(channelId: channelId, pageNo: 1,onlyReadInChat: true);
       socketProvider.addMemberToChannel(response: passInSocket);
     }
     else {

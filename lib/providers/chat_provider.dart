@@ -68,12 +68,12 @@ class ChatProvider extends  ChangeNotifier {
   void paginationAPICall({required String oppositeUserId}) {
     if(currentPagea < totalPages) {
       currentPagea++;
-      getMessagesList(oppositeUserId: oppositeUserId, currentPage: currentPagea);
+      getMessagesList(oppositeUserId: oppositeUserId, currentPage: currentPagea,onlyReadInChat: false);
       notifyListeners();
     }
   }
 
-  Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false,bool? isFromJump,bool? callForFav}) async {
+  Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false,bool? isFromJump,bool? callForFav,bool onlyReadInChat = false}) async {
     print("oppositeUserId in getMessagesList==> $oppositeUserId");
 
     try {
@@ -121,9 +121,11 @@ class ChatProvider extends  ChangeNotifier {
             return msg.MessageGroups.fromJson(message);
           }).toList());
         }
-        channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: callForFav ?? false,isCallForReadMessage: true);
-          totalPages = response['data']['totalPages'];
-          lastOpenedUserId = oppositeUserId;
+        totalPages = response['data']['totalPages'];
+        lastOpenedUserId = oppositeUserId;
+        if(onlyReadInChat == true){
+          await channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: callForFav ?? false,isCallForReadMessage: true);
+        }
       }
     } catch (e) {
       print("ERROR>>>$e");
@@ -140,7 +142,7 @@ class ChatProvider extends  ChangeNotifier {
       if(firstInitialPageNo != 1){
         firstInitialPageNo --;
         print("Page no paginationAPICall in down $firstInitialPageNo $oppositeUserId");
-        getMessagesList(oppositeUserId: oppositeUserId, currentPage: firstInitialPageNo,isFromMsgListen: true);
+        getMessagesList(oppositeUserId: oppositeUserId, currentPage: firstInitialPageNo,isFromMsgListen: true,onlyReadInChat: false);
         notifyListeners();
       }
 
@@ -403,7 +405,7 @@ class ChatProvider extends  ChangeNotifier {
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(statusCode200Check(response)){
       if(callForUnpinPostOnly){
-        getMessagesList(oppositeUserId: receiverId,currentPage: 1);
+        getMessagesList(oppositeUserId: receiverId,currentPage: 1,onlyReadInChat: true);
         commonProvider.getUserByIDCallForSecondUser(userId: receiverId);
       }else {
         togglePinModel(messageId);

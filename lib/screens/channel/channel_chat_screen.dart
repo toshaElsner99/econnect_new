@@ -461,7 +461,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       downStreamPagination(channelId: channelID);
       channelChatProviderInit.getChannelInfoApiCall(channelId: channelID,callFroHome: true);
       Provider.of<ChannelChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
-      channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: 1,isFromJump: isfromJump);
+      channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: 1,isFromJump: isfromJump,onlyReadInChat: true);
       channelChatProviderInit.getChannelMembersList(widget.channelId);
       channelChatProviderInit.getFileListingInChannelChat(channelId: channelID);
       if(isfromJump){
@@ -486,12 +486,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     _messageController.dispose();
     _focusNode.dispose();
     _fileServiceProvider.clearFilesForScreen(AppString.channelChat);
+    socketProvider.userTypingEventChannel(
+        channelId: channelID,
+        isReplyMsg: false,
+        isTyping:  0
+    );
+    socketProvider.connectSocket();
     super.dispose();
-    // socketProvider.userTypingEventChannel(
-    //     channelId: channelID,
-    //     isReplyMsg: false,
-    //     isTyping:  0
-    // );
   }
 
   void _showRenameChannelDialog() {

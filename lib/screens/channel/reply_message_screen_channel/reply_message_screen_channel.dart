@@ -112,7 +112,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
         // pop(popValue: true);
-        channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
+        channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage,onlyReadInChat: true);
       },
       child: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
@@ -121,7 +121,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
           appBar: AppBar(
             leading: IconButton(onPressed: () {
               pop(popValue: true);
-              channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage);
+              channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage,onlyReadInChat: false);
             } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
             bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
             titleSpacing: 0,
