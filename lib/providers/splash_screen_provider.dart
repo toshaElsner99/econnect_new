@@ -62,7 +62,7 @@ class SplashProvider extends ChangeNotifier {
     signInModel = (await SignInModel.loadFromPrefs()) ?? SignInModel();
     final isLoggedIn = await getBool(AppPreferenceConstants.isLoginPrefs) ?? false;
 
-    Timer(const Duration(milliseconds: 300), () {
+    Timer(const Duration(seconds: 1), () {
       if (isLoggedIn) {
         if (NotificationService.pendingNotification != null && 
             NotificationService.pendingNotification!.isNotEmpty && 
