@@ -23,7 +23,8 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-
+  final FocusNode emailNode = FocusNode();
+  final FocusNode passNode = FocusNode();
   @override
   void initState() {
     super.initState();
@@ -158,10 +159,12 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
               controller: signInProvider.emailController,
               hintText: AppString.loginId,
               prefixIcon: const Icon(CupertinoIcons.person,color: Colors.black,),
+              fNode: emailNode,
               isEmail: true,
             ),
             const SizedBox(height: 16),
             _buildTextField(
+              fNode: passNode,
               signInProvider: signInProvider,
               controller: signInProvider.passwordController,
               hintText: AppString.password,
@@ -185,6 +188,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
     required TextEditingController controller,
     required String hintText,
     required Icon prefixIcon,
+    required FocusNode fNode,
     bool isEmail = false,
     bool isPassword = false,
   }) {
@@ -194,6 +198,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         borderRadius: BorderRadius.circular(12),
       ),
       child: commonTextFormField(
+        focusNode: fNode,
         controller: controller,
         hintText: hintText,
         prefixIcon: prefixIcon,

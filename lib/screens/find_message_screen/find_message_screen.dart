@@ -26,6 +26,7 @@ class FindMessageScreen extends StatefulWidget {
 class _FindMessageScreenState extends State<FindMessageScreen> {
   final _searchController = TextEditingController();
   final ScrollController scrollController = ScrollController();
+  final FocusNode node = FocusNode();
 
   @override
   Widget build(BuildContext context) {

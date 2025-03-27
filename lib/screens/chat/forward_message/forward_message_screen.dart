@@ -37,6 +37,8 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
 
   final provider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
   final contentController = TextEditingController();
+  final FocusNode searchPeopleNode = FocusNode();
+  final FocusNode addCommentNode = FocusNode();
   List itemInfo = [];
   @override
   void initState() {
@@ -106,7 +108,9 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 10.0, right: 20,left: 20),
-                child: Container(child: commonTextFormField(controller: channelListProvider.searchController, hintText: "Search People",suffixIcon: channelListProvider.combinedList.isEmpty ? null : IconButton(onPressed: () => channelListProvider.clearList(), icon: Icon(Icons.close)))),
+                child: Container(child: commonTextFormField(
+                    focusNode: searchPeopleNode,
+                    controller: channelListProvider.searchController, hintText: "Search People",suffixIcon: channelListProvider.combinedList.isEmpty ? null : IconButton(onPressed: () => channelListProvider.clearList(), icon: Icon(Icons.close)))),
               ),
               Visibility(
                 visible: (channelListProvider.searchController.text.isNotEmpty && channelListProvider.combinedList.isNotEmpty),
@@ -218,6 +222,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 20),
                 child: commonTextFormField(
+                    focusNode: addCommentNode,
                     controller: contentController,
                     hintText: "Add a comment (optional)"),
               ),

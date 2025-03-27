@@ -25,6 +25,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
+import 'package:keyboard_actions/keyboard_actions.dart';
 
 import 'package:provider/provider.dart';
 
@@ -523,8 +524,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
   Widget inputTextFieldWithEditor() {
     return Container(
+      margin: Platform.isAndroid ? null :  EdgeInsets.only(bottom: _focusNode.hasFocus ? 40 : 0),
       decoration: BoxDecoration(
-        // color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
         border: Border(
           top: BorderSide(
             color: AppColor.borderColor,
@@ -566,53 +567,29 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           Expanded(
                             child: CompositedTransformTarget(
                               link: _layerLink,
-                              child: TextField(
-                                maxLines: 5,
-                                minLines: 1,
-                                controller: _messageController,
-                                focusNode: _focusNode,
-                                keyboardType: TextInputType.multiline,
-                                textInputAction: TextInputAction.newline,
-                                style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
-                                decoration: InputDecoration(
-                                  hintText: 'Message....',
-                                  hintMaxLines: 1,
-                                  hintStyle: TextStyle(color: Colors.grey),
-                                  border: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  errorBorder: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  // suffixIcon: Row(
-                                  //   mainAxisSize: MainAxisSize.min,
-                                  //   children: [
-                                  //     const SizedBox(width: 8),
-                                  //     GestureDetector(
-                                  //       onTap: () {
-                                  //         _focusNode.unfocus();
-                                  //       },
-                                  //       child: const Icon(Icons.attach_file, color: Colors.white),
-                                  //     ),
-                                  //     const SizedBox(width: 8),
-                                  //     GestureDetector(
-                                  //       onTap: () {
-                                  //         _focusNode.unfocus();
-                                  //       },
-                                  //       child: const Icon(Icons.image, color: Colors.white),
-                                  //     ),
-                                  //     const SizedBox(width: 8),
-                                  //     GestureDetector(
-                                  //       onTap: () {
-                                  //         _focusNode.unfocus();
-                                  //         showCameraOptionsBottomSheet(context,AppString.singleChat);
-                                  //       },
-                                  //       child: const Icon(Icons.camera_alt, color: Colors.white),
-                                  //     ),
-                                  //     const SizedBox(width: 8),
-                                  //   ],
-                                  // ),
+                              child: KeyboardActions(
+                                disableScroll: true,
+                                config: keyboardConfigIos(_focusNode),
+                                child: TextField(
+                                  maxLines: 5,
+                                  minLines: 1,
+                                  controller: _messageController,
+                                  focusNode: _focusNode,
+                                  keyboardType: TextInputType.multiline,
+                                  textInputAction: TextInputAction.newline,
+                                  style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
+                                  decoration: InputDecoration(
+                                    hintText: 'Message....',
+                                    hintMaxLines: 1,
+                                    hintStyle: TextStyle(color: Colors.grey),
+                                    border: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    errorBorder: InputBorder.none,
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                  textCapitalization: TextCapitalization.sentences,
                                 ),
-                                textCapitalization: TextCapitalization.sentences,
                               ),
                             ),
                           ),
@@ -719,7 +696,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 FileServiceProvider.instance.pickFiles(AppString.singleChat);
               }),
               _optionItem(context, Icons.camera_alt_outlined, "Camera", "Capture image and video",(){
-                FileServiceProvider.instance.captureMedia(AppString.singleChat);
+                FileServiceProvider.instance.captureImageAndVideo(AppString.singleChat);
               }),
             ],
           ),

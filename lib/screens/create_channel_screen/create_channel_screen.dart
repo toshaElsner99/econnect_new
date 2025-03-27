@@ -3,6 +3,7 @@ import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/channel_list_provider.dart';
@@ -20,13 +21,13 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _purposeController = TextEditingController();
-  // final channelListCubit = ChannelListCubit();
-
+  final purposeNode = FocusNode();
   bool isPrivate = true;
 
   @override
   void dispose() {
     _nameController.dispose();
+    purposeNode.dispose();
     _descriptionController.dispose();
     _purposeController.dispose();
     super.dispose();
@@ -81,11 +82,16 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
               ),
               const SizedBox(height: 24),
 
-              _buildInputField(
-                controller: _purposeController,
-                label: 'Purpose (optional)',
-                hintText: 'What\'s this channel about?',
-                maxLines: 3,
+              KeyboardActions(
+                disableScroll: true,
+                config: keyboardConfigIos(purposeNode),
+                child: _buildInputField(
+                  controller: _purposeController,
+                  focusNode: purposeNode,
+                  label: 'Purpose (optional)',
+                  hintText: 'What\'s this channel about?',
+                  maxLines: 3,
+                ),
               ),
               const SizedBox(height: 24),
 
@@ -159,6 +165,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
     required TextEditingController controller,
     required String label,
     required String hintText,
+    FocusNode? focusNode,
     int maxLines = 1,
   }) {
     return Column(
@@ -173,6 +180,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
         ),
         const SizedBox(height: 8),
         TextField(
+          focusNode: focusNode,
           controller: controller,
           maxLines: maxLines,
           decoration: InputDecoration(

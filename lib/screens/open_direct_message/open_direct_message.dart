@@ -22,7 +22,7 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
   final _searchController = TextEditingController();
   // final channelListCubit = ChannelListCubit();
   final channelListProvider1 = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
-
+  final FocusNode node = FocusNode();
   @override
   void initState() {
     super.initState();
@@ -59,6 +59,7 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: commonTextFormField(
+                  focusNode: node,
                   controller: _searchController,
                   hintText: 'Search names',
                   prefixIcon: const Icon(CupertinoIcons.search),

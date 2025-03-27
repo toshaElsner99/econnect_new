@@ -130,27 +130,27 @@ class FileServiceProvider with ChangeNotifier {
     }
   }
 
-  // Future<void> captureMedia({required bool isVideo, required String screenName}) async {
-  //   try {
-  //     final ImagePicker picker = ImagePicker();
-  //     final XFile? media = isVideo
-  //         ? await picker.pickVideo(source: ImageSource.camera)
-  //         : await picker.pickImage(source: ImageSource.camera);
-  //
-  //     if (media != null) {
-  //       final file = PlatformFile(
-  //         name: media.name,
-  //         size: await media.length(),
-  //         path: media.path,
-  //       );
-  //       addFilesForScreen(screenName, [file]); // Add captured media to the correct screen
-  //     }
-  //   } catch (e) {
-  //     debugPrint('Error capturing media: $e');
-  //   }
-  // }
+  Future<void> captureMedia({required bool isVideo, required String screenName}) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? media = isVideo
+          ? await picker.pickVideo(source: ImageSource.camera)
+          : await picker.pickImage(source: ImageSource.camera);
 
-  Future<void> captureMedia(String screenName) async {
+      if (media != null) {
+        final file = PlatformFile(
+          name: media.name,
+          size: await media.length(),
+          path: media.path,
+        );
+        addFilesForScreen(screenName, [file]); // Add captured media to the correct screen
+      }
+    } catch (e) {
+      debugPrint('Error capturing media: $e');
+    }
+  }
+
+  Future<void> captureImageAndVideo(String screenName) async {
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? media = await picker.pickMedia();

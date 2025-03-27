@@ -21,6 +21,7 @@ class BrowseAndSearchChannel extends StatefulWidget {
 class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
   final _searchController = TextEditingController();
   bool hideJoined = false;
+  final FocusNode browseAndSearchNode = FocusNode();
 
   @override
   void initState() {
@@ -59,6 +60,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: commonTextFormField(
+                focusNode: browseAndSearchNode,
                 controller: _searchController,
                 hintText: 'Search Channel',
                 prefixIcon: const Icon(CupertinoIcons.search),

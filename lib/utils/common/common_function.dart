@@ -18,6 +18,10 @@ import '../../main.dart';
 import '../../providers/file_service_provider.dart';
 import '../app_preference_constants.dart';
 import '../theme/theme_cubit.dart';
+bool isKeyboardOpen(BuildContext context) {
+  return MediaQuery.of(context).viewInsets.bottom > 0;
+}
+
 
 clearSelectedFiles(){
 

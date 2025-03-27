@@ -23,6 +23,7 @@ class FindChannelScreen extends StatefulWidget {
 
 class _FindChannelScreenState extends State<FindChannelScreen> {
   final _searchController = TextEditingController();
+  final FocusNode node = FocusNode();
   // final channelListCubit = ChannelListCubit();
   @override
   void initState() {
@@ -64,6 +65,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: commonTextFormField(
+                  focusNode: node,
                   controller: _searchController,
                   hintText: 'Search users or channels',
                   prefixIcon: const Icon(CupertinoIcons.search),

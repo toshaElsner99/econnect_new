@@ -11,6 +11,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:intl/intl.dart';
+import 'package:keyboard_actions/keyboard_actions.dart';
+import 'package:keyboard_actions/keyboard_actions_config.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -2313,6 +2315,39 @@ Widget commonPopUpMenuForChannel() {
   );
 }
 
+KeyboardActionsConfig keyboardConfigIos(FocusNode focusNode) {
+  return KeyboardActionsConfig(
+    keyboardActionsPlatform: KeyboardActionsPlatform.IOS,
+    keyboardBarColor: AppPreferenceConstants.themeModeBoolValueGet
+        ? CupertinoColors.darkBackgroundGray
+        : null,
+    defaultDoneWidget: Padding(
+      padding: const EdgeInsets.only(right: 16.0),
+      child: CupertinoButton(
+        padding: EdgeInsets.zero, // Removes extra padding
+        onPressed: () => focusNode.unfocus(),
+        child: Text(
+          "Done",
+          style: TextStyle(
+            color: AppPreferenceConstants.themeModeBoolValueGet
+                ? Colors.grey
+                : Colors.black, // Custom color works now!
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    ),
+    actions: [
+      KeyboardActionsItem(
+        focusNode: focusNode,
+        // displayDoneButton: true, // Disables default iOS "Done" button
+        displayArrows: false,
+      ),
+    ],
+  );
+}
+
 
 Widget commonTextFormField({
   required TextEditingController controller,
@@ -2927,7 +2962,7 @@ void showCameraOptionsBottomSheet(BuildContext context,String screenName) {
               ),
               onTap: () {
                 Navigator.pop(context);
-                // FileServiceProvider.instance.captureMedia(isVideo: false,screenName: screenName);
+                FileServiceProvider.instance.captureMedia(isVideo: false,screenName: screenName);
               },
             ),
             ListTile(
@@ -2938,7 +2973,7 @@ void showCameraOptionsBottomSheet(BuildContext context,String screenName) {
               ),
               onTap: () {
                 Navigator.pop(context);
-                // FileServiceProvider.instance.captureMedia(isVideo: true,screenName: screenName);
+                FileServiceProvider.instance.captureMedia(isVideo: true,screenName: screenName);
               },
             ),
           ],

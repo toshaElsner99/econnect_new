@@ -19,6 +19,7 @@ import 'package:e_connect/utils/common/shimmer_loading.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
+import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:provider/provider.dart';
 
 import '../../main.dart';
@@ -628,84 +629,72 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
 
   Widget inputTextFieldWithEditor(ChannelChatProvider channelChatProvider) {
     return Container(
+      margin: Platform.isAndroid ? null : EdgeInsets.only(bottom: _focusNode.hasFocus ? 40 : 0),
       decoration: BoxDecoration(
-        color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
         border: Border(
           top: BorderSide(
-            color: Colors.grey.shade800,
-            width: 0.5,
+            color: AppColor.borderColor,
+            width: 0.2,
           ),
         ),
       ),
       child: SafeArea(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 children: [
+                  /// ADD ICON  ////
+                  GestureDetector(
+                    onTap: () => mediaSheet(context),
+                    child: Container(
+                      padding: EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColor.blueColor,
+                      ),
+                      child: Icon(Icons.add,color: Colors.white,size: 25,),
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  /// TEXT FIELD ///
                   Expanded(
                     child: Container(
                       margin: EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
-                        // color: Colors.grey.shade900,
-                        borderRadius: BorderRadius.circular(25),
+                        color: AppPreferenceConstants.themeModeBoolValueGet ? Color(0xFf292929) : Color(0xFFf2f2f2),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
                         children: [
                           Expanded(
                             child: CompositedTransformTarget(
                               link: _layerLink,
-                              child: TextField(
-                                key: _textFieldKey,
-                                maxLines: 5,
-                                minLines: 1,
-                                controller: _messageController,
-                                focusNode: _focusNode,
-                                keyboardType: TextInputType.multiline,
-                                textInputAction: TextInputAction.newline,
-                                style: TextStyle(color: AppColor.whiteColor),
-                                decoration: InputDecoration(
-                                  hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
-                                  hintMaxLines: 1,
-                                  hintStyle: TextStyle(color: Colors.grey),
-                                  border: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  errorBorder: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  suffixIcon: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _focusNode.unfocus();
-                                          FileServiceProvider.instance.pickFiles(AppString.channelChat);
-                                        },
-                                        child: const Icon(Icons.attach_file, color: Colors.white),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _focusNode.unfocus();
-                                          // FileServiceProvider.instance.pickImages(AppString.channelChat);
-                                        },
-                                        child: const Icon(Icons.image, color: Colors.white),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _focusNode.unfocus();
-                                          showCameraOptionsBottomSheet(context,AppString.channelChat);
-                                        },
-                                        child: const Icon(Icons.camera_alt, color: Colors.white),
-                                      ),
-                                      const SizedBox(width: 8),
-                                    ],
+                              child: KeyboardActions(
+                                disableScroll: true,
+                                config: keyboardConfigIos(_focusNode),
+                                child: TextField(
+                                  maxLines: 5,
+                                  minLines: 1,
+                                  controller: _messageController,
+                                  focusNode: _focusNode,
+                                  keyboardType: TextInputType.multiline,
+                                  textInputAction: TextInputAction.newline,
+                                  style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
+                                  decoration: InputDecoration(
+                                    hintText: 'Message....',
+                                    hintMaxLines: 1,
+                                    hintStyle: TextStyle(color: Colors.grey),
+                                    border: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    errorBorder: InputBorder.none,
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                   ),
+                                  textCapitalization: TextCapitalization.sentences,
                                 ),
-                                textCapitalization: TextCapitalization.sentences,
                               ),
                             ),
                           ),
@@ -713,16 +702,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       ),
                     ),
                   ),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColor.blueColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
-                      onPressed: () async {
-                         var plainText = _messageController.text.trim();
+                  /// SEND MESSAGE & CAMERA,MIC ///
+                  if(_messageController.text.isNotEmpty)...{
+                    GestureDetector(
+                      onTap: () async {
+                        var plainText = _messageController.text.trim();
                         if (plainText.contains(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'))) {
                           plainText = plainText.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
                         }
@@ -743,15 +727,104 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           _clearInputAndDismissKeyboard();
                         }
                       },
+                      child: Container(
+                          margin: EdgeInsets.only(left: 10),
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColor.blueColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.send, color: AppColor.whiteColor, size: 18)),
                     ),
-                  ),
+                  }else...{
+                    GestureDetector(
+                     onTap: () {
+                       _focusNode.unfocus();
+                       showCameraOptionsBottomSheet(context,AppString.channelChat);
+                     },
+                    child : Container(
+                      margin: EdgeInsets.symmetric(horizontal: 5),
+                      child: Icon(Icons.camera_alt_outlined, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black , size: 30),
+                    )),
+                    Container(
+                      margin: EdgeInsets.only(right: 5),
+                      child: Icon(Icons.mic_none, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, size: 30),
+                    ),
+                  }
                 ],
               ),
             ),
-            if(Platform.isIOS)...{
-              SizedBox(height: 20)
-            },
             selectedFilesWidget(screenName: AppString.channelChat),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> mediaSheet(BuildContext context) {
+    return showModalBottomSheet(
+      context: context,
+      backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Content and tools",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _optionItem(context, Icons.photo_library_outlined, "Media", "Photos and Video",(){
+                FileServiceProvider.instance.pickImagesAndVideo(AppString.channelChat);
+              }),
+              _optionItem(context, Icons.attach_file, "Files", "Access all Files",(){
+                FileServiceProvider.instance.pickFiles(AppString.channelChat);
+              }),
+              _optionItem(context, Icons.camera_alt_outlined, "Camera", "Capture image and video",(){
+                FileServiceProvider.instance.captureImageAndVideo(AppString.channelChat);
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _optionItem(BuildContext context, IconData icon, String title, String subtitle,Function onTap) {
+    return InkWell(
+      onTap: () {
+        Navigator.pop(context);
+        _focusNode.unfocus();
+        onTap.call();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Row(
+          children: [
+            Icon(icon, size: 30),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                Text(subtitle, style: TextStyle(fontSize: 14, color: Colors.grey)),
+              ],
+            ),
           ],
         ),
       ),
