@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:e_connect/main.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
+import 'package:e_connect/providers/thread_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -179,6 +180,9 @@ class SocketIoProvider extends ChangeNotifier{
 
   sendMessagesSC({required Map<String, dynamic> response,bool emitReplyMsg = false}) {
     print("emit>>>>> Send Message $response");
+    // print("emit>>>>> For reply $emitReplyMsg");
+    String a = emitReplyMsg ? sendReplyMessage : sendMessage;
+    print("emit>>>>> For reply $a");
     socket.emit(emitReplyMsg ? sendReplyMessage : sendMessage, response);
     // socket.on(  emitReplyMsg ? sendReplyMessage : sendMessage, (data) {
     //   print("sendReplyMessage>>>>>DD $data");
@@ -207,6 +211,10 @@ class SocketIoProvider extends ChangeNotifier{
         navigatorKey.currentState!.context, 
         listen: false
       );
+      final threadProvider = Provider.of<ThreadProvider>(
+          navigatorKey.currentState!.context,
+          listen: false
+      );
       
       // Explicitly refresh all lists in sequence to ensure we have the latest data with timestamps
       print("Socket notification received - refreshing lists...");
@@ -215,7 +223,9 @@ class SocketIoProvider extends ChangeNotifier{
       Future.wait([
         channelListProvider.getFavoriteList(),
         channelListProvider.getChannelList(),
-        channelListProvider.getDirectMessageList()
+        channelListProvider.getDirectMessageList(),
+         threadProvider.fetchUnreadThreads(),
+          threadProvider.fetchUnreadThreadCount()
       ]).then((_) {
         // Explicitly combine lists after all data is fetched to ensure proper sorting
         channelListProvider.combineAllLists();
@@ -227,6 +237,43 @@ class SocketIoProvider extends ChangeNotifier{
           listen: false
         ).getUserByIDCall();
         
+        NotificationService.setBadgeCount();
+      });
+    });
+    socket.on(replyNotification, (data) {
+      print("Received Notification >>> $data");
+
+      // Refresh the list with the latest data
+      final channelListProvider = Provider.of<ChannelListProvider>(
+        navigatorKey.currentState!.context,
+        listen: false
+      );
+      final threadProvider = Provider.of<ThreadProvider>(
+          navigatorKey.currentState!.context,
+          listen: false
+      );
+
+      // Explicitly refresh all lists in sequence to ensure we have the latest data with timestamps
+      print("Socket notification received - refreshing lists...");
+
+      // Make sure all lists are refreshed before combining
+      Future.wait([
+        channelListProvider.getFavoriteList(),
+        channelListProvider.getChannelList(),
+        channelListProvider.getDirectMessageList(),
+         threadProvider.fetchUnreadThreads(),
+          threadProvider.fetchUnreadThreadCount()
+      ]).then((_) {
+        // Explicitly combine lists after all data is fetched to ensure proper sorting
+        channelListProvider.combineAllLists();
+        print("All lists refreshed and combined after socket notification");
+
+        // Also update user data and badge count
+        Provider.of<CommonProvider>(
+          navigatorKey.currentState!.context,
+          listen: false
+        ).getUserByIDCall();
+
         NotificationService.setBadgeCount();
       });
     });

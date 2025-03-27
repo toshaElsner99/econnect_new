@@ -127,7 +127,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       // channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
       /// this is default call with page 1 for chat listing ///
       Provider.of<ChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
-      chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromJump: isfromJump,callForFav: widget.calledForFavorite ?? false,onlyReadInChat: false);
+      chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: pageNo,isFromJump: isfromJump,callForFav: widget.calledForFavorite ?? false,onlyReadInChat: false);
       /// this is for fetch other user details and store it to cache memory ///
       /// this is for get user mention listing api ///
       commonProvider.getUserApi(id: oppositeUserId);
@@ -205,8 +205,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     print("IDD $msgIndex");
 
     if(scrollController1.hasClients && scrollController.hasClients){
-      scrollController.jumpTo(index*800.0);
-      scrollController1.jumpTo(msgIndex*50.0);
+      scrollController.animateTo(
+        index*800.0,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      scrollController.animateTo(
+        msgIndex*800.0,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
     // Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
   }

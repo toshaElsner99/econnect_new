@@ -21,6 +21,7 @@ import '../../../providers/chat_provider.dart';
 import '../../../providers/common_provider.dart';
 import '../../../providers/download_provider.dart';
 import '../../../providers/file_service_provider.dart';
+import '../../../providers/thread_provider.dart';
 import '../../../socket_io/socket_io.dart';
 import '../../../utils/api_service/api_string_constants.dart';
 import '../../../utils/app_color_constants.dart';
@@ -85,6 +86,9 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
       Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: widget.messageId,fromWhere: "SCREEN INIT");
       Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.messageId);
       Provider.of<CommonProvider>(context, listen: false).getUserApi(id :widget.receiverId);
+      final threadProvider = Provider.of<ThreadProvider>(context, listen: false);
+      threadProvider.fetchUnreadThreads();
+      threadProvider.fetchUnreadThreadCount();
     });
   }
 

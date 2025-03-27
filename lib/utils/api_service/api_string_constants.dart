@@ -72,4 +72,8 @@ class ApiString{
   // Search Message
   static const searchMessages = "messages/search";
   static const messageJump = "messages/get-message-jump";
+
+  // Threads
+  static const getUnreadThread = "messages/getUnreadThread";
+  static const getUnreadThreadCounts = "messages/getUnreadThreadCounts";
 }
