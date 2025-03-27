@@ -787,7 +787,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                       GestureDetector(
                                         onTap: () {
                                           _focusNode.unfocus();
-                                          FileServiceProvider.instance.pickImages(AppString.singleChatReply);
+                                          // FileServiceProvider.instance.pickImages(AppString.singleChatReply);
                                         },
                                         child: const Icon(Icons.image, color: Colors.white),
                                       ),

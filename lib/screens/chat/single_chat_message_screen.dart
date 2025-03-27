@@ -524,11 +524,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   Widget inputTextFieldWithEditor() {
     return Container(
       decoration: BoxDecoration(
-        color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+        // color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
         border: Border(
           top: BorderSide(
-            color: Colors.white,
-            width: 0.5,
+            color: AppColor.borderColor,
+            width: 0.2,
           ),
         ),
       ),
@@ -540,11 +540,26 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 children: [
+                  /// ADD ICON  ////
+                  GestureDetector(
+                    onTap: () => mediaSheet(context),
+                    child: Container(
+                      padding: EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColor.blueColor,
+                      ),
+                      child: Icon(Icons.add,color: Colors.white,size: 25,),
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  /// TEXT FIELD ///
                   Expanded(
                     child: Container(
                       margin: EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(25),
+                        color: AppPreferenceConstants.themeModeBoolValueGet ? Color(0xFf292929) : Color(0xFFf2f2f2),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
                         children: [
@@ -558,9 +573,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 focusNode: _focusNode,
                                 keyboardType: TextInputType.multiline,
                                 textInputAction: TextInputAction.newline,
-                                style: TextStyle(color: AppColor.whiteColor),
+                                style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
                                 decoration: InputDecoration(
-                                  hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
+                                  hintText: 'Message....',
                                   hintMaxLines: 1,
                                   hintStyle: TextStyle(color: Colors.grey),
                                   border: InputBorder.none,
@@ -568,36 +583,34 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   enabledBorder: InputBorder.none,
                                   errorBorder: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  suffixIcon: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _focusNode.unfocus();
-                                          FileServiceProvider.instance.pickFiles(AppString.singleChat);
-                                        },
-                                        child: const Icon(Icons.attach_file, color: Colors.white),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _focusNode.unfocus();
-                                          FileServiceProvider.instance.pickImages(AppString.singleChat);
-                                        },
-                                        child: const Icon(Icons.image, color: Colors.white),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _focusNode.unfocus();
-                                          showCameraOptionsBottomSheet(context,AppString.singleChat);
-                                        },
-                                        child: const Icon(Icons.camera_alt, color: Colors.white),
-                                      ),
-                                      const SizedBox(width: 8),
-                                    ],
-                                  ),
+                                  // suffixIcon: Row(
+                                  //   mainAxisSize: MainAxisSize.min,
+                                  //   children: [
+                                  //     const SizedBox(width: 8),
+                                  //     GestureDetector(
+                                  //       onTap: () {
+                                  //         _focusNode.unfocus();
+                                  //       },
+                                  //       child: const Icon(Icons.attach_file, color: Colors.white),
+                                  //     ),
+                                  //     const SizedBox(width: 8),
+                                  //     GestureDetector(
+                                  //       onTap: () {
+                                  //         _focusNode.unfocus();
+                                  //       },
+                                  //       child: const Icon(Icons.image, color: Colors.white),
+                                  //     ),
+                                  //     const SizedBox(width: 8),
+                                  //     GestureDetector(
+                                  //       onTap: () {
+                                  //         _focusNode.unfocus();
+                                  //         showCameraOptionsBottomSheet(context,AppString.singleChat);
+                                  //       },
+                                  //       child: const Icon(Icons.camera_alt, color: Colors.white),
+                                  //     ),
+                                  //     const SizedBox(width: 8),
+                                  //   ],
+                                  // ),
                                 ),
                                 textCapitalization: TextCapitalization.sentences,
                               ),
@@ -607,35 +620,59 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       ),
                     ),
                   ),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColor.blueColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      icon: Icon(Icons.send, color: AppColor.whiteColor, size: 20),
-                      onPressed: () async {
+                  /// SEND MESSAGE & CAMERA,MIC ///
+                  if(_messageController.text.isNotEmpty)...{
+                    GestureDetector(
+                      onTap: () async {
                         final plainText = _messageController.text.trim();
-                        if(plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
-                          if(fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty){
+                        if (plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
+                          if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
                             final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
-                            chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, files: filesOfList);
+                            chatProvider.sendMessage(
+                                content: plainText,
+                                receiverId: oppositeUserId,
+                                files: filesOfList);
                           } else {
-                            chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then((value) => setState(() {
-                              currentUserMessageId = "";
-                              socketProvider.userTypingEvent(
-                                oppositeUserId: oppositeUserId,
-                                isReplyMsg: false,
-                                isTyping: 0,
-                              );
-                            }),);
+                            chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then(
+                                  (value) => setState(() {
+                                    currentUserMessageId = "";
+                                    socketProvider.userTypingEvent(
+                                      oppositeUserId: oppositeUserId,
+                                      isReplyMsg: false,
+                                      isTyping: 0,
+                                    );
+                                  }),
+                                );
                           }
                           _clearInputAndDismissKeyboard();
                         }
                       },
+                      child: Container(
+                          margin: EdgeInsets.only(left: 10),
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColor.blueColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.send, color: AppColor.whiteColor, size: 18)),
                     ),
-                  ),
+
+                  }else...{
+                    GestureDetector(
+                     onTap: () {
+                       _focusNode.unfocus();
+                       showCameraOptionsBottomSheet(context,AppString.singleChat);
+                     },
+                    child : Container(
+                      margin: EdgeInsets.symmetric(horizontal: 5),
+                      child: Icon(Icons.camera_alt_outlined, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black , size: 30),
+                    )),
+                    Container(
+                      margin: EdgeInsets.only(right: 5),
+                      child: Icon(Icons.mic_none, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, size: 30),
+                    ),
+                  }
+
                 ],
               ),
             ),
@@ -646,6 +683,76 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     );
   }
 
+
+  Future<void> mediaSheet(BuildContext context) {
+    return showModalBottomSheet(
+      context: context,
+      backgroundColor:  AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Content and tools",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _optionItem(context, Icons.photo_library_outlined, "Media", "Photos and Video",(){
+                FileServiceProvider.instance.pickImagesAndVideo(AppString.singleChat);
+              }),
+              _optionItem(context, Icons.attach_file, "Files", "Access all Files",(){
+                FileServiceProvider.instance.pickFiles(AppString.singleChat);
+              }),
+              _optionItem(context, Icons.camera_alt_outlined, "Camera", "Capture image and video",(){
+                FileServiceProvider.instance.captureMedia(AppString.singleChat);
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _optionItem(BuildContext context, IconData icon, String title, String subtitle,Function onTap) {
+    return InkWell(
+      onTap: () {
+        Navigator.pop(context);
+        _focusNode.unfocus();
+        onTap.call();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Row(
+          children: [
+            Icon(icon, size: 30),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                Text(subtitle, style: TextStyle(fontSize: 14, color: Colors.grey)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget dateHeaders() {
     return Consumer<ChatProvider>(builder: (context, value, child) {

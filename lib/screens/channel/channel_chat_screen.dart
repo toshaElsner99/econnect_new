@@ -689,7 +689,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                       GestureDetector(
                                         onTap: () {
                                           _focusNode.unfocus();
-                                          FileServiceProvider.instance.pickImages(AppString.channelChat);
+                                          // FileServiceProvider.instance.pickImages(AppString.channelChat);
                                         },
                                         child: const Icon(Icons.image, color: Colors.white),
                                       ),

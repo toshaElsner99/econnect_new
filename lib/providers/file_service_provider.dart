@@ -114,11 +114,11 @@ class FileServiceProvider with ChangeNotifier {
     }
   }
 
-  Future<void> pickImages(String screenName) async {
+  Future<void> pickImagesAndVideo(String screenName) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        // allowedExtensions: ['jpg', 'jpeg', 'png', 'gif'],
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi'], // Only images & videos
         allowMultiple: true,
       );
 
@@ -130,23 +130,46 @@ class FileServiceProvider with ChangeNotifier {
     }
   }
 
-  Future<void> captureMedia({required bool isVideo, required String screenName}) async {
+  // Future<void> captureMedia({required bool isVideo, required String screenName}) async {
+  //   try {
+  //     final ImagePicker picker = ImagePicker();
+  //     final XFile? media = isVideo
+  //         ? await picker.pickVideo(source: ImageSource.camera)
+  //         : await picker.pickImage(source: ImageSource.camera);
+  //
+  //     if (media != null) {
+  //       final file = PlatformFile(
+  //         name: media.name,
+  //         size: await media.length(),
+  //         path: media.path,
+  //       );
+  //       addFilesForScreen(screenName, [file]); // Add captured media to the correct screen
+  //     }
+  //   } catch (e) {
+  //     debugPrint('Error capturing media: $e');
+  //   }
+  // }
+
+  Future<void> captureMedia(String screenName) async {
     try {
       final ImagePicker picker = ImagePicker();
-      final XFile? media = isVideo
-          ? await picker.pickVideo(source: ImageSource.camera)
-          : await picker.pickImage(source: ImageSource.camera);
+      final XFile? media = await picker.pickMedia();
 
-      if (media != null) {
-        final file = PlatformFile(
-          name: media.name,
-          size: await media.length(),
-          path: media.path,
-        );
-        addFilesForScreen(screenName, [file]); // Add captured media to the correct screen
+      if (media == null) {
+        debugPrint('No media captured.');
+        return;
       }
+
+      final file = PlatformFile(
+        name: media.name,
+        size: await media.length(),
+        path: media.path,
+      );
+
+      addFilesForScreen(screenName, [file]); // Add captured media to the correct screen
     } catch (e) {
       debugPrint('Error capturing media: $e');
     }
   }
+
 }

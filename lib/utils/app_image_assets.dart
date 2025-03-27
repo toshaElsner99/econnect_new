@@ -44,6 +44,12 @@ class AppImage{
   static const playStoreIcon = "$path/playstore.png";
   static const appStoreIcon = "$path/app-store.png";
   static const wafflePNG = "$path/waffle.png";
+  static const audioIcon = "$path/audio_icon.png";
+  static const cameraIcon = "$path/camera.png";
+  static const fileIconPng = "$path/file_icon.png";
+  static const galleryIcon = "$path/gallery.png";
+  static const sendIconPng = "$path/send.png";
+
 
 
 

@@ -2927,7 +2927,7 @@ void showCameraOptionsBottomSheet(BuildContext context,String screenName) {
               ),
               onTap: () {
                 Navigator.pop(context);
-                FileServiceProvider.instance.captureMedia(isVideo: false,screenName: screenName);
+                // FileServiceProvider.instance.captureMedia(isVideo: false,screenName: screenName);
               },
             ),
             ListTile(
@@ -2938,7 +2938,7 @@ void showCameraOptionsBottomSheet(BuildContext context,String screenName) {
               ),
               onTap: () {
                 Navigator.pop(context);
-                FileServiceProvider.instance.captureMedia(isVideo: true,screenName: screenName);
+                // FileServiceProvider.instance.captureMedia(isVideo: true,screenName: screenName);
               },
             ),
           ],
