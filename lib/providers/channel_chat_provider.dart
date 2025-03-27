@@ -833,7 +833,7 @@ class ChannelChatProvider extends ChangeNotifier{
     }
   }
   String? lastOpenedChannelId;
-  bool isChannelChatLoading = false;
+  bool isChannelChatLoading = true;
 
   Future<void> getFileListingInChannelChat({required String channelId})async{
     final requestBody = {"channelId": channelId};

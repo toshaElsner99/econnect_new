@@ -2,12 +2,16 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/model/direct_message_list_model.dart';
 import 'package:e_connect/model/channel_list_model.dart';
+import 'package:e_connect/model/thread_model.dart';
 import 'package:e_connect/screens/bottom_nav_tabs/setting_screen.dart';
 import 'package:e_connect/screens/browse_and_search_channel/browse_and_search_channel.dart';
 import 'package:e_connect/screens/channel/channel_chat_screen.dart';
+import 'package:e_connect/screens/channel/reply_message_screen_channel/reply_message_screen_channel.dart';
+import 'package:e_connect/screens/chat/reply_message_screen/reply_message_screen.dart';
 import 'package:e_connect/screens/create_channel_screen/create_channel_screen.dart';
 import 'package:e_connect/screens/find_channel_screen/find_channel_screen.dart';
 import 'package:e_connect/screens/open_direct_message/open_direct_message.dart';
+import 'package:e_connect/screens/thread/thread_screen.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
@@ -22,6 +26,7 @@ import '../../model/direct_message_list_model.dart';
 import '../../notificationServices/pushNotificationService.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/common_provider.dart';
+import '../../providers/thread_provider.dart';
 import '../../socket_io/socket_io.dart';
 import '../../utils/app_preference_constants.dart';
 import '../../utils/common/common_function.dart';
@@ -62,15 +67,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   
   // Selected tab index
   int _selectedTabIndex = 0;
-  final List<String> _tabTitles = ['All', 'Channels', 'Favourites'];
+  final List<String> _tabTitles = ['All', 'Channels', 'Favourites', 'Threads'];
   
   // PageController for swiping between tabs
   late PageController _pageController;
-  
+
   @override
   void initState() {
     super.initState();
-    // print("signInModel>>>> ${signInModel.data?.user?.muteChannels}");
     WidgetsBinding.instance.addObserver(this);
     Provider.of<SocketIoProvider>(context,listen: false).connectSocket();
     _pageController = PageController(initialPage: _selectedTabIndex);
@@ -86,6 +90,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     setState(() {
       _isInitialized = true;
     });
+    // Thread Updates
+    updateThreads();
   }
 
   @override
@@ -96,6 +102,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
   }
 
+  updateThreads(){
+    // Fetch both thread data and count
+    final threadProvider = Provider.of<ThreadProvider>(context, listen: false);
+    threadProvider.fetchUnreadThreads();
+    threadProvider.fetchUnreadThreadCount();
+  }
 
   @override
   void dispose() {
@@ -137,6 +149,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     children: [
                       _buildHeader(),
                       Spacer(),
+                      // GestureDetector(
+                      //     onTap: (){
+                      //       pushScreen(screen: ThreadScreen());
+                      //       // _buildThreadsTab();
+                      //     },
+                      //     child: Icon(Icons.chat_outlined,color: AppColor.whiteColor,size: 25)),
+                      // SizedBox(width: 20),
                       _buildAddButton()
                     ],
                   ),
@@ -165,45 +184,69 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildTabsSection() {
     return Container(
       margin: EdgeInsets.only(top: 16, bottom: 8),
-      child: Row(
-        children: List.generate(
-          _tabTitles.length,
-          (index) => Padding(
-            padding: EdgeInsets.only(right: index < _tabTitles.length - 1 ? 8 : 0),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedTabIndex = index;
-                  _pageController.animateToPage(
-                    index,
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                });
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: _tabTitles[index] == 'All' ? 16 : 20, 
-                  vertical: 10
-                ),
-                decoration: BoxDecoration(
-                  border: _selectedTabIndex == index ? null : Border.all(color: AppColor.borderColor,width: 0.2),
-                  color: _selectedTabIndex == index 
-                      ? AppColor.white
-                      : AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.blueColor.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: commonText(
-                 text: _tabTitles[index],
-                    color: _selectedTabIndex != index
-                        ? AppColor.white
-                        : AppColor.blueColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Consumer<ThreadProvider>(
+          builder: (context, threadProvider, child) {
+            return Row(
+              children: List.generate(
+                _tabTitles.length,
+                (index) => Padding(
+                  padding: EdgeInsets.only(right: index < _tabTitles.length - 1 ? 8 : 0),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedTabIndex = index;
+                        _pageController.animateToPage(
+                          index,
+                          duration: Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        );
+                        if(_selectedTabIndex == 3){
+                          updateThreads();
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10
+                      ),
+                      decoration: BoxDecoration(
+                        border: _selectedTabIndex == index ? null : Border.all(color: AppColor.borderColor,width: 0.2),
+                        color: _selectedTabIndex == index
+                            ? AppColor.white
+                            : AppPreferenceConstants.themeModeBoolValueGet ? CupertinoColors.darkBackgroundGray : AppColor.blueColor.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          // Show count only for Threads tab
+                          if (index == 3 && threadProvider.unreadThreadCount > 0) ...[
+                            commonText(
+                              text: threadProvider.unreadThreadCount.toString(),
+                              color: AppColor.lightBlueBgColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            SizedBox(width: 8),
+                          ],
+                          commonText(
+                            text: _tabTitles[index],
+                            color: _selectedTabIndex != index
+                                ? AppColor.white
+                                : AppColor.blueColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );
@@ -222,6 +265,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         _buildAllTab(channelListProvider, commonProvider),
         _buildChannelsTab(channelListProvider, commonProvider),
         _buildFavoritesTab(channelListProvider, commonProvider),
+        _buildThreadsTab()
       ],
     );
   }
@@ -1447,6 +1491,208 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               return _buildListItem(item, commonProvider);
             },
           ),
+        ),
+      ),
+    );
+  }
+
+  // Thread UI implementation
+  Widget _buildThreadsTab() {
+    return Consumer<ThreadProvider>(
+      builder: (context, threadProvider, child) {
+        if (threadProvider.isLoading && threadProvider.threads.isEmpty) {
+          return Center(
+            child: CircularProgressIndicator(
+              color: AppColor.white
+            ),
+          );
+        }
+
+        if (threadProvider.threads.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.message,
+                  size: 60,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  "No Unread Threads",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              ],
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // // Show loading indicator at top when fetching new data
+              if (threadProvider.isLoading && threadProvider.threads.isNotEmpty)
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: 25,
+                    height: 25,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColor.white,
+                    ),
+                  ),
+                ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 5),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: AppPreferenceConstants.themeModeBoolValueGet
+                      ? AppColor.borderColor.withOpacity(0.05)
+                      : AppColor.blueColor.withOpacity(0.1),
+                ),
+                child: ListView.separated(
+                  physics: NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: threadProvider.threads.length,
+                  separatorBuilder: (context, index) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Divider(color: AppColor.white.withAlpha(15)),
+                  ),
+                  itemBuilder: (context, index) {
+                    final thread = threadProvider.threads[index];
+                    return _buildThreadItem(thread);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildThreadItem(Thread thread) {
+    final bool isChannelMessage = thread.mainMessageReceiverInfo == null;
+    final String channelName = isChannelMessage 
+        ? thread.mainMessageChannelInfo?.name ?? ""
+        : thread.mainMessageReceiverInfo?.fullName ?? thread.mainMessageReceiverInfo?.username ?? "";
+    
+    return GestureDetector(
+      onTap: () {
+        if(isChannelMessage) {
+          pushScreen(
+            screen: ReplyMessageScreenChannel(
+              msgID: thread.sId ?? "",
+              channelName: channelName,
+              channelId: thread.mainMessageChannelId ?? "",
+            ),
+          ).then((onValue){
+            updateThreads();
+          });
+        }else{
+          pushScreen(
+            screen: ReplyMessageScreen(
+              userName: thread.mainMessageSenderInfo?.fullName ?? thread.mainMessageSenderInfo?.username ?? "",
+              messageId: thread.sId ?? "",
+              receiverId: thread.mainMessageRecieverId ?? "",
+            ),
+          ).then((onValue){
+            updateThreads();
+          });
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (isChannelMessage) ...[
+              // Container(
+              //   // constraints: BoxConstraints(maxWidth: 120),
+              //   decoration: BoxDecoration(
+              //     color: AppColor.lightGreyColor,
+              //     borderRadius: BorderRadius.circular(5),
+              //   ),
+              //   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+              //   child: commonText(
+              //     text: channelName.toUpperCase(),
+              //     color: AppColor.blackColor,
+              //     fontSize: 12,
+              //     fontWeight: FontWeight.bold,
+              //     maxLines: 1,
+              //     overflow: TextOverflow.ellipsis,
+              //   ),
+              // ), 
+              commonText(
+                text: channelName.toUpperCase(),
+                color: AppColor.borderColor,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 10),
+            ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                profileIconWithStatus(
+                  userName: thread.mainMessageSenderInfo?.fullName ?? thread.mainMessageSenderInfo?.username ?? "",
+                  userID: thread.mainMessageSenderInfo?.sId ?? "",
+                  otherUserProfile: thread.mainMessageSenderInfo?.thumbnailAvatarUrl ?? "",
+                  status: thread.mainMessageSenderInfo?.status ?? "online",
+                  radius: 15,
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      commonText(
+                        text: thread.mainMessageSenderInfo?.fullName ?? thread.mainMessageSenderInfo?.username ?? "",
+                        color: AppColor.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 4),
+                      commonHTMLText(
+                        message: thread.mainMessageContent ?? "",
+                        color: AppColor.white
+                      ),
+                      SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.reply,
+                            size: 16,
+                            color: AppColor.white.withOpacity(0.6),
+                          ),
+                          SizedBox(width: 8),
+                          commonText(
+                            text: "${thread.totalUnseenReplies} new ${thread.totalUnseenReplies == 1 ? 'reply' : 'replies'}",
+                            color: AppColor.white.withOpacity(0.6),
+                            fontSize: 12,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+          ],
         ),
       ),
     );

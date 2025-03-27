@@ -139,7 +139,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                           "oppositeUserID":
                                           message.oppositeUserInfo?.id,
                                           "oppositeUserName": message
-                                              .oppositeUserInfo!.username,
+                                              .oppositeUserInfo?.username,
                                           "name": message.senderInfo!.username,
                                           "needToOpenChannelChat":
                                           message.channelInfo != null
@@ -230,7 +230,6 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                             : message
                                                             .senderInfo!
                                                             .status
-                                                            .name
                                                             .contains(
                                                             "offline")
                                                             ? Colors
@@ -242,8 +241,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                     getCommonStatusIcons(
                                                         status: message
                                                             .senderInfo!
-                                                            .status
-                                                            .name,
+                                                            .status,
                                                         size: 20,
                                                         assetIcon: false),
                                                   ],

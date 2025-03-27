@@ -90,36 +90,30 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     });
   }
   void jumpToMessage({required List<MessageGroup> sortedGroups,required String messageGroupId,required String messageId}){
+    if(Provider.of<ChannelChatProvider>(context,listen: false).isChannelChatLoading == false){
+      print("messageGroupId $messageGroupId");
+      // log("messageGroupId $sortedGroups");
+      final  index = sortedGroups.indexWhere((test)=> test.id == messageGroupId.split(" ")[0]);
+      final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.id == messageId);
+      print("indexindexindexindexindex $index");
 
-
-
-
-    // final  index = sortedGroups.indexWhere((test)=> test.sId == messageGroupId.split(" ")[0]);
-    // print(index);
-    // print("IDD $messageId");
-    // final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.sId == messageId);
-    // print("IDD $msgIndex");
-    //
-    // if(scrollController1.hasClients && scrollController.hasClients){
-    //   scrollController.jumpTo(index*800.0);
-    //   scrollController1.jumpTo(msgIndex*50.0);
-    // }
-
-    print("messageGroupId $messageGroupId");
-    // log("messageGroupId $sortedGroups");
-    final  index = sortedGroups.indexWhere((test)=> test.id == messageGroupId.split(" ")[0]);
-    final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.id == messageId);
-    print("indexindexindexindexindex $index");
-
-    if(_scrollController.hasClients && _scrollController1.hasClients){
-      _scrollController.jumpTo(index*800.0);
-      _scrollController1.jumpTo(msgIndex*50.0);
+      if(_scrollController.hasClients && _scrollController1.hasClients){
+        // _scrollController.jumpTo(index*800.0);
+        _scrollController.animateTo(
+          index*800.0,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        _scrollController.animateTo(
+          msgIndex*400.0,
+          duration: Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        // _scrollController1.jumpTo(msgIndex*800.0);
+      }
+    }else{
+      Future.delayed(Duration(seconds: 5),()=> jumpToMessage(sortedGroups: sortedGroups,messageGroupId: messageGroupId,messageId: messageId));
     }
-    // if(_scrollController.hasClients){
-    //   _scrollController.jumpTo(index*8000.0);
-    // }
-
-    // Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
   }
   void _onTextChanged() {
     final text = _messageController.text;
@@ -461,7 +455,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       downStreamPagination(channelId: channelID);
       channelChatProviderInit.getChannelInfoApiCall(channelId: channelID,callFroHome: true);
       Provider.of<ChannelChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
-      channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: 1,isFromJump: isfromJump,onlyReadInChat: true);
+      channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: pageNo,isFromJump: isfromJump,onlyReadInChat: true);
       channelChatProviderInit.getChannelMembersList(channelID);
       channelChatProviderInit.getFileListingInChannelChat(channelId: channelID);
       if(isfromJump){
@@ -586,7 +580,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             .renameChannel(
                             channelId: channelID,
                             name: newName,
-                            isPrivate: false
+                            isPrivate: channelChatProv.getChannelInfo?.data?.isPrivate ?? false
                         )
                             .then((_) => pop());
                       }else {
@@ -810,8 +804,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           fontSize: 14,
                         ),
                       ),
-                      if (channelChatProvider.getChannelInfo?.data?.ownerId?.sId == signInModel.data?.user?.id)
-                        ...{
+                      if (channelChatProvider.getChannelInfo?.data?.members
+                          ?.any((member) => member.isAdmin == true &&
+                          member.id == signInModel.data?.user?.id) ?? false)...{
                           SizedBox(width: 10),
                           GestureDetector(
                             onTap: () => _showRenameChannelDialog(),

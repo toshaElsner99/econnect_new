@@ -1665,7 +1665,7 @@ Widget commonText({
   );
 }
 
-Widget commonHTMLText({required String message,String userId = "", bool isLog = false,String userName = ""})  {
+Widget commonHTMLText({required String message,String userId = "", bool isLog = false,String userName = "", color})  {
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
   final currentUserId = signInModel.data?.user?.id ?? "";
   // First process @mentions
@@ -1730,7 +1730,7 @@ Widget commonHTMLText({required String message,String userId = "", bool isLog = 
     textStyle: TextStyle(
       height: 1.2,
       fontFamily: AppFonts.interFamily,
-      color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+      color: color ?? (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
       fontSize: 16,
     ),
     customStylesBuilder: (element) {

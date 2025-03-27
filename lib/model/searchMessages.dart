@@ -124,7 +124,7 @@ class ErInfo {
   String id;
   String username;
   String email;
-  Status status;
+  String status;
   String thumbnailAvatarUrl;
   String elsnerEmail;
 
@@ -141,7 +141,7 @@ class ErInfo {
     id: json["_id"],
     username: json["username"],
     email: json["email"],
-    status: statusValues.map[json["status"]]!,
+    status: json["status"] ?? "offline",
     thumbnailAvatarUrl: json["thumbnail_avatarUrl"],
     elsnerEmail: json["elsner_email"],
   );
@@ -150,7 +150,7 @@ class ErInfo {
     "_id": id,
     "username": username,
     "email": email,
-    "status": statusValues.reverse[status],
+    // "status": statusValues.reverse[status],
     "thumbnail_avatarUrl": thumbnailAvatarUrl,
     "elsner_email": elsnerEmail,
   };
