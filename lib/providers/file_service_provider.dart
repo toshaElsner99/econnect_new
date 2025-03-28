@@ -117,8 +117,7 @@ class FileServiceProvider with ChangeNotifier {
   Future<void> pickImagesAndVideo(String screenName) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi'], // Only images & videos
+        type: FileType.image,
         allowMultiple: true,
       );
 

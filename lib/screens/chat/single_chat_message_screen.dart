@@ -32,6 +32,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:voice_message_player/voice_message_player.dart';
+import 'package:just_audio/just_audio.dart';
 
 // import '../../model/browse_and_search_channel_model.dart';
 import '../../model/get_user_mention_model.dart';
@@ -96,6 +97,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   Timer? _recordingTimer;
   bool _showAudioPreview = false;
   String? _previewAudioPath;
+  VoiceController? _currentlyPlayingController;
+  final Map<String, VoiceController> _audioControllers = {};
+  final Map<String, Duration> _audioDurations = {};
+  final _audioPlayer = AudioPlayer();
 
   Future<void> _initializeRecorder() async {
     _record = AudioRecorder();
@@ -133,7 +138,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
   Future<void> _toggleRecording() async {
     if (_isRecording) {
-      // Stop recording
       final path = await _record.stop();
       _stopRecordingTimer();
       setState(() {
@@ -144,7 +148,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       });
       print("Recording saved at: $_audioPath");
     } else {
-      // Start recording
       if (await _record.hasPermission()) {
         final path = await _getFilePath();
         await _record.start(RecordConfig(encoder: AudioEncoder.aacLc), path: path);
@@ -269,6 +272,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
   @override
   void dispose() {
+    _audioPlayer.dispose();
+    _currentlyPlayingController?.stopPlaying();
+    for (var controller in _audioControllers.values) {
+      controller.stopPlaying();
+      controller.dispose();
+    }
+    _audioControllers.clear();
+    _audioDurations.clear();
     _recordingTimer?.cancel();
     _record.dispose();
     _messageController.removeListener(_onTextChanged);
@@ -714,12 +725,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     Expanded(
                       child: Row(
                         children: [
-                          Icon(Icons.mic, color: Colors.red, size: 24),
+                          Icon(Icons.mic, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red, size: 24),
                           SizedBox(width: 8),
                           Text(
                             _formatDuration(_recordingDuration),
                             style: TextStyle(
-                              color: Colors.red,
+                              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -728,11 +739,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.close, color: Colors.red),
+                      icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
                       onPressed: _cancelRecording,
                     ),
                     IconButton(
-                      icon: Icon(Icons.stop, color: Colors.red),
+                      icon: Icon(Icons.stop, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
                       onPressed: _toggleRecording,
                     ),
                   ],
@@ -740,12 +751,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     Expanded(
                       child: Row(
                         children: [
-                          Icon(Icons.audio_file, color: AppColor.blueColor, size: 24),
+                          Icon(Icons.audio_file, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor, size: 24),
                           SizedBox(width: 8),
                           Text(
                             _formatDuration(_recordingDuration),
                             style: TextStyle(
-                              color: AppColor.blueColor,
+                              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -754,7 +765,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.close, color: Colors.red),
+                      icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
                       onPressed: () {
                         setState(() {
                           _showAudioPreview = false;
@@ -763,7 +774,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       },
                     ),
                     IconButton(
-                      icon: Icon(Icons.send, color: AppColor.blueColor),
+                      icon: Icon(Icons.send, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white :  AppColor.blueColor),
                       onPressed: _sendAudioMessage,
                     ),
                   ],
@@ -817,12 +828,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       GestureDetector(
                         onTap: _toggleRecording,
                         child: Container(
-                          padding: EdgeInsets.all(10),
+                          padding: EdgeInsets.all(5),
                           decoration: BoxDecoration(
                             color: AppColor.blueColor,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.mic, color: Colors.white, size: 30),
+                          child: Icon(Icons.mic, color: Colors.white, size: 25),
                         ),
                       ),
                     }
@@ -1387,6 +1398,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             
                             if (isAudioFile) {
                               print("Rendering VoiceMessagePlayer for: ${ApiString.profileBaseUrl}$filesUrl");
+                              
                               return Container(
                                 margin: EdgeInsets.only(top: 4, right: 10),
                                 decoration: BoxDecoration(
@@ -1399,12 +1411,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   activeSliderColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
                                   controller: VoiceController(
                                     audioSrc: "${ApiString.profileBaseUrl}$filesUrl",
-                                    onComplete: () => print("Audio playback completed"),
-                                    onPause: () => print("Audio playback paused"),
-                                    onPlaying: () => print("Audio playback started"),
-                                    onError: (err) => print("Audio playback error: $err"),
-                                    maxDuration: Duration(seconds: 300),
-                                    isFile: false,
+                                    maxDuration: Duration(minutes: 5),
+                                    isFile: false, onComplete: () {  }, onPause: () {  }, onPlaying: () {  },
                                   ),
                                   innerPadding: 12,
                                   cornerRadius: 20,
@@ -2074,6 +2082,64 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         ),
       ),
     );
+  }
+
+  Future<Duration?> _getAudioDuration(String url) async {
+    try {
+      if (_audioDurations.containsKey(url)) {
+        return _audioDurations[url];
+      }
+      
+      await _audioPlayer.setUrl("${ApiString.profileBaseUrl}$url");
+      final duration = await _audioPlayer.duration;
+      if (duration != null) {
+        _audioDurations[url] = duration;
+      }
+      return duration;
+    } catch (e) {
+      print("Error getting audio duration: $e");
+      return null;
+    }
+  }
+
+  Future<VoiceController> _createAudioController(String filesUrl) async {
+    final duration = await _getAudioDuration(filesUrl) ?? Duration(minutes: 1);
+    
+    return VoiceController(
+      audioSrc: "${ApiString.profileBaseUrl}$filesUrl",
+      onComplete: () {
+        print("Audio playback completed");
+        if (_currentlyPlayingController == _audioControllers[filesUrl]) {
+          setState(() => _currentlyPlayingController = null);
+        }
+      },
+      onPause: () {
+        print("Audio playback paused");
+        if (_currentlyPlayingController == _audioControllers[filesUrl]) {
+          setState(() => _currentlyPlayingController = null);
+        }
+      },
+      onPlaying: () {
+        print("Audio playback started");
+        _handleAudioPlayback(filesUrl, _audioControllers[filesUrl]!);
+      },
+      onError: (err) {
+        print("Audio playback error: $err");
+        if (_currentlyPlayingController == _audioControllers[filesUrl]) {
+          setState(() => _currentlyPlayingController = null);
+        }
+      },
+      maxDuration: duration,
+      isFile: false,
+    );
+  }
+
+  void _handleAudioPlayback(String audioUrl, VoiceController controller) {
+    // If there's already an audio playing and it's different from the new one
+    if (_currentlyPlayingController != null && _currentlyPlayingController != controller) {
+      _currentlyPlayingController!.stopPlaying();
+    }
+    setState(() => _currentlyPlayingController = controller);
   }
 }
 
