@@ -364,9 +364,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             isCalledForFav: widget.calledForFavorite ?? false,
             isCallForReadMessage: true,
           );
-          if (widget.isFromNotification ?? false) {
-            pushAndRemoveUntil(screen: HomeScreen());
-          }
+          // if (widget.isFromNotification ?? false) {
+          //   pushAndRemoveUntil(screen: HomeScreen());
+          // }
         },
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -462,11 +462,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         child: IconButton(
           icon: Icon(CupertinoIcons.back, color: Colors.white),
           onPressed: () {
-            if(widget.isFromNotification ?? false) {
-              pushAndRemoveUntil(screen: HomeScreen());
-            }else{
-              pop();
-            }
+            pop();
+            // if(widget.isFromNotification ?? false) {
+            //   pushAndRemoveUntil(screen: HomeScreen());
+            // }else{
+            //   pop();
+            // }
             channelListProvider.readUnreadMessages(
               oppositeUserId: oppositeUserId,
               isCalledForFav: widget.calledForFavorite ?? false,
@@ -1399,6 +1400,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             if (isAudioFile) {
                               print("Rendering VoiceMessagePlayer for: ${ApiString.profileBaseUrl}$filesUrl");
                               
+                              // Create or get the controller for this audio file
+                              if (!_audioControllers.containsKey(filesUrl)) {
+                                _createAudioController(filesUrl).then((controller) {
+                                  _audioControllers[filesUrl] = controller;
+                                });
+                              }
+                              
                               return Container(
                                 margin: EdgeInsets.only(top: 4, right: 10),
                                 decoration: BoxDecoration(
@@ -1409,10 +1417,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.transparent : Colors.white,
                                   circlesColor: AppColor.blueColor,
                                   activeSliderColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
-                                  controller: VoiceController(
+                                  controller: _audioControllers[filesUrl] ?? VoiceController(
                                     audioSrc: "${ApiString.profileBaseUrl}$filesUrl",
                                     maxDuration: Duration(minutes: 5),
-                                    isFile: false, onComplete: () {  }, onPause: () {  }, onPlaying: () {  },
+                                    isFile: false,
+                                    onComplete: () {},
+                                    onPause: () {},
+                                    onPlaying: () {},
                                   ),
                                   innerPadding: 12,
                                   cornerRadius: 20,
@@ -2091,7 +2102,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       }
       
       await _audioPlayer.setUrl("${ApiString.profileBaseUrl}$url");
-      final duration = await _audioPlayer.duration;
+      final duration = _audioPlayer.duration;
       if (duration != null) {
         _audioDurations[url] = duration;
       }
@@ -2103,6 +2114,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
 
   Future<VoiceController> _createAudioController(String filesUrl) async {
+    // Stop any currently playing audio
+    await _stopAllAudio();
+    
     final duration = await _getAudioDuration(filesUrl) ?? Duration(minutes: 1);
     
     return VoiceController(
@@ -2132,6 +2146,19 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       maxDuration: duration,
       isFile: false,
     );
+  }
+
+  Future<void> _stopAllAudio() async {
+    // Stop the currently playing controller if any
+    if (_currentlyPlayingController != null) {
+      _currentlyPlayingController?.stopPlaying();
+      setState(() => _currentlyPlayingController = null);
+    }
+
+    // Stop all other controllers
+    for (var controller in _audioControllers.values) {
+      controller.stopPlaying();
+    }
   }
 
   void _handleAudioPlayback(String audioUrl, VoiceController controller) {

@@ -86,11 +86,16 @@ class ChannelListProvider extends ChangeNotifier{
         }
 
         // Find the channel where isDefault = true
-        var defaultChannel = channelListModel!.data!.firstWhere(
+        var defaultChannel = channelListModel?.data?.firstWhere(
               (channel) => channel.isDefault == true,
-          // orElse: () => null,
+          orElse: () => ChannelList(),
         );
-
+        if (defaultChannel != null) {
+          // Proceed with your logic
+          print("Default Channel ID: ${defaultChannel.sId}");
+        } else {
+          print("No default channel found.");
+        }
         if (defaultChannel != null) {
           print("channelId : ${defaultChannel.sId} & channel : ${defaultChannel.name}");
           AppPreferenceConstants.elsnerChannelGetId = defaultChannel.sId ?? "";

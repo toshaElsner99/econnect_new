@@ -843,11 +843,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       return PopScope(
         onPopInvokedWithResult: (x, y) {
           Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
-          if (widget.isFromNotification ?? false) {
-            pushAndRemoveUntil(screen: HomeScreen());
-          } else {
-            // return true;
-          }
+          // if (widget.isFromNotification ?? false) {
+          //   // pushAndRemoveUntil(screen: HomeScreen());
+          // } else {
+          //   // return true;
+          // }
         },
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -859,11 +859,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               leading: IconButton(
                 icon: Icon(CupertinoIcons.back, color: Colors.white),
                 onPressed: () {
-                  if(widget.isFromNotification ?? false) {
-                    pushAndRemoveUntil(screen: HomeScreen());
-                  }else{
-                    pop();
-                  }
+                  pop();
+                  // if(widget.isFromNotification ?? false) {
+                  //   // pushAndRemoveUntil(screen: HomeScreen());
+                  //
+                  // }else{
+                  //   pop();
+                  // }
                   Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
                 },
               ),
