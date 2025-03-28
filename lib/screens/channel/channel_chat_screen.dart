@@ -552,7 +552,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     errorBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
                     focusedErrorBorder: InputBorder.none,
-                    hintText: "Enter channel name",
+                    hintText: 'Write to ${channelChatProv.getChannelInfo?.data?.name ?? ""}',
                     hintStyle: TextStyle(color: AppColor.lightGreyColor.withOpacity(0.5)),
                   ),
                 ),

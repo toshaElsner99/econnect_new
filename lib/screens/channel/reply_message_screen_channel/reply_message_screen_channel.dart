@@ -729,7 +729,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                   textInputAction: TextInputAction.newline,
                                   style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
                                   decoration: InputDecoration(
-                                    hintText: 'Message....',
+                                    hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
                                     hintMaxLines: 1,
                                     hintStyle: TextStyle(color: Colors.grey),
                                     border: InputBorder.none,

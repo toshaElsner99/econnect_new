@@ -777,7 +777,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                   textInputAction: TextInputAction.newline,
                                   style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
                                   decoration: InputDecoration(
-                                    hintText: 'Message....',
+                                    hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
                                     hintMaxLines: 1,
                                     hintStyle: TextStyle(color: Colors.grey),
                                     border: InputBorder.none,

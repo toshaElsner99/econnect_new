@@ -295,6 +295,53 @@ class ChatProvider extends  ChangeNotifier {
      stopLoading();
    }
   }
+  Future<List<String>> uploadFilesForAudio(List<String> filePaths) async {
+    try {
+      startLoading();
+
+      if (filePaths.isEmpty) {
+        throw Exception("No file path provided for upload");
+      }
+
+      File fileToUpload = File(filePaths.first);
+
+      print("<<<<<<<<<<SUIIIII>>>>>>>>>>>");
+
+      var request = http.MultipartRequest('POST', Uri.parse(ApiString.baseUrl + ApiString.uploadFileForMessageMedia));
+      request.headers.addAll({
+        'Authorization': "Bearer ${signInModel.data?.authToken}",
+      });
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'files',
+          fileToUpload.path,
+          contentType: MediaType.parse(lookupMimeType(fileToUpload.path) ?? 'application/octet-stream'),
+        ),
+      );
+
+      var response = await request.send();
+      var responseData = await http.Response.fromStream(response);
+
+      if (response.statusCode == 200) {
+        var jsonResponse = jsonDecode(responseData.body);
+        if (jsonResponse['data'] != null && jsonResponse['data'] is List && jsonResponse['data'].isNotEmpty) {
+          List<String> uploadedFilePaths = [jsonResponse['data'][0]['file_path'] ?? ''];
+          print("filePathRes>>>>> $uploadedFilePaths");
+          return uploadedFilePaths;
+        } else {
+          throw Exception("Unexpected response structure");
+        }
+      } else {
+        throw Exception('Failed to upload file: ${responseData.body}');
+      }
+    } catch (e) {
+      throw Exception("$e");
+    } finally {
+      stopLoading();
+    }
+  }
+
   Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID,bool? isEditFromReply = false})async{
     final requestBody = {
       "content": content,

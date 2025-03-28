@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -26,8 +27,11 @@ import 'package:flutter/services.dart';
 import 'package:html/parser.dart';
 import 'package:http/http.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'package:provider/provider.dart';
+import 'package:record/record.dart';
+import 'package:voice_message_player/voice_message_player.dart';
 
 // import '../../model/browse_and_search_channel_model.dart';
 import '../../model/get_user_mention_model.dart';
@@ -85,7 +89,111 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   bool NeedTocallJumpToMessage = false;
   String messageGroupId = "";
   String messageId = "";
+  late AudioRecorder _record = AudioRecorder();
+  bool _isRecording = false;
+  String? _audioPath;
+  Duration _recordingDuration = Duration.zero;
+  Timer? _recordingTimer;
+  bool _showAudioPreview = false;
+  String? _previewAudioPath;
 
+  Future<void> _initializeRecorder() async {
+    _record = AudioRecorder();
+    bool hasPermission = await _record.hasPermission();
+    if (!hasPermission) {
+      print("Recording permission denied!");
+    }
+  }
+
+  void _startRecordingTimer() {
+    _recordingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _recordingDuration += Duration(seconds: 1);
+      });
+    });
+  }
+
+  void _stopRecordingTimer() {
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return duration.inHours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
+  }
+
+  Future<String> _getFilePath() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+  }
+
+  Future<void> _toggleRecording() async {
+    if (_isRecording) {
+      // Stop recording
+      final path = await _record.stop();
+      _stopRecordingTimer();
+      setState(() {
+        _isRecording = false;
+        _audioPath = path;
+        _showAudioPreview = true;
+        _previewAudioPath = path;
+      });
+      print("Recording saved at: $_audioPath");
+    } else {
+      // Start recording
+      if (await _record.hasPermission()) {
+        final path = await _getFilePath();
+        await _record.start(RecordConfig(encoder: AudioEncoder.aacLc), path: path);
+        setState(() {
+          _isRecording = true;
+          _recordingDuration = Duration.zero;
+          _showAudioPreview = false;
+        });
+        _startRecordingTimer();
+      }
+    }
+  }
+
+  void _cancelRecording() async {
+    if (_isRecording) {
+      await _record.stop();
+      _stopRecordingTimer();
+      setState(() {
+        _isRecording = false;
+        _recordingDuration = Duration.zero;
+        _showAudioPreview = false;
+      });
+    }
+  }
+
+  void _sendAudioMessage() async {
+    if (_audioPath != null) {
+      try {
+        final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
+        print("uploadFiles>>>> $uploadedFiles");
+        // Send the message with the uploaded files
+        await chatProvider.sendMessage(
+          content: "",
+          receiverId: oppositeUserId,
+          files: uploadedFiles,
+        );
+
+        // Clear the audio state after successful send
+        setState(() {
+          _audioPath = null;
+          _showAudioPreview = false;
+          _recordingDuration = Duration.zero;
+        });
+      } catch (e) {
+        print("Error sending audio message: $e");
+        // You might want to show an error message to the user here
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -98,6 +206,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }else{
       initializeScreen(1,isFromJump,"","");
     }
+    _initializeRecorder();
   }
 
 
@@ -160,6 +269,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
   @override
   void dispose() {
+    _recordingTimer?.cancel();
+    _record.dispose();
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _focusNode.dispose();
@@ -524,7 +635,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
   Widget inputTextFieldWithEditor() {
     return Container(
-      margin: Platform.isAndroid ? null :  EdgeInsets.only(bottom: _focusNode.hasFocus ? 40 : 0),
+      margin: Platform.isAndroid ? null : EdgeInsets.only(bottom: _focusNode.hasFocus ? 40 : 0),
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(
@@ -541,115 +652,181 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 children: [
-                  /// ADD ICON  ////
-                  GestureDetector(
-                    onTap: () => mediaSheet(context),
-                    child: Container(
-                      padding: EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColor.blueColor,
+                  if (!_isRecording && !_showAudioPreview) ...[
+                    /// ADD ICON  ////
+                    GestureDetector(
+                      onTap: () => mediaSheet(context),
+                      child: Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColor.blueColor,
+                        ),
+                        child: Icon(Icons.add,color: Colors.white,size: 25,),
                       ),
-                      child: Icon(Icons.add,color: Colors.white,size: 25,),
                     ),
-                  ),
-                  SizedBox(width: 6),
-                  /// TEXT FIELD ///
-                  Expanded(
-                    child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: AppPreferenceConstants.themeModeBoolValueGet ? Color(0xFf292929) : Color(0xFFf2f2f2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: CompositedTransformTarget(
-                              link: _layerLink,
-                              child: KeyboardActions(
-                                disableScroll: true,
-                                config: keyboardConfigIos(_focusNode),
-                                child: TextField(
-                                  maxLines: 5,
-                                  minLines: 1,
-                                  controller: _messageController,
-                                  focusNode: _focusNode,
-                                  keyboardType: TextInputType.multiline,
-                                  textInputAction: TextInputAction.newline,
-                                  style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
-                                  decoration: InputDecoration(
-                                    hintText: 'Message....',
-                                    hintMaxLines: 1,
-                                    hintStyle: TextStyle(color: Colors.grey),
-                                    border: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    errorBorder: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    SizedBox(width: 6),
+                    /// TEXT FIELD ///
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppPreferenceConstants.themeModeBoolValueGet ? Color(0xFf292929) : Color(0xFFf2f2f2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: CompositedTransformTarget(
+                                link: _layerLink,
+                                child: KeyboardActions(
+                                  disableScroll: true,
+                                  config: keyboardConfigIos(_focusNode),
+                                  child: TextField(
+                                    maxLines: 5,
+                                    minLines: 1,
+                                    controller: _messageController,
+                                    focusNode: _focusNode,
+                                    keyboardType: TextInputType.multiline,
+                                    textInputAction: TextInputAction.newline,
+                                    style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
+                                    decoration: InputDecoration(
+                                      hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
+                                      hintMaxLines: 1,
+                                      hintStyle: TextStyle(color: Colors.grey),
+                                      border: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      errorBorder: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    ),
+                                    textCapitalization: TextCapitalization.sentences,
                                   ),
-                                  textCapitalization: TextCapitalization.sentences,
                                 ),
                               ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (_isRecording) ...[
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.mic, color: Colors.red, size: 24),
+                          SizedBox(width: 8),
+                          Text(
+                            _formatDuration(_recordingDuration),
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  /// SEND MESSAGE & CAMERA,MIC ///
-                  if(_messageController.text.isNotEmpty)...{
-                    GestureDetector(
-                      onTap: () async {
-                        final plainText = _messageController.text.trim();
-                        if (plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
-                          if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
-                            final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
-                            chatProvider.sendMessage(
-                                content: plainText,
-                                receiverId: oppositeUserId,
-                                files: filesOfList);
-                          } else {
-                            chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then(
-                                  (value) => setState(() {
-                                    currentUserMessageId = "";
-                                    socketProvider.userTypingEvent(
-                                      oppositeUserId: oppositeUserId,
-                                      isReplyMsg: false,
-                                      isTyping: 0,
-                                    );
-                                  }),
-                                );
-                          }
-                          _clearInputAndDismissKeyboard();
-                        }
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.red),
+                      onPressed: _cancelRecording,
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.stop, color: Colors.red),
+                      onPressed: _toggleRecording,
+                    ),
+                  ],
+                  if (_showAudioPreview) ...[
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(Icons.audio_file, color: AppColor.blueColor, size: 24),
+                          SizedBox(width: 8),
+                          Text(
+                            _formatDuration(_recordingDuration),
+                            style: TextStyle(
+                              color: AppColor.blueColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.red),
+                      onPressed: () {
+                        setState(() {
+                          _showAudioPreview = false;
+                          _audioPath = null;
+                        });
                       },
-                      child: Container(
-                          margin: EdgeInsets.only(left: 10),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.send, color: AppColor.blueColor),
+                      onPressed: _sendAudioMessage,
+                    ),
+                  ],
+                  if (!_isRecording && !_showAudioPreview) ...[
+                    if(_messageController.text.isNotEmpty)...{
+                      GestureDetector(
+                        onTap: () async {
+                          final plainText = _messageController.text.trim();
+                          if (plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
+                            if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
+                              final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
+                              chatProvider.sendMessage(
+                                  content: plainText,
+                                  receiverId: oppositeUserId,
+                                  files: filesOfList);
+                            } else {
+                              chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then(
+                                    (value) => setState(() {
+                                      currentUserMessageId = "";
+                                      socketProvider.userTypingEvent(
+                                        oppositeUserId: oppositeUserId,
+                                        isReplyMsg: false,
+                                        isTyping: 0,
+                                      );
+                                    }),
+                                  );
+                            }
+                            _clearInputAndDismissKeyboard();
+                          }
+                        },
+                        child: Container(
+                            margin: EdgeInsets.only(left: 10),
+                            padding: EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColor.blueColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.send, color: AppColor.whiteColor, size: 18)),
+                      ),
+                    }else...{
+                      GestureDetector(
+                        onTap: () {
+                          _focusNode.unfocus();
+                          showCameraOptionsBottomSheet(context,AppString.singleChat);
+                        },
+                        child: Container(
+                          margin: EdgeInsets.symmetric(horizontal: 5),
+                          child: Icon(Icons.camera_alt_outlined, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black , size: 30),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: _toggleRecording,
+                        child: Container(
                           padding: EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: AppColor.blueColor,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(Icons.send, color: AppColor.whiteColor, size: 18)),
-                    ),
-
-                  }else...{
-                    GestureDetector(
-                     onTap: () {
-                       _focusNode.unfocus();
-                       showCameraOptionsBottomSheet(context,AppString.singleChat);
-                     },
-                    child : Container(
-                      margin: EdgeInsets.symmetric(horizontal: 5),
-                      child: Icon(Icons.camera_alt_outlined, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black , size: 30),
-                    )),
-                    Container(
-                      margin: EdgeInsets.only(right: 5),
-                      child: Icon(Icons.mic_none, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, size: 30),
-                    ),
-                  }
-
+                          child: Icon(Icons.mic, color: Colors.white, size: 30),
+                        ),
+                      ),
+                    }
+                  ],
                 ],
               ),
             ),
@@ -1194,13 +1371,51 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           physics: NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
                             final filesUrl = messageList.files![index];
+                            print("File URL: $filesUrl");
                             String originalFileName = getFileName(messageList.files![index]);
+                            print("Original File Name: $originalFileName");
                             String formattedFileName = formatFileName(originalFileName);
                             String fileType = getFileExtension(originalFileName);
-                            // IconData fileIcon = getFileIcon(fileType);
+                            print("File Type: $fileType");
+                            
+                            // Check if file is audio
+                            bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
+                                            fileType.toLowerCase() == 'mp3' ||
+                                            fileType.toLowerCase() == 'wav';
+                            
+                            print("Is Audio File: $isAudioFile");
+                            
+                            if (isAudioFile) {
+                              print("Rendering VoiceMessagePlayer for: ${ApiString.profileBaseUrl}$filesUrl");
+                              return Container(
+                                margin: EdgeInsets.only(top: 4, right: 10),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppColor.lightGreyColor),
+                                ),
+                                child: VoiceMessagePlayer(
+                                  backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.transparent : Colors.white,
+                                  circlesColor: AppColor.blueColor,
+                                  activeSliderColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
+                                  controller: VoiceController(
+                                    audioSrc: "${ApiString.profileBaseUrl}$filesUrl",
+                                    onComplete: () => print("Audio playback completed"),
+                                    onPause: () => print("Audio playback paused"),
+                                    onPlaying: () => print("Audio playback started"),
+                                    onError: (err) => print("Audio playback error: $err"),
+                                    maxDuration: Duration(seconds: 300),
+                                    isFile: false,
+                                  ),
+                                  innerPadding: 12,
+                                  cornerRadius: 20,
+                                ),
+                              );
+                            }
+
+
                             return Container(
-                              margin: EdgeInsets.only(top: 4,right: 10),
-                              padding: EdgeInsets.symmetric(horizontal: 20,vertical: 15),
+                              margin: EdgeInsets.only(top: 4, right: 10),
+                              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(color: AppColor.lightGreyColor),
@@ -1208,19 +1423,29 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               child: Row(
                                 children: [
                                   getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
-                                  SizedBox(width: 20,),
+                                  SizedBox(width: 20),
                                   Flexible(
-                                      flex: 10,
-                                      fit: FlexFit.loose,
-                                      child: commonText(text: formattedFileName,maxLines: 1)),
+                                    flex: 10,
+                                    fit: FlexFit.loose,
+                                    child: commonText(text: formattedFileName, maxLines: 1),
+                                  ),
                                   Spacer(),
                                   GestureDetector(
-                                      onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
-                                      child: Image.asset(AppImage.downloadIcon,fit: BoxFit.contain,height: 20,width: 20,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black))
+                                    onTap: () => Provider.of<DownloadFileProvider>(context, listen: false)
+                                        .downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
+                                    child: Image.asset(
+                                      AppImage.downloadIcon,
+                                      fit: BoxFit.contain,
+                                      height: 20,
+                                      width: 20,
+                                      color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                    ),
+                                  ),
                                 ],
                               ),
                             );
-                          },),
+                          },
+                        ),
                       ),
                       Visibility(
                         visible: messageList.replies?.isNotEmpty ?? false,
