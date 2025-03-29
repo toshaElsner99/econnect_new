@@ -74,7 +74,6 @@ dependencies:
   voice_message_player: ^1.1.2
   record: ^6.0.0
 
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

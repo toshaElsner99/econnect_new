@@ -794,14 +794,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             } else {
                               chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then(
                                     (value) => setState(() {
-                                      currentUserMessageId = "";
-                                      socketProvider.userTypingEvent(
-                                        oppositeUserId: oppositeUserId,
-                                        isReplyMsg: false,
-                                        isTyping: 0,
-                                      );
-                                    }),
+                                  currentUserMessageId = "";
+                                  socketProvider.userTypingEvent(
+                                    oppositeUserId: oppositeUserId,
+                                    isReplyMsg: false,
+                                    isTyping: 0,
                                   );
+                                }),
+                              );
                             }
                             _clearInputAndDismissKeyboard();
                           }
@@ -1389,24 +1389,24 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             String formattedFileName = formatFileName(originalFileName);
                             String fileType = getFileExtension(originalFileName);
                             print("File Type: $fileType");
-                            
+
                             // Check if file is audio
                             bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
-                                            fileType.toLowerCase() == 'mp3' ||
-                                            fileType.toLowerCase() == 'wav';
-                            
+                                fileType.toLowerCase() == 'mp3' ||
+                                fileType.toLowerCase() == 'wav';
+
                             print("Is Audio File: $isAudioFile");
-                            
+
                             if (isAudioFile) {
                               print("Rendering VoiceMessagePlayer for: ${ApiString.profileBaseUrl}$filesUrl");
-                              
+
                               // Create or get the controller for this audio file
                               if (!_audioControllers.containsKey(filesUrl)) {
                                 _createAudioController(filesUrl).then((controller) {
                                   _audioControllers[filesUrl] = controller;
                                 });
                               }
-                              
+
                               return Container(
                                 margin: EdgeInsets.only(top: 4, right: 10),
                                 decoration: BoxDecoration(
@@ -2100,7 +2100,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       if (_audioDurations.containsKey(url)) {
         return _audioDurations[url];
       }
-      
+
       await _audioPlayer.setUrl("${ApiString.profileBaseUrl}$url");
       final duration = _audioPlayer.duration;
       if (duration != null) {
@@ -2116,9 +2116,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   Future<VoiceController> _createAudioController(String filesUrl) async {
     // Stop any currently playing audio
     await _stopAllAudio();
-    
+
     final duration = await _getAudioDuration(filesUrl) ?? Duration(minutes: 1);
-    
+
     return VoiceController(
       audioSrc: "${ApiString.profileBaseUrl}$filesUrl",
       onComplete: () {
