@@ -446,137 +446,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                           ],
                         ),
                       ),
-                      // Put Reacted emojis list here
-                      if (messageList.reactions?.isNotEmpty ?? false)
-                        Container(
-                          margin: const EdgeInsets.only(top: 6, bottom: 6),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Reaction avatars section
-                              Builder(builder: (context) {
-                                // Get unique users who reacted
-                                final uniqueUsers = messageList.reactions!
-                                  .map((r) => r.userId!.sId)
-                                  .where((id) => id != null)
-                                  .toSet()
-                                  .toList();
 
-                                // Count total unique users for the counter
-                                final totalUniqueUsers = uniqueUsers.length;
-
-                                // Get usernames for the visible avatars (show at most 2 for direct chat)
-                                final visibleUsers = uniqueUsers.take(2).toList();
-                                
-                                // Calculate the width needed based on number of avatars
-                                final double stackWidth = visibleUsers.isEmpty ? 0 : 
-                                                        (visibleUsers.length == 1 ? 30 : 50);
-
-                                // Create container with avatars
-                                return Container(
-                                  height: 32,
-                                  width: stackWidth,
-                                  child: Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      for (int i = 0; i < visibleUsers.length; i++)
-                                        Positioned(
-                                          left: i * 20.0, // Offset each avatar by 20 pixels
-                                          child: GestureDetector(
-                                            onTap: () => _showReactionsList(context, messageList.reactions!),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: AppPreferenceConstants.themeModeBoolValueGet ? 
-                                                    Colors.grey.shade900 : Colors.white,
-                                                  width: 1.5,
-                                                ),
-                                              ),
-                                              child: profileIconWithStatus(
-                                                userID: visibleUsers[i] ?? "",
-                                                status: "",
-                                                needToShowIcon: false,
-                                                radius: 14,
-                                                otherUserProfile: userCache[visibleUsers[i]]?.data?.user?.thumbnailAvatarUrl ?? '',
-                                                borderColor: AppColor.blueColor,
-                                                userName: userCache[visibleUsers[i]]?.data?.user?.username ?? userCache[visibleUsers[i]]?.data?.user?.fullName ?? 'Unknown',
-                                                onTap: () => _showReactionsList(context, messageList.reactions!),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                );
-                              }),
-                              
-                              SizedBox(width: 8),
-                              
-                              // Reaction emojis section - keep this part to maintain functionality
-                              Flexible(
-                                child: Wrap(
-                                  spacing: 4,
-                                  runSpacing: 4,
-                                  alignment: WrapAlignment.start,
-                                  children: groupReactions(messageList.reactions!).entries.map((entry) {
-                                    bool hasUserReacted = messageList.reactions!.any((reaction) =>
-                                      reaction.userId!.sId == signInModel.data?.user?.id &&
-                                      reaction.emoji == entry.key);
-
-                                    return GestureDetector(
-                                      onTap: () {
-                                        if (hasUserReacted) {
-                                          context.read<ChatProvider>().reactionRemove(
-                                            messageId: messageList.sId!,
-                                            reactUrl: entry.key,
-                                            receiverId: widget.receiverId,
-                                            isFrom: "Reply"
-                                          );
-                                        } else {
-                                          context.read<ChatProvider>().reactMessage(
-                                            messageId: messageList.sId!,
-                                            reactUrl: entry.key,
-                                            receiverId: widget.receiverId,
-                                            isFrom: "Reply"
-                                          );
-                                        }
-                                      },
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            CachedNetworkImage(
-                                              imageUrl: entry.key,
-                                              height: 20,
-                                              width: 20,
-                                              errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
-                                            ),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              entry.value.toString(),
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: hasUserReacted ? Colors.blue : 
-                                                  AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(
@@ -685,7 +555,137 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             );
                           },),
                       ),
-                      // Spacer(),
+                      // Put Reacted emojis list here
+                      if (messageList.reactions?.isNotEmpty ?? false)
+                        Container(
+                          margin: const EdgeInsets.only(top: 6, bottom: 6),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Reaction avatars section
+                              Builder(builder: (context) {
+                                // Get unique users who reacted
+                                final uniqueUsers = messageList.reactions!
+                                    .map((r) => r.userId!.sId)
+                                    .where((id) => id != null)
+                                    .toSet()
+                                    .toList();
+
+                                // Count total unique users for the counter
+                                final totalUniqueUsers = uniqueUsers.length;
+
+                                // Get usernames for the visible avatars (show at most 2 for direct chat)
+                                final visibleUsers = uniqueUsers.take(2).toList();
+
+                                // Calculate the width needed based on number of avatars
+                                final double stackWidth = visibleUsers.isEmpty ? 0 :
+                                (visibleUsers.length == 1 ? 30 : 50);
+
+                                // Create container with avatars
+                                return Container(
+                                  height: 32,
+                                  width: stackWidth,
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      for (int i = 0; i < visibleUsers.length; i++)
+                                        Positioned(
+                                          left: i * 20.0, // Offset each avatar by 20 pixels
+                                          child: GestureDetector(
+                                            onTap: () => _showReactionsList(context, messageList.reactions!),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: AppPreferenceConstants.themeModeBoolValueGet ?
+                                                  Colors.grey.shade900 : Colors.white,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: profileIconWithStatus(
+                                                userID: visibleUsers[i] ?? "",
+                                                status: "",
+                                                needToShowIcon: false,
+                                                radius: 14,
+                                                otherUserProfile: userCache[visibleUsers[i]]?.data?.user?.thumbnailAvatarUrl ?? '',
+                                                borderColor: AppColor.blueColor,
+                                                userName: userCache[visibleUsers[i]]?.data?.user?.username ?? userCache[visibleUsers[i]]?.data?.user?.fullName ?? 'Unknown',
+                                                onTap: () => _showReactionsList(context, messageList.reactions!),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              }),
+
+                              SizedBox(width: 8),
+
+                              // Reaction emojis section - keep this part to maintain functionality
+                              Flexible(
+                                child: Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  alignment: WrapAlignment.start,
+                                  children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                    bool hasUserReacted = messageList.reactions!.any((reaction) =>
+                                    reaction.userId!.sId == signInModel.data?.user?.id &&
+                                        reaction.emoji == entry.key);
+
+                                    return GestureDetector(
+                                      onTap: () {
+                                        if (hasUserReacted) {
+                                          context.read<ChatProvider>().reactionRemove(
+                                              messageId: messageList.sId!,
+                                              reactUrl: entry.key,
+                                              receiverId: widget.receiverId,
+                                              isFrom: "Reply"
+                                          );
+                                        } else {
+                                          context.read<ChatProvider>().reactMessage(
+                                              messageId: messageList.sId!,
+                                              reactUrl: entry.key,
+                                              receiverId: widget.receiverId,
+                                              isFrom: "Reply"
+                                          );
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            CachedNetworkImage(
+                                              imageUrl: entry.key,
+                                              height: 20,
+                                              width: 20,
+                                              errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              entry.value.toString(),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: hasUserReacted ? Colors.blue :
+                                                AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),

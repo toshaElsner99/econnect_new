@@ -46,7 +46,7 @@ class _CameraScreenState extends State<CameraScreen> {
       );
 
       await _cameraController!.initialize();
-      
+
       // Set initial zoom level to minimum
       // await _cameraController!.setZoomLevel(_cameraController!.value.previewSize!.aspectRatio);
       double minZoom = await _cameraController!.getMinZoomLevel();
@@ -87,7 +87,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
     final dir = await getTemporaryDirectory();
     final String filePath = "${dir.path}/video_${DateTime.now().millisecondsSinceEpoch}.mp4";
-    
+
     try {
       await _cameraController!.startVideoRecording();
       setState(() {
@@ -105,7 +105,7 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       XFile videoFile = await _cameraController!.stopVideoRecording();
       _stopRecordingTimer();
-      
+
       setState(() {
         _isRecording = false;
         _capturedVideo = File(videoFile.path);
@@ -148,14 +148,14 @@ class _CameraScreenState extends State<CameraScreen> {
       final File fileToUse = _capturedImage ?? _capturedVideo!;
       final String extension = fileToUse.path.split('.').last;
       final String fileName = fileToUse.path.split('/').last;
-      
+
       final platformFile = PlatformFile(
         path: fileToUse.path,
         name: fileName,
         size: fileToUse.lengthSync(),
         bytes: fileToUse.readAsBytesSync(),
       );
-      
+
       FileServiceProvider.instance.addFilesForScreen(widget.screenName, [platformFile]);
     }
     Navigator.pop(context);
@@ -285,14 +285,21 @@ class _CameraScreenState extends State<CameraScreen> {
                           Container(
                             width: 70,
                             height: 70,
-                            margin: EdgeInsets.only(bottom: 5),
+                            padding: EdgeInsets.all(!_isVideoMode ? 7 : 15),
+                            margin: EdgeInsets.only(bottom: 10),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 4),
                               color: _isRecording ? Colors.red : Colors.transparent,
                             ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _isRecording ? Colors.transparent : Colors.white
+                              ),
+                            ),
                           ),
-                          commonText(text: !_isVideoMode ? "CAPTURE" : "RECORD",color: Colors.white)
+                          commonText(text: !_isVideoMode ? "CAPTURE" : "RECORD",color: Colors.white,fontSize: 13)
                         ],
                       ),
                     ),

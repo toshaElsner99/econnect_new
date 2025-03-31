@@ -1056,7 +1056,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildChannelRow(ChannelList channel) {
-    print("channelID _buildChannelRow >>> ${channel.sId}");
+    // print("channelID _buildChannelRow >>> ${channel.sId}");
     final muteChannel = signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false;
     return Container(
       // color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
@@ -1271,7 +1271,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     required int unSeenMsgCount,
     required bool mutedConversation,
   }) {
-    print("dateAndColumnWidget>>>>> $date");
+    // print("dateAndColumnWidget>>>>> $date");
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [

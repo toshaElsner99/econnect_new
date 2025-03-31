@@ -1591,168 +1591,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           ],
                         ),
                       ),
-                      if (messageList.reactions?.isNotEmpty ?? false)
-                        Container(
-                          margin: const EdgeInsets.only(top: 6, bottom: 6),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Reaction avatars section
-                              Builder(builder: (context) {
-                                // Get unique users who reacted
-                                final uniqueUsers = messageList.reactions!
-                                    .map((r) => r.userId)
-                                    .where((id) => id != null)
-                                    .map((id) => id as String)
-                                    .toSet()
-                                    .toList();
 
-                                // Count total unique users for the counter
-                                final totalUniqueUsers = uniqueUsers.length;
-
-                                // Get usernames for the visible avatars (show at most 3)
-                                final visibleUsers = uniqueUsers.take(3).toList();
-                                final remainingUsers = totalUniqueUsers > 2 ? totalUniqueUsers - 2 : 0;
-
-                                // Get usernames for the visible avatars
-                                List<String> usernames = [];
-                                for (int i = 0; i < visibleUsers.length && i < messageList.reactions!.length; i++) {
-                                  String? username = messageList.reactions!
-                                      .firstWhere((r) => r.userId == visibleUsers[i],
-                                      orElse: () => Message().reactions!.first)
-                                      .username;
-
-                                  usernames.add(username ?? "");
-                                }
-
-                                // Calculate the width needed based on number of avatars
-                                final double stackWidth = visibleUsers.isEmpty ? 0 :
-                                (visibleUsers.length == 1 ? 30 :
-                                (visibleUsers.length == 2 ? 50 : 70));
-
-                                // Create container with avatars
-                                return Container(
-                                  height: 32,
-                                  width: stackWidth,
-                                  child: Stack(
-                                    clipBehavior: Clip.none,
-                                    children: [
-                                      for (int i = 0; i < visibleUsers.length; i++)
-                                        Positioned(
-                                          left: i * 20.0, // Offset each avatar by 20 pixels
-                                          child: GestureDetector(
-                                            onTap: () => _showReactionsList(context, messageList.reactions!),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                border: Border.all(
-                                                  color: AppPreferenceConstants.themeModeBoolValueGet ?
-                                                  Colors.grey.shade900 : Colors.white,
-                                                  width: 1.5,
-                                                ),
-                                              ),
-                                              child: i < 2 || remainingUsers == 0 ?
-                                              profileIconWithStatus(
-                                                userID: visibleUsers[i],
-                                                userName: i < usernames.length ? usernames[i] : "",
-                                                status: "",
-                                                needToShowIcon: false,
-                                                radius: 14,
-                                                otherUserProfile: channelChatProvider.getUserById(visibleUsers[i])?.thumbnailAvatarUrl ?? '',
-                                                borderColor: AppColor.blueColor,
-                                              ) :
-                                              // Last avatar with +X indicator
-                                              Container(
-                                                width: 30,
-                                                height: 30,
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                  color: Colors.white,
-                                                  // border: Border.all(color: AppColor.blackColor),
-                                                ),
-                                                alignment: Alignment.center,
-                                                child: Text(
-                                                  "+$remainingUsers",
-                                                  style: TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                );
-                              }),
-
-                              SizedBox(width: 8),
-
-                              // Reaction emojis section - keep this part to maintain functionality
-                              Flexible(
-                                child: Wrap(
-                                  spacing: 4,
-                                  runSpacing: 4,
-                                  alignment: WrapAlignment.start,
-                                  children: groupReactions(messageList.reactions!).entries.map((entry) {
-                                    bool hasUserReacted = messageList.reactions!.any((reaction) =>
-                                    reaction.userId == signInModel.data?.user?.id &&
-                                        reaction.emoji == entry.key);
-
-                                    return GestureDetector(
-                                      onTap: () {
-                                        if (hasUserReacted) {
-                                          context.read<ChannelChatProvider>().reactionRemove(
-                                              messageId: messageList.id!,
-                                              reactUrl: entry.key,
-                                              channelId: channelID,
-                                              isFrom: "Channel"
-                                          );
-                                        } else {
-                                          context.read<ChannelChatProvider>().reactMessage(
-                                              messageId: messageList.id!,
-                                              reactUrl: entry.key,
-                                              channelId: channelID,
-                                              isFrom: "Channel"
-                                          );
-                                        }
-                                      },
-                                      child: Container(
-                                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            CachedNetworkImage(
-                                              imageUrl: entry.key,
-                                              height: 20,
-                                              width: 20,
-                                              errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
-                                            ),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              entry.value.toString(),
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: hasUserReacted ? Colors.blue : null,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                       // Forwarded message section
                       Visibility(
                           visible: messageList.isForwarded ?? false,
@@ -1996,8 +1835,169 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             ),
                           ),
                         ),
-                      )
+                      ),
+                      if (messageList.reactions?.isNotEmpty ?? false)
+                        Container(
+                          margin: const EdgeInsets.only(top: 6, bottom: 6),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Reaction avatars section
+                              Builder(builder: (context) {
+                                // Get unique users who reacted
+                                final uniqueUsers = messageList.reactions!
+                                    .map((r) => r.userId)
+                                    .where((id) => id != null)
+                                    .map((id) => id as String)
+                                    .toSet()
+                                    .toList();
 
+                                // Count total unique users for the counter
+                                final totalUniqueUsers = uniqueUsers.length;
+
+                                // Get usernames for the visible avatars (show at most 3)
+                                final visibleUsers = uniqueUsers.take(3).toList();
+                                final remainingUsers = totalUniqueUsers > 2 ? totalUniqueUsers - 2 : 0;
+
+                                // Get usernames for the visible avatars
+                                List<String> usernames = [];
+                                for (int i = 0; i < visibleUsers.length && i < messageList.reactions!.length; i++) {
+                                  String? username = messageList.reactions!
+                                      .firstWhere((r) => r.userId == visibleUsers[i],
+                                      orElse: () => Message().reactions!.first)
+                                      .username;
+
+                                  usernames.add(username ?? "");
+                                }
+
+                                // Calculate the width needed based on number of avatars
+                                final double stackWidth = visibleUsers.isEmpty ? 0 :
+                                (visibleUsers.length == 1 ? 30 :
+                                (visibleUsers.length == 2 ? 50 : 70));
+
+                                // Create container with avatars
+                                return Container(
+                                  height: 32,
+                                  width: stackWidth,
+                                  child: Stack(
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      for (int i = 0; i < visibleUsers.length; i++)
+                                        Positioned(
+                                          left: i * 20.0, // Offset each avatar by 20 pixels
+                                          child: GestureDetector(
+                                            onTap: () => _showReactionsList(context, messageList.reactions!),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                border: Border.all(
+                                                  color: AppPreferenceConstants.themeModeBoolValueGet ?
+                                                  Colors.grey.shade900 : Colors.white,
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: i < 2 || remainingUsers == 0 ?
+                                              profileIconWithStatus(
+                                                userID: visibleUsers[i],
+                                                userName: i < usernames.length ? usernames[i] : "",
+                                                status: "",
+                                                needToShowIcon: false,
+                                                radius: 14,
+                                                otherUserProfile: channelChatProvider.getUserById(visibleUsers[i])?.thumbnailAvatarUrl ?? '',
+                                                borderColor: AppColor.blueColor,
+                                              ) :
+                                              // Last avatar with +X indicator
+                                              Container(
+                                                width: 30,
+                                                height: 30,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: Colors.white,
+                                                  // border: Border.all(color: AppColor.blackColor),
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: Text(
+                                                  "+$remainingUsers",
+                                                  style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              }),
+
+                              SizedBox(width: 8),
+
+                              // Reaction emojis section - keep this part to maintain functionality
+                              Flexible(
+                                child: Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  alignment: WrapAlignment.start,
+                                  children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                    bool hasUserReacted = messageList.reactions!.any((reaction) =>
+                                    reaction.userId == signInModel.data?.user?.id &&
+                                        reaction.emoji == entry.key);
+
+                                    return GestureDetector(
+                                      onTap: () {
+                                        if (hasUserReacted) {
+                                          context.read<ChannelChatProvider>().reactionRemove(
+                                              messageId: messageList.id!,
+                                              reactUrl: entry.key,
+                                              channelId: channelID,
+                                              isFrom: "Channel"
+                                          );
+                                        } else {
+                                          context.read<ChannelChatProvider>().reactMessage(
+                                              messageId: messageList.id!,
+                                              reactUrl: entry.key,
+                                              channelId: channelID,
+                                              isFrom: "Channel"
+                                          );
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: hasUserReacted ? Colors.blue.withOpacity(0.2) : Colors.grey.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            CachedNetworkImage(
+                                              imageUrl: entry.key,
+                                              height: 20,
+                                              width: 20,
+                                              errorWidget: (context, url, error) => Icon(Icons.error, size: 20),
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              entry.value.toString(),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: hasUserReacted ? Colors.blue : null,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),
