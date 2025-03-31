@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -25,7 +24,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:html/parser.dart';
-import 'package:http/http.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -33,258 +31,16 @@ import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:just_audio/just_audio.dart';
 
-// import '../../model/browse_and_search_channel_model.dart';
 import '../../model/get_user_mention_model.dart';
-import '../../providers/channel_chat_provider.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/common_provider.dart';
-import '../../screens/chat/media_preview_screen.dart';
-import '../../utils/theme/theme_cubit.dart';
+import '../../widgets/audio_widget.dart';
 import '../../widgets/chat_profile_header.dart';
-import '../bottom_nav_tabs/home_screen.dart';
 import '../camera_preview/camera_preview.dart';
 import '../channel/channel_chat_screen.dart';
 import '../find_message_screen/find_message_screen.dart';
 import 'package:e_connect/utils/common/shimmer_loading.dart';
-
-// Add this class before the SingleChatMessageScreen class
-class AudioPlayerWidget extends StatefulWidget {
-  final String audioUrl;
-  final Map<String, AudioPlayer> audioPlayers;
-  final Map<String, Duration> audioDurations;
-  final Function(String, AudioPlayer) onPlaybackStart;
-  final AudioPlayer? currentlyPlayingPlayer;
-
-  const AudioPlayerWidget({
-    Key? key,
-    required this.audioUrl,
-    required this.audioPlayers,
-    required this.audioDurations,
-    required this.onPlaybackStart,
-    required this.currentlyPlayingPlayer,
-  }) : super(key: key);
-
-  @override
-  State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
-}
-
-class _AudioPlayerWidgetState extends State<AudioPlayerWidget> with AutomaticKeepAliveClientMixin {
-  late AudioPlayer _player;
-  bool _isPlaying = false;
-  Duration _position = Duration.zero;
-  Duration? _duration;
-  Timer? _positionTimer;
-  bool _isInitialized = false;
-
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  void initState() {
-    super.initState();
-    _setupPlayer();
-  }
-
-  Future<void> _setupPlayer() async {
-    _player = widget.audioPlayers[widget.audioUrl] ?? AudioPlayer();
-    widget.audioPlayers[widget.audioUrl] = _player;
-
-    try {
-      await _player.setUrl("${ApiString.profileBaseUrl}${widget.audioUrl}");
-
-      _duration = widget.audioDurations[widget.audioUrl];
-      if (_duration == null) {
-        final newDuration = await _player.duration;
-        if (newDuration != null) {
-          _duration = newDuration;
-          widget.audioDurations[widget.audioUrl] = newDuration;
-        }
-      }
-
-      // Listen to player state changes
-      _player.playerStateStream.listen((state) {
-        if (mounted) {
-          setState(() {
-            _isPlaying = state.playing;
-            _isInitialized = true;
-
-            // Check if playback has completed
-            if (state.processingState == ProcessingState.completed) {
-              _isPlaying = false;
-              _position = Duration.zero;
-              _player.seek(Duration.zero);
-            }
-          });
-        }
-      });
-
-      // Listen to position changes
-      _player.positionStream.listen((position) {
-        if (mounted) {
-          setState(() => _position = position);
-
-          // Check if we've reached the end
-          if (_duration != null && position >= _duration!) {
-            _player.seek(Duration.zero);
-            _player.pause();
-            setState(() {
-              _isPlaying = false;
-              _position = Duration.zero;
-            });
-          }
-        }
-      });
-
-    } catch (e) {
-      print('Error setting up audio player: $e');
-    }
-  }
-
-  Future<void> _playPause() async {
-    if (_isPlaying) {
-      await _player.pause();
-    } else {
-      // If we're at the end, reset position before playing
-      if (_position >= (_duration ?? Duration.zero)) {
-        await _player.seek(Duration.zero);
-        setState(() => _position = Duration.zero);
-      }
-      widget.onPlaybackStart(widget.audioUrl, _player);
-      await _player.play();
-    }
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$minutes:$seconds";
-  }
-
-  @override
-  void dispose() {
-    _positionTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-
-    return Container(
-      margin: EdgeInsets.symmetric(vertical: 8),
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.grey[200],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          // Play/Pause Button
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
-            ),
-            child: IconButton(
-              icon: Icon(
-                _isPlaying ? Icons.pause : Icons.play_arrow,
-                color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.blueColor : Colors.white,
-                size: 24,
-              ),
-              padding: EdgeInsets.zero,
-              onPressed: _playPause,
-            ),
-          ),
-          SizedBox(width: 12),
-
-          // Progress and Duration
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Waveform/Progress bar
-                Container(
-                  height: 24,
-                  child: Stack(
-                    alignment: Alignment.centerLeft,
-                    children: [
-                      // Background waveform
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: List.generate(
-                          20,
-                              (index) => Container(
-                            width: 3,
-                            height: (index % 2 == 0 ? 15.0 : 10.0),
-                            decoration: BoxDecoration(
-                              color: AppPreferenceConstants.themeModeBoolValueGet ?
-                              Colors.white.withOpacity(0.3) : AppColor.blueColor.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(1.5),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Progress waveform
-                      ClipRect(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: _duration != null ?
-                          (_position.inMilliseconds / _duration!.inMilliseconds).clamp(0.0, 1.0) : 0.0,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(
-                              20,
-                                  (index) => Container(
-                                width: 3,
-                                height: index % 2 == 0 ? 15.0 : 10.0,
-                                decoration: BoxDecoration(
-                                  color: AppPreferenceConstants.themeModeBoolValueGet ?
-                                  Colors.white : AppColor.blueColor,
-                                  borderRadius: BorderRadius.circular(1.5),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 4),
-                // Duration text
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _formatDuration(_position),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppPreferenceConstants.themeModeBoolValueGet ?
-                        Colors.white.withOpacity(0.7) : Colors.grey[600],
-                      ),
-                    ),
-                    Text(
-                      _formatDuration(_duration ?? Duration.zero),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppPreferenceConstants.themeModeBoolValueGet ?
-                        Colors.white.withOpacity(0.7) : Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class SingleChatMessageScreen extends StatefulWidget {
   final String userName;
@@ -335,8 +91,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   Timer? _recordingTimer;
   bool _showAudioPreview = false;
   String? _previewAudioPath;
-  // VoiceController? _currentlyPlayingController;
-  // final Map<String, VoiceController> _audioControllers = {};
   final Map<String, Duration> _audioDurations = {};
   final _audioPlayer = AudioPlayer();
 
@@ -886,207 +640,209 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
 
   Widget inputTextFieldWithEditor() {
-    return Container(
-      margin: Platform.isAndroid ? null : EdgeInsets.only(bottom: _focusNode.hasFocus ? 40 : 0),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: AppColor.borderColor,
-            width: 0.2,
+    return Consumer<FileServiceProvider>(builder: (context, fileServiceProvider, child) {
+      return Container(
+        margin: Platform.isAndroid ? null : EdgeInsets.only(bottom: _focusNode.hasFocus ? 40 : 0),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: AppColor.borderColor,
+              width: 0.2,
+            ),
           ),
         ),
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                children: [
-                  if (!_isRecording && !_showAudioPreview) ...[
-                    /// ADD ICON  ////
-                    GestureDetector(
-                      onTap: () => mediaSheet(context),
-                      child: Container(
-                        padding: EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColor.blueColor,
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    if (!_isRecording && !_showAudioPreview) ...[
+                      /// ADD ICON  ////
+                      GestureDetector(
+                        onTap: () => mediaSheet(context),
+                        child: Container(
+                          padding: EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColor.blueColor,
+                          ),
+                          child: Icon(Icons.add,color: Colors.white,size: 25,),
                         ),
-                        child: Icon(Icons.add,color: Colors.white,size: 25,),
                       ),
-                    ),
-                    SizedBox(width: 6),
-                    /// TEXT FIELD ///
-                    Expanded(
-                      child: Container(
-                        margin: EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppPreferenceConstants.themeModeBoolValueGet ? Color(0xFf292929) : Color(0xFFf2f2f2),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: CompositedTransformTarget(
-                                link: _layerLink,
-                                child: KeyboardActions(
-                                  disableScroll: true,
-                                  config: keyboardConfigIos(_focusNode),
-                                  child: TextField(
-                                    maxLines: 5,
-                                    minLines: 1,
-                                    controller: _messageController,
-                                    focusNode: _focusNode,
-                                    keyboardType: TextInputType.multiline,
-                                    textInputAction: TextInputAction.newline,
-                                    style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
-                                    decoration: InputDecoration(
-                                      hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
-                                      hintMaxLines: 1,
-                                      hintStyle: TextStyle(color: Colors.grey),
-                                      border: InputBorder.none,
-                                      focusedBorder: InputBorder.none,
-                                      enabledBorder: InputBorder.none,
-                                      errorBorder: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      SizedBox(width: 6),
+                      /// TEXT FIELD ///
+                      Expanded(
+                        child: Container(
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppPreferenceConstants.themeModeBoolValueGet ? Color(0xFf292929) : Color(0xFFf2f2f2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: CompositedTransformTarget(
+                                  link: _layerLink,
+                                  child: KeyboardActions(
+                                    disableScroll: true,
+                                    config: keyboardConfigIos(_focusNode),
+                                    child: TextField(
+                                      maxLines: 5,
+                                      minLines: 1,
+                                      controller: _messageController,
+                                      focusNode: _focusNode,
+                                      keyboardType: TextInputType.multiline,
+                                      textInputAction: TextInputAction.newline,
+                                      style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
+                                      decoration: InputDecoration(
+                                        hintText: 'Write to ${userDetails?.data?.user!.username ?? userDetails?.data?.user!.fullName ?? "...."}',
+                                        hintMaxLines: 1,
+                                        hintStyle: TextStyle(color: Colors.grey),
+                                        border: InputBorder.none,
+                                        focusedBorder: InputBorder.none,
+                                        enabledBorder: InputBorder.none,
+                                        errorBorder: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      ),
+                                      textCapitalization: TextCapitalization.sentences,
                                     ),
-                                    textCapitalization: TextCapitalization.sentences,
                                   ),
                                 ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (_isRecording) ...[
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.mic, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red, size: 24),
+                            SizedBox(width: 8),
+                            Text(
+                              _formatDuration(_recordingDuration),
+                              style: TextStyle(
+                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
-                  if (_isRecording) ...[
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Icon(Icons.mic, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red, size: 24),
-                          SizedBox(width: 8),
-                          Text(
-                            _formatDuration(_recordingDuration),
-                            style: TextStyle(
-                              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                      IconButton(
+                        icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
+                        onPressed: _cancelRecording,
                       ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
-                      onPressed: _cancelRecording,
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.stop, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
-                      onPressed: _toggleRecording,
-                    ),
-                  ],
-                  if (_showAudioPreview) ...[
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Icon(Icons.audio_file, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor, size: 24),
-                          SizedBox(width: 8),
-                          Text(
-                            _formatDuration(_recordingDuration),
-                            style: TextStyle(
-                              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                      IconButton(
+                        icon: Icon(Icons.stop, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
+                        onPressed: _toggleRecording,
                       ),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          _showAudioPreview = false;
-                          _audioPath = null;
-                        });
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.send, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white :  AppColor.blueColor),
-                      onPressed: _sendAudioMessage,
-                    ),
-                  ],
-                  if (!_isRecording && !_showAudioPreview) ...[
-                    if(_messageController.text.isNotEmpty)...{
-                      GestureDetector(
-                        onTap: () async {
-                          final plainText = _messageController.text.trim();
-                          if (plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
-                            if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
-                              final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
-                              chatProvider.sendMessage(
-                                  content: plainText,
-                                  receiverId: oppositeUserId,
-                                  files: filesOfList);
-                            } else {
-                              chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then(
-                                    (value) => setState(() {
-                                  currentUserMessageId = "";
-                                  socketProvider.userTypingEvent(
-                                    oppositeUserId: oppositeUserId,
-                                    isReplyMsg: false,
-                                    isTyping: 0,
-                                  );
-                                }),
-                              );
-                            }
-                            _clearInputAndDismissKeyboard();
-                          }
+                    ],
+                    if (_showAudioPreview) ...[
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.audio_file, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor, size: 24),
+                            SizedBox(width: 8),
+                            Text(
+                              _formatDuration(_recordingDuration),
+                              style: TextStyle(
+                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
+                        onPressed: () {
+                          setState(() {
+                            _showAudioPreview = false;
+                            _audioPath = null;
+                          });
                         },
-                        child: Container(
-                            margin: EdgeInsets.only(left: 10),
-                            padding: EdgeInsets.all(10),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.send, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white :  AppColor.blueColor),
+                        onPressed: _sendAudioMessage,
+                      ),
+                    ],
+                    if (!_isRecording && !_showAudioPreview) ...[
+                      if(fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty || _messageController.text.isNotEmpty )...{
+                        GestureDetector(
+                          onTap: () async {
+                            final plainText = _messageController.text.trim();
+                            if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty || plainText.isNotEmpty) {
+                              if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
+                                final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
+                                chatProvider.sendMessage(
+                                    content: plainText,
+                                    receiverId: oppositeUserId,
+                                    files: filesOfList);
+                              } else {
+                                chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then(
+                                      (value) => setState(() {
+                                    currentUserMessageId = "";
+                                    socketProvider.userTypingEvent(
+                                      oppositeUserId: oppositeUserId,
+                                      isReplyMsg: false,
+                                      isTyping: 0,
+                                    );
+                                  }),
+                                );
+                              }
+                              _clearInputAndDismissKeyboard();
+                            }
+                          },
+                          child: Container(
+                              margin: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColor.blueColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.send, color: AppColor.whiteColor, size: 18)),
+                        ),
+                      }else...{
+                        GestureDetector(
+                          onTap: () {
+                            _focusNode.unfocus();
+                            pushScreen(screen: CameraScreen(screenName: AppString.singleChat,));
+                          },
+                          child: Container(
+                            margin: EdgeInsets.symmetric(horizontal: 5),
+                            child: Icon(Icons.camera_alt_outlined, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black , size: 30),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _toggleRecording,
+                          child: Container(
+                            padding: EdgeInsets.all(5),
                             decoration: BoxDecoration(
                               color: AppColor.blueColor,
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.send, color: AppColor.whiteColor, size: 18)),
-                      ),
-                    }else...{
-                      GestureDetector(
-                        onTap: () {
-                          _focusNode.unfocus();
-                          pushScreen(screen: CameraScreen(screenName: AppString.singleChat,));
-                        },
-                        child: Container(
-                          margin: EdgeInsets.symmetric(horizontal: 5),
-                          child: Icon(Icons.camera_alt_outlined, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black , size: 30),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: _toggleRecording,
-                        child: Container(
-                          padding: EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: AppColor.blueColor,
-                            shape: BoxShape.circle,
+                            child: Icon(Icons.mic, color: Colors.white, size: 25),
                           ),
-                          child: Icon(Icons.mic, color: Colors.white, size: 25),
                         ),
-                      ),
-                    }
+                      }
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            selectedFilesWidget(screenName: AppString.singleChat),
-          ],
+              selectedFilesWidget(screenName: AppString.singleChat),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    },);
   }
 
 
@@ -1598,6 +1354,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                           audioDurations: _audioDurations,
                                           onPlaybackStart: _handleAudioPlayback,
                                           currentlyPlayingPlayer: _currentlyPlayingPlayer,
+                                          isForwarded: true, // Set to true for forwarded messages
                                         );
                                       }
 
@@ -1660,6 +1417,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 audioDurations: _audioDurations,
                                 onPlaybackStart: _handleAudioPlayback,
                                 currentlyPlayingPlayer: _currentlyPlayingPlayer,
+                                isForwarded: false, // Set to false for normal messages
                               );
                             }
 
@@ -1826,6 +1584,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     visible: userDetails?.data?.user?.isLeft == false,
                     child: popMenu2(context,
                         isPinned: pinnedMsg,
+                        hasAudioFile: ,
                         onOpened: () {},
                         onClosed: () {},
                         onReact: () {

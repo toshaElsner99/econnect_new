@@ -1,20 +1,21 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:keyboard_actions/keyboard_actions.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:e_connect/model/channel_members_model.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:record/record.dart';
 
 import '../../../main.dart';
 import '../../../model/get_reply_message_channel_model.dart';
-import '../../../model/get_user_mention_model.dart';
 import '../../../providers/chat_provider.dart';
 import '../../../providers/common_provider.dart';
 import '../../../providers/download_provider.dart';
@@ -27,6 +28,8 @@ import '../../../utils/app_image_assets.dart';
 import '../../../utils/app_preference_constants.dart';
 import '../../../utils/common/common_function.dart';
 import '../../../utils/common/common_widgets.dart';
+import '../../../widgets/audio_widget.dart';
+import '../../camera_preview/camera_preview.dart';
 import '../../chat/forward_message/forward_message_screen.dart';
 
 class ReplyMessageScreenChannel extends StatefulWidget {
@@ -54,9 +57,122 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
   int _mentionCursorPosition = 0;
   final Map<String, dynamic> userCache = {};
   bool _isTextFieldEmpty = true;
-
-
   final TextEditingController _messageController = TextEditingController();
+  late AudioRecorder _record = AudioRecorder();
+  bool _isRecording = false;
+  String? _audioPath;
+  Duration _recordingDuration = Duration.zero;
+  Timer? _recordingTimer;
+  bool _showAudioPreview = false;
+  String? _previewAudioPath;
+  final Map<String, Duration> _audioDurations = {};
+  final _audioPlayer = AudioPlayer();
+
+  // Replace voice_message_player related variables with:
+  final Map<String, AudioPlayer> _audioPlayers = {};
+  AudioPlayer? _currentlyPlayingPlayer;
+
+  Future<void> _initializeRecorder() async {
+    _record = AudioRecorder();
+    bool hasPermission = await _record.hasPermission();
+    if (!hasPermission) {
+      print("Recording permission denied!");
+    }
+  }
+
+  void _startRecordingTimer() {
+    _recordingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _recordingDuration += Duration(seconds: 1);
+      });
+    });
+  }
+
+  void _stopRecordingTimer() {
+    _recordingTimer?.cancel();
+    _recordingTimer = null;
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return duration.inHours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
+  }
+
+  Future<String> _getFilePath() async {
+    final dir = await getApplicationDocumentsDirectory();
+    return '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+  }
+
+  Future<void> _toggleRecording() async {
+    if (_isRecording) {
+      final path = await _record.stop();
+      _stopRecordingTimer();
+      setState(() {
+        _isRecording = false;
+        _audioPath = path;
+        _showAudioPreview = true;
+        _previewAudioPath = path;
+      });
+      print("Recording saved at: $_audioPath");
+    } else {
+      if (await _record.hasPermission()) {
+        final path = await _getFilePath();
+        await _record.start(RecordConfig(encoder: AudioEncoder.aacLc), path: path);
+        setState(() {
+          _isRecording = true;
+          _recordingDuration = Duration.zero;
+          _showAudioPreview = false;
+        });
+        _startRecordingTimer();
+      }
+    }
+  }
+
+  void _cancelRecording() async {
+    if (_isRecording) {
+      await _record.stop();
+      _stopRecordingTimer();
+      setState(() {
+        _isRecording = false;
+        _recordingDuration = Duration.zero;
+        _showAudioPreview = false;
+      });
+    }
+  }
+
+  void _sendAudioMessage() async {
+    final chatProvider = Provider.of<ChatProvider>(context,listen: false);
+    if (_audioPath != null) {
+      try {
+        final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
+        print("uploadFiles>>>> $uploadedFiles");
+        // Send the message with the uploaded files
+
+        await channelChatProvider.sendMessage(
+          content: "",
+          channelId: widget.channelId,
+          files: uploadedFiles,
+          replyId: widget.msgID,
+          editMsgID: currentUserMessageId,
+          isEditFromReply: true,
+        );
+
+
+        // Clear the audio state after successful send
+        setState(() {
+          _audioPath = null;
+          _showAudioPreview = false;
+          _recordingDuration = Duration.zero;
+        });
+      } catch (e) {
+        print("Error sending audio message: $e");
+        // You might want to show an error message to the user here
+      }
+    }
+  }
   @override
   void initState() {
     print("REPLY_CHANNEL_ID>>>> ${widget.msgID}");
@@ -82,6 +198,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
       final threadProvider = Provider.of<ThreadProvider>(context, listen: false);
       threadProvider.fetchUnreadThreads();
       threadProvider.fetchUnreadThreadCount();
+      _initializeRecorder();
     });
   }
 
@@ -95,6 +212,13 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
 
   @override
   void dispose() {
+    for (var player in _audioPlayers.values) {
+      player.dispose();
+    }
+    _audioPlayers.clear();
+    _audioDurations.clear();
+    _recordingTimer?.cancel();
+    _record.dispose();
     _messageController.removeListener(_onTextChanged);
     super.dispose();
     socketProvider.userTypingEventChannel(
@@ -413,6 +537,20 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                       String originalFileName = getFileName(messageList.forwardFrom?.files?[index]);
                                       String formattedFileName = formatFileName(originalFileName);
                                       String fileType = getFileExtension(originalFileName);
+                                      bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
+                                          fileType.toLowerCase() == 'mp3' ||
+                                          fileType.toLowerCase() == 'wav';
+                                      if (isAudioFile) {
+                                        print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
+                                        return AudioPlayerWidget(
+                                          audioUrl: filesUrl ?? "",
+                                          audioPlayers: _audioPlayers,
+                                          audioDurations: _audioDurations,
+                                          onPlaybackStart: _handleAudioPlayback,
+                                          currentlyPlayingPlayer: _currentlyPlayingPlayer,
+                                          isForwarded: true,
+                                        );
+                                      }
                                       return Container(
                                         margin: EdgeInsets.only(top: 5,right: 10),
                                         padding: EdgeInsets.symmetric(horizontal: 20,vertical: 15),
@@ -454,6 +592,20 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                             String formattedFileName = formatFileName(originalFileName);
                             String fileType = getFileExtension(originalFileName);
                             // IconData fileIcon = getFileIcon(fileType);
+                            bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
+                                fileType.toLowerCase() == 'mp3' ||
+                                fileType.toLowerCase() == 'wav';
+                            if (isAudioFile) {
+                              print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
+                              return AudioPlayerWidget(
+                                audioUrl: filesUrl ?? "",
+                                audioPlayers: _audioPlayers,
+                                audioDurations: _audioDurations,
+                                onPlaybackStart: _handleAudioPlayback,
+                                currentlyPlayingPlayer: _currentlyPlayingPlayer,
+                                isForwarded: false,
+                              );
+                            }
                             return Container(
                               margin: EdgeInsets.only(top: 4,right: 10),
                               padding: EdgeInsets.symmetric(horizontal: 20,vertical: 15),
@@ -673,150 +825,221 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
 
 
   Widget inputTextFieldWithEditor() {
-    return Container(
-      margin: Platform.isAndroid ? null : EdgeInsets.only(bottom: _focusNode.hasFocus ? 40 : 0),
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(
-            color: AppColor.borderColor,
-            width: 0.2,
+    return Consumer<FileServiceProvider>(builder: (context, fileServiceProvider, child) {
+      return Container(
+        margin: Platform.isAndroid ? null : EdgeInsets.only(bottom: _focusNode.hasFocus ? 40 : 0),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: AppColor.borderColor,
+              width: 0.2,
+            ),
           ),
         ),
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                children: [
-                  /// ADD ICON  ////
-                  GestureDetector(
-                    onTap: () => mediaSheet(context),
-                    child: Container(
-                      padding: EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColor.blueColor,
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    if (!_isRecording && !_showAudioPreview) ...[
+                      /// ADD ICON  ////
+                      GestureDetector(
+                        onTap: () => mediaSheet(context),
+                        child: Container(
+                          padding: EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColor.blueColor,
+                          ),
+                          child: Icon(Icons.add,color: Colors.white,size: 25,),
+                        ),
                       ),
-                      child: Icon(Icons.add,color: Colors.white,size: 25,),
-                    ),
-                  ),
-                  SizedBox(width: 6),
-                  /// TEXT FIELD ///
-                  Expanded(
-                    child: Container(
-                      margin: EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: AppPreferenceConstants.themeModeBoolValueGet ? Color(0xFf292929) : Color(0xFFf2f2f2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: CompositedTransformTarget(
-                              link: _layerLink,
-                              child: KeyboardActions(
-                                disableScroll: true,
-                                config: keyboardConfigIos(_focusNode),
-                                child: TextField(
-                                  maxLines: 5,
-                                  minLines: 1,
-                                  controller: _messageController,
-                                  focusNode: _focusNode,
-                                  keyboardType: TextInputType.multiline,
-                                  textInputAction: TextInputAction.newline,
-                                  style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
-                                  decoration: InputDecoration(
-                                    hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
-                                    hintMaxLines: 1,
-                                    hintStyle: TextStyle(color: Colors.grey),
-                                    border: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    errorBorder: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      SizedBox(width: 6),
+                      /// TEXT FIELD ///
+                      Expanded(
+                        child: Container(
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppPreferenceConstants.themeModeBoolValueGet ? Color(0xFf292929) : Color(0xFFf2f2f2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: CompositedTransformTarget(
+                                  link: _layerLink,
+                                  child: KeyboardActions(
+                                    disableScroll: true,
+                                    config: keyboardConfigIos(_focusNode),
+                                    child: TextField(
+                                      maxLines: 5,
+                                      minLines: 1,
+                                      controller: _messageController,
+                                      focusNode: _focusNode,
+                                      keyboardType: TextInputType.multiline,
+                                      textInputAction: TextInputAction.newline,
+                                      style: TextStyle(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blackColor),
+                                      decoration: InputDecoration(
+                                        hintText: 'Write to ${channelChatProvider.getChannelInfo?.data?.name ?? ""}',
+                                        hintMaxLines: 1,
+                                        hintStyle: TextStyle(color: Colors.grey),
+                                        border: InputBorder.none,
+                                        focusedBorder: InputBorder.none,
+                                        enabledBorder: InputBorder.none,
+                                        errorBorder: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      ),
+                                      textCapitalization: TextCapitalization.sentences,
+                                    ),
                                   ),
-                                  textCapitalization: TextCapitalization.sentences,
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                  /// SEND MESSAGE & CAMERA,MIC ///
-                  if(_messageController.text.isNotEmpty)...{
-                    GestureDetector(
-                      onTap: () async {
-                        final plainText = _messageController.text.trim();
-                        if (plainText.isNotEmpty || fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty) {
-                          if (fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty) {
-                            final filesOfList = await chatProvider.uploadFiles(AppString.channelChatReply);
-                            await channelChatProvider.sendMessage(
-                              content: plainText,
-                              channelId: widget.channelId,
-                              files: filesOfList,
-                              replyId: widget.msgID,
-                              editMsgID: currentUserMessageId,
-                              isEditFromReply: true,
-                            );
-                          } else {
-                            await channelChatProvider.sendMessage(
-                                content: plainText,
-                                channelId: widget.channelId,
-                                replyId: widget.msgID,
-                                editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
-                                isEditFromReply: true,
-                            ).then((value) {
-                              setState(() {
-                                currentUserMessageId = "";
-                                socketProvider.userTypingEventChannel(
+                    ],
+                    if (_isRecording) ...[
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.mic, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red, size: 24),
+                            SizedBox(width: 8),
+                            Text(
+                              _formatDuration(_recordingDuration),
+                              style: TextStyle(
+                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
+                        onPressed: _cancelRecording,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.stop, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
+                        onPressed: _toggleRecording,
+                      ),
+                    ],
+                    if (_showAudioPreview) ...[
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.audio_file, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor, size: 24),
+                            SizedBox(width: 8),
+                            Text(
+                              _formatDuration(_recordingDuration),
+                              style: TextStyle(
+                                color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
+                        onPressed: () {
+                          setState(() {
+                            _showAudioPreview = false;
+                            _audioPath = null;
+                          });
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.send, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white :  AppColor.blueColor),
+                        onPressed: _sendAudioMessage,
+                      ),
+                    ],
+                    /// SEND MESSAGE & CAMERA,MIC ///
+                    if (!_isRecording && !_showAudioPreview) ...[
+                      if(fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty || _messageController.text.isNotEmpty)...{
+                        GestureDetector(
+                          onTap: () async {
+                            final plainText = _messageController.text.trim();
+                            if (fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty || plainText.isNotEmpty) {
+                              if (fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty) {
+                                final filesOfList = await chatProvider.uploadFiles(AppString.channelChatReply);
+                                await channelChatProvider.sendMessage(
+                                  content: plainText,
                                   channelId: widget.channelId,
-                                  isReplyMsg: true,
-                                  isTyping: 0,
-                                  msgId: widget.msgID,
+                                  files: filesOfList,
+                                  replyId: widget.msgID,
+                                  editMsgID: currentUserMessageId,
+                                  isEditFromReply: true,
                                 );
-                              });
-                            });
-                          }
-                          _clearInputAndDismissKeyboard();
-                        }
-                      },
-                      child: Container(
-                          margin: EdgeInsets.only(left: 10),
-                          padding: EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColor.blueColor,
-                            shape: BoxShape.circle,
+                              } else {
+                                await channelChatProvider.sendMessage(
+                                  content: plainText,
+                                  channelId: widget.channelId,
+                                  replyId: widget.msgID,
+                                  editMsgID: currentUserMessageId.isEmpty ? "" : currentUserMessageId,
+                                  isEditFromReply: true,
+                                ).then((value) {
+                                  setState(() {
+                                    currentUserMessageId = "";
+                                    socketProvider.userTypingEventChannel(
+                                      channelId: widget.channelId,
+                                      isReplyMsg: true,
+                                      isTyping: 0,
+                                      msgId: widget.msgID,
+                                    );
+                                  });
+                                });
+                              }
+                              _clearInputAndDismissKeyboard();
+                            }
+                          },
+                          child: Container(
+                              margin: EdgeInsets.only(left: 10),
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColor.blueColor,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.send, color: AppColor.whiteColor, size: 18)),
+                        ),
+                      }else...{
+                        GestureDetector(
+                            onTap: () {
+                              _focusNode.unfocus();
+                              // showCameraOptionsBottomSheet(context,AppString.channelChatReply);
+                              pushScreen(screen: CameraScreen(screenName: AppString.channelChatReply,));
+                            },
+                            child : Container(
+                              margin: EdgeInsets.symmetric(horizontal: 5),
+                              child: Icon(Icons.camera_alt_outlined, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black , size: 30),
+                            )),
+                        GestureDetector(
+                          onTap: _toggleRecording,
+                          child: Container(
+                            padding: EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: AppColor.blueColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.mic, color: Colors.white, size: 25),
                           ),
-                          child: Icon(Icons.send, color: AppColor.whiteColor, size: 18)),
-                    ),
-                  }else...{
-                    GestureDetector(
-                     onTap: () {
-                       _focusNode.unfocus();
-                       showCameraOptionsBottomSheet(context,AppString.channelChatReply);
-                     },
-                    child : Container(
-                      margin: EdgeInsets.symmetric(horizontal: 5),
-                      child: Icon(Icons.camera_alt_outlined, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black , size: 30),
-                    )),
-                    Container(
-                      margin: EdgeInsets.only(right: 5),
-                      child: Icon(Icons.mic_none, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, size: 30),
-                    ),
-                  }
-                ],
+                        ),
+                      }
+                    ],
+                  ],
+                ),
               ),
-            ),
-            selectedFilesWidget(screenName: AppString.channelChatReply),
-          ],
+              selectedFilesWidget(screenName: AppString.channelChatReply),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    },);
   }
 
   Future<void> mediaSheet(BuildContext context) {
@@ -854,7 +1077,8 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                 FileServiceProvider.instance.pickFiles(AppString.channelChatReply);
               }),
               _optionItem(context, Icons.camera_alt_outlined, "Camera", "Capture image and video",(){
-                FileServiceProvider.instance.captureImageAndVideo(AppString.channelChatReply);
+                // FileServiceProvider.instance.captureImageAndVideo(AppString.channelChatReply);
+                pushScreen(screen: CameraScreen(screenName: AppString.channelChatReply,));
               }),
             ],
           ),
@@ -1297,5 +1521,12 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
         ),
       ),
     );
+  }
+  void _handleAudioPlayback(String audioUrl, AudioPlayer player) {
+    // If there's already an audio playing and it's different from the new one
+    if (_currentlyPlayingPlayer != null && _currentlyPlayingPlayer != player) {
+      _currentlyPlayingPlayer!.stop();
+    }
+    setState(() => _currentlyPlayingPlayer = player);
   }
 }
