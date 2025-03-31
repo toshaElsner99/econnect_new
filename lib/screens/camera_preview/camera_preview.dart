@@ -36,6 +36,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   List<AssetPathEntity> _albums = [];
   AssetPathEntity? _selectedAlbum;
   bool _showingPhotos = true; // true for Photos tab, false for Albums tab
+  bool _isRearCamera = true; // Track current camera
 
   @override
   void initState() {
@@ -273,11 +274,44 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       }
   }
 
+  Future<void> switchCamera() async {
+    if (cameras == null || cameras!.length < 2) return;
+    
+    final newCameraIndex = _isRearCamera ? 1 : 0;
+    final newCamera = cameras![newCameraIndex];
+    
+    // Dispose of previous controller
+    final previousController = _cameraController;
+    await _cameraController?.dispose();
+    
+    // Create new controller
+    _cameraController = CameraController(
+      newCamera,
+      ResolutionPreset.high,
+      enableAudio: true,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+    
+    // If old controller is mounted, wait until it's disposed
+    if (previousController?.value.isInitialized ?? false) {
+      await previousController!.dispose();
+    }
+    
+    // Initialize new controller
+    await _cameraController!.initialize();
+    
+    if (mounted) {
+      setState(() {
+        _isRearCamera = !_isRearCamera;
+      });
+    }
+  }
+
   Future<void> _openAssetPicker() async {
     final List<AssetEntity>? result = await AssetPicker.pickAssets(
       context,
       pickerConfig: AssetPickerConfig(
-        maxAssets: 1,
+        maxAssets: 5, // Allow up to 5 selections
         requestType: RequestType.common,
         specialPickerType: SpecialPickerType.noPreview,
         themeColor: Theme.of(context).primaryColor,
@@ -286,23 +320,27 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
 
     if (result != null && result.isNotEmpty) {
       try {
-        final AssetEntity asset = result.first;
-        final File? file = await asset.file;
+        List<PlatformFile> selectedFiles = [];
         
-        if (file != null) {
-          final platformFile = PlatformFile(
-            path: file.path,
-            name: file.path.split('/').last,
-            size: file.lengthSync(),
-            bytes: file.readAsBytesSync(),
-          );
-          
+        for (var asset in result) {
+          final File? file = await asset.file;
+          if (file != null) {
+            final platformFile = PlatformFile(
+              path: file.path,
+              name: file.path.split('/').last,
+              size: file.lengthSync(),
+              bytes: file.readAsBytesSync(),
+            );
+            selectedFiles.add(platformFile);
+          }
+        }
+        
+        if (selectedFiles.isNotEmpty) {
           FileServiceProvider.instance.addFilesForScreen(
             widget.screenName, 
-            [platformFile]
+            selectedFiles
           );
-          
-          Navigator.pop(context); // Close camera screen
+          Navigator.pop(context);
         }
       } catch (e) {
         print("Error selecting media: $e");
@@ -329,9 +367,20 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
         backgroundColor: Colors.black,
         leading: commonBackButton(),
         centerTitle: true,
-        title:   Visibility(
-            visible: _isVideoMode,
-            child: commonText(text: "3:00",color: Colors.white)),
+        title: Visibility(
+          visible: _isVideoMode,
+          child: commonText(text: "3:00", color: Colors.white)
+        ),
+        actions: [
+          if (cameras != null && cameras!.length > 1)
+            IconButton(
+              icon: Icon(
+                Icons.flip_camera_ios,
+                color: Colors.white,
+              ),
+              onPressed: switchCamera,
+            ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -348,9 +397,13 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  child: AspectRatio(
-                    aspectRatio: _cameraController!.value.aspectRatio,
-                    child: CameraPreview(_cameraController!),
+                  child: Transform.scale(
+                    scaleX: !_isRearCamera ? -1 : 1,
+                    alignment: Alignment.center,
+                    child: AspectRatio(
+                      aspectRatio: _cameraController!.value.aspectRatio,
+                      child: CameraPreview(_cameraController!),
+                    ),
                   ),
                 ),
               ),
@@ -382,7 +435,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                 alignment: Alignment.bottomLeft,
                 children: [
                   Container(
-                    padding: EdgeInsets.only(top: 10),
+                    padding: EdgeInsets.symmetric(vertical: 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
