@@ -398,7 +398,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                 child: Container(
                   width: double.infinity,
                   child: Transform.scale(
-                    scaleX: !_isRearCamera ? -1 : 1,
+                    scaleX: !_isRearCamera ? Platform.isAndroid ? -1 : 1 : 1,
                     alignment: Alignment.center,
                     child: AspectRatio(
                       aspectRatio: _cameraController!.value.aspectRatio,

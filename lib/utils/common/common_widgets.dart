@@ -316,7 +316,7 @@ ToastFuture commonShowToast(String msg, [Color? bgColor]) {
 
 
 Widget getCommonStatusIcons({required String status, double size = 25 , bool assetIcon = true}){
-  print("getIconStatus>>> $status");
+  // print("getIconStatus>>> $status");
   if(status ==  AppString.online.toLowerCase()) {
     return assetIcon ? Image.asset(AppImage.onlineIcon,height: size,width: size,) : Icon(Icons.check_circle,size: size,color: AppColor.greenColor,);
   } else if(status == AppString.away.toLowerCase()){
@@ -494,12 +494,12 @@ Widget popMenuChannel(
   const double menuHeight = 220;
 
   final bool openAbove = (buttonPositionY + menuHeight) > screenHeight;
-  print("cretedTime>>>>POPOP $createdAt");
-  print("cretedTime>>>>POPOP $currentUserId");
+  // print("cretedTime>>>>POPOP $createdAt");
+  // print("cretedTime>>>>POPOP $currentUserId");
   DateTime createdTime = DateTime.parse(createdAt).toLocal();
   DateTime now = DateTime.now();
   final isEditable = now.difference(createdTime).inHours < 24;
-  print("createdAt>> $createdTime $isEditable");
+  // print("createdAt>> $createdTime $isEditable");
   final isCurrentUser = currentUserId == signInModel.data?.user?.id; // Check if message belongs to the user
 
   return Container(
@@ -688,6 +688,7 @@ Widget popMenu2(
       required String createdAt,  // Pass createdAt timestamp
       required String currentUserId, // Current user's ID
       required bool isForwarded,
+      bool hasAudioFile = false, // Add new parameter with default value
     }) {
   final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
   final double screenHeight = MediaQuery.of(context).size.height;
@@ -695,13 +696,10 @@ Widget popMenu2(
   const double menuHeight = 220;
 
   final bool openAbove = (buttonPositionY + menuHeight) > screenHeight;
-  print("cretedTime>>>>POPOP $createdAt");
-  print("cretedTime>>>>POPOP $currentUserId");
   DateTime createdTime = DateTime.parse(createdAt).toLocal();
   DateTime now = DateTime.now();
   final isEditable = now.difference(createdTime).inHours < 24;
-  print("createdAt>> $createdTime $isEditable");
-  final isCurrentUser = currentUserId == signInModel.data?.user?.id; // Check if message belongs to the user
+  final isCurrentUser = currentUserId == signInModel.data?.user?.id;
 
   return Container(
     alignment: Alignment.topCenter,
@@ -757,8 +755,8 @@ Widget popMenu2(
         if(isForwarded == true){
           menuItems.insert(1, _menuItem(0, Icons.forward, "Forward"));
         }
-        // Show Edit option only if message is under 24 hours old
-        if (isCurrentUser && isEditable) {
+        // Show Edit option only if message is under 24 hours old and not an audio file
+        if (isCurrentUser && isEditable && !hasAudioFile) {
           menuItems.add(_menuItem(4, Icons.edit, "Edit"));
         }
 
@@ -801,7 +799,7 @@ Widget popMenuForReply2(
   DateTime createdTime = DateTime.parse(createdAt).toLocal();
   DateTime now = DateTime.now();
   final isEditable = now.difference(createdTime).inHours < 24;
-  print("createdAt>> $createdTime $isEditable");
+  // print("createdAt>> $createdTime $isEditable");
   final isCurrentUser = currentUserId == signInModel.data?.user?.id;
 
   return Container(

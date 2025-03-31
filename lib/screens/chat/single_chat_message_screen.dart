@@ -31,7 +31,6 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
-import 'package:voice_message_player/voice_message_player.dart';
 import 'package:just_audio/just_audio.dart';
 
 // import '../../model/browse_and_search_channel_model.dart';
@@ -44,9 +43,248 @@ import '../../screens/chat/media_preview_screen.dart';
 import '../../utils/theme/theme_cubit.dart';
 import '../../widgets/chat_profile_header.dart';
 import '../bottom_nav_tabs/home_screen.dart';
+import '../camera_preview/camera_preview.dart';
 import '../channel/channel_chat_screen.dart';
 import '../find_message_screen/find_message_screen.dart';
 import 'package:e_connect/utils/common/shimmer_loading.dart';
+
+// Add this class before the SingleChatMessageScreen class
+class AudioPlayerWidget extends StatefulWidget {
+  final String audioUrl;
+  final Map<String, AudioPlayer> audioPlayers;
+  final Map<String, Duration> audioDurations;
+  final Function(String, AudioPlayer) onPlaybackStart;
+  final AudioPlayer? currentlyPlayingPlayer;
+
+  const AudioPlayerWidget({
+    Key? key,
+    required this.audioUrl,
+    required this.audioPlayers,
+    required this.audioDurations,
+    required this.onPlaybackStart,
+    required this.currentlyPlayingPlayer,
+  }) : super(key: key);
+
+  @override
+  State<AudioPlayerWidget> createState() => _AudioPlayerWidgetState();
+}
+
+class _AudioPlayerWidgetState extends State<AudioPlayerWidget> with AutomaticKeepAliveClientMixin {
+  late AudioPlayer _player;
+  bool _isPlaying = false;
+  Duration _position = Duration.zero;
+  Duration? _duration;
+  Timer? _positionTimer;
+  bool _isInitialized = false;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupPlayer();
+  }
+
+  Future<void> _setupPlayer() async {
+    _player = widget.audioPlayers[widget.audioUrl] ?? AudioPlayer();
+    widget.audioPlayers[widget.audioUrl] = _player;
+
+    try {
+      await _player.setUrl("${ApiString.profileBaseUrl}${widget.audioUrl}");
+
+      _duration = widget.audioDurations[widget.audioUrl];
+      if (_duration == null) {
+        final newDuration = await _player.duration;
+        if (newDuration != null) {
+          _duration = newDuration;
+          widget.audioDurations[widget.audioUrl] = newDuration;
+        }
+      }
+
+      // Listen to player state changes
+      _player.playerStateStream.listen((state) {
+        if (mounted) {
+          setState(() {
+            _isPlaying = state.playing;
+            _isInitialized = true;
+
+            // Check if playback has completed
+            if (state.processingState == ProcessingState.completed) {
+              _isPlaying = false;
+              _position = Duration.zero;
+              _player.seek(Duration.zero);
+            }
+          });
+        }
+      });
+
+      // Listen to position changes
+      _player.positionStream.listen((position) {
+        if (mounted) {
+          setState(() => _position = position);
+
+          // Check if we've reached the end
+          if (_duration != null && position >= _duration!) {
+            _player.seek(Duration.zero);
+            _player.pause();
+            setState(() {
+              _isPlaying = false;
+              _position = Duration.zero;
+            });
+          }
+        }
+      });
+
+    } catch (e) {
+      print('Error setting up audio player: $e');
+    }
+  }
+
+  Future<void> _playPause() async {
+    if (_isPlaying) {
+      await _player.pause();
+    } else {
+      // If we're at the end, reset position before playing
+      if (_position >= (_duration ?? Duration.zero)) {
+        await _player.seek(Duration.zero);
+        setState(() => _position = Duration.zero);
+      }
+      widget.onPlaybackStart(widget.audioUrl, _player);
+      await _player.play();
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
+  @override
+  void dispose() {
+    _positionTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[900] : Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          // Play/Pause Button
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
+            ),
+            child: IconButton(
+              icon: Icon(
+                _isPlaying ? Icons.pause : Icons.play_arrow,
+                color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.blueColor : Colors.white,
+                size: 24,
+              ),
+              padding: EdgeInsets.zero,
+              onPressed: _playPause,
+            ),
+          ),
+          SizedBox(width: 12),
+
+          // Progress and Duration
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Waveform/Progress bar
+                Container(
+                  height: 24,
+                  child: Stack(
+                    alignment: Alignment.centerLeft,
+                    children: [
+                      // Background waveform
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: List.generate(
+                          20,
+                              (index) => Container(
+                            width: 3,
+                            height: (index % 2 == 0 ? 15.0 : 10.0),
+                            decoration: BoxDecoration(
+                              color: AppPreferenceConstants.themeModeBoolValueGet ?
+                              Colors.white.withOpacity(0.3) : AppColor.blueColor.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(1.5),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Progress waveform
+                      ClipRect(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: _duration != null ?
+                          (_position.inMilliseconds / _duration!.inMilliseconds).clamp(0.0, 1.0) : 0.0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: List.generate(
+                              20,
+                                  (index) => Container(
+                                width: 3,
+                                height: index % 2 == 0 ? 15.0 : 10.0,
+                                decoration: BoxDecoration(
+                                  color: AppPreferenceConstants.themeModeBoolValueGet ?
+                                  Colors.white : AppColor.blueColor,
+                                  borderRadius: BorderRadius.circular(1.5),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 4),
+                // Duration text
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDuration(_position),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppPreferenceConstants.themeModeBoolValueGet ?
+                        Colors.white.withOpacity(0.7) : Colors.grey[600],
+                      ),
+                    ),
+                    Text(
+                      _formatDuration(_duration ?? Duration.zero),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppPreferenceConstants.themeModeBoolValueGet ?
+                        Colors.white.withOpacity(0.7) : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class SingleChatMessageScreen extends StatefulWidget {
   final String userName;
@@ -97,10 +335,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   Timer? _recordingTimer;
   bool _showAudioPreview = false;
   String? _previewAudioPath;
-  VoiceController? _currentlyPlayingController;
-  final Map<String, VoiceController> _audioControllers = {};
+  // VoiceController? _currentlyPlayingController;
+  // final Map<String, VoiceController> _audioControllers = {};
   final Map<String, Duration> _audioDurations = {};
   final _audioPlayer = AudioPlayer();
+
+  // Replace voice_message_player related variables with:
+  final Map<String, AudioPlayer> _audioPlayers = {};
+  AudioPlayer? _currentlyPlayingPlayer;
 
   Future<void> _initializeRecorder() async {
     _record = AudioRecorder();
@@ -272,13 +514,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
   @override
   void dispose() {
-    _audioPlayer.dispose();
-    _currentlyPlayingController?.stopPlaying();
-    for (var controller in _audioControllers.values) {
-      controller.stopPlaying();
-      controller.dispose();
+    // Dispose all audio players
+    for (var player in _audioPlayers.values) {
+      player.dispose();
     }
-    _audioControllers.clear();
+    _audioPlayers.clear();
     _audioDurations.clear();
     _recordingTimer?.cancel();
     _record.dispose();
@@ -819,7 +1059,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       GestureDetector(
                         onTap: () {
                           _focusNode.unfocus();
-                          showCameraOptionsBottomSheet(context,AppString.singleChat);
+                          pushScreen(screen: CameraScreen(screenName: AppString.singleChat,));
                         },
                         child: Container(
                           margin: EdgeInsets.symmetric(horizontal: 5),
@@ -885,7 +1125,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 FileServiceProvider.instance.pickFiles(AppString.singleChat);
               }),
               _optionItem(context, Icons.camera_alt_outlined, "Camera", "Capture image and video",(){
-                FileServiceProvider.instance.captureImageAndVideo(AppString.singleChat);
+                // FileServiceProvider.instance.captureImageAndVideo(AppString.singleChat);
+                pushScreen(screen: CameraScreen(screenName: AppString.singleChat,));
               }),
             ],
           ),
@@ -1343,9 +1584,23 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                       String originalFileName = getFileName(messageList.forwardInfo!.files[index]);
                                       String formattedFileName = formatFileName(originalFileName);
                                       String fileType = getFileExtension(originalFileName);
-                                      print("FILENAME :- ${messageList.forwardInfo!.files[index]}");
-                                      print("FILENAME :- $originalFileName");
-                                      print("FILENAME :- $formattedFileName");
+                                      // print("FILENAME :- ${messageList.forwardInfo!.files[index]}");
+                                      // print("FILENAME :- $originalFileName");
+                                      // print("FILENAME :- $formattedFileName");
+                                      bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
+                                          fileType.toLowerCase() == 'mp3' ||
+                                          fileType.toLowerCase() == 'wav';
+                                      if (isAudioFile) {
+                                        print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
+                                        return AudioPlayerWidget(
+                                          audioUrl: filesUrl ?? "",
+                                          audioPlayers: _audioPlayers,
+                                          audioDurations: _audioDurations,
+                                          onPlaybackStart: _handleAudioPlayback,
+                                          currentlyPlayingPlayer: _currentlyPlayingPlayer,
+                                        );
+                                      }
+
                                       return Container(
                                         margin: EdgeInsets.only(top: 5,right: 10),
                                         padding: EdgeInsets.symmetric(horizontal: 20,vertical: 15),
@@ -1398,36 +1653,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             print("Is Audio File: $isAudioFile");
 
                             if (isAudioFile) {
-                              print("Rendering VoiceMessagePlayer for: ${ApiString.profileBaseUrl}$filesUrl");
-
-                              // Create or get the controller for this audio file
-                              if (!_audioControllers.containsKey(filesUrl)) {
-                                _createAudioController(filesUrl).then((controller) {
-                                  _audioControllers[filesUrl] = controller;
-                                });
-                              }
-
-                              return Container(
-                                margin: EdgeInsets.only(top: 4, right: 10),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: AppColor.lightGreyColor),
-                                ),
-                                child: VoiceMessagePlayer(
-                                  backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.transparent : Colors.white,
-                                  circlesColor: AppColor.blueColor,
-                                  activeSliderColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
-                                  controller: _audioControllers[filesUrl] ?? VoiceController(
-                                    audioSrc: "${ApiString.profileBaseUrl}$filesUrl",
-                                    maxDuration: Duration(minutes: 5),
-                                    isFile: false,
-                                    onComplete: () {},
-                                    onPause: () {},
-                                    onPlaying: () {},
-                                  ),
-                                  innerPadding: 12,
-                                  cornerRadius: 20,
-                                ),
+                              print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
+                              return AudioPlayerWidget(
+                                audioUrl: filesUrl,
+                                audioPlayers: _audioPlayers,
+                                audioDurations: _audioDurations,
+                                onPlaybackStart: _handleAudioPlayback,
+                                currentlyPlayingPlayer: _currentlyPlayingPlayer,
                               );
                             }
 
@@ -2113,60 +2345,26 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }
   }
 
-  Future<VoiceController> _createAudioController(String filesUrl) async {
-    // Stop any currently playing audio
-    await _stopAllAudio();
-
-    final duration = await _getAudioDuration(filesUrl) ?? Duration(minutes: 1);
-
-    return VoiceController(
-      audioSrc: "${ApiString.profileBaseUrl}$filesUrl",
-      onComplete: () {
-        print("Audio playback completed");
-        if (_currentlyPlayingController == _audioControllers[filesUrl]) {
-          setState(() => _currentlyPlayingController = null);
-        }
-      },
-      onPause: () {
-        print("Audio playback paused");
-        if (_currentlyPlayingController == _audioControllers[filesUrl]) {
-          setState(() => _currentlyPlayingController = null);
-        }
-      },
-      onPlaying: () {
-        print("Audio playback started");
-        _handleAudioPlayback(filesUrl, _audioControllers[filesUrl]!);
-      },
-      onError: (err) {
-        print("Audio playback error: $err");
-        if (_currentlyPlayingController == _audioControllers[filesUrl]) {
-          setState(() => _currentlyPlayingController = null);
-        }
-      },
-      maxDuration: duration,
-      isFile: false,
-    );
-  }
-
   Future<void> _stopAllAudio() async {
-    // Stop the currently playing controller if any
-    if (_currentlyPlayingController != null) {
-      _currentlyPlayingController?.stopPlaying();
-      setState(() => _currentlyPlayingController = null);
+    // Stop the currently playing player if any
+    if (_currentlyPlayingPlayer != null) {
+      _currentlyPlayingPlayer!.stop();
+      setState(() => _currentlyPlayingPlayer = null);
     }
 
-    // Stop all other controllers
-    for (var controller in _audioControllers.values) {
-      controller.stopPlaying();
+    // Stop all other players
+    for (var player in _audioPlayers.values) {
+      player.stop();
     }
   }
 
-  void _handleAudioPlayback(String audioUrl, VoiceController controller) {
+  void _handleAudioPlayback(String audioUrl, AudioPlayer player) {
     // If there's already an audio playing and it's different from the new one
-    if (_currentlyPlayingController != null && _currentlyPlayingController != controller) {
-      _currentlyPlayingController!.stopPlaying();
+    if (_currentlyPlayingPlayer != null && _currentlyPlayingPlayer != player) {
+      _currentlyPlayingPlayer!.stop();
     }
-    setState(() => _currentlyPlayingController = controller);
+    setState(() => _currentlyPlayingPlayer = player);
   }
 }
+
 

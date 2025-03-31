@@ -12,6 +12,8 @@ import '../providers/channel_list_provider.dart';
 import '../providers/chat_provider.dart';
 import '../providers/common_provider.dart';
 import '../notificationServices/pushNotificationService.dart';
+import '../utils/app_preference_constants.dart';
+import '../utils/common/prefrance_function.dart';
 
 class SocketIoProvider extends ChangeNotifier{
 
@@ -63,8 +65,9 @@ class SocketIoProvider extends ChangeNotifier{
   String sendReplyMessage = "send_reply_message";
 
 
-  void connectSocket([bool? connectFrom = false]) {
-    if(connectFrom == true){
+  void connectSocket([bool? connectFrom = false]) async {
+    final isLoggedIn = await getBool(AppPreferenceConstants.isLoginPrefs) ?? false;
+    if(connectFrom == true && isLoggedIn == true){
       print("socket connected >>>> ${socket.active} || ${socket.connected}");
       if (socket.active == true) {
         return;

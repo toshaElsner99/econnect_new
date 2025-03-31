@@ -11,7 +11,9 @@ import 'package:e_connect/screens/bottom_navigation_screen/bottom_navigation_scr
 import 'package:e_connect/screens/splash_screen/splash_screen.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
+import 'package:e_connect/utils/common/prefrance_function.dart';
 import 'package:e_connect/utils/loading_widget/loading_cubit.dart';
 import 'package:e_connect/utils/loading_widget/loading_widget.dart';
 import 'package:e_connect/utils/network_connectivity/network_connectivity.dart';
@@ -23,6 +25,7 @@ import 'package:flutter/services.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'model/sign_in_model.dart';
 import 'notificationServices/pushNotificationService.dart';
 
@@ -63,7 +66,7 @@ class AppLifecycleObserver with WidgetsBindingObserver {
           }
         });
         Provider.of<ChannelListProvider>(context, listen: false).refreshAllLists();
-        Provider.of<SocketIoProvider>(context, listen: false).connectSocket(true);
+          Provider.of<SocketIoProvider>(context, listen: false).connectSocket(true);
         break;
 
       case AppLifecycleState.paused:
