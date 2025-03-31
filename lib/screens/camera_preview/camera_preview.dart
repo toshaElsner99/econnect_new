@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+// import 'package:picker_pro_max_ultra/media_picker_widget.dart';
 import 'package:video_player/video_player.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:photo_manager/photo_manager.dart';
+import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 
 class CameraScreen extends StatefulWidget {
   final String screenName;
@@ -16,7 +20,7 @@ class CameraScreen extends StatefulWidget {
   _CameraScreenState createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends State<CameraScreen> {
+class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver {
   CameraController? _cameraController;
   List<CameraDescription>? cameras;
   bool _isRecording = false;
@@ -28,11 +32,80 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _isVideoPlaying = false;
   Timer? _recordingTimer;
   Duration _recordingDuration = Duration.zero;
+  List<AssetEntity> _recentAssets = [];
+  List<AssetPathEntity> _albums = [];
+  AssetPathEntity? _selectedAlbum;
+  bool _showingPhotos = true; // true for Photos tab, false for Albums tab
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     initializeCamera();
+    _loadGallery();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cameraController?.dispose();
+    _videoPlayerController?.dispose();
+    _recordingTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadGallery();
+    }
+  }
+
+  Future<void> _loadGallery() async {
+    final permitted = await PhotoManager.requestPermissionExtend();
+    if (permitted.isAuth || permitted.hasAccess) {
+      await _loadAlbums();
+    }
+  }
+
+  Future<void> _loadAlbums() async {
+    try {
+      final List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
+        type: RequestType.common,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _albums = albums;
+          _selectedAlbum = albums.firstWhere(
+            (album) => album.isAll,
+            orElse: () => albums.first,
+          );
+        });
+        await _loadAssetsForCurrentAlbum();
+      }
+    } catch (e) {
+      print("Error loading albums: $e");
+    }
+  }
+
+  Future<void> _loadAssetsForCurrentAlbum() async {
+    if (_selectedAlbum == null) return;
+    
+    try {
+      final assets = await _selectedAlbum!.getAssetListRange(
+        start: 0,
+        end: 50,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _recentAssets = assets;
+        });
+      }
+    } catch (e) {
+      print("Error loading assets: $e");
+    }
   }
 
   Future<void> initializeCamera() async {
@@ -47,8 +120,6 @@ class _CameraScreenState extends State<CameraScreen> {
 
       await _cameraController!.initialize();
 
-      // Set initial zoom level to minimum
-      // await _cameraController!.setZoomLevel(_cameraController!.value.previewSize!.aspectRatio);
       double minZoom = await _cameraController!.getMinZoomLevel();
       await _cameraController!.setZoomLevel(minZoom); // Set to minimum zoom
 
@@ -60,7 +131,7 @@ class _CameraScreenState extends State<CameraScreen> {
     _recordingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
       setState(() {
         _recordingDuration += Duration(seconds: 1);
-        if (_recordingDuration.inMinutes >= 10) {
+        if (_recordingDuration.inMinutes >= 3) {
           stopVideoRecording();
         }
       });
@@ -202,12 +273,44 @@ class _CameraScreenState extends State<CameraScreen> {
       }
   }
 
-  @override
-  void dispose() {
-    _cameraController?.dispose();
-    _videoPlayerController?.dispose();
-    _recordingTimer?.cancel();
-    super.dispose();
+  Future<void> _openAssetPicker() async {
+    final List<AssetEntity>? result = await AssetPicker.pickAssets(
+      context,
+      pickerConfig: AssetPickerConfig(
+        maxAssets: 1,
+        requestType: RequestType.common,
+        specialPickerType: SpecialPickerType.noPreview,
+        themeColor: Theme.of(context).primaryColor,
+      ),
+    );
+
+    if (result != null && result.isNotEmpty) {
+      try {
+        final AssetEntity asset = result.first;
+        final File? file = await asset.file;
+        
+        if (file != null) {
+          final platformFile = PlatformFile(
+            path: file.path,
+            name: file.path.split('/').last,
+            size: file.lengthSync(),
+            bytes: file.readAsBytesSync(),
+          );
+          
+          FileServiceProvider.instance.addFilesForScreen(
+            widget.screenName, 
+            [platformFile]
+          );
+          
+          Navigator.pop(context); // Close camera screen
+        }
+      } catch (e) {
+        print("Error selecting media: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to select media'))
+        );
+      }
+    }
   }
 
   @override
@@ -221,12 +324,27 @@ class _CameraScreenState extends State<CameraScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
+      appBar: AppBar(
+        toolbarHeight: 35,
+        backgroundColor: Colors.black,
+        leading: commonBackButton(),
+        centerTitle: true,
+        title:   Visibility(
+            visible: _isVideoMode,
+            child: commonText(text: "3:00",color: Colors.white)),
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_capturedImage == null && _capturedVideo == null) ...[
-              commonBackButton(),
+              // Row(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     commonBackButton(),
+              //
+              //   ],
+              // ),
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -240,12 +358,12 @@ class _CameraScreenState extends State<CameraScreen> {
               // Recording Duration
               if (_isRecording)
                 Container(
-                  padding: EdgeInsets.symmetric(vertical: 8),
+                  padding: EdgeInsets.only(bottom: 0,top: 4),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           color: Colors.black54,
                           borderRadius: BorderRadius.circular(20),
@@ -260,55 +378,75 @@ class _CameraScreenState extends State<CameraScreen> {
                 ),
 
               // Camera Controls
-              Container(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(
+              Stack(
+                alignment: Alignment.bottomLeft,
+                children: [
+                  Container(
+                    padding: EdgeInsets.only(top: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            _isVideoMode ? Icons.camera_alt : Icons.videocam,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                          onPressed: toggleMode,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                          child: GestureDetector(
+                            onTap: _isVideoMode
+                              ? (_isRecording ? stopVideoRecording : startVideoRecording)
+                              : capturePhoto,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 70,
+                                  height: 70,
+                                  padding: EdgeInsets.all(!_isVideoMode ? 7 : 15),
+                                  margin: EdgeInsets.only(bottom: 10),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 4),
+                                    color: _isRecording ? Colors.red : Colors.transparent,
+                                  ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: _isRecording ? Colors.transparent : Colors.white
+                                    ),
+                                  ),
+                                ),
+                                commonText(text: !_isVideoMode ? "CAPTURE" : "RECORD",color: Colors.white,fontSize: 13)
+                              ],
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(getFlashIcon(), color: Colors.white, size: 30),
+                          onPressed: toggleFlash,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 5.0),
+                    child: IconButton(
                       icon: Icon(
-                        _isVideoMode ? Icons.camera_alt : Icons.videocam,
+                        Icons.photo_library,
                         color: Colors.white,
                         size: 30,
                       ),
-                      onPressed: toggleMode,
+                      onPressed: _openAssetPicker,
                     ),
-                    GestureDetector(
-                      onTap: _isVideoMode
-                        ? (_isRecording ? stopVideoRecording : startVideoRecording)
-                        : capturePhoto,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 70,
-                            height: 70,
-                            padding: EdgeInsets.all(!_isVideoMode ? 7 : 15),
-                            margin: EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 4),
-                              color: _isRecording ? Colors.red : Colors.transparent,
-                            ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _isRecording ? Colors.transparent : Colors.white
-                              ),
-                            ),
-                          ),
-                          commonText(text: !_isVideoMode ? "CAPTURE" : "RECORD",color: Colors.white,fontSize: 13)
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(getFlashIcon(), color: Colors.white, size: 30),
-                      onPressed: toggleFlash,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ] else ...[
               // Media Preview
