@@ -2227,6 +2227,18 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   visible: !(messageList.isLog ?? false),
                   child: popMenu2(
                       context,
+                      hasAudioFile: (messageList.files?.any((file) {
+                        String fileType = getFileExtension(getFileName(file));
+                        return fileType.toLowerCase() == 'm4a' ||
+                            fileType.toLowerCase() == 'mp3' ||
+                            fileType.toLowerCase() == 'wav';
+                      }) ?? false) ||
+                          (messageList.forwards?.files?.any((file) {
+                            String fileType = getFileExtension(getFileName(file));
+                            return fileType.toLowerCase() == 'm4a' ||
+                                fileType.toLowerCase() == 'mp3' ||
+                                fileType.toLowerCase() == 'wav';
+                          }) ?? false),
                       isPinned: pinnedMsg,
                       createdAt: messageList.createdAt.toString(),
                       currentUserId: userId,

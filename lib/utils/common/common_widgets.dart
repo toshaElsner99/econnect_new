@@ -787,6 +787,7 @@ Widget popMenuForReply2(
       required VoidCallback onReact,
       required String createdAt,
       required String currentUserId,
+      required bool hasAudioFile,
     }) {
 
   final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
@@ -852,7 +853,7 @@ Widget popMenuForReply2(
 
         menuItems.add(const PopupMenuDivider());
         menuItems.add(_menuItem(2, Icons.copy, "Copy Text"));
-        if(isCurrentUser && isEditable){
+        if(isCurrentUser && isEditable && !hasAudioFile){
           menuItems.add(_menuItem(3, Icons.edit, "Edit"));
         }
         if(isCurrentUser){

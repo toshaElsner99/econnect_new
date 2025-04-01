@@ -794,6 +794,18 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                 ),
                 popMenuForReply2(context,
                   isPinned: pinnedMsg,
+                  hasAudioFile: (messageList.files?.any((file) {
+                    String fileType = getFileExtension(getFileName(file));
+                    return fileType.toLowerCase() == 'm4a' ||
+                        fileType.toLowerCase() == 'mp3' ||
+                        fileType.toLowerCase() == 'wav';
+                  }) ?? false) ||
+                      (messageList.forwardFrom?.files?.any((file) {
+                        String fileType = getFileExtension(getFileName(file));
+                        return fileType.toLowerCase() == 'm4a' ||
+                            fileType.toLowerCase() == 'mp3' ||
+                            fileType.toLowerCase() == 'wav';
+                      }) ?? false),
                   onOpened: () {}  ,
                   onClosed: () {} ,
                   onReact: () {
