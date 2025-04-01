@@ -2,6 +2,8 @@ import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:record/record.dart';
 
 import '../../../providers/chat_provider.dart';
 import '../../../providers/download_provider.dart';
@@ -10,6 +12,7 @@ import '../../../utils/app_image_assets.dart';
 import '../../../utils/app_preference_constants.dart';
 import '../../../utils/common/common_function.dart';
 import '../../../utils/common/common_widgets.dart';
+import '../../../widgets/audio_widget.dart';
 
 class FilesListingScreen extends StatefulWidget {
   final String userName;
@@ -21,6 +24,17 @@ class FilesListingScreen extends StatefulWidget {
 }
 
 class _FilesListingScreenState extends State<FilesListingScreen> {
+
+  final Map<String, AudioPlayer> _audioPlayers = {};
+  final Map<String, Duration> _audioDurations = {};
+  AudioPlayer? _currentlyPlayingPlayer;
+  void _handleAudioPlayback(String audioUrl, AudioPlayer player) {
+    // If there's already an audio playing and it's different from the new one
+    if (_currentlyPlayingPlayer != null && _currentlyPlayingPlayer != player) {
+      _currentlyPlayingPlayer!.stop();
+    }
+    setState(() => _currentlyPlayingPlayer = player);
+  }
   @override
   void initState() {
     Provider.of<ChatProvider>(context,listen: false).getFileListingInChat(oppositeUserId: widget.oppositeUserId);
@@ -97,6 +111,23 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
                         String formattedFileName = formatFileName(originalFileName);
                         String fileType = getFileExtension(originalFileName);
 
+                        bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
+                            fileType.toLowerCase() == 'mp3' ||
+                            fileType.toLowerCase() == 'wav';
+                        if (isAudioFile) {
+                          // print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 15,right: 15, top: 5),
+                            child: AudioPlayerWidget(
+                              audioUrl: fileUrl,
+                              audioPlayers: _audioPlayers,
+                              audioDurations: _audioDurations,
+                              onPlaybackStart: _handleAudioPlayback,
+                              currentlyPlayingPlayer: _currentlyPlayingPlayer,
+                              isForwarded: true, // Set to true for forwarded messages
+                            ),
+                          );
+                        }
                         return Container(
                           margin: EdgeInsets.only(top: 7, right: 15,left: 15),
                           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
