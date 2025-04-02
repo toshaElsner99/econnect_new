@@ -42,7 +42,7 @@
     <key>NSUserNotificationCenterUsageDescription</key>
     <string>This app requires notification permissions to alert you about updates and messages.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>This App requires access to your microphone to use in camera for videos.</string>
+    <string>This app requires microphone access for audio chat and video recording.</string>
 	<key>NSUserNotificationAlert</key>
 	<string>YES</string>
 	<key>NSUserNotificationBadge</key>

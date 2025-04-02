@@ -83,7 +83,8 @@ plugins {
 
 android {
     namespace = "com.elsner.econnect"
-    compileSdk = flutter.compileSdkVersion
+//    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -98,7 +99,8 @@ android {
     defaultConfig {
         applicationId = "com.elsner.econnect"
         minSdk = 23
-        targetSdk = flutter.targetSdkVersion
+//        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

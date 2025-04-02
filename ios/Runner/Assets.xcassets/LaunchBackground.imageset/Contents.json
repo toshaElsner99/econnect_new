@@ -1,17 +1,14 @@
 {
   "images" : [
     {
-      "filename" : "ios_splash.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "ios_splash 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "ios_splash 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
