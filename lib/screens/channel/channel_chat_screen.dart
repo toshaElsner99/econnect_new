@@ -195,7 +195,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       //   // _scrollController1.jumpTo(msgIndex*800.0);
       // }
     }else{
-      Future.delayed(Duration(seconds: 5),()=> jumpToMessage(sortedGroups: sortedGroups,messageGroupId: messageGroupId,messageId: messageId));
+      Future.delayed(Duration(seconds: 3),()=> jumpToMessage(sortedGroups: sortedGroups,messageGroupId: messageGroupId,messageId: messageId));
     }
   }
   void _onTextChanged() {
@@ -588,59 +588,39 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     }
   }
 
+  sendAudio() async{
+    final chatProvider = Provider.of<ChatProvider>(context,listen: false);
+    if (_audioPath != null) {
+      try {
+        final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
+        print("uploadFiles>>>> $uploadedFiles");
+        // Send the message with the uploaded files
+
+        await channelChatProviderInit.sendMessage(content: "", channelId: channelID, files: uploadedFiles);
+
+
+
+        // Clear the audio state after successful send
+        setState(() {
+          _audioPath = null;
+          _showAudioPreview = false;
+          _recordingDuration = Duration.zero;
+        });
+      } catch (e) {
+        print("Error sending audio message: $e");
+        // You might want to show an error message to the user here
+      }
+    }
+  }
+
   void _sendAudioMessage() async {
     if(_showScrollToBottomButton){
       reloadPageOne();
       Future.delayed(Duration(seconds: 3),() async{
-        final chatProvider = Provider.of<ChatProvider>(context,listen: false);
-        if (_audioPath != null) {
-          try {
-            final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
-            print("uploadFiles>>>> $uploadedFiles");
-            // Send the message with the uploaded files
-
-            await channelChatProviderInit.sendMessage(content: "", channelId: channelID, files: uploadedFiles);
-
-
-
-            // Clear the audio state after successful send
-            setState(() {
-              _audioPath = null;
-              _showAudioPreview = false;
-              _recordingDuration = Duration.zero;
-            });
-          } catch (e) {
-            print("Error sending audio message: $e");
-            // You might want to show an error message to the user here
-          }
-        }
-        // setState(() {
-        //   _showScrollToBottomButton = false;
-        // });
+        sendAudio();
       });
     }else{
-      final chatProvider = Provider.of<ChatProvider>(context,listen: false);
-      if (_audioPath != null) {
-        try {
-          final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
-          print("uploadFiles>>>> $uploadedFiles");
-          // Send the message with the uploaded files
-
-          await channelChatProviderInit.sendMessage(content: "", channelId: channelID, files: uploadedFiles);
-
-
-
-          // Clear the audio state after successful send
-          setState(() {
-            _audioPath = null;
-            _showAudioPreview = false;
-            _recordingDuration = Duration.zero;
-          });
-        } catch (e) {
-          print("Error sending audio message: $e");
-          // You might want to show an error message to the user here
-        }
-      }
+      sendAudio();
     }
 
   }
@@ -869,6 +849,29 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     return path;
   }
 
+  sendMsg(channelChatProvider) async{
+    var plainText = _messageController.text.trim();
+    if (plainText.contains(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'))) {
+      plainText = plainText.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
+    }
+    if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty || plainText.isNotEmpty) {
+      if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
+        final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
+        channelChatProvider.sendMessage(content: plainText, channelId: channelID, files: filesOfList);
+      } else {
+        channelChatProvider.sendMessage(content: plainText, channelId: channelID,editMsgID: currentUserMessageId).then((value) => setState(() {
+          currentUserMessageId = "";
+          socketProvider.userTypingEventChannel(
+              channelId: channelID,
+              isReplyMsg: false,
+              isTyping:  0
+          );
+        }),);
+      }
+      _clearInputAndDismissKeyboard();
+    }
+  }
+
   Widget inputTextFieldWithEditor(ChannelChatProvider channelChatProvider) {
     return Consumer<FileServiceProvider>(builder: (context, fileServiceProvider, child) {
       return Container(
@@ -1012,55 +1015,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             if(_showScrollToBottomButton){
                               reloadPageOne();
                               Future.delayed(Duration(seconds: 3), () async{
-
-                                var plainText = _messageController.text.trim();
-                                if (plainText.contains(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'))) {
-                                  plainText = plainText.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
-                                }
-                                if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty || plainText.isNotEmpty) {
-                                  if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
-                                    final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
-                                    channelChatProvider.sendMessage(content: plainText, channelId: channelID, files: filesOfList);
-                                  } else {
-                                    channelChatProvider.sendMessage(content: plainText, channelId: channelID,editMsgID: currentUserMessageId).then((value) => setState(() {
-                                      currentUserMessageId = "";
-                                      socketProvider.userTypingEventChannel(
-                                          channelId: channelID,
-                                          isReplyMsg: false,
-                                          isTyping:  0
-                                      );
-                                    }),);
-                                  }
-                                  _clearInputAndDismissKeyboard();
-                                }
-                                // setState(() {
-                                //   _showScrollToBottomButton = false;
-                                // });
+                                sendMsg(channelChatProvider);
                               });
                             }else{
-
-                              var plainText = _messageController.text.trim();
-                              if (plainText.contains(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'))) {
-                                plainText = plainText.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
-                              }
-                              if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty || plainText.isNotEmpty) {
-                                if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
-                                  final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
-                                  channelChatProvider.sendMessage(content: plainText, channelId: channelID, files: filesOfList);
-                                } else {
-                                  channelChatProvider.sendMessage(content: plainText, channelId: channelID,editMsgID: currentUserMessageId).then((value) => setState(() {
-                                    currentUserMessageId = "";
-                                    socketProvider.userTypingEventChannel(
-                                        channelId: channelID,
-                                        isReplyMsg: false,
-                                        isTyping:  0
-                                    );
-                                  }),);
-                                }
-                                _clearInputAndDismissKeyboard();
-                              }
+                              sendMsg(channelChatProvider);
                             }
-
                           },
                           child: Container(
                               margin: EdgeInsets.only(left: 10),

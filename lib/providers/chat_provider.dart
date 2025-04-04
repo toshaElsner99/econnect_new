@@ -73,7 +73,7 @@ class ChatProvider extends  ChangeNotifier {
     }
   }
 
-  Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false,bool? isFromJump,bool? callForFav,bool onlyReadInChat = false}) async {
+  Future<void> getMessagesList({required String oppositeUserId,required int currentPage,bool isFromMsgListen = false,bool? isFromJump,bool? callForFav,bool onlyReadInChat = false, bool needToReload= false}) async {
     print("oppositeUserId in getMessagesList==> $oppositeUserId");
 
     try {
@@ -81,7 +81,7 @@ class ChatProvider extends  ChangeNotifier {
         messageGroups.clear();
         currentPagea = currentPage;
       }
-      if (lastOpenedUserId != oppositeUserId) {
+      if (lastOpenedUserId != oppositeUserId || needToReload) {
         messageGroups.clear();
         totalPages = 0;
         // currentPage = 1;

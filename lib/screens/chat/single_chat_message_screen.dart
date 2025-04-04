@@ -93,10 +93,30 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   String? _previewAudioPath;
   final Map<String, Duration> _audioDurations = {};
   final _audioPlayer = AudioPlayer();
+  String? highlightedMessageId;
+  bool _showScrollToBottomButton = false;
+  bool reloading = false;
+  bool isFromJump = false;
 
   // Replace voice_message_player related variables with:
   final Map<String, AudioPlayer> _audioPlayers = {};
   AudioPlayer? _currentlyPlayingPlayer;
+
+  // Add this method to scroll to bottom
+  void reloadPageOne() {
+    setState(() {
+      reloading = true;
+    });
+    pagination(oppositeUserId: oppositeUserId);
+    downStreamPagination(oppositeUserId: oppositeUserId);
+    Provider.of<ChatProvider>(context,listen: false).changeCurrentPageValue(1);
+    chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: 1,isFromJump: false,callForFav: widget.calledForFavorite ?? false,onlyReadInChat: false,needToReload: true);
+    isFromJump = false;
+    _showScrollToBottomButton = false;
+    highlightedMessageId = null;
+    reloading = false;
+    setState(() {});
+  }
 
   Future<void> _initializeRecorder() async {
     _record = AudioRecorder();
@@ -169,10 +189,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }
   }
 
-  void _sendAudioMessage() async {
+  sendAudio() async{
     if (_audioPath != null) {
       try {
-        final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
+        final uploadedFiles =
+            await chatProvider.uploadFilesForAudio([_audioPath!]);
         print("uploadFiles>>>> $uploadedFiles");
         // Send the message with the uploaded files
         await chatProvider.sendMessage(
@@ -194,13 +215,28 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }
   }
 
+  void _sendAudioMessage() async {
+    if(_showScrollToBottomButton){
+      reloadPageOne();
+      Future.delayed(Duration(seconds: 3),() async{
+        sendAudio();
+      });
+    }else {
+      sendAudio();
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     oppositeUserId = widget.oppositeUserId;
     userName = widget.userName ?? "";
-    bool isFromJump = widget.isFromJump ?? false;
+    isFromJump = widget.isFromJump ?? false;
     if(isFromJump && widget.jumpData != null){
+      highlightedMessageId = widget.jumpData['messageId'];
+      setState(() {
+        // Ensure the state is updated with the highlighted message ID
+      });
       initializeScreen(widget.jumpData['pageNO'],true,widget.jumpData['messageGroupId'],widget.jumpData['messageId']);
     }else{
       initializeScreen(1,isFromJump,"","");
@@ -218,9 +254,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       socketProvider.userTypingEvent(oppositeUserId: oppositeUserId, isReplyMsg: false, isTyping: 0,);
       _fetchAndCacheUserDetails();
       print("oppositeUserId in init==> ${oppositeUserId}");
-      /// this is for pagination ///
-      pagination(oppositeUserId: oppositeUserId);
-      downStreamPagination(oppositeUserId: oppositeUserId);
+      if(!isfromJump) {
+        /// this is for pagination ///
+        pagination(oppositeUserId: oppositeUserId);
+        downStreamPagination(oppositeUserId: oppositeUserId);
+      }
       /// opposite user typing listen ///
       chatProvider.getTypingUpdate();
       /// THis Is Socket Listening Event ///
@@ -240,8 +278,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       /// this is for fetch other user details and store it to cache memory ///
       /// this is for get user mention listing api ///
       commonProvider.getUserApi(id: oppositeUserId);
-      if(isfromJump){
-        Future.delayed(Duration(seconds: 5),()=> jumpToMessage(sortedGroups: chatProvider.messageGroups,messageGroupId: msgGroup,messageId: msgId));
+      if(isFromJump){
+        Future.delayed(Duration(seconds: 3),()=> jumpToMessage(sortedGroups: chatProvider.messageGroups,messageGroupId: msgGroup,messageId: msgId));
       }
       // chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
     },);
@@ -315,25 +353,67 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     });
   }
   void jumpToMessage({required List<MessageGroups> sortedGroups,required String messageGroupId,required String messageId}){
-    final  index = sortedGroups.indexWhere((test)=> test.sId == messageGroupId.split(" ")[0]);
-    print(index);
-    print("IDD $messageId");
-    final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.sId == messageId);
-    print("IDD $msgIndex");
+    if(Provider.of<ChatProvider>(context,listen: false).idChatListLoading == false){
+      print("messageGroupId $messageGroupId");
+      // log("messageGroupId $sortedGroups");
+      final  index = sortedGroups.indexWhere((test)=> test.sId == messageGroupId.split(" ")[0]);
+      final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.sId == messageId);
 
-    if(scrollController1.hasClients && scrollController.hasClients){
-      scrollController.animateTo(
-        index*800.0,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-      scrollController.animateTo(
-        msgIndex*800.0,
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
+      // Set the highlighted message ID
+      setState(() {
+        highlightedMessageId = messageId;
+      });
+
+      Map<String, String> messages = {};
+      for(var group in sortedGroups.reversed) {
+        print("Date = ${group.sId}");
+        List<Messages> perGroupMessages = (group.messages ?? [])
+          ..sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
+        for (var msg in perGroupMessages){
+          print("msg = ${msg.content}");
+          // messages.addAll({msg.id! : msg.content!});
+          messages[msg.sId!] = msg.content!;
+          print("INdex in loop =${messages.keys.toList().indexOf(msg.sId!)}");
+        }
+      }
+      print("messages = ${messages.length}");
+      int newIndex = messages.keys.toList().indexOf(messageId);
+      print("Single Chat New Index $newIndex");
+      if (newIndex != -1) {
+        double itemHeight; // Approximate height of each message
+        if(newIndex >= (messages.length-5)  && newIndex <= (messages.length-1)){
+          itemHeight = 0;
+          print("itemHeight1 = $itemHeight");
+        }else if(newIndex >= (messages.length-10)  && newIndex <= (messages.length-4)){
+          itemHeight = 5;
+          print("itemHeight2 = $itemHeight");
+        }else if(newIndex >= (messages.length-15)  && newIndex <= (messages.length-9)){
+          itemHeight = 40;
+          print("itemHeight3 = $itemHeight");
+        }else if(newIndex >= (messages.length-20)  && newIndex <= (messages.length-16)){
+          itemHeight = 60;
+          print("itemHeight4 = $itemHeight");
+        }else{
+          itemHeight = 120;
+          print("itemHeight5 = $itemHeight");
+        }
+        final messagesInPage = (messages.length) - (newIndex % (messages.length));
+        final targetPosition = messagesInPage * itemHeight;
+        print("targetPosition = $targetPosition");
+        // Scroll to the message with animation
+        scrollController.animateTo(
+          targetPosition,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        _showScrollToBottomButton = true;
+        setState(() {
+
+        });
+      }
+    }else{
+      Future.delayed(Duration(seconds: 3),()=> jumpToMessage(sortedGroups: sortedGroups,messageGroupId: messageGroupId,messageId: messageId));
     }
-    // Provider.of<ChatProvider>(context,listen: false).paginationAPICall(oppositeUserId: oppositeUserId);
   }
 
   void _saveScrollPosition() => setState(() {
@@ -379,13 +459,20 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   }
                 ],),
             ),
+            floatingActionButton: _showScrollToBottomButton
+                ? FloatingActionButton(
+              backgroundColor: AppColor.blueColor,
+              onPressed: reloadPageOne,
+              child: Icon(Icons.arrow_downward, color: Colors.white),
+            )
+                : null,
             body: Column(
               children: [
                 Divider(
                   color: Colors.grey.shade800,
                   height: 1,
                 ),
-                if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser)...{
+                if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser || reloading)...{
                   Flexible(child: ShimmerLoading.chatShimmer(context))
                 }else...{
                   if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
@@ -592,6 +679,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     print("messageId ${value['messageId']}");
                     initializeScreen(value['pageNO'],true,value['messageGroupId'],value['messageId']);
                     NeedTocallJumpToMessage = true;
+                    isFromJump = true;
+                    highlightedMessageId = null;
                     messageGroupId =value['messageGroupId'];
                   });
 
@@ -637,6 +726,30 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     );
   }
 
+  sendMsg() async{
+    final plainText = _messageController.text.trim();
+    if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty || plainText.isNotEmpty) {
+      if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
+        final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
+        chatProvider.sendMessage(
+            content: plainText,
+            receiverId: oppositeUserId,
+            files: filesOfList);
+      } else {
+        chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then(
+              (value) => setState(() {
+            currentUserMessageId = "";
+            socketProvider.userTypingEvent(
+              oppositeUserId: oppositeUserId,
+              isReplyMsg: false,
+              isTyping: 0,
+            );
+          }),
+        );
+      }
+      _clearInputAndDismissKeyboard();
+    }
+  }
 
 
   Widget inputTextFieldWithEditor() {
@@ -778,27 +891,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       if(fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty || _messageController.text.isNotEmpty )...{
                         GestureDetector(
                           onTap: () async {
-                            final plainText = _messageController.text.trim();
-                            if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty || plainText.isNotEmpty) {
-                              if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
-                                final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
-                                chatProvider.sendMessage(
-                                    content: plainText,
-                                    receiverId: oppositeUserId,
-                                    files: filesOfList);
-                              } else {
-                                chatProvider.sendMessage(content: plainText, receiverId: oppositeUserId, editMsgID: currentUserMessageId).then(
-                                      (value) => setState(() {
-                                    currentUserMessageId = "";
-                                    socketProvider.userTypingEvent(
-                                      oppositeUserId: oppositeUserId,
-                                      isReplyMsg: false,
-                                      isTyping: 0,
-                                    );
-                                  }),
-                                );
-                              }
-                              _clearInputAndDismissKeyboard();
+                            if(_showScrollToBottomButton){
+                              reloadPageOne();
+                              Future.delayed(Duration(seconds: 3), () async{
+                                sendMsg();
+                              });
+                            }else{
+                              sendMsg();
                             }
                           },
                           child: Container(
@@ -925,10 +1024,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         reverse: true,
         controller: scrollController,
         // physics: NeverScrollableScrollPhysics(),
-        itemCount: sortedGroups.length + 1,
+        itemCount: isFromJump ? sortedGroups.length  : sortedGroups.length + 1,
         itemBuilder: (itemContext, index) {
           if(index == sortedGroups.length){
-            if(value.totalPages > value.currentPagea) {
+            if(!isFromJump && value.totalPages > value.currentPagea) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: customLoading(),
@@ -980,14 +1079,19 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   Messages message = sortedMessages[index];
                   bool showUserDetails = previousSenderId != message.senderId;
                   previousSenderId = message.senderId;
-                  return chatBubble(
-                    index: index, // Pass index here
-                    messageList: message,
-                    messageId: sortedMessages[index].sId.toString(),
-                    userId: message.senderId!,
-                    message: message.content!,
-                    time: DateTime.parse(message.createdAt!).toString(),
-                    showUserDetails: showUserDetails,
+                  bool isHighlighted = message.sId.toString() == highlightedMessageId;
+                  return AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    color: isHighlighted ? Colors.yellow.withOpacity(0.3) : Colors.transparent,
+                    child: chatBubble(
+                      index: index, // Pass index here
+                      messageList: message,
+                      messageId: sortedMessages[index].sId.toString(),
+                      userId: message.senderId!,
+                      message: message.content!,
+                      time: DateTime.parse(message.createdAt!).toString(),
+                      showUserDetails: showUserDetails,
+                    ),
                   );
                 },
               )
