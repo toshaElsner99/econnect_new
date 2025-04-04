@@ -78,6 +78,30 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   bool NeedTocallJumpToMessage = false;
   String messageGroupId = "";
   final Set<String> _playedConfettiMessages = {};
+  String? highlightedMessageId;
+  bool _showScrollToBottomButton = false;
+  bool reloading = false;
+
+  // Add this method to scroll to bottom
+  void reloadPageOne() {
+    setState(() {
+      reloading = true;
+    });
+    pagination(channelId: channelID);
+    downStreamPagination(channelId: channelID);
+    Provider.of<ChannelChatProvider>(context,listen: false).changeCurrentPageValue(1);
+    channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: 1, isFromJump: false,onlyReadInChat: true,needToReload: true);
+    isFromJump = false;
+    _showScrollToBottomButton = false;
+    highlightedMessageId = null;
+    reloading = false;
+    setState(() {});
+    // pushReplacement(screen: ChannelChatScreen(channelId: channelID,isFromJump: false,isFromNotification: false)).then((val){
+    //   setState(() {
+    //     _showScrollToBottomButton = false;
+    //   });
+    // });
+  }
 
   void pagination({required String channelId}) {
     _scrollController.addListener(() {
@@ -95,28 +119,81 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       }
     });
   }
-  void jumpToMessage({required List<MessageGroup> sortedGroups,required String messageGroupId,required String messageId}){
+
+  void jumpToMessage({required List<MessageGroup> sortedGroups, required String messageGroupId, required String messageId}) {
     if(Provider.of<ChannelChatProvider>(context,listen: false).isChannelChatLoading == false){
       print("messageGroupId $messageGroupId");
       // log("messageGroupId $sortedGroups");
       final  index = sortedGroups.indexWhere((test)=> test.id == messageGroupId.split(" ")[0]);
       final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.id == messageId);
-      print("indexindexindexindexindex $index");
 
-      if(_scrollController.hasClients && _scrollController1.hasClients){
-        // _scrollController.jumpTo(index*800.0);
-        _scrollController.animateTo(
-          index*800.0,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-        _scrollController.animateTo(
-          msgIndex*400.0,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-        // _scrollController1.jumpTo(msgIndex*800.0);
+      // Set the highlighted message ID
+      setState(() {
+        highlightedMessageId = messageId;
+      });
+
+      Map<String, String> messages = {};
+      for(var group in sortedGroups.reversed) {
+        print("Date = ${group.id}");
+        List<Message> perGroupMessages = (group.messages ?? [])
+          ..sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
+        for (var msg in perGroupMessages){
+          print("msg = ${msg.content}");
+          // messages.addAll({msg.id! : msg.content!});
+          messages[msg.id!] = msg.content!;
+          print("INdex in loop =${messages.keys.toList().indexOf(msg.id!)}");
+        }
       }
+      print("messages = ${messages.length}");
+      int newIndex = messages.keys.toList().indexOf(messageId);
+      print("indexindexindexindexindex $newIndex");
+      if (newIndex != -1) {
+        double itemHeight; // Approximate height of each message
+        if(newIndex >= (messages.length-5)  && newIndex <= (messages.length-1)){
+          itemHeight = 0;
+          print("itemHeight1 = $itemHeight");
+        }else if(newIndex >= (messages.length-10)  && newIndex <= (messages.length-4)){
+          itemHeight = 5;
+          print("itemHeight2 = $itemHeight");
+        }else if(newIndex >= (messages.length-15)  && newIndex <= (messages.length-9)){
+          itemHeight = 40;
+          print("itemHeight3 = $itemHeight");
+        }else if(newIndex >= (messages.length-20)  && newIndex <= (messages.length-16)){
+          itemHeight = 60;
+          print("itemHeight4 = $itemHeight");
+        }else{
+          itemHeight = 120;
+          print("itemHeight5 = $itemHeight");
+        }
+        final messagesInPage = (messages.length) - (newIndex % (messages.length));
+        final targetPosition = messagesInPage * itemHeight;
+        print("targetPosition = $targetPosition");
+        // Scroll to the message with animation
+        _scrollController.animateTo(
+          targetPosition,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+        _showScrollToBottomButton = true;
+        setState(() {
+
+        });
+      }
+
+      // if(_scrollController.hasClients && _scrollController1.hasClients){
+      //   // _scrollController.jumpTo(index*800.0);
+      //   _scrollController.animateTo(
+      //     index*800.0,
+      //     duration: Duration(milliseconds: 300),
+      //     curve: Curves.easeInOut,
+      //   );
+      //   _scrollController.animateTo(
+      //     msgIndex*400.0,
+      //     duration: Duration(milliseconds: 300),
+      //     curve: Curves.easeInOut,
+      //   );
+      //   // _scrollController1.jumpTo(msgIndex*800.0);
+      // }
     }else{
       Future.delayed(Duration(seconds: 5),()=> jumpToMessage(sortedGroups: sortedGroups,messageGroupId: messageGroupId,messageId: messageId));
     }
@@ -432,6 +509,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   Timer? _recordingTimer;
   bool _showAudioPreview = false;
   String? _previewAudioPath;
+  bool isFromJump = false;
   final Map<String, Duration> _audioDurations = {};
   final _audioPlayer = AudioPlayer();
 
@@ -511,28 +589,60 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   }
 
   void _sendAudioMessage() async {
-    final chatProvider = Provider.of<ChatProvider>(context,listen: false);
-    if (_audioPath != null) {
-      try {
-        final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
-        print("uploadFiles>>>> $uploadedFiles");
-        // Send the message with the uploaded files
+    if(_showScrollToBottomButton){
+      reloadPageOne();
+      Future.delayed(Duration(seconds: 3),() async{
+        final chatProvider = Provider.of<ChatProvider>(context,listen: false);
+        if (_audioPath != null) {
+          try {
+            final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
+            print("uploadFiles>>>> $uploadedFiles");
+            // Send the message with the uploaded files
 
-        await channelChatProviderInit.sendMessage(content: "", channelId: channelID, files: uploadedFiles);
+            await channelChatProviderInit.sendMessage(content: "", channelId: channelID, files: uploadedFiles);
 
 
 
-        // Clear the audio state after successful send
-        setState(() {
-          _audioPath = null;
-          _showAudioPreview = false;
-          _recordingDuration = Duration.zero;
-        });
-      } catch (e) {
-        print("Error sending audio message: $e");
-        // You might want to show an error message to the user here
+            // Clear the audio state after successful send
+            setState(() {
+              _audioPath = null;
+              _showAudioPreview = false;
+              _recordingDuration = Duration.zero;
+            });
+          } catch (e) {
+            print("Error sending audio message: $e");
+            // You might want to show an error message to the user here
+          }
+        }
+        // setState(() {
+        //   _showScrollToBottomButton = false;
+        // });
+      });
+    }else{
+      final chatProvider = Provider.of<ChatProvider>(context,listen: false);
+      if (_audioPath != null) {
+        try {
+          final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
+          print("uploadFiles>>>> $uploadedFiles");
+          // Send the message with the uploaded files
+
+          await channelChatProviderInit.sendMessage(content: "", channelId: channelID, files: uploadedFiles);
+
+
+
+          // Clear the audio state after successful send
+          setState(() {
+            _audioPath = null;
+            _showAudioPreview = false;
+            _recordingDuration = Duration.zero;
+          });
+        } catch (e) {
+          print("Error sending audio message: $e");
+          // You might want to show an error message to the user here
+        }
       }
     }
+
   }
 
   @override
@@ -544,9 +654,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     super.initState();
     Provider.of<CommonProvider>(context,listen: false).getUserApi(id: signInModel.data?.user?.id ?? "");
     channelID = widget.channelId;
-    bool isFromJump = widget.isFromJump ?? false;
+    isFromJump = widget.isFromJump ?? false;
 
     if(isFromJump && widget.jumpData != null){
+      highlightedMessageId = widget.jumpData['messageId'];
+      setState(() {
+        // Ensure the state is updated with the highlighted message ID
+      });
       initializedScreen(widget.jumpData['pageNO'],true,widget.jumpData['messageGroupId'],widget.jumpData['messageId']);
     }else{
       initializedScreen(1,isFromJump,"","");
@@ -566,16 +680,23 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
 
       /// this for socket listen in channel chat for new message and delete //
       socketProvider.listenForChannelChatScreen(channelId: channelID);
-      pagination(channelId: channelID);
-      downStreamPagination(channelId: channelID);
-      channelChatProviderInit.getChannelInfoApiCall(channelId: channelID,callFroHome: true);
+        if(!isfromJump){
+          pagination(channelId: channelID);
+          downStreamPagination(channelId: channelID);
+        }
+        channelChatProviderInit.getChannelInfoApiCall(channelId: channelID,callFroHome: true);
       Provider.of<ChannelChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
-      channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: pageNo,isFromJump: isfromJump,onlyReadInChat: true);
+      channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: pageNo, isFromJump: isfromJump,onlyReadInChat: true);
       channelChatProviderInit.getChannelMembersList(channelID);
       channelChatProviderInit.getFileListingInChannelChat(channelId: channelID);
-      if(isfromJump){
-        Future.delayed(Duration(seconds: 5),()=> jumpToMessage(sortedGroups: channelChatProviderInit.messageGroups,messageGroupId: msgGroup,messageId: msgId));
+      if(isFromJump){
+        Future.delayed(Duration(seconds: 3), (){
+          jumpToMessage(sortedGroups: channelChatProviderInit.messageGroups,messageGroupId: msgGroup,messageId: msgId);
+        });
       }
+      // if(isfromJump){
+      //   Future.delayed(Duration(seconds: 5),()=> jumpToMessage(sortedGroups: channelChatProviderInit.messageGroups,messageGroupId: msgGroup,messageId: msgId));
+      // }
     },);
   }
 
@@ -888,26 +1009,58 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty || _messageController.text.isNotEmpty)...{
                         GestureDetector(
                           onTap: () async {
-                            var plainText = _messageController.text.trim();
-                            if (plainText.contains(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'))) {
-                              plainText = plainText.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
-                            }
-                            if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty || plainText.isNotEmpty) {
-                              if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
-                                final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
-                                channelChatProvider.sendMessage(content: plainText, channelId: channelID, files: filesOfList);
-                              } else {
-                                channelChatProvider.sendMessage(content: plainText, channelId: channelID,editMsgID: currentUserMessageId).then((value) => setState(() {
-                                  currentUserMessageId = "";
-                                  socketProvider.userTypingEventChannel(
-                                      channelId: channelID,
-                                      isReplyMsg: false,
-                                      isTyping:  0
-                                  );
-                                }),);
+                            if(_showScrollToBottomButton){
+                              reloadPageOne();
+                              Future.delayed(Duration(seconds: 3), () async{
+
+                                var plainText = _messageController.text.trim();
+                                if (plainText.contains(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'))) {
+                                  plainText = plainText.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
+                                }
+                                if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty || plainText.isNotEmpty) {
+                                  if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
+                                    final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
+                                    channelChatProvider.sendMessage(content: plainText, channelId: channelID, files: filesOfList);
+                                  } else {
+                                    channelChatProvider.sendMessage(content: plainText, channelId: channelID,editMsgID: currentUserMessageId).then((value) => setState(() {
+                                      currentUserMessageId = "";
+                                      socketProvider.userTypingEventChannel(
+                                          channelId: channelID,
+                                          isReplyMsg: false,
+                                          isTyping:  0
+                                      );
+                                    }),);
+                                  }
+                                  _clearInputAndDismissKeyboard();
+                                }
+                                // setState(() {
+                                //   _showScrollToBottomButton = false;
+                                // });
+                              });
+                            }else{
+
+                              var plainText = _messageController.text.trim();
+                              if (plainText.contains(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'))) {
+                                plainText = plainText.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
                               }
-                              _clearInputAndDismissKeyboard();
+                              if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty || plainText.isNotEmpty) {
+                                if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty){
+                                  final filesOfList = await channelChatProvider.uploadFiles(AppString.channelChat);
+                                  channelChatProvider.sendMessage(content: plainText, channelId: channelID, files: filesOfList);
+                                } else {
+                                  channelChatProvider.sendMessage(content: plainText, channelId: channelID,editMsgID: currentUserMessageId).then((value) => setState(() {
+                                    currentUserMessageId = "";
+                                    socketProvider.userTypingEventChannel(
+                                        channelId: channelID,
+                                        isReplyMsg: false,
+                                        isTyping:  0
+                                    );
+                                  }),);
+                                }
+                                _clearInputAndDismissKeyboard();
+                              }
                             }
+
                           },
                           child: Container(
                               margin: EdgeInsets.only(left: 10),
@@ -1190,9 +1343,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             channelID = value['channelId'];
                             _scrollController.dispose();
                             _scrollController = ScrollController();
+                            isFromJump = true;
                             initializedScreen(value['pageNO'],true,value['messageGroupId'],value['messageId']);
                             NeedTocallJumpToMessage = true;
                             messageGroupId =value['messageGroupId'];
+                            highlightedMessageId = null;
                             // Provider.of<ChannelListProvider>(context, listen: false).readUnReadChannelMessage(oppositeUserId: channelID,isCallForReadMessage: true);
                           });
                           // }
@@ -1227,12 +1382,19 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   inputTextFieldWithEditor(channelChatProvider)
                 ],),
             ),
+            floatingActionButton: _showScrollToBottomButton
+                ? FloatingActionButton(
+              backgroundColor: AppColor.blueColor,
+              onPressed: reloadPageOne,
+              child: Icon(Icons.arrow_downward, color: Colors.white),
+            )
+                : null,
             body: Stack(
               children: [
                 Column(
                   children: [
                     Divider(color: Colors.grey.shade800, height: 1,),
-                    if(channelChatProvider.isChannelChatLoading )...{
+                    if(channelChatProvider.isChannelChatLoading || reloading)...{
                       Flexible(child: ShimmerLoading.chatShimmer(context))
                     }else...{
                       // Expanded(
@@ -1421,10 +1583,10 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         reverse: true,
         controller: _scrollController,
         // physics: NeverScrollableScrollPhysics(),
-        itemCount: sortedGroups.length + 1,
+        itemCount: isFromJump ? sortedGroups.length  : sortedGroups.length + 1,
         itemBuilder: (itemContext, index) {
           if(index == sortedGroups.length){
-            if(channelChatProvider.totalPages > channelChatProvider.currentPage) {
+            if(!isFromJump && channelChatProvider.totalPages > channelChatProvider.currentPage) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: customLoading(),
@@ -1517,14 +1679,20 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   Message message = sortedMessages[index];
                   bool showUserDetails = previousSenderId != message.senderId;
                   previousSenderId = message.senderId;
-                  return chatBubble(
-                    index: index,
-                    messageList: message,
-                    showUserDetails: showUserDetails,
-                    userId: message.senderId ?? "",
-                    messageId: sortedMessages[index].id.toString(),
-                    message: message.content ?? "",
-                    time: DateTime.parse(message.createdAt.toString()).toString(),
+                  bool isHighlighted = message.id.toString() == highlightedMessageId;
+
+                  return AnimatedContainer(
+                    duration: Duration(milliseconds: 300),
+                    color: isHighlighted ? Colors.yellow.withOpacity(0.3) : Colors.transparent,
+                    child: chatBubble(
+                      index: index,
+                      messageList: message,
+                      showUserDetails: showUserDetails,
+                      userId: message.senderId ?? "",
+                      messageId: sortedMessages[index].id.toString(),
+                      message: message.content ?? "",
+                      time: DateTime.parse(message.createdAt.toString()).toString(),
+                    ),
                   );
                 },
               )

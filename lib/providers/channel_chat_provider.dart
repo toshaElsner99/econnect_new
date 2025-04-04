@@ -702,14 +702,14 @@ class ChannelChatProvider extends ChangeNotifier{
     firstInitialPageNo = pageNo;
     notifyListeners();
   }
-  Future<void> getChannelChatApiCall({required String channelId,required int pageNo,bool isFromMsgListen = false,bool? isFromJump,bool onlyReadInChat = false})async {
+  Future<void> getChannelChatApiCall({required String channelId,required int pageNo,bool isFromMsgListen = false,bool? isFromJump,bool onlyReadInChat = false, bool needToReload = false})async {
    try{
      if(isFromJump ?? false){
        currentPage = pageNo;
        messageGroups.clear();
        print("CCCCCC >>>>> $pageNo");
      }
-     if (lastOpenedChannelId != channelId) {
+     if (lastOpenedChannelId != channelId || needToReload) {
        messageGroups.clear();
        totalPages = 0;
        currentPage =isFromJump ?? false ? pageNo :  1;
