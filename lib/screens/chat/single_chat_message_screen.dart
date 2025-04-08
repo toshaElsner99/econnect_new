@@ -251,6 +251,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       print("inside post frame $oppositeUserId");
       messageGroupId = msgGroup;
       messageId = msgId;
+      
+      // Clean up existing socket listeners first
+      socketProvider.cleanupChatListeners();
+      
       socketProvider.userTypingEvent(oppositeUserId: oppositeUserId, isReplyMsg: false, isTyping: 0,);
       _fetchAndCacheUserDetails();
       print("oppositeUserId in init==> ${oppositeUserId}");
@@ -270,8 +274,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         channelListProvider.addUserToChatList(selectedUserId: oppositeUserId);
       }
 
-      /// this is for read message ///
-      // channelListProvider.readUnreadMessages(oppositeUserId: oppositeUserId,isCalledForFav: widget.calledForFavorite ?? false,isCallForReadMessage: true);
       /// this is default call with page 1 for chat listing ///
       Provider.of<ChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
       chatProvider.getMessagesList(oppositeUserId: oppositeUserId,currentPage: pageNo,isFromJump: isfromJump,callForFav: widget.calledForFavorite ?? false,onlyReadInChat: false);
@@ -281,7 +283,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       if(isFromJump){
         Future.delayed(Duration(seconds: 3),()=> jumpToMessage(sortedGroups: chatProvider.messageGroups,messageGroupId: msgGroup,messageId: msgId));
       }
-      // chatProvider.getFileListingInChat(oppositeUserId: widget.oppositeUserId);
     },);
     _messageController.addListener(_onTextChanged);
   }
@@ -323,7 +324,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       isReplyMsg: false,
       isTyping: 0,
     );
-    socketProvider.connectSocket();
+    // Clean up all chat-related socket listeners
+    socketProvider.cleanupChatListeners();
     super.dispose();
   }
   void _clearInputAndDismissKeyboard() {
@@ -1187,14 +1189,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 height: 1.2,
                                 text:
                                 user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', fontWeight: FontWeight.bold),
-                            if (signInModel.data?.user!.id == user?.data!.user!.sId && commonProvider.customStatusUrl.isNotEmpty) ...{
-                              SizedBox(width: 8,),
-                              CachedNetworkImage(
-                                width: 20,
-                                height: 20,
-                                imageUrl: commonProvider.customStatusUrl,
-                              ),
-                            } else if (userDetails?.data?.user?.customStatusEmoji != "" && userDetails?.data?.user?.customStatusEmoji != null) ...{
+                            if (signInModel.data?.user!.id == user?.data!.user!.sId) ...{
+                              if (commonProvider.customStatusUrl.isNotEmpty) ...{
+                                SizedBox(width: 8,),
+                                CachedNetworkImage(
+                                  width: 20,
+                                  height: 20,
+                                  imageUrl: commonProvider.customStatusUrl,
+                                ),
+                              }
+                            } else if (userDetails?.data?.user?.customStatusEmoji != "" && userDetails?.data?.user?.customStatusEmoji != null && userDetails?.data?.user?.sId == user?.data!.user!.sId) ...{
                               Padding(
                                 padding: const EdgeInsets.only(left: 5.0),
                                 child: CachedNetworkImage(

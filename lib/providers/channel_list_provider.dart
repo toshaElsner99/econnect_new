@@ -716,8 +716,8 @@ void combineAllLists() {
     if (timestampB.isEmpty) return -1;
     
     // For debugging
-    print("Comparing timestamps - Item A: ${a['type']} - ${a['timestamp']}");
-    print("Comparing timestamps - Item B: ${b['type']} - ${b['timestamp']}");
+    // print("Comparing timestamps - Item A: ${a['type']} - ${a['timestamp']}");
+    // print("Comparing timestamps - Item B: ${b['type']} - ${b['timestamp']}");
     
     // Compare timestamps - most recent first
     return timestampB.compareTo(timestampA);

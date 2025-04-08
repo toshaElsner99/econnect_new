@@ -689,6 +689,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   }
   @override
   void dispose() {
+    // Clean up all chat-related socket listeners
+    socketProvider.cleanupChatListeners();
     for (var player in _audioPlayers.values) {
       player.dispose();
     }
