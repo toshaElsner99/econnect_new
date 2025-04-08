@@ -1727,204 +1727,48 @@ Widget commonHTMLText({required String message, String userId = "", bool isLog =
   }
   processedMessage = processedMessage.replaceAll("\n", "<br>");
 
-  return StatefulBuilder(
-    builder: (context, setState) {
-      // Create a unique key for this message to maintain state
-      final messageKey = ValueKey(message);
-      // final bool needsReadMore = processedMessage.length > 200;
-      final String plainText = htmlToPlainText(processedMessage);
-      final bool needsReadMore = plainText.length > 200;
-      return ValueListenableBuilder<bool>(
-        valueListenable: _expandedStates.putIfAbsent(messageKey, () => ValueNotifier<bool>(false)),
-        builder: (context, isExpanded, child) {
-          final String displayMessage = needsReadMore && !isExpanded
-              ? processedMessage.substring(0, 200) + "..."
-              : processedMessage;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              HtmlWidget(
-                displayMessage,
-                textStyle: TextStyle(
-                  height: 1.2,
-                  fontFamily: AppFonts.interFamily,
-                  color: color ?? (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
-                  fontSize: 16,
-                ),
-                customStylesBuilder: (element) {
-                  Map<String, String> styles = {
-                    'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
-                  };
-
-                  if (element.classes.contains('renderer_bold')) {
-                    styles['font-weight'] = 'bold';
-                  }
-                  if (element.classes.contains('renderer_italic')) {
-                    styles['font-style'] = 'italic';
-                  }
-                  if (element.classes.contains('renderer_strikethrough')) {
-                    styles['text-decoration'] = 'line-through';
-                  }
-                  if (element.classes.contains('renderer_link')) {
-                    styles['color'] = '#2196F3';
-                  }
-                  if (element.classes.contains('renderer_emoji')) {
-                    styles['display'] = 'inline-block';
-                    styles['vertical-align'] = 'middle';
-                  }
-                  if (element.classes.contains('username')) {
-                    String username = element.text;
-                    if (username.startsWith('@')) {
-                      username = username.substring(1);
-                    }
-
-                    final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
-                    if (commonProvider.getUserMentionModel == null) {
-                      commonProvider.getUserApi(id: signInModel.data!.user!.id!);
-                      return {};
-                    }
-
-                    bool isValidUser = commonProvider.isUserInAllUsers(username);
-                    if (isValidUser) {
-                      styles['background-color'] = '#007770';
-                      styles['color'] = '#FFFFFF';
-                      styles['border-radius'] = '10px';
-                      styles['padding'] = '4px 8px';
-                      styles['margin'] = '2px';
-                      styles['display'] = 'inline-block';
-                    }
-                  }
-                  return styles;
-                },
-                customWidgetBuilder: (element) {
-                  if (element.localName == 'a' || element.localName.toString().startsWith("https") || element.localName.toString().startsWith("http")) {
-                    final String? url = element.attributes['href'];
-                    if (url != null) {
-                      return GestureDetector(
-                        onTap: () => _openUrl(url),
-                        child: Text(
-                          url,
-                          style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
-                        ),
-                      );
-                    }
-                  }
-                  if (element.classes.contains('renderer_emoji')) {
-                    final imageUrl = element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
-                    if (imageUrl != null) {
-                      return CachedNetworkImage(
-                        imageUrl: imageUrl,
-                        width: 21,
-                        height: 21,
-                        fit: BoxFit.contain,
-                      );
-                    }
-                  }
-                  return null;
-                },
-                enableCaching: true,
-              ),
-              if (needsReadMore)
-                GestureDetector(
-                  onTap: () {
-                    final notifier = _expandedStates[messageKey];
-                    if (notifier != null) {
-                      notifier.value = !notifier.value;
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      isExpanded ? "Show Less" : "Read More",
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
-// Add this at the top of the file, outside any class or function
-final Map<ValueKey<String>, ValueNotifier<bool>> _expandedStates = {};
-
-
-Widget commonHTMLTextNew({
-  required String message,
-  String userId = "",
-  bool isLog = false,
-  String userName = "",
-}) {
-  final commonProvider = Provider.of<CommonProvider>(
-      navigatorKey.currentState!.context,
-      listen: false);
-  final currentUserId = signInModel.data?.user?.id ?? "";
-
-  // First process @mentions
-  String processedMessage = message.replaceAllMapped(
-    RegExp(r'@(\w+)'),
-        (match) {
-      return '<span class="username">@${match.group(1)}</span>';
-    },
-  );
-
-  // Replace "added to the channel by" with a dynamic value
-  if (processedMessage.contains("added to the channel by")) {
-    final isCurrentUser = userId == currentUserId;
-    String replacement = isCurrentUser
-        ? "added to the channel by you"
-        : 'added to the channel by <span class="username" id="$userId">@${userName.isNotEmpty ? userName : "someone"}</span>';
-
-    processedMessage = processedMessage.replaceAll(
-        "added to the channel by", replacement);
-  }
-
   return HtmlWidget(
     processedMessage,
     textStyle: TextStyle(
       height: 1.2,
       fontFamily: AppFonts.interFamily,
-      color: AppPreferenceConstants.themeModeBoolValueGet
-          ? Colors.white
-          : Colors.black,
+      color: color ?? (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black),
       fontSize: 16,
     ),
     customStylesBuilder: (element) {
       Map<String, String> styles = {
-        'color': AppPreferenceConstants.themeModeBoolValueGet
-            ? '#FFFFFF'
-            : '#000000',
+        'color': AppPreferenceConstants.themeModeBoolValueGet ? '#FFFFFF' : '#000000',
       };
 
+      if (element.classes.contains('renderer_bold')) {
+        styles['font-weight'] = 'bold';
+      }
+      if (element.classes.contains('renderer_italic')) {
+        styles['font-style'] = 'italic';
+      }
+      if (element.classes.contains('renderer_strikethrough')) {
+        styles['text-decoration'] = 'line-through';
+      }
+      if (element.classes.contains('renderer_link')) {
+        styles['color'] = '#2196F3';
+      }
+      if (element.classes.contains('renderer_emoji')) {
+        styles['display'] = 'inline-block';
+        styles['vertical-align'] = 'middle';
+      }
       if (element.classes.contains('username')) {
-        // Get username
         String username = element.text;
         if (username.startsWith('@')) {
           username = username.substring(1);
         }
 
-        // Get CommonProvider instance
-        final commonProvider = Provider.of<CommonProvider>(
-            navigatorKey.currentState!.context,
-            listen: false);
-
-        // Fetch users if not available
+        final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false);
         if (commonProvider.getUserMentionModel == null) {
           commonProvider.getUserApi(id: signInModel.data!.user!.id!);
-          return {}; // Return empty styles for now
+          return {};
         }
 
-        // Check if username exists in allUsers
         bool isValidUser = commonProvider.isUserInAllUsers(username);
-        username = element.text;
         if (isValidUser) {
           styles['background-color'] = '#007770';
           styles['color'] = '#FFFFFF';
@@ -1934,28 +1778,23 @@ Widget commonHTMLTextNew({
           styles['display'] = 'inline-block';
         }
       }
-
       return styles;
     },
     customWidgetBuilder: (element) {
-      if (element.localName == 'a' ||
-          element.localName.toString().startsWith("https") ||
-          element.localName.toString().startsWith("http")) {
+      if (element.localName == 'a' || element.localName.toString().startsWith("https") || element.localName.toString().startsWith("http")) {
         final String? url = element.attributes['href'];
         if (url != null) {
           return GestureDetector(
             onTap: () => _openUrl(url),
             child: Text(
               url,
-              style: TextStyle(
-                  color: Colors.blue, decoration: TextDecoration.underline),
+              style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
             ),
           );
         }
       }
       if (element.classes.contains('renderer_emoji')) {
-        final imageUrl =
-            element.attributes['style']?.split('url(\'')?.last?.split('\')').first;
+        final imageUrl = element.attributes['style']?.split('url(\'').last.split('\')').first;
         if (imageUrl != null) {
           return CachedNetworkImage(
             imageUrl: imageUrl,
