@@ -167,7 +167,7 @@ class ChatProvider extends  ChangeNotifier {
               parentId = data['parentId'] ?? "";
             oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
             notifyListeners();
-            print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor && $parentId ");
+            // print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor && $parentId ");
           } else {
             msgLength = 0;
             oppUserIdForTyping = "";

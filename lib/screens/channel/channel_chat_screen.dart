@@ -1443,7 +1443,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   ],
                 ),
                 Visibility(
-                visible : channelID == "67d2a08db7b8f099e41e4dc4" ? true : false,
+                // visible : channelID == "67d2a08db7b8f099e41e4dc4" ? true : false,
+                visible : channelID == AppPreferenceConstants.elsnerChannelGetId ? true : false,
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: ConfettiWidget(
@@ -1462,7 +1463,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   ),
                 ),
                 Visibility(
-                  visible : channelID == "67d2a08db7b8f099e41e4dc4" ? true : false,
+                  // visible : channelID == "67d2a08db7b8f099e41e4dc4" ? true : false,
+                  visible : channelID == AppPreferenceConstants.elsnerChannelGetId ? true : false,
                   child: Align(
                     alignment: Alignment.bottomCenter,
                     child: ConfettiWidget(
@@ -1493,9 +1495,28 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       final isCurrentUserAdmin = adminMembers.any((member) =>
       member.isAdmin == true &&
           member.sId == signInModel.data?.user?.id);
-      List<MessageGroup>? sortedGroups = channelChatProvider.messageGroups..sort((a, b) => b.id!.compareTo(a.id!));
-      // List<MessageGroup>? sortedGroups = channelChatProvider.channelChatModel?.data?.messages?..sort((a, b) => b.id!.compareTo(a.id!));
-      return channelChatProvider.messageGroups.isEmpty? Padding(
+
+      // Sort and merge message groups by date
+      Map<String, List<Message>> mergedMessagesByDate = {};
+      List<MessageGroup> sortedGroups = channelChatProvider.messageGroups..sort((a, b) => b.id!.compareTo(a.id!));
+
+      // Merge messages with the same date
+      for (var group in sortedGroups) {
+        String date = group.id!;
+        if (!mergedMessagesByDate.containsKey(date)) {
+          mergedMessagesByDate[date] = [];
+        }
+        if (group.messages != null) {
+          mergedMessagesByDate[date]!.addAll(group.messages!);
+        }
+      }
+
+      // Sort messages within each date group
+      mergedMessagesByDate.forEach((date, messages) {
+        messages.sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
+      });
+
+      return channelChatProvider.messageGroups.isEmpty ? Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1511,7 +1532,6 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 padding: const EdgeInsets.all(10.0),
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Action for adding members
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -1528,7 +1548,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     style: TextStyle(color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[900], // Button color
+                    backgroundColor: Colors.blue[900],
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
@@ -1543,10 +1563,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         shrinkWrap: true,
         reverse: true,
         controller: _scrollController,
-        // physics: NeverScrollableScrollPhysics(),
-        itemCount: isFromJump ? sortedGroups.length  : sortedGroups.length + 1,
+        itemCount: isFromJump ? mergedMessagesByDate.length : mergedMessagesByDate.length + 1,
         itemBuilder: (itemContext, index) {
-          if(index == sortedGroups.length){
+          if(index == mergedMessagesByDate.length){
             if(!isFromJump && channelChatProvider.totalPages > channelChatProvider.currentPage) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -1569,7 +1588,6 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         padding: const EdgeInsets.all(10.0),
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            // Action for adding members
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -1586,7 +1604,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             style: TextStyle(color: Colors.white),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue[900], // Button color
+                            backgroundColor: Colors.blue[900],
                             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(6),
@@ -1603,9 +1621,10 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
             }
           }
 
-          final group = sortedGroups[index];
-          List<Message> sortedMessages = (group.messages ?? [])..sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
+          String date = mergedMessagesByDate.keys.elementAt(index);
+          List<Message> messagesForDate = mergedMessagesByDate[date]!;
           String? previousSenderId;
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1622,7 +1641,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: commonText(
-                        text: formatDateTime(DateTime.parse(group.id!)),
+                        text: formatDateTime(DateTime.parse(date)),
                         fontSize: 12,
                         color: AppColor.whiteColor,
                       ),
@@ -1632,12 +1651,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 ),
               ),
               ListView.builder(
-                itemCount: sortedMessages.length,
+                itemCount: messagesForDate.length,
                 shrinkWrap: true,
-                controller: _scrollController1,
                 physics: NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  Message message = sortedMessages[index];
+                itemBuilder: (context, messageIndex) {
+                  Message message = messagesForDate[messageIndex];
                   bool showUserDetails = previousSenderId != message.senderId;
                   previousSenderId = message.senderId;
                   bool isHighlighted = message.id.toString() == highlightedMessageId;
@@ -1646,11 +1664,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     duration: Duration(milliseconds: 300),
                     color: isHighlighted ? Colors.yellow.withOpacity(0.3) : Colors.transparent,
                     child: chatBubble(
-                      index: index,
+                      index: messageIndex,
                       messageList: message,
                       showUserDetails: showUserDetails,
                       userId: message.senderId ?? "",
-                      messageId: sortedMessages[index].id.toString(),
+                      messageId: message.id.toString(),
                       message: message.content ?? "",
                       time: DateTime.parse(message.createdAt.toString()).toString(),
                     ),
@@ -1752,7 +1770,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
 
-      if (channelID == "67d2a08db7b8f099e41e4dc4" && messageList.isSeen == false) {
+      // if (channelID == "67d2a08db7b8f099e41e4dc4" && messageList.isSeen == false) {
+      if (channelID == AppPreferenceConstants.elsnerChannelGetId && messageList.isSeen == false) {
         final loggedInUserId = signInModel.data?.user?.id;
 
         // Ensure exactly one :waffle is present
@@ -1854,7 +1873,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       SizedBox(height: 5),
 
                       /// waffle ///
-                      if (channelID == "67d2a08db7b8f099e41e4dc4")...{
+                      // if (channelID == "67d2a08db7b8f099e41e4dc4")...{
+                      if (channelID == AppPreferenceConstants.elsnerChannelGetId)...{
                         Visibility(
                           visible: shouldShowWaffle( message, commonProvider),
                           child: Padding(

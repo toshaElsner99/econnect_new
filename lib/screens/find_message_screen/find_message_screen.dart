@@ -29,6 +29,13 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
   final FocusNode node = FocusNode();
 
   @override
+  void initState() {
+    final searchMessageProvider = Provider.of<SearchMessageProvider>(context,listen: false);
+    searchMessageProvider.messageGroups.clear();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),

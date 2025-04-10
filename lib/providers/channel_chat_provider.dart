@@ -497,8 +497,8 @@ class ChannelChatProvider extends ChangeNotifier{
     /// Karma Functionality ///
     bool shouldSendMessage = true;
 
-    // if (channelId == AppPreferenceConstants.elsnerChannelGetId && content is String) {
-    if (channelId == "67d2a08db7b8f099e41e4dc4" && content is String) {
+    // if (channelId == "67d2a08db7b8f099e41e4dc4" && content is String) {
+    if (channelId == AppPreferenceConstants.elsnerChannelGetId && content is String) {
       // New pattern: Look for both @username and :karma anywhere in the content
       RegExp mentionRegex = RegExp(r'@([A-Za-z0-9_]+)');
       RegExp karmaRegex = RegExp(r':waffle', caseSensitive: false);
@@ -740,20 +740,20 @@ class ChannelChatProvider extends ChangeNotifier{
        }
 
        // Check for waffle messages in new messages
-       if (channelId == "67d2a08db7b8f099e41e4dc4") {
-         final loggedInUserId = signInModel.data?.user?.id;
-         for (var messageGroup in messageGroups) {
-           for (var message in messageGroup.messages ?? []) {
-             if (message.isSeen == false && 
-                 message.content?.contains(":waffle") == true &&
-                 !(message.readBy?.contains(loggedInUserId) ?? false) &&
-                 (message.taggedUsers?.contains(loggedInUserId) ?? false)) {
-               // Notify that confetti should be played
-               notifyListeners();
-             }
-           }
-         }
-       }
+       // if (channelId == "67d2a08db7b8f099e41e4dc4") {
+       //   final loggedInUserId = signInModel.data?.user?.id;
+       //   for (var messageGroup in messageGroups) {
+       //     for (var message in messageGroup.messages ?? []) {
+       //       if (message.isSeen == false &&
+       //           message.content?.contains(":waffle") == true &&
+       //           !(message.readBy?.contains(loggedInUserId) ?? false) &&
+       //           (message.taggedUsers?.contains(loggedInUserId) ?? false)) {
+       //         // Notify that confetti should be played
+       //         notifyListeners();
+       //       }
+       //     }
+       //   }
+       // }
      }
      if(onlyReadInChat == true){
        await Provider.of<ChannelListProvider>(navigatorKey.currentState!.context, listen: false)

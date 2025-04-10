@@ -1020,22 +1020,41 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
   Widget dateHeaders() {
     return Consumer<ChatProvider>(builder: (context, value, child) {
+      // First, merge messages by date to prevent duplicates
+      Map<String, List<Messages>> mergedMessagesByDate = {};
       List<MessageGroups> sortedGroups = value.messageGroups..sort((a, b) => b.sId!.compareTo(a.sId!));
+
+      // Merge all messages with the same date
+      for (var group in sortedGroups) {
+        String date = group.sId!;
+        if (!mergedMessagesByDate.containsKey(date)) {
+          mergedMessagesByDate[date] = [];
+        }
+        if (group.messages != null) {
+          mergedMessagesByDate[date]!.addAll(group.messages!);
+        }
+      }
+
+      // Sort messages within each date group
+      mergedMessagesByDate.forEach((date, messages) {
+        messages.sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
+      });
+
       return value.messageGroups.isEmpty ? SizedBox.shrink() : ListView.builder(
         shrinkWrap: true,
         reverse: true,
         controller: scrollController,
-        // physics: NeverScrollableScrollPhysics(),
-        itemCount: isFromJump ? sortedGroups.length  : sortedGroups.length + 1,
+        itemCount: isFromJump ? mergedMessagesByDate.length : mergedMessagesByDate.length + 1,
         itemBuilder: (itemContext, index) {
-          if(index == sortedGroups.length){
+          if(index == mergedMessagesByDate.length){
             if(!isFromJump && value.totalPages > value.currentPagea) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: customLoading(),
               );
             }else if(value.totalPages == value.currentPagea){
-              return ChatProfileHeader(userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',
+              return ChatProfileHeader(
+                userName: userDetails?.data?.user?.fullName ?? userDetails?.data?.user?.username ??' Unknown',
                 userImageUrl: userDetails?.data?.user?.thumbnailAvatarUrl ?? '',
                 userId: userDetails?.data?.user?.sId ?? "",
                 userStatus: userDetails?.data?.user?.status ?? "offline",
@@ -1044,9 +1063,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               return SizedBox.shrink();
             }
           }
-          final group = sortedGroups[index];
-          List<Messages> sortedMessages = (group.messages ?? [])..sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
+
+          String date = mergedMessagesByDate.keys.elementAt(index);
+          List<Messages> messagesForDate = mergedMessagesByDate[date]!;
           String? previousSenderId;
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1063,7 +1084,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: commonText(
-                        text: formatDateTime(DateTime.parse(group.sId!)),
+                        text: formatDateTime(DateTime.parse(date)),
                         fontSize: 12,
                         color: AppColor.whiteColor,
                       ),
@@ -1073,22 +1094,22 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 ),
               ),
               ListView.builder(
-                itemCount: sortedMessages.length,
-                controller:scrollController1,
+                itemCount: messagesForDate.length,
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  Messages message = sortedMessages[index];
+                itemBuilder: (context, messageIndex) {
+                  Messages message = messagesForDate[messageIndex];
                   bool showUserDetails = previousSenderId != message.senderId;
                   previousSenderId = message.senderId;
                   bool isHighlighted = message.sId.toString() == highlightedMessageId;
+
                   return AnimatedContainer(
                     duration: Duration(milliseconds: 300),
                     color: isHighlighted ? Colors.yellow.withOpacity(0.3) : Colors.transparent,
                     child: chatBubble(
-                      index: index, // Pass index here
+                      index: messageIndex,
                       messageList: message,
-                      messageId: sortedMessages[index].sId.toString(),
+                      messageId: message.sId.toString(),
                       userId: message.senderId!,
                       message: message.content!,
                       time: DateTime.parse(message.createdAt!).toString(),
@@ -1174,7 +1195,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     ),
                   )
                 } else ...{
-                  SizedBox(width: 50)
+                  SizedBox(width: MediaQuery.of(context).size.width * 0.135)
                 },
                 if (showUserDetails) SizedBox(width: 10),
                 Expanded(
