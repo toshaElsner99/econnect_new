@@ -60,7 +60,7 @@ class AppLifecycleObserver with WidgetsBindingObserver {
         commonProvider.getUserByIDCall().then((_) {
           final currentStatus = commonProvider.getUserModel?.data?.user?.status?.toLowerCase() ?? "";
           // Only update to online if not busy or DND
-          if (currentStatus != AppString.busy.toLowerCase() && 
+          if (currentStatus != AppString.busy.toLowerCase() ||
               currentStatus != AppString.dnd.toLowerCase()) {
             commonProvider.updateStatusCall(status: AppString.online.toLowerCase());
           }
@@ -75,7 +75,7 @@ class AppLifecycleObserver with WidgetsBindingObserver {
         commonProvider.getUserByIDCall().then((_) {
           final currentStatus = commonProvider.getUserModel?.data?.user?.status?.toLowerCase() ?? "";
           // Only update to away if not busy or DND
-          if (currentStatus != AppString.busy.toLowerCase() && 
+          if (currentStatus != AppString.busy.toLowerCase() ||
               currentStatus != AppString.dnd.toLowerCase()) {
             commonProvider.updateStatusCall(status: AppString.away.toLowerCase());
           }
