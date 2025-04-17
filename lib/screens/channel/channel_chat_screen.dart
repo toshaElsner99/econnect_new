@@ -35,6 +35,7 @@ import '../../socket_io/socket_io.dart';
 import '../../utils/api_service/api_string_constants.dart';
 import '../../utils/app_color_constants.dart';
 import '../../utils/app_preference_constants.dart';
+import '../../widgets/achivement_dialog.dart';
 import '../../widgets/audio_widget.dart';
 import '../camera_preview/camera_preview.dart';
 import '../chat/forward_message/forward_message_screen.dart';
@@ -81,6 +82,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   String? highlightedMessageId;
   bool _showScrollToBottomButton = false;
   bool reloading = false;
+  bool _isDialogShowing = false; // Add this flag to track dialog state
 
   // Add this method to scroll to bottom
   void reloadPageOne() {
@@ -627,8 +629,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
 
   @override
   void initState() {
-      _confettiController1 = ConfettiController(duration: const Duration(seconds: 10));
-      _confettiController2 = ConfettiController(duration: const Duration(seconds: 10));
+      _confettiController1 = ConfettiController(duration: const Duration(seconds: 5));
+      _confettiController2 = ConfettiController(duration: const Duration(seconds: 5));
       // _confettiController1.play();
       // _confettiController2.play();
     super.initState();
@@ -1443,7 +1445,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   ],
                 ),
                 Visibility(
-                // visible : channelID == "67d2a08db7b8f099e41e4dc4" ? true : false,
+                // visible : channelID == "67fdfe38eb1f5907bf48e624" ? true : false,
                 visible : channelID == AppPreferenceConstants.elsnerChannelGetId ? true : false,
                   child: Align(
                     alignment: Alignment.topCenter,
@@ -1463,7 +1465,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   ),
                 ),
                 Visibility(
-                  // visible : channelID == "67d2a08db7b8f099e41e4dc4" ? true : false,
+                  // visible : channelID == "67fdfe38eb1f5907bf48e624" ? true : false,
                   visible : channelID == AppPreferenceConstants.elsnerChannelGetId ? true : false,
                   child: Align(
                     alignment: Alignment.bottomCenter,
@@ -1770,7 +1772,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
 
-      // if (channelID == "67d2a08db7b8f099e41e4dc4" && messageList.isSeen == false) {
+      // if (channelID == "67fdfe38eb1f5907bf48e624" && messageList.isSeen == false) {
       if (channelID == AppPreferenceConstants.elsnerChannelGetId && messageList.isSeen == false) {
         final loggedInUserId = signInModel.data?.user?.id;
 
@@ -1797,11 +1799,40 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
             !(messageList.readBy?.contains(loggedInUserId) ?? false) &&
             (messageList.taggedUsers?.length == 1 && messageList.taggedUsers?.first == loggedInUserId) && // Ensure only one tag, and it's the current user
             !_playedConfettiMessages.contains(messageList.id)) {
+          
+          // Play confetti immediately
           _confettiController1.play();
           _confettiController2.play();
+          
+          // Update message state first
           messageList.isSeen = true;
-          messageList.readBy?.add(loggedInUserId!);
+          messageList.readBy ??= [];
+          if (!messageList.readBy!.contains(loggedInUserId)) {
+            messageList.readBy!.add(loggedInUserId!);
+          }
           _playedConfettiMessages.add(messageList.id!);
+
+          // Show dialog after a microtask to ensure it's outside the build phase
+          if (!_isDialogShowing) {
+            _isDialogShowing = true;
+            Future.microtask(() {
+              if (mounted) {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => AchievementPopup(
+                    title: 'Congratulations! 🎉',
+                    description: 'You\'ve received a waffle!',
+                    achievementType: 'milestone',
+                    onClose: () {
+                      Navigator.pop(context);
+                      _isDialogShowing = false;
+                    },
+                  ),
+                );
+              }
+            });
+          }
         }
       }
 
@@ -1873,7 +1904,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       SizedBox(height: 5),
 
                       /// waffle ///
-                      // if (channelID == "67d2a08db7b8f099e41e4dc4")...{
+                      // if (channelID == "67fdfe38eb1f5907bf48e624")...{
                       if (channelID == AppPreferenceConstants.elsnerChannelGetId)...{
                         Visibility(
                           visible: shouldShowWaffle( message, commonProvider),

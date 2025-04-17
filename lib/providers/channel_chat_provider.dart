@@ -497,7 +497,7 @@ class ChannelChatProvider extends ChangeNotifier{
     /// Karma Functionality ///
     bool shouldSendMessage = true;
 
-    // if (channelId == "67d2a08db7b8f099e41e4dc4" && content is String) {
+    // if (channelId == "67fdfe38eb1f5907bf48e624" && content is String) {
     if (channelId == AppPreferenceConstants.elsnerChannelGetId && content is String) {
       // New pattern: Look for both @username and :karma anywhere in the content
       RegExp mentionRegex = RegExp(r'@([A-Za-z0-9_]+)');
