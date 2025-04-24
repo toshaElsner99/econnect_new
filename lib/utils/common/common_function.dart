@@ -1,4 +1,3 @@
-
 import 'dart:async';
 import 'dart:io';
 
@@ -12,12 +11,17 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:http/http.dart' as http;
 import 'package:insta_image_viewer/insta_image_viewer.dart';
 import 'package:intl/intl.dart';
+import 'package:pinch_zoom/pinch_zoom.dart';
 import 'package:provider/provider.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
+import '../../screens/image_viewer_screen.dart';
 
 import '../../main.dart';
 import '../../providers/file_service_provider.dart';
 import '../app_preference_constants.dart';
 import '../theme/theme_cubit.dart';
+
 bool isKeyboardOpen(BuildContext context) {
   return MediaQuery.of(context).viewInsets.bottom > 0;
 }
@@ -190,9 +194,15 @@ Widget getFileIconInChat({required String fileType, String? pngUrl}) {
   if (iconPath != null && !iconPath.contains(ApiString.profileBaseUrl)) {
     return Image.asset(iconPath, width: 40, height: 40, fit: BoxFit.contain);
   } else if (pngUrl != null && pngUrl.isNotEmpty) {
-    return InstaImageViewer(
-      imageUrl: pngUrl,
-      backgroundIsTransparent: true,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          navigatorKey.currentState!.context,
+          MaterialPageRoute(
+            builder: (context) => ImageViewerScreen(imageUrl: pngUrl),
+          ),
+        );
+      },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 2),
         color: AppColor.lightGreyColor.withOpacity(0.6),
