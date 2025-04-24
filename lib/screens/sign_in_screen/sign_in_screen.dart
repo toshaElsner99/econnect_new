@@ -30,6 +30,9 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
     super.initState();
     clearBadge();
     _setupAnimations();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<SignInProvider>(context, listen: false).getDomainsCall();
+    });
   }
 
   clearBadge() async{
@@ -173,9 +176,9 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
             ),
             const SizedBox(height: 24),
             _buildSignInButton(signInProvider),
-            // const SizedBox(height: 16),
-            // _buildHRMSButton(),
-            const SizedBox(height: 24),
+            // const SizedBox(height: 10),
+            // _buildGoogleSignInButton(signInProvider,context),
+            // const SizedBox(height: 15),
             _buildFooter(),
           ],
         ),
@@ -224,7 +227,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   }
 
   Widget _buildSignInButton(SignInProvider signInProvider) {
-    return commonElevatedButton(onPressed: () => signInProvider.signINCALL(), buttonText: AppString.signIN);
+    return commonElevatedButton(onPressed: () =>  signInProvider.signINCALL(), buttonText: AppString.signIN);
   }
 
 
@@ -246,4 +249,29 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
       ],
     );
   }
+}
+
+
+
+Widget _buildGoogleSignInButton(SignInProvider signInProvider,BuildContext context) {
+  return ElevatedButton.icon(
+    onPressed: () => signInProvider.signInWithGoogle(context),
+    icon: const Icon(
+      Icons.g_mobiledata,
+      size: 30,
+      color: Colors.white,
+    ),
+    iconAlignment: IconAlignment.start,
+    label: commonText(text : AppString.signINWithGoogle,color: Colors.white),
+    style: ButtonStyle(
+      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+        ),
+      ),
+      elevation: WidgetStateProperty.all(0),
+      fixedSize: WidgetStateProperty.all(const Size(double.maxFinite, 40)),
+      backgroundColor: WidgetStateProperty.all(AppColor.commonAppColor),
+    ),
+  );
 }

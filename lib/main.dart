@@ -8,6 +8,7 @@ import 'package:e_connect/providers/sign_in_provider.dart';
 import 'package:e_connect/providers/splash_screen_provider.dart';
 import 'package:e_connect/providers/thread_provider.dart';
 import 'package:e_connect/screens/bottom_navigation_screen/bottom_navigation_screen_cubit.dart';
+import 'package:e_connect/screens/channel/channel_chat_screen.dart';
 import 'package:e_connect/screens/splash_screen/splash_screen.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/socket_io/socket_io.dart';

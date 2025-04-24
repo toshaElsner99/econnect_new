@@ -12,6 +12,7 @@ class ApiString{
 
   /// End Point , Don't Change Belows End Point until didn't confirm through backend ///
   static const login = "user/login";
+  static const emailDomainForGoogleLogin = "https://dev-hrms.elsner.com/api/emailDomain";
   static const updateStatus = "user/update";
   static const getUserById = "user/getUserById";
   static const favoriteListGet = "favouriteLists/get";

@@ -12,6 +12,7 @@ class AppString {
   static const String loginId  = "Login Id";
   static const String password = "Password";
   static const String signIN = "Sign In";
+  static const String signINWithGoogle = "Sign In With Google";
   static const String signINWithHRMS = "Sign In With HRMS";
   static const String eConnect = "Econnect";
   static const String setACustomStatus = "Set a custom Status";

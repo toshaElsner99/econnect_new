@@ -24,19 +24,35 @@ class GetUserMentionModel {
     //   });
     // }
   }
-  Future<void> saveToPrefs() async {
+  // Future<void> saveToPrefs() async {
+  //   if (statusCode == 200) {
+  //     SharedPreferences prefs = await SharedPreferences.getInstance();
+  //     String jsonString = jsonEncode(toJson());
+  //     await prefs.setString('getUserMentionModel', jsonString);
+  //   }
+  // }
+  Future<void> saveToPrefs(String id) async {
     if (statusCode == 200) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String jsonString = jsonEncode(toJson());
-      await prefs.setString('getUserMentionModel', jsonString);
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = jsonEncode(toJson());
+      await prefs.setString('getUserMentionModel_$id', jsonString);
     }
   }
 
-  static Future<GetUserMentionModel?> loadFromPrefs() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? jsonString = prefs.getString('getUserMentionModel');
+  // static Future<GetUserMentionModel?> loadFromPrefs() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   String? jsonString = prefs.getString('getUserMentionModel');
+  //   if (jsonString != null) {
+  //     return GetUserMentionModel.fromJson(jsonDecode(jsonString));
+  //   }
+  //   return null;
+  // }
+  static Future<GetUserMentionModel?> loadFromPrefs(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonString = prefs.getString('getUserMentionModel_$id');
     if (jsonString != null) {
-      return GetUserMentionModel.fromJson(jsonDecode(jsonString));
+      final jsonMap = jsonDecode(jsonString);
+      return GetUserMentionModel.fromJson(jsonMap);
     }
     return null;
   }

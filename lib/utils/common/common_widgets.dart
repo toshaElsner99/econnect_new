@@ -2380,7 +2380,7 @@ Widget commonElevatedButton({
         ),
       ),
       elevation: WidgetStateProperty.all(0),
-      fixedSize: WidgetStateProperty.all(const Size(double.maxFinite, 46)),
+      fixedSize: WidgetStateProperty.all(const Size(double.maxFinite, 40)),
       backgroundColor: WidgetStateProperty.all(backgroundColor ?? AppColor.commonAppColor),
     ),
     child: Text(

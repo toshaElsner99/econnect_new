@@ -155,9 +155,9 @@ class CommonProvider extends ChangeNotifier {
     final response = await ApiService.instance.request(endPoint: ApiString.getUser, method: Method.POST,reqBody: requestBody);
     if (statusCode200Check(response)) {
       getUserMentionModel = GetUserMentionModel.fromJson(response);
-      getUserMentionModel?.saveToPrefs();
-      await GetUserMentionModel.loadFromPrefs();
-      getUserMentionModel = (await GetUserMentionModel.loadFromPrefs())!;
+      getUserMentionModel?.saveToPrefs(id);
+      await GetUserMentionModel.loadFromPrefs(id);
+      getUserMentionModel = (await GetUserMentionModel.loadFromPrefs(id))!;
     }
   }
 
