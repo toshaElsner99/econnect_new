@@ -713,9 +713,8 @@ class ChannelChatProvider extends ChangeNotifier{
        messageGroups.clear();
        totalPages = 0;
        currentPage =isFromJump ?? false ? pageNo :  1;
-
-       isChannelChatLoading = true;
      }
+     isChannelChatLoading = true;
      final requestBody = {
        "channelId": channelId,
        "pageNo": pageNo.toString()
@@ -738,7 +737,8 @@ class ChannelChatProvider extends ChangeNotifier{
        }else{
          messageGroups.addAll((response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList());
        }
-
+       isChannelChatLoading = false;
+       notifyListeners();
        // Check for waffle messages in new messages
        // if (channelId == "67d2a08db7b8f099e41e4dc4") {
        //   final loggedInUserId = signInModel.data?.user?.id;
