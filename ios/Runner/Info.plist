@@ -45,6 +45,19 @@
     <string>This app requires microphone access for audio chat and video recording.</string>
 	<key>NSUserNotificationAlert</key>
 	<string>YES</string>
+	<key>GIDClientID</key>
+    <string>846703694175-81vl8ltd6aqh4kou1kqhc8t9artgti1f.apps.googleusercontent.com</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>com.googleusercontent.apps.846703694175-ptv25v02pjmcg5vi3c7kufknbha4d5ec</string>
+            </array>
+        </dict>
+    </array>
 	<key>NSUserNotificationBadge</key>
 	<string>YES</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
