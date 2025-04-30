@@ -64,9 +64,9 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        leading: IconButton(onPressed: () => pop(), icon: Icon(Icons.close,color: Colors.white,)),
+        leading: IconButton(onPressed: () => Cf.instance.pop(), icon: Icon(Icons.close,color: Colors.white,)),
         titleSpacing: 0,
-        title: commonText(text: "Forward Message", color: Colors.white)
+        title: Cw.instance.commonText(text: "Forward Message", color: Colors.white)
       ),
       body: Consumer2<ChannelListProvider,ChatProvider>(builder: (context, channelListProvider,chatProvider, child) {
         return SingleChildScrollView(
@@ -86,7 +86,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                   children: [
                     Icon(Icons.info, color: Colors.white,),
                     SizedBox(width: 10,),
-                    Flexible(child: commonText(text: "This message is from a private conversation", fontSize: 18,fontWeight: FontWeight.w500,height: 1.2,color: Colors.white)),
+                    Flexible(child: Cw.instance.commonText(text: "This message is from a private conversation", fontSize: 18,fontWeight: FontWeight.w500,height: 1.2,color: Colors.white)),
                   ],
                 ),
               ),
@@ -96,7 +96,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                   children: itemInfo.map((item) => Padding(
                     padding: const EdgeInsets.only(right: 2.0),
                     child: Chip(
-                      label: commonText(text: item['name'] ?? "unknow",fontSize: 12),
+                      label: Cw.instance.commonText(text: item['name'] ?? "unknow",fontSize: 12),
                       onDeleted: () {
                         setState(() {
                           itemInfo.remove(item);
@@ -108,7 +108,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 10.0, right: 20,left: 20),
-                child: Container(child: commonTextFormField(
+                child: Container(child: Cw.instance.commonTextFormField(
                     focusNode: searchPeopleNode,
                     controller: channelListProvider.searchController, hintText: "Search People",suffixIcon: channelListProvider.combinedList.isEmpty ? null : IconButton(onPressed: () => channelListProvider.clearList(), icon: Icon(Icons.close)))),
               ),
@@ -180,7 +180,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                                 child: Row(
                                   children: [
                                     if (list['type'] == 'user') ...{
-                                      profileIconWithStatus(
+                                      Cw.instance.profileIconWithStatus(
                                         userName: displayName,
                                         userID: list['userId'],
                                         status: "",
@@ -188,7 +188,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                                         otherUserProfile: list['avatarUrl'],
                                       ),
                                       SizedBox(width: 10),
-                                      Expanded(child: commonText(text: displayName))
+                                      Expanded(child: Cw.instance.commonText(text: displayName))
                                     } else ...{
                                       Container(
                                         alignment: Alignment.center,
@@ -197,13 +197,13 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                                           color: Colors.green,
                                           shape: BoxShape.circle,
                                         ),
-                                        child: commonText(
+                                        child: Cw.instance.commonText(
                                           text: displayName.isNotEmpty ? displayName[0].toString().toUpperCase() : "#",
                                           color: Colors.white,
                                         ),
                                       ),
                                       SizedBox(width: 10),
-                                      Expanded(child: commonText(text: displayName, maxLines: 1))
+                                      Expanded(child: Cw.instance.commonText(text: displayName, maxLines: 1))
                                     },
                                   ],
                                 ),
@@ -221,14 +221,14 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 20),
-                child: commonTextFormField(
+                child: Cw.instance.commonTextFormField(
                     focusNode: addCommentNode,
                     controller: contentController,
                     hintText: "Add a comment (optional)"),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: commonText(
+                child: Cw.instance.commonText(
                   text: "Message preview",
                 ),
               ),
@@ -245,7 +245,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                   children: [
                     Row(
                       children: [
-                        profileIconWithStatus(
+                        Cw.instance.profileIconWithStatus(
                           userName: widget.userName,
                             userID: widget.userID,
                             status: "",
@@ -257,16 +257,16 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            commonText(text: widget.userName),
+                            Cw.instance.commonText(text: widget.userName),
                             SizedBox(height: 4),
-                            commonText(text: widget.time,color: AppColor.borderColor,fontWeight: FontWeight.w400,fontSize: 12),
+                            Cw.instance.commonText(text: widget.time,color: AppColor.borderColor,fontWeight: FontWeight.w400,fontSize: 12),
                           ],
                         ),
                       ],
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 5),
-                      child: commonHTMLText(message: widget.msgToForward),
+                      child: Cw.instance.commonHTMLText(message: widget.msgToForward),
                     ),
                   ],
                 ),
@@ -281,9 +281,9 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: AppColor.borderColor)
                         ),
-                        child: commonElevatedButton(onPressed: () => pop(), buttonText: "Cancel",backgroundColor: Colors.transparent,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black))),
-                    Flexible(child: commonElevatedButton(onPressed: () {
-                      pop();
+                        child: Cw.instance.commonElevatedButton(onPressed: () => Cf.instance.pop(), buttonText: "Cancel",backgroundColor: Colors.transparent,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black))),
+                    Flexible(child: Cw.instance.commonElevatedButton(onPressed: () {
+                      Cf.instance.pop();
                       for (var item in itemInfo) {
                         if (item['type'] == 'user') {
                           chatProvider.forwardMessage(forwardBody: {

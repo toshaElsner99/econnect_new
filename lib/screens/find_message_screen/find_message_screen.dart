@@ -1,20 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:e_connect/model/searchMessages.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
-import 'package:e_connect/utils/app_color_constants.dart';
-import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../main.dart';
-import '../../providers/common_provider.dart';
 import '../../providers/search_message_provider.dart';
-import '../../utils/app_image_assets.dart';
-import '../../utils/app_preference_constants.dart';
 
 class FindMessageScreen extends StatefulWidget {
   const FindMessageScreen({super.key});
@@ -52,7 +45,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
               context,
             ),
           ),
-          title: commonText(
+          title: Cw.instance.commonText(
             text: 'Find Messages',
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -64,7 +57,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
             // Search Field
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: commonTextFormField(
+              child: Cw.instance.commonTextFormField(
                 controller: _searchController,
                 hintText: 'Search Messages',
                 prefixIcon: const Icon(CupertinoIcons.search),
@@ -82,14 +75,14 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                   print(value.messageGroups.length);
                   if (value.messageGroups.length == 0) {
                     return Center(
-                      child: commonText(text: "No data found"),
+                      child: Cw.instance.commonText(text: "No data found"),
                     );
                   }
                   return ListView.builder(
                     itemCount: value.messageGroups.length,
                     itemBuilder: (context, index) {
                       final messageData = value.messageGroups[index];
-                      final dateFormatted = formatDateTime(
+                      final dateFormatted = Cf.instance.formatDateTime(
                           DateTime.parse(messageData.date.toString()));
 
                       return Padding(
@@ -106,7 +99,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8.0),
-                                    child: commonText(
+                                    child: Cw.instance.commonText(
                                         text: dateFormatted,
                                         fontSize: 13,
                                         color: Colors.grey),
@@ -171,7 +164,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                         SizedBox(
                                           height: 8,
                                         ),
-                                        commonText(
+                                        Cw.instance.commonText(
                                             text: channel != ""
                                                 ? channel
                                                 : "Direct Message (With ${message.oppositeUserInfo?.username})",
@@ -246,7 +239,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                         shape: BoxShape.circle,
                                                       ),
                                                     ),
-                                                    getCommonStatusIcons(
+                                                    Cw.instance.getCommonStatusIcons(
                                                         status: message
                                                             .senderInfo!
                                                             .status,
@@ -270,11 +263,11 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                 crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                                 children: [
-                                                  commonText(
+                                                  Cw.instance.commonText(
                                                       text: sender!,
                                                       fontSize: 18),
                                                   SizedBox(height: 10),
-                                                  commonHTMLText(
+                                                  Cw.instance.commonHTMLText(
                                                       message: content),
                                                 ],
                                               ),

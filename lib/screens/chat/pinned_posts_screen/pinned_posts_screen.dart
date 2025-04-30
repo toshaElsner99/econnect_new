@@ -69,10 +69,10 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            commonText(text: "Pinned Posts", fontSize: 16),
+            Cw.instance.commonText(text: "Pinned Posts", fontSize: 16),
             Padding(
               padding: const EdgeInsets.only(left: 5),
-              child: commonText(
+              child: Cw.instance.commonText(
                 text: " | ${widget.userName}",
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -106,7 +106,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                               borderRadius: BorderRadius.circular(30),
                               border: Border.all(color: Colors.grey.shade600)
                           ),
-                          child: commonText(text : date, fontWeight: FontWeight.w600, fontSize: 14,),
+                          child: Cw.instance.commonText(text : date, fontWeight: FontWeight.w600, fontSize: 14,),
                         ),
                         Expanded(child: Divider(color: Colors.grey.shade600,)),
                       ],
@@ -126,7 +126,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                             children: [
                               Padding(
                                 padding: EdgeInsets.only(right: 10),
-                                child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data?.user?.thumbnailAvatarUrl ?? '',radius: 15,needToShowIcon: false,userName: user?.data?.user?.username ?? ""),
+                                child: Cw.instance.profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data?.user?.thumbnailAvatarUrl ?? '',radius: 15,needToShowIcon: false,userName: user?.data?.user?.username ?? ""),
                               ),
                               Flexible(
                                 child: Column(
@@ -139,15 +139,15 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
-                                          commonText(
+                                          Cw.instance.commonText(
                                               height: 1.2,
                                               text:
                                               user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', fontWeight: FontWeight.bold),
                                           Padding(
                                             padding: const EdgeInsets.only(left: 5.0),
-                                            child: commonText(
+                                            child: Cw.instance.commonText(
                                                 height: 1.2,
-                                                text: formatTime(messages.createdAt.toString()), color: Colors.grey, fontSize: 12
+                                                text: Cf.instance.formatTime(messages.createdAt.toString()), color: Colors.grey, fontSize: 12
                                             ),
                                           ),
                                           Spacer(),
@@ -167,7 +167,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                                     children: [
                                                       Image.asset(AppImage.pinTiltIcon,height: 20,width: 20,color: Colors.white,),
                                                       SizedBox(width: 10,),
-                                                      commonText(text: 'Unpin from Channel',color: Colors.white),
+                                                      Cw.instance.commonText(text: 'Unpin from Channel',color: Colors.white),
                                                     ],
                                                   ),
                                                 ),
@@ -178,7 +178,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                         ],
                                       ),
                                     ),
-                                    commonHTMLText(message: messages.content!),
+                                    Cw.instance.commonHTMLText(message: messages.content!),
                                     Visibility(
                                         visible: messages.isForwarded ?? false,
                                         child: Container(
@@ -192,25 +192,25 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                              Cw.instance.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
                                               Padding(
                                                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                                                 child: Row(children: [
-                                                  profileIconWithStatus(userID: messages.senderOfForwardSecondUser?.id ?? "", status: messages.senderOfForwardSecondUser?.status ?? "offline",needToShowIcon: false,otherUserProfile: messages.senderOfForwardSecondUser?.thumbnailAvatarUrl,userName: messages.senderOfForwardSecondUser?.username ?? ""),
+                                                  Cw.instance.profileIconWithStatus(userID: messages.senderOfForwardSecondUser?.id ?? "", status: messages.senderOfForwardSecondUser?.status ?? "offline",needToShowIcon: false,otherUserProfile: messages.senderOfForwardSecondUser?.thumbnailAvatarUrl,userName: messages.senderOfForwardSecondUser?.username ?? ""),
                                                   Padding(
                                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                                     child: Column(
                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                       children: [
-                                                        commonText(text: "${messages.senderOfForwardSecondUser?.username}"),
+                                                        Cw.instance.commonText(text: "${messages.senderOfForwardSecondUser?.username}"),
                                                         SizedBox(height: 3),
-                                                        commonText(text: formatDateString("${messages.senderOfForwardSecondUser?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                                        Cw.instance.commonText(text: Cf.instance.formatDateString("${messages.senderOfForwardSecondUser?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                                       ],
                                                     ),
                                                   ),
                                                 ],),
                                               ),
-                                              commonHTMLText(message: "${messages.forwardMSGInfoSecondUser?.content}"),
+                                              Cw.instance.commonHTMLText(message: "${messages.forwardMSGInfoSecondUser?.content}"),
                                               Visibility(
                                                 visible: messages.forwardMSGInfoSecondUser?.files?.length != 0 ? true : false,
                                                 child: ListView.builder(
@@ -219,9 +219,9 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                                   physics: NeverScrollableScrollPhysics(),
                                                   itemBuilder: (context, index) {
                                                     final filesUrl = messages.forwardMSGInfoSecondUser?.files?[index] ?? "";
-                                                    String originalFileName = getFileName(messages.forwardMSGInfoSecondUser!.files?[index] ?? "");
-                                                    String formattedFileName = formatFileName(originalFileName);
-                                                    String fileType = getFileExtension(originalFileName);
+                                                    String originalFileName = Cf.instance.getFileName(messages.forwardMSGInfoSecondUser!.files?[index] ?? "");
+                                                    String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                                                    String fileType = Cf.instance.getFileExtension(originalFileName);
                                                     return Container(
                                                       margin: EdgeInsets.only(top: 5,right: 10),
                                                       padding: EdgeInsets.symmetric(horizontal: 20,vertical: 15),
@@ -231,12 +231,12 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                                       ),
                                                       child: Row(
                                                         children: [
-                                                          getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                                          Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                                           SizedBox(width: 20,),
                                                           Flexible(
                                                               flex: 10,
                                                               fit: FlexFit.loose,
-                                                              child: commonText(text: formattedFileName,maxLines: 1)),
+                                                              child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                                           Spacer(),
                                                           GestureDetector(
                                                               onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -260,9 +260,9 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                         physics: NeverScrollableScrollPhysics(),
                                         itemBuilder: (context, index) {
                                           final filesUrl = messages.files![index];
-                                          String originalFileName = getFileName(messages.files![index]);
-                                          String formattedFileName = formatFileName(originalFileName);
-                                          String fileType = getFileExtension(originalFileName);
+                                          String originalFileName = Cf.instance.getFileName(messages.files![index]);
+                                          String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                                          String fileType = Cf.instance.getFileExtension(originalFileName);
                                           // IconData fileIcon = getFileIcon(fileType);
                                           return Container(
                                             margin: EdgeInsets.only(top: 4,right: 10),
@@ -273,12 +273,12 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                             ),
                                             child: Row(
                                               children: [
-                                                getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                                Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                                 SizedBox(width: 20,),
                                                 Flexible(
                                                     flex: 10,
                                                     fit: FlexFit.loose,
-                                                    child: commonText(text: formattedFileName,maxLines: 1)),
+                                                    child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                                 Spacer(),
                                                 GestureDetector(
                                                     onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -291,7 +291,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                     Visibility(
                                       visible:messages.replyCount != 0,
                                       child: GestureDetector(
-                                        onTap: () =>  pushReplacement(screen: ReplyMessageScreen(userName: user?.data?.user?.fullName ?? user?.data?.user?.username ?? 'Unknown', messageId: messages.id ?? "", receiverId: widget.oppositeUserId,),),
+                                        onTap: () =>  Cf.instance.pushReplacement(screen: ReplyMessageScreen(userName: user?.data?.user?.fullName ?? user?.data?.user?.username ?? 'Unknown', messageId: messages.id ?? "", receiverId: widget.oppositeUserId,),),
                                         child: Container(
                                           // color: Colors.red,
                                           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -299,60 +299,8 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                             children: [
                                               Padding(
                                                 padding: EdgeInsets.only(right: 10),
-                                                child: profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data?.user?.thumbnailAvatarUrl ?? '',radius: 10,needToShowIcon: false,userName: user?.data?.user?.username),
+                                                child: Cw.instance.profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data?.user?.thumbnailAvatarUrl ?? '',radius: 10,needToShowIcon: false,userName: user?.data?.user?.username),
                                               ),
-                                              // 🖼️ Overlapping profile images
-                                              // if (messageList.repliesSenderInfo != null && messageList.repliesSenderInfo!.isNotEmpty)
-                                              //   Container(
-                                              //     margin: EdgeInsets.only(right :messageList.repliesSenderInfo!.length > 1 ? 22 : 7),
-                                              //     // color: Colors.amber,
-                                              //     child: Row(
-                                              //       children: [
-                                              //         Stack(
-                                              //           clipBehavior: Clip.none,
-                                              //           children: [
-                                              //             profileIconWithStatus(
-                                              //               userID: messageList.repliesSenderInfo![0].id,
-                                              //               status: "",
-                                              //               needToShowIcon: false,
-                                              //               radius: 12,
-                                              //               otherUserProfile: messageList.repliesSenderInfo![0].avatarUrl,
-                                              //             ),
-                                              //             if (messageList.repliesSenderInfo!.length > 1)
-                                              //               Positioned(
-                                              //                 left: 16,
-                                              //                 child: profileIconWithStatus(
-                                              //                   userID: messageList.repliesSenderInfo![1].id,
-                                              //                   status: "",
-                                              //                   needToShowIcon: false,
-                                              //                   radius: 12,
-                                              //                   otherUserProfile: messageList.repliesSenderInfo![1].avatarUrl,
-                                              //                 ),
-                                              //               ),
-                                              //           ],
-                                              //         ),
-                                              //       ],
-                                              //     ),
-                                              //   ),
-
-
-                                              // 🔴 Red dot circle
-                                              // Visibility(
-                                              //   replacement: SizedBox.shrink(),
-                                              //   visible: messageList.replies != null && messageList.replies!.isNotEmpty &&
-                                              //       messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false),
-                                              //   child: Container(
-                                              //     margin:EdgeInsets.only(right: 5),
-                                              //     width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
-                                              //     height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
-                                              //     decoration: const BoxDecoration(
-                                              //       color: Colors.red,
-                                              //       shape: BoxShape.circle,
-                                              //     ),
-                                              //   ),
-                                              // ),
-
-                                              // 🔄 Reply icon and text
                                               Padding(
                                                 padding: EdgeInsets.only(left: 0.0,right: 4.0),
                                                 child: Transform.flip(
@@ -366,7 +314,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                                 ),
                                               ),
 
-                                              commonText(
+                                              Cw.instance.commonText(
                                                 text: "${messages.replyCount} ${messages.replyCount! > 1 ? 'replies' : 'reply'}",
                                                 fontSize: 12,
                                                 color: AppColor.borderColor,

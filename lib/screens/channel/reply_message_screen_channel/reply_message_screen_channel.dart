@@ -249,7 +249,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
           resizeToAvoidBottomInset: true,
           appBar: AppBar(
             leading: IconButton(onPressed: () {
-              pop(popValue: true);
+              Cf.instance.pop(popValue: true);
               channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage,onlyReadInChat: false);
             } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
             bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
@@ -257,10 +257,10 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                commonText(text: "Thread", fontSize: 16,),
+                Cw.instance.commonText(text: "Thread", fontSize: 16,),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 1.5),
-                  child: commonText(text: widget.channelName, fontSize: 12,fontWeight: FontWeight.w400),
+                  child: Cw.instance.commonText(text: widget.channelName, fontSize: 12,fontWeight: FontWeight.w400),
                 ),
               ],
             ),
@@ -309,7 +309,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                   child: Column(
                     children: [
                       if (typingMessage.isNotEmpty)
-                        commonText(
+                        Cw.instance.commonText(
                           text: typingMessage,
                           fontSize: 14,
                           color: Colors.grey.shade600,
@@ -352,8 +352,8 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                         color: AppColor.blueColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: commonText(
-                        text: formatDateTime(DateTime.parse(grpId!)),
+                      child: Cw.instance.commonText(
+                        text: Cf.instance.formatDateTime(DateTime.parse(grpId!)),
                         fontSize: 12,
                         color: AppColor.whiteColor,
                       ),
@@ -411,7 +411,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                     children: [
                       Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,),
                       SizedBox(width: 5,),
-                      commonText(text: "Pinned",color: AppColor.blueColor)
+                      Cw.instance.commonText(text: "Pinned",color: AppColor.blueColor)
                     ],
                   ),
                 )),
@@ -422,7 +422,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                 /// Profile  Section ///
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: profileIconWithStatus(userID: "${messageList.senderId?.sId}", status: "${messageList.senderId?.status}",otherUserProfile: messageList.senderId?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderId?.username ?? ""),
+                  child: Cw.instance.profileIconWithStatus(userID: "${messageList.senderId?.sId}", status: "${messageList.senderId?.status}",otherUserProfile: messageList.senderId?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderId?.username ?? ""),
                 ),
 
                 Expanded(
@@ -432,14 +432,14 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          commonText(
+                          Cw.instance.commonText(
                               height: 1.2,
                               text:
                               messageList.senderId?.username ?? messageList.senderId!.fullName ?? 'Unknown', fontWeight: FontWeight.bold),
                           SizedBox(width: 5),
-                          commonText(
+                          Cw.instance.commonText(
                               height: 1.2,
-                              text: formatTime(time), color: Colors.grey, fontSize: 12
+                              text: Cf.instance.formatTime(time), color: Colors.grey, fontSize: 12
                           ),
                         ],
                       ),
@@ -454,7 +454,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: commonHTMLText(message: message),
+                                    child: Cw.instance.commonHTMLText(message: message),
                                   ),
 
                                   if (isEdited)
@@ -477,7 +477,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                               color: AppColor.borderColor,
                                             ),
                                             const SizedBox(width: 2),
-                                            commonText(
+                                            Cw.instance.commonText(
                                               text: "Edited",
                                               fontSize: 10,
                                               color: AppColor.borderColor,
@@ -507,25 +507,25 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                Cw.instance.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl,userName: messageList.forwardFrom?.senderId?.username ?? messageList.forwardFrom?.senderId?.fullName ?? ""),
+                                    Cw.instance.profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl,userName: messageList.forwardFrom?.senderId?.username ?? messageList.forwardFrom?.senderId?.fullName ?? ""),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          commonText(text: messageList.forwardFrom?.senderId?.username ?? messageList.forwardFrom?.senderId?.fullName ?? ""),
+                                          Cw.instance.commonText(text: messageList.forwardFrom?.senderId?.username ?? messageList.forwardFrom?.senderId?.fullName ?? ""),
                                           SizedBox(height: 3),
-                                          commonText(text: formatDateString("${messageList.forwardFrom?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          Cw.instance.commonText(text: Cf.instance.formatDateString("${messageList.forwardFrom?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),
                                   ],),
                                 ),
-                                commonHTMLText(message: "${messageList.forwardFrom?.content}"),
+                                Cw.instance.commonHTMLText(message: "${messageList.forwardFrom?.content}"),
                                 Visibility(
                                   visible: messageList.forwardFrom?.files?.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -534,9 +534,9 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                     physics: NeverScrollableScrollPhysics(),
                                     itemBuilder: (context, index) {
                                       final filesUrl = messageList.forwardFrom?.files?[index];
-                                      String originalFileName = getFileName(messageList.forwardFrom?.files?[index]);
-                                      String formattedFileName = formatFileName(originalFileName);
-                                      String fileType = getFileExtension(originalFileName);
+                                      String originalFileName = Cf.instance.getFileName(messageList.forwardFrom?.files?[index]);
+                                      String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                                      String fileType = Cf.instance.getFileExtension(originalFileName);
                                       bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
                                           fileType.toLowerCase() == 'mp3' ||
                                           fileType.toLowerCase() == 'wav';
@@ -560,12 +560,12 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                         ),
                                         child: Row(
                                           children: [
-                                            getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                            Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                             SizedBox(width: 20,),
                                             Flexible(
                                                 flex: 10,
                                                 fit: FlexFit.loose,
-                                                child: commonText(text: formattedFileName,maxLines: 1)),
+                                                child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                             Spacer(),
                                             GestureDetector(
                                                 onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -588,9 +588,9 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                           physics: NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
                             final filesUrl = messageList.files![index];
-                            String originalFileName = getFileName(messageList.files![index]);
-                            String formattedFileName = formatFileName(originalFileName);
-                            String fileType = getFileExtension(originalFileName);
+                            String originalFileName = Cf.instance.getFileName(messageList.files![index]);
+                            String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                            String fileType = Cf.instance.getFileExtension(originalFileName);
                             // IconData fileIcon = getFileIcon(fileType);
                             bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
                                 fileType.toLowerCase() == 'mp3' ||
@@ -615,12 +615,12 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                               ),
                               child: Row(
                                 children: [
-                                  getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                  Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                   SizedBox(width: 20,),
                                   Flexible(
                                       flex: 10,
                                       fit: FlexFit.loose,
-                                      child: commonText(text: formattedFileName,maxLines: 1)),
+                                      child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                   Spacer(),
                                   GestureDetector(
                                       onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -690,7 +690,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                                 ),
                                               ),
                                               child: i < 2 || remainingUsers == 0 ?
-                                              profileIconWithStatus(
+                                              Cw.instance.profileIconWithStatus(
                                                   userID: visibleUsers[i] ?? "",
                                                   userName: i < usernames.length ? usernames[i] : "",
                                                   status: "",
@@ -733,7 +733,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                   spacing: 4,
                                   runSpacing: 4,
                                   alignment: WrapAlignment.start,
-                                  children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                  children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
                                     reaction.userId!.sId == signInModel.data?.user?.id &&
                                         reaction.emoji == entry.key);
@@ -792,16 +792,16 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                     ],
                   ),
                 ),
-                popMenuForReply2(context,
+                Cw.instance.popMenuForReply2(context,
                   isPinned: pinnedMsg,
                   hasAudioFile: (messageList.files?.any((file) {
-                    String fileType = getFileExtension(getFileName(file));
+                    String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
                     return fileType.toLowerCase() == 'm4a' ||
                         fileType.toLowerCase() == 'mp3' ||
                         fileType.toLowerCase() == 'wav';
                   }) ?? false) ||
                       (messageList.forwardFrom?.files?.any((file) {
-                        String fileType = getFileExtension(getFileName(file));
+                        String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
                         return fileType.toLowerCase() == 'm4a' ||
                             fileType.toLowerCase() == 'mp3' ||
                             fileType.toLowerCase() == 'wav';
@@ -809,13 +809,13 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                   onOpened: () {}  ,
                   onClosed: () {} ,
                   onReact: () {
-                    showReactionBar(context, messageId.toString(), userId, "ChannelReply");
+                    Cw.instance.showReactionBar(context, messageId.toString(), userId, "ChannelReply");
                   },
                   opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
-                  onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.username ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
+                  onForward: () => Cf.instance.pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.username ?? messageList.senderId!.fullName ?? 'Unknown',time: Cf.instance.formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
                   onPin: () => channelChatProvider.pinUnPinMessage(messageId: messageId,pinned: pinnedMsg = !pinnedMsg,channelID: widget.channelId,isCalledForReply: true),
-                  onCopy: () => copyToClipboard(context, parse(message).body?.text ?? ""),
+                  onCopy: () => Cf.instance.copyToClipboard(context, parse(message).body?.text ?? ""),
                   onEdit: () => setState(() {
                     _messageController.clear();
                     FocusScope.of(context).requestFocus(_focusNode);
@@ -824,7 +824,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                     print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                     _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                   }),
-                  onDelete: () => deleteMessageDialog(context, ()=> channelChatProvider.deleteMessageForReplyChannel(messageId: messageId.toString(),firsMessageId: widget.msgID)),
+                  onDelete: () => Cw.instance.deleteMessageDialog(context, ()=> channelChatProvider.deleteMessageForReplyChannel(messageId: messageId.toString(),firsMessageId: widget.msgID)),
                   createdAt:"${messageList.createdAt}",)
               ],
             ),
@@ -885,7 +885,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                   link: _layerLink,
                                   child: KeyboardActions(
                                     disableScroll: true,
-                                    config: keyboardConfigIos(_focusNode),
+                                    config: Cw.instance.keyboardConfigIos(_focusNode),
                                     child: TextField(
                                       maxLines: 5,
                                       minLines: 1,
@@ -976,7 +976,8 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                       if(fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty || _messageController.text.isNotEmpty)...{
                         GestureDetector(
                           onTap: () async {
-                            final plainText = _messageController.text.trim();
+                            // final plainText = _messageController.text.trim();
+                            final plainText = Cf.instance.processContent(_messageController.text.trim());
                             if (fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty || plainText.isNotEmpty) {
                               if (fileServiceProvider.getFilesForScreen(AppString.channelChatReply).isNotEmpty) {
                                 final filesOfList = await chatProvider.uploadFiles(AppString.channelChatReply);
@@ -1024,7 +1025,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                             onTap: () {
                               _focusNode.unfocus();
                               // showCameraOptionsBottomSheet(context,AppString.channelChatReply);
-                              pushScreen(screen: CameraScreen(screenName: AppString.channelChatReply,));
+                              Cf.instance.pushScreen(screen: CameraScreen(screenName: AppString.channelChatReply,));
                             },
                             child : Container(
                               margin: EdgeInsets.symmetric(horizontal: 5),
@@ -1046,7 +1047,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                   ],
                 ),
               ),
-              selectedFilesWidget(screenName: AppString.channelChatReply),
+              Cw.instance.selectedFilesWidget(screenName: AppString.channelChatReply),
             ],
           ),
         ),
@@ -1090,7 +1091,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
               }),
               _optionItem(context, Icons.camera_alt_outlined, "Camera", "Capture image and video",(){
                 // FileServiceProvider.instance.captureImageAndVideo(AppString.channelChatReply);
-                pushScreen(screen: CameraScreen(screenName: AppString.channelChatReply,));
+                Cf.instance.pushScreen(screen: CameraScreen(screenName: AppString.channelChatReply,));
               }),
             ],
           ),
@@ -1485,7 +1486,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
                         children: [
-                          profileIconWithStatus(
+                          Cw.instance.profileIconWithStatus(
                             userID: userId,
                             userName: user?.username ?? '',
                             status: "",

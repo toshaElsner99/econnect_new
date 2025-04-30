@@ -104,7 +104,7 @@ class ChatProvider extends  ChangeNotifier {
             "pageNo": currentPage.toString()
           });
 
-      if (statusCode200Check(response)) {
+      if (Cf.instance.statusCode200Check(response)) {
           //
         if(isFromMsgListen){
           for (var newItem in (response['data']['messages'] as List).map((message) => msg.MessageGroups.fromJson(message)).toList()) {
@@ -116,7 +116,7 @@ class ChatProvider extends  ChangeNotifier {
             }
           }
         }else{
-          print("MSG = ${response['data']['messages'] as List}");
+          // print("MSG = ${response['data']['messages'] as List}");
           messageGroups.addAll((response['data']['messages'] as List).map((message) {
             return msg.MessageGroups.fromJson(message);
           }).toList());
@@ -235,7 +235,7 @@ class ChatProvider extends  ChangeNotifier {
         endPoint: ApiString.getRepliesMsg,
         method: Method.POST,
         reqBody: requestBody);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       getReplyMessageModel = reply.GetReplyMessageModel.fromJson(response);
       lastOpenedUserMSGId = msgId;
       print("lastOpenedUserMSGId store=> $lastOpenedUserMSGId");
@@ -250,7 +250,7 @@ class ChatProvider extends  ChangeNotifier {
   }
   Future<List<String>> uploadFiles(String screenName) async {
    try {
-     startLoading();
+     Cw.instance.startLoading();
      List<PlatformFile> selectedFiles = FileServiceProvider.instance.getFilesForScreen(screenName);
      List<File> filesToUpload = selectedFiles.map((platformFile) {
        return File(platformFile.path!);
@@ -292,12 +292,12 @@ class ChatProvider extends  ChangeNotifier {
    }catch (e){
      throw Exception("$e");
    }finally{
-     stopLoading();
+     Cw.instance.stopLoading();
    }
   }
   Future<List<String>> uploadFilesForAudio(List<String> filePaths) async {
     try {
-      startLoading();
+      Cw.instance.startLoading();
 
       if (filePaths.isEmpty) {
         throw Exception("No file path provided for upload");
@@ -338,9 +338,10 @@ class ChatProvider extends  ChangeNotifier {
     } catch (e) {
       throw Exception("$e");
     } finally {
-      stopLoading();
+      Cw.instance.stopLoading();
     }
   }
+
 
   Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID,bool? isEditFromReply = false})async{
     final requestBody = {
@@ -363,7 +364,7 @@ class ChatProvider extends  ChangeNotifier {
 
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
     print("Send Message requestBody -= $requestBody");
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       /// Socket Emit ///
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
       /// find where to add ///
@@ -425,13 +426,13 @@ class ChatProvider extends  ChangeNotifier {
 
   Future<void> forwardMessage({required Map<String,dynamic> forwardBody})async{
     final response = await ApiService.instance.request(endPoint: forwardBody.keys.contains('channelId') ? ApiString.sendChannelMessage : ApiString.sendMessage, method: Method.POST,reqBody: forwardBody,needLoader: false);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: false);
     }
   }
   Future<void> deleteMessage({required String messageId,required String receiverId})async{
     final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       // getMessagesList(oppositeUserId: receiverId);
       deleteMessageFromModelSingleChat(messageId);
       socketProvider.deleteMessagesSC(response: {"data": response['data']});
@@ -439,18 +440,18 @@ class ChatProvider extends  ChangeNotifier {
   }
   Future<void> deleteMessageForReply({required String messageId, required firsMessageId})async{
     final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       deleteMessageFromReplyModel(messageId);
       socketProvider.deleteMessagesSC(response: {"data": response['data']});
         if(firsMessageId == messageId) {
-          pop();
+          Cf.instance.pop();
           deleteMessageFromModelSingleChat(messageId);
         }
     }
   }
   Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned, bool callForUnpinPostOnly = false})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       if(callForUnpinPostOnly){
         getMessagesList(oppositeUserId: receiverId,currentPage: 1,onlyReadInChat: true);
         commonProvider.getUserByIDCallForSecondUser(userId: receiverId);
@@ -469,7 +470,7 @@ class ChatProvider extends  ChangeNotifier {
 
   Future<void> pinUnPinMessageForReply({required String receiverId,required String messageId,required bool pinned})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       if(pinned){
         pinMessageModelUpdate();
       }else{
@@ -520,7 +521,7 @@ class ChatProvider extends  ChangeNotifier {
   Future<void> getFileListingInChat({required String oppositeUserId})async{
     final requestBody = {"oppositeUserId": oppositeUserId};
     final response = await ApiService.instance.request(endPoint: ApiString.getFileListingInChat, method: Method.POST,reqBody: requestBody);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       filesListingInChatModel = FilesListingInChatModel.fromJson(response);
     }
     notifyListeners();
@@ -560,7 +561,7 @@ class ChatProvider extends  ChangeNotifier {
         endPoint: ApiString.reactMessage,
         method: Method.POST,
         reqBody: reqBody);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       socketProvider.reactMessagesSC(response: {"receiverId": receiverId, "senderId": signInModel.data?.user?.id});
       print("Reacted Successfully");
       print("isFrom = $isFrom");
@@ -649,7 +650,7 @@ class ChatProvider extends  ChangeNotifier {
     print("reactionRemove Fun");
     final response = await ApiService.instance.request(
         endPoint: ApiString.removeReact, method: Method.POST, reqBody: reqBody);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       socketProvider.reactMessagesSC(response: {
         "receiverId": receiverId,
         "senderId": signInModel.data?.user?.id,

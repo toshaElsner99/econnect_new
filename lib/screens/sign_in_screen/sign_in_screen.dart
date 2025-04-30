@@ -7,7 +7,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../notificationServices/pushNotificationService.dart';
 import '../../providers/sign_in_provider.dart';
 import '../../utils/app_color_constants.dart';
 
@@ -30,9 +29,10 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
     super.initState();
     clearBadge();
     _setupAnimations();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<SignInProvider>(context, listen: false).getDomainsCall();
-    });
+    /// Domain api call ///
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   Provider.of<SignInProvider>(context, listen: false).getDomainsCall();
+    // });
   }
 
   clearBadge() async{
@@ -114,14 +114,14 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
           ),
         ),
         const SizedBox(height: 24),
-        commonText(
+        Cw.instance.commonText(
           text: AppString.welcomeTO,
           fontSize: 16,
           color: Colors.white.withOpacity(0.7),
           letterSpacing: 1.5,
         ),
         const SizedBox(height: 8),
-        commonText(
+        Cw.instance.commonText(
           text: AppString.elsnerEconnectPortal,
           fontSize: 24,
           fontWeight: FontWeight.bold,
@@ -150,7 +150,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            commonText(
+            Cw.instance.commonText(
               text: AppString.signIN,
               fontSize: 28,
               fontWeight: FontWeight.w600,
@@ -176,9 +176,11 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
             ),
             const SizedBox(height: 24),
             _buildSignInButton(signInProvider),
-            // const SizedBox(height: 10),
-            // _buildGoogleSignInButton(signInProvider,context),
-            // const SizedBox(height: 15),
+            const SizedBox(height: 20),
+            _buildDividerWithText(),
+            const SizedBox(height: 20),
+            _buildGoogleSignInGif(signInProvider, context),
+            const SizedBox(height: 20),
             _buildFooter(),
           ],
         ),
@@ -200,7 +202,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
       ),
-      child: commonTextFormField(
+      child: Cw.instance.commonTextFormField(
         focusNode: fNode,
         controller: controller,
         hintText: hintText,
@@ -220,16 +222,58 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         )
             : null,
         validator: (value) => isEmail
-            ? validateEmail(value, controller)
-            : validatePassword(controller, value),
+            ? Cf.instance.validateEmail(value, controller)
+            : Cf.instance.validatePassword(controller, value),
       ),
     );
   }
 
   Widget _buildSignInButton(SignInProvider signInProvider) {
-    return commonElevatedButton(onPressed: () =>  signInProvider.signINCALL(), buttonText: AppString.signIN);
+    return Cw.instance.commonElevatedButton(onPressed: () =>  signInProvider.signINCALL(), buttonText: AppString.signIN);
   }
 
+  Widget _buildDividerWithText() {
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(
+            color: Colors.grey[400],
+            thickness: 1,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Cw.instance.commonText(
+            text: "OR Continue With",
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+        Expanded(
+          child: Divider(
+            color: Colors.grey[400],
+            thickness: 1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGoogleSignInGif(SignInProvider signInProvider, BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if(signInProvider.domainList.isNotEmpty) {
+          signInProvider.signInWithGoogle(context);
+        } else {
+          Cw.instance.commonShowToast("Domain not found", Colors.white);
+        }
+      },
+      child: Image.asset(
+        AppImage.googleSignIn,
+        height: 50,
+      ),
+    );
+  }
 
   Widget _buildFooter() {
     return Row(
@@ -241,7 +285,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
           color: Colors.grey[400],
         ),
         const SizedBox(width: 8),
-        commonText(
+        Cw.instance.commonText(
           text: "Secure Login",
           fontSize: 14,
           color: Colors.grey[600],
@@ -249,29 +293,4 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
       ],
     );
   }
-}
-
-
-
-Widget _buildGoogleSignInButton(SignInProvider signInProvider,BuildContext context) {
-  return ElevatedButton.icon(
-    onPressed: () => signInProvider.signInWithGoogle(context),
-    icon: const Icon(
-      Icons.g_mobiledata,
-      size: 30,
-      color: Colors.white,
-    ),
-    iconAlignment: IconAlignment.start,
-    label: commonText(text : AppString.signINWithGoogle,color: Colors.white),
-    style: ButtonStyle(
-      shape: WidgetStateProperty.all<RoundedRectangleBorder>(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-        ),
-      ),
-      elevation: WidgetStateProperty.all(0),
-      fixedSize: WidgetStateProperty.all(const Size(double.maxFinite, 40)),
-      backgroundColor: WidgetStateProperty.all(AppColor.commonAppColor),
-    ),
-  );
 }

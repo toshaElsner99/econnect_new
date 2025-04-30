@@ -1,15 +1,13 @@
 import 'package:e_connect/main.dart';
-import 'package:e_connect/model/favorite_list_model.dart';
 import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/providers/sign_in_provider.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
+
 
 import '../model/get_user_mention_model.dart';
-import '../model/sign_in_model.dart';
 import '../notificationServices/pushNotificationService.dart';
 import '../screens/sign_in_screen/sign_in_Screen.dart';
 import '../utils/common/common_function.dart';
@@ -56,7 +54,7 @@ class CommonProvider extends ChangeNotifier {
     var signInProvider = Provider.of<SignInProvider>(navigatorKey.currentState!.context,listen: false);
     signInProvider.fcmTokenRemoveInAPI();
     await clearData();
-    pushAndRemoveUntil(screen: SignInScreen());
+    Cf.instance.pushAndRemoveUntil(screen: SignInScreen());
     await NotificationService.clearBadgeCount();
     await NotificationService.clearAllNotifications();
   }
@@ -72,7 +70,7 @@ class CommonProvider extends ChangeNotifier {
         endPoint: ApiString.updateStatus,
         method: Method.POST,
         reqBody: requestBody,);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       getUserByIDCall();
     }
     notifyListeners();
@@ -91,7 +89,7 @@ class CommonProvider extends ChangeNotifier {
       reqBody: requestBody,
     );
     
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       customStatusTitle = status;
       customStatusUrl = emojiUrl;
       getUserByIDCall();
@@ -105,7 +103,7 @@ class CommonProvider extends ChangeNotifier {
 
   Future<void> getUserByIDCall() async {
     final response = await ApiService.instance.request(endPoint: "${ApiString.getUserById}//${/*userId ?? */signInModel.data?.user?.id ?? ""}", method: Method.GET,);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
       // getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
       // isMutedUser = signInModel.data?.user!.muteUsers!.contains(userId) ?? false;
@@ -118,7 +116,6 @@ class CommonProvider extends ChangeNotifier {
   bool isLoadingGetUser = false;
 
   Future<GetUserModelSecondUser?> getUserByIDCallForSecondUser({String? userId}) async {
-    print("Called>>>>getUserByIDCallForSecondUser>>> $userId ");
     try{
       isLoadingGetUser = true;
       if(userId != (getUserModelSecondUser?.data?.user?.sId ?? "")){
@@ -127,7 +124,7 @@ class CommonProvider extends ChangeNotifier {
       }
       final response = await ApiService.instance.request(
         endPoint: "${ApiString.getUserById}/$userId", method: Method.GET,);
-      if (statusCode200Check(response)) {
+      if (Cf.instance.statusCode200Check(response)) {
         getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
         // print("getUserByIDCallForSecondUser>>>${getUserModelSecondUser?.data?.user?.pinnedMessageCount}");
         return getUserModelSecondUser;
@@ -143,7 +140,7 @@ class CommonProvider extends ChangeNotifier {
     final response = await ApiService.instance.request(
         endPoint: "${ApiString.getUserById}/${userId ?? signInModel.data?.user?.id}",
         method: Method.GET,);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
       print("getUserByIDCall2>>>${getUserModel?.data?.user?.pinnedMessageCount}");
       return getUserModel;
@@ -153,7 +150,7 @@ class CommonProvider extends ChangeNotifier {
   Future<void> getUserApi({required String id})async{
     final requestBody = {"type": "message", "id": id};
     final response = await ApiService.instance.request(endPoint: ApiString.getUser, method: Method.POST,reqBody: requestBody);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       getUserMentionModel = GetUserMentionModel.fromJson(response);
       getUserMentionModel?.saveToPrefs(id);
       await GetUserMentionModel.loadFromPrefs(id);
@@ -197,8 +194,6 @@ class CommonProvider extends ChangeNotifier {
   }
 
   bool isUserInAllUsers(String username) {
-    // print("userName?????? $username");
-    // First check for special mentions
     final specialMentions = ['here', 'channel', 'all'];
     if (specialMentions.contains(username.toLowerCase())) {
       return true;
@@ -209,7 +204,6 @@ class CommonProvider extends ChangeNotifier {
       return false;
     }
 
-    print("Checking username/fullname: $username in ${getUserMentionModel?.data!.users!.length ?? 0} users");
     return getUserMentionModel?.data!.users!.any((user) =>
       user.username?.toLowerCase() == username.toLowerCase() ||
       user.fullName?.toLowerCase() == username.toLowerCase()

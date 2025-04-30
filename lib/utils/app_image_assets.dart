@@ -44,6 +44,7 @@ class AppImage{
   static const playStoreIcon = "$path/playstore.png";
   static const appStoreIcon = "$path/app-store.png";
   static const wafflePNG = "$path/waffle.png";
+  static const googleSignIn = "$path/google.gif";
 
 
 

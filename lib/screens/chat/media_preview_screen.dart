@@ -25,7 +25,7 @@ class MediaPreviewScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: AppColor.whiteColor),
           onPressed: () => Navigator.pop(context),
         ),
-        title: commonText(
+        title: Cw.instance.commonText(
           text: '${initialIndex + 1} of ${files.length}',
           fontSize: 16,
           color: AppColor.whiteColor,
@@ -56,10 +56,10 @@ class MediaPreviewScreen extends StatelessWidget {
                         width: 100,
                         height: 100,
                         color: AppColor.commonAppColor,
-                        child: getFileIcon(file.extension!, file.path),
+                        child: Cf.instance.getFileIcon(file.extension!, file.path),
                       ),
                       const SizedBox(height: 16),
-                      commonText(
+                      Cw.instance.commonText(
                         text: file.name,
                         fontSize: 16,
                         color: AppColor.whiteColor,
@@ -97,14 +97,14 @@ class MediaPreviewScreen extends StatelessWidget {
                       CircleAvatar(
                         backgroundColor: AppColor.lightBlueColor,
                         radius: 15,
-                        child: commonText(
+                        child: Cw.instance.commonText(
                           text: 'T',
                           color: AppColor.whiteColor,
                           fontSize: 16,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      commonText(
+                      Cw.instance.commonText(
                         text: 'Tosha Shah (you)',
                         color: AppColor.whiteColor,
                         fontSize: 14,
@@ -112,7 +112,7 @@ class MediaPreviewScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  commonText(
+                  Cw.instance.commonText(
                     text: 'Shared in @jigarghodasara',
                     color: Colors.grey,
                     fontSize: 12,

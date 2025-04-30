@@ -51,7 +51,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
             icon: const Icon(Icons.close,color: Colors.white,),
             onPressed: () => Navigator.pop(context),
           ),
-          title: commonText(
+          title: Cw.instance.commonText(
             text: 'Find Channel',
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -64,7 +64,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
               // Search Field
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: commonTextFormField(
+                child: Cw.instance.commonTextFormField(
                   focusNode: node,
                   controller: _searchController,
                   hintText: 'Search users or channels',
@@ -84,7 +84,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                           children: [
                             Image.asset(AppImage.persons,height: 20,width: 20,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,),
                             SizedBox(width: 5,),
-                            commonText(
+                            Cw.instance.commonText(
                               text: 'Users',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -96,7 +96,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                           child: Center(
-                            child: commonText(
+                            child: Cw.instance.commonText(
                               text: 'No users found',
                               color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.grey[600],
                               fontSize: 14,
@@ -123,7 +123,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                           children: [
                             Image.asset(AppImage.globalIcon,width: 20,height: 20,color:  AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,),
                             SizedBox(width: 5,),
-                            commonText(
+                            Cw.instance.commonText(
                               text: 'Channels',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -135,7 +135,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                           child: Center(
-                            child: commonText(
+                            child: Cw.instance.commonText(
                               text: 'No channels found',
                               color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.grey[600],
                               fontSize: 14,
@@ -165,13 +165,13 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
 
   Widget _buildUserTile(Users user) {
     return ListTile(
-      onTap: () => pushReplacement(screen: SingleChatMessageScreen(userName:  user.fullName ?? user.username ?? "", oppositeUserId: user.userId ?? "",needToCallAddMessage: true,)),
+      onTap: () => Cf.instance.pushReplacement(screen: SingleChatMessageScreen(userName:  user.fullName ?? user.username ?? "", oppositeUserId: user.userId ?? "",needToCallAddMessage: true,)),
       leading: CircleAvatar(
         backgroundImage: CachedNetworkImageProvider(
           ApiString.profileBaseUrl + (user.thumbnailAvatarUrl ?? ""),
         ),
       ),
-      title: commonText(
+      title: Cw.instance.commonText(
         text: user.fullName ?? user.username ?? "",
         fontSize: 15,
         fontWeight: FontWeight.w500,
@@ -182,7 +182,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
 
   Widget _buildChannelTile(Channels channel) {
     return ListTile(
-      onTap: () => pushReplacement(screen: ChannelChatScreen(channelId: channel.sId.toString())),
+      onTap: () => Cf.instance.pushReplacement(screen: ChannelChatScreen(channelId: channel.sId.toString())),
       leading: Container(
         width: 40,
         height: 40,
@@ -200,7 +200,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
           ),
         ),
       ),
-      title: commonText(
+      title: Cw.instance.commonText(
         text: channel.name ?? "",
         // color: Colors.black87,
         fontSize: 15,

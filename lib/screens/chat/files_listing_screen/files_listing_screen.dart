@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:record/record.dart';
 
 import '../../../providers/chat_provider.dart';
 import '../../../providers/download_provider.dart';
@@ -55,10 +54,10 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            commonText(text: "Files", fontSize: 16),
+            Cw.instance.commonText(text: "Files", fontSize: 16),
             Padding(
               padding: const EdgeInsets.only(left: 5),
-              child: commonText(
+              child: Cw.instance.commonText(
                 text: " | ${widget.userName}",
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -79,7 +78,7 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
               children: [
                 Image.asset(AppImage.fileIcon,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,height: 100,width: 100,),
                 SizedBox(height: 10),
-                commonText(text: "No file posts yet",fontSize: 18),
+                Cw.instance.commonText(text: "No file posts yet",fontSize: 18),
               ],
             ),
           ) : Column(
@@ -90,7 +89,7 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
                   alignment: Alignment.centerLeft,
                   child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: commonText(
+                    child: Cw.instance.commonText(
                       text: "Recent files",
                       color: AppColor.borderColor,
                       fontSize: 20,
@@ -107,9 +106,9 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
 
                     return Column(
                       children: files?.map((fileUrl) {
-                        String originalFileName = getFileName(fileUrl);
-                        String formattedFileName = formatFileName(originalFileName);
-                        String fileType = getFileExtension(originalFileName);
+                        String originalFileName = Cf.instance.getFileName(fileUrl);
+                        String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                        String fileType = Cf.instance.getFileExtension(originalFileName);
 
                         bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
                             fileType.toLowerCase() == 'mp3' ||
@@ -137,9 +136,9 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
                           ),
                           child: Row(
                             children: [
-                              getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$fileUrl"),
+                              Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$fileUrl"),
                               SizedBox(width: 20),
-                              commonText(text: formattedFileName, maxLines: 1,overflow: TextOverflow.ellipsis),
+                              Cw.instance.commonText(text: formattedFileName, maxLines: 1,overflow: TextOverflow.ellipsis),
                               Spacer(),
                               GestureDetector(
                                 onTap: () => Provider.of<DownloadFileProvider>(context, listen: false).downloadFile(

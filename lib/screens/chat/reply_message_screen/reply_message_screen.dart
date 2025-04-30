@@ -87,7 +87,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     _record = AudioRecorder();
     bool hasPermission = await _record.hasPermission();
     if (!hasPermission) {
-      print("Recording permission denied!");
+      // print("Recording permission denied!");
     }
   }
 
@@ -127,7 +127,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
         _showAudioPreview = true;
         _previewAudioPath = path;
       });
-      print("Recording saved at: $_audioPath");
+      // print("Recording saved at: $_audioPath");
     } else {
       if (await _record.hasPermission()) {
         final path = await _getFilePath();
@@ -158,7 +158,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     if (_audioPath != null) {
       try {
         final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
-        print("uploadFiles>>>> $uploadedFiles");
+        // print("uploadFiles>>>> $uploadedFiles");
         // Send the message with the uploaded files
 
         await chatProvider.sendMessage(
@@ -178,7 +178,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
           _recordingDuration = Duration.zero;
         });
       } catch (e) {
-        print("Error sending audio message: $e");
+        // print("Error sending audio message: $e");
         // You might want to show an error message to the user here
       }
     }
@@ -186,7 +186,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
   @override
   void initState() {
-    print("msgIDD>>>> ${widget.messageId}");
+    // print("msgIDD>>>> ${widget.messageId}");
     super.initState();
     _messageController.addListener(_onTextChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -202,7 +202,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
       socketProvider.listenDeleteMessageSocketForReply(msgId: widget.messageId);
       socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
       socketProvider.socketListenReactMessageInReplyScreen(msgId: widget.messageId);
-      print("I'm In initState");
+      // print("I'm In initState");
       Provider.of<ChatProvider>(context, listen: false).getReplyMessageList(msgId: widget.messageId,fromWhere: "SCREEN INIT");
       Provider.of<ChatProvider>(context, listen: false).seenReplayMessage(msgId: widget.messageId);
       Provider.of<CommonProvider>(context, listen: false).getUserApi(id :widget.receiverId);
@@ -220,10 +220,10 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
       userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
       userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
     });
-    print("user>>>>>> ${userCache}");
-    print("user>>>>>> ${userDetails?.data!.user!.username}");
-    print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.username}");
-    print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.sId}");
+    // print("user>>>>>> ${userCache}");
+    // print("user>>>>>> ${userDetails?.data!.user!.username}");
+    // print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.username}");
+    // print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.sId}");
   }
   late FileServiceProvider _fileServiceProvider;
   @override
@@ -363,7 +363,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
           ),
           appBar: AppBar(
             leading: IconButton(onPressed: (){
-              pop(popValue: true);
+              Cf.instance.pop(popValue: true);
               chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: false,onlyReadInChat: false);
             },
             icon: Icon(CupertinoIcons.back,color: Colors.white,)),
@@ -372,11 +372,11 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                commonText(text: "Thread", fontSize: 16,),
+                Cw.instance.commonText(text: "Thread", fontSize: 16,),
               Consumer<ChatProvider>(builder: (context, value, child) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 1.5),
-                  child: commonText(text:
+                  child: Cw.instance.commonText(text:
                   (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
                       ? "Typing..." : widget.userName,
                       fontSize: 12,fontWeight: FontWeight.w400),
@@ -431,7 +431,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                         color: AppColor.blueColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: commonText(
+                      child: Cw.instance.commonText(
                         text: formatDateTime(DateTime.parse(grpId!)),
                         fontSize: 12,
                         color: AppColor.whiteColor,
@@ -490,7 +490,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                     children: [
                       Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,),
                       SizedBox(width: 5,),
-                      commonText(text: "Pinned",color: AppColor.blueColor)
+                      Cw.instance.commonText(text: "Pinned",color: AppColor.blueColor)
                     ],
                   ),
                 )),
@@ -501,7 +501,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: profileIconWithStatus(userID: "${messageList.senderId!.sId}", status: "${messageList.senderId!.status}",otherUserProfile: messageList.senderId?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderId?.userName ?? ""),
+                    child: Cw.instance.profileIconWithStatus(userID: "${messageList.senderId!.sId}", status: "${messageList.senderId!.status}",otherUserProfile: messageList.senderId?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderId?.userName ?? ""),
                   ),
 
                 Expanded(
@@ -511,14 +511,14 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                       Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            commonText(
+                            Cw.instance.commonText(
                                 height: 1.2,
                                 text:
                                 messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown', fontWeight: FontWeight.bold),
                             SizedBox(width: 5),
-                            commonText(
+                            Cw.instance.commonText(
                                 height: 1.2,
-                                text: formatTime(time), color: Colors.grey, fontSize: 12
+                                text: Cf.instance.formatTime(time), color: Colors.grey, fontSize: 12
                             ),
                           ],
                         ),
@@ -533,7 +533,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: commonHTMLText(message: message),
+                                    child: Cw.instance.commonHTMLText(message: message),
                                   ),
 
                                   if (isEdited)
@@ -556,7 +556,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                               color: AppColor.borderColor,
                                             ),
                                             const SizedBox(width: 2),
-                                            commonText(
+                                            Cw.instance.commonText(
                                               text: "Edited",
                                               fontSize: 10,
                                               color: AppColor.borderColor,
@@ -586,25 +586,25 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                Cw.instance.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl, userName: messageList.forwardFrom?.senderId?.userName ?? ''),
+                                    Cw.instance.profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl, userName: messageList.forwardFrom?.senderId?.userName ?? ''),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          commonText(text: messageList.forwardFrom?.senderId?.userName ?? messageList.forwardFrom?.senderId?.fullName ?? ""),
+                                          Cw.instance.commonText(text: messageList.forwardFrom?.senderId?.userName ?? messageList.forwardFrom?.senderId?.fullName ?? ""),
                                           SizedBox(height: 3),
-                                          commonText(text: formatDateString("${messageList.forwardFrom?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          Cw.instance.commonText(text: Cf.instance.formatDateString("${messageList.forwardFrom?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),
                                   ],),
                                 ),
-                                commonHTMLText(message: "${messageList.forwardFrom?.content}"),
+                                Cw.instance.commonHTMLText(message: "${messageList.forwardFrom?.content}"),
                                 Visibility(
                                   visible: messageList.forwardFrom?.files?.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -613,14 +613,14 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                     physics: NeverScrollableScrollPhysics(),
                                     itemBuilder: (context, index) {
                                       final filesUrl = messageList.forwardFrom?.files?[index];
-                                      String originalFileName = getFileName(messageList.forwardFrom?.files?[index]);
-                                      String formattedFileName = formatFileName(originalFileName);
-                                      String fileType = getFileExtension(originalFileName);
+                                      String originalFileName = Cf.instance.getFileName(messageList.forwardFrom?.files?[index]);
+                                      String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                                      String fileType = Cf.instance.getFileExtension(originalFileName);
                                       bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
                                           fileType.toLowerCase() == 'mp3' ||
                                           fileType.toLowerCase() == 'wav';
                                       if (isAudioFile) {
-                                        print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
+                                        // print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
                                         return AudioPlayerWidget(
                                           audioUrl: filesUrl ?? "",
                                           audioPlayers: _audioPlayers,
@@ -639,12 +639,12 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                         ),
                                         child: Row(
                                           children: [
-                                            getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                            Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                             SizedBox(width: 20,),
                                             Flexible(
                                                 flex: 10,
                                                 fit: FlexFit.loose,
-                                                child: commonText(text: formattedFileName,maxLines: 1)),
+                                                child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                             Spacer(),
                                             GestureDetector(
                                                 onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -668,18 +668,18 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                           physics: NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
                             final filesUrl = messageList.files![index];
-                            String originalFileName = getFileName(messageList.files![index]);
-                            String formattedFileName = formatFileName(originalFileName);
-                            String fileType = getFileExtension(originalFileName);
+                            String originalFileName = Cf.instance.getFileName(messageList.files![index]);
+                            String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                            String fileType = Cf.instance.getFileExtension(originalFileName);
                             // IconData fileIcon = getFileIcon(fileType);
                             bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
                                 fileType.toLowerCase() == 'mp3' ||
                                 fileType.toLowerCase() == 'wav';
 
-                            print("Is Audio File: $isAudioFile");
+                            // print("Is Audio File: $isAudioFile");
 
                             if (isAudioFile) {
-                              print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
+                              // print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
                               return AudioPlayerWidget(
                                 audioUrl: filesUrl,
                                 audioPlayers: _audioPlayers,
@@ -698,12 +698,12 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                  Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                   SizedBox(width: 20,),
                                   Flexible(
                                       flex: 10,
                                       fit: FlexFit.loose,
-                                      child: commonText(text: formattedFileName,maxLines: 1)),
+                                      child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                   Spacer(),
                                   GestureDetector(
                                       onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -761,7 +761,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                                   width: 1.5,
                                                 ),
                                               ),
-                                              child: profileIconWithStatus(
+                                              child: Cw.instance.profileIconWithStatus(
                                                 userID: visibleUsers[i] ?? "",
                                                 status: "",
                                                 needToShowIcon: false,
@@ -787,7 +787,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                   spacing: 4,
                                   runSpacing: 4,
                                   alignment: WrapAlignment.start,
-                                  children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                  children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
                                     reaction.userId!.sId == signInModel.data?.user?.id &&
                                         reaction.emoji == entry.key);
@@ -847,16 +847,16 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                     ],
                   ),
                 ),
-                popMenuForReply2(context,
+                Cw.instance.popMenuForReply2(context,
                   isPinned: pinnedMsg,
                   hasAudioFile: (messageList.files?.any((file) {
-                    String fileType = getFileExtension(getFileName(file));
+                    String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
                     return fileType.toLowerCase() == 'm4a' ||
                         fileType.toLowerCase() == 'mp3' ||
                         fileType.toLowerCase() == 'wav';
                   }) ?? false) ||
                       (messageList.forwardFrom?.files?.any((file) {
-                        String fileType = getFileExtension(getFileName(file));
+                        String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
                         return fileType.toLowerCase() == 'm4a' ||
                             fileType.toLowerCase() == 'mp3' ||
                             fileType.toLowerCase() == 'wav';
@@ -864,22 +864,22 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   onOpened: () {}  ,
                   onClosed: () {} ,
                   onReact: () {
-                    showReactionBar(context, messageId.toString(), userId, "Reply");
+                    Cw.instance.showReactionBar(context, messageId.toString(), userId, "Reply");
                   },
                   opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
-                  onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
+                  onForward: () => Cf.instance.pushScreen(screen: ForwardMessageScreen(userName: messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown',time: Cf.instance.formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: "${messageList.senderId!.avatarUrl}",forwardMsgId: messageId,)),
                   onPin: () => chatProvider.pinUnPinMessageForReply(receiverId: widget.receiverId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
-                  onCopy: () => copyToClipboard(context, parse(message).body?.text ?? ""),
+                  onCopy: () => Cf.instance.copyToClipboard(context, parse(message).body?.text ?? ""),
                   onEdit: () => setState(() {
                     _messageController.clear();
                     FocusScope.of(context).requestFocus(_focusNode);
                     int position = _messageController.text.length;
                     currentUserMessageId = messageId;
-                    print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
+                    // print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                     _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                   }),
-                  onDelete: () => deleteMessageDialog(context, ()=> chatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.messageId)),
+                  onDelete: () => Cw.instance.deleteMessageDialog(context, ()=> chatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.messageId)),
                   createdAt:"${messageList.createdAt}",)
               ],
             ),
@@ -939,7 +939,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                   link: _layerLink,
                                   child: KeyboardActions(
                                     disableScroll: true,
-                                    config: keyboardConfigIos(_focusNode),
+                                    config: Cw.instance.keyboardConfigIos(_focusNode),
                                     child: TextField(
                                       maxLines: 5,
                                       minLines: 1,
@@ -1030,7 +1030,8 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                       if(fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty || _messageController.text.isNotEmpty)...{
                         GestureDetector(
                           onTap: () async {
-                            final plainText = _messageController.text.trim();
+                            // final plainText = _messageController.text.trim();
+                            final plainText = Cf.instance.processContent(_messageController.text.trim());
                             if (fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty || plainText.isNotEmpty) {
                               if (fileServiceProvider.getFilesForScreen(AppString.singleChatReply).isNotEmpty) {
                                 final filesOfList = await chatProvider.uploadFiles(AppString.singleChatReply);
@@ -1078,7 +1079,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             onTap: () {
                               _focusNode.unfocus();
                               // showCameraOptionsBottomSheet(context,AppString.singleChatReply);
-                              pushScreen(screen: CameraScreen(screenName: AppString.singleChatReply,));
+                              Cf.instance.pushScreen(screen: CameraScreen(screenName: AppString.singleChatReply,));
                             },
                             child : Container(
                               margin: EdgeInsets.symmetric(horizontal: 5),
@@ -1100,7 +1101,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   ],
                 ),
               ),
-              selectedFilesWidget(screenName: AppString.singleChatReply),
+              Cw.instance.selectedFilesWidget(screenName: AppString.singleChatReply),
             ],
           ),
         ),
@@ -1144,7 +1145,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
               }),
               _optionItem(context, Icons.camera_alt_outlined, "Camera", "Capture image and video",(){
                 // FileServiceProvider.instance.captureImageAndVideo(AppString.singleChatReply);
-                pushScreen(screen: CameraScreen(screenName: AppString.singleChatReply,));
+                Cf.instance.pushScreen(screen: CameraScreen(screenName: AppString.singleChatReply,));
               }),
             ],
           ),
@@ -1427,9 +1428,9 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
     // Handle both Users object and special mention map
     String mentionText;
-    print("User type = ${user.runtimeType}");
+    // print("User type = ${user.runtimeType}");
     if (user is Users) { // Users from user_mention_model.dart
-      print("user = ${user.username}");
+      // print("user = ${user.username}");
       mentionText = '@${user.username} ';
     }else if (user is SecondUser) {
       mentionText = '@${user.username} ';
@@ -1438,7 +1439,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
     } else if (user is User) {
       mentionText = '@${user.username} ';
     } else {
-      print("user = ${user.username}");
+      // print("user = ${user.username}");
       return; // Invalid user object
     }
 
@@ -1529,7 +1530,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
                         children: [
-                          profileIconWithStatus(
+                          Cw.instance.profileIconWithStatus(
                               userID: userId,
                               status: "",
                               needToShowIcon: false,

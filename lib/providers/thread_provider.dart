@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../model/thread_counts_model.dart';
 import '../model/thread_model.dart';
@@ -29,7 +28,7 @@ class ThreadProvider extends ChangeNotifier {
           method: Method.POST,
           reqBody: {});
 
-      if (statusCode200Check(response)) {
+      if (Cf.instance.statusCode200Check(response)) {
         _threads = (response['data'] as List).map((list) => Thread.fromJson(list as Map<String, dynamic>)).toList();
         print("_threads= $_threads");
       } else {
@@ -51,7 +50,7 @@ class ThreadProvider extends ChangeNotifier {
           endPoint: ApiString.getUnreadThreadCounts,
           method: Method.GET);
 
-      if (statusCode200Check(response)) {
+      if (Cf.instance.statusCode200Check(response)) {
         final ThreadCountsModel countModel = ThreadCountsModel.fromJson(response);
         unreadThreadCount = countModel.data?.count ?? 0;
       } else {

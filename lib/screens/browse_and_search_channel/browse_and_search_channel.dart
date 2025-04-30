@@ -47,7 +47,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
           icon: const Icon(Icons.close, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: commonText(
+        title: Cw.instance.commonText(
           text: 'Browse Channel',
           color: Colors.white,
           fontSize: 20,
@@ -59,7 +59,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
           children: [
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: commonTextFormField(
+              child: Cw.instance.commonTextFormField(
                 focusNode: browseAndSearchNode,
                 controller: _searchController,
                 hintText: 'Search Channel',
@@ -94,7 +94,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                           activeColor: AppColor.commonAppColor,
                         ),
                       ),
-                      commonText(text: 'Hide Joined'),
+                      Cw.instance.commonText(text: 'Hide Joined'),
                     ],
                   ),
                 ],
@@ -170,7 +170,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
 
                   if (filteredChannels == null || filteredChannels.isEmpty) {
                     return Center(
-                      child: commonText(
+                      child: Cw.instance.commonText(
                         text: "No Channel Found",
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -192,7 +192,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            commonChannelIcon(
+                            Cw.instance.commonChannelIcon(
                               isPrivate: channelListing.isPrivate == true ? true : false,
                               isShowPersons: true,
                               color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.appBarColor,
@@ -203,12 +203,12 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  commonText(text: "${channelListing.name}", height: 1.2),
+                                  Cw.instance.commonText(text: "${channelListing.name}", height: 1.2),
                                   const SizedBox(height: 10),
                                   Row(
                                     children: [
                                       Image.asset(AppImage.person, height: 16, width: 16, color: AppColor.borderColor),
-                                      commonText(
+                                      Cw.instance.commonText(
                                         text: channelListing.members!.length.toString(),
                                         color: AppColor.borderColor,
                                       ),
@@ -218,14 +218,14 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                               ),
                             ),
                             GestureDetector(
-                              onTap: () => pushReplacement(screen: ChannelChatScreen(channelId: channelListing.sId ?? "")),
+                              onTap: () => Cf.instance.pushReplacement(screen: ChannelChatScreen(channelId: channelListing.sId ?? "")),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(5),
                                   border: Border.all(width: 1, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.commonAppColor),
                                 ),
-                                child: commonText(text: "View", color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.commonAppColor),
+                                child: Cw.instance.commonText(text: "View", color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.commonAppColor),
                               ),
                             ),
                           ],

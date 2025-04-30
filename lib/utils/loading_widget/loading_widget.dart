@@ -28,7 +28,7 @@ class Loading extends StatelessWidget {
                 children: [
                   Image.asset(AppImage.noInternet,height: 100,width: 100,color: Colors.white,),
                   const SizedBox(height: 16),
-                  commonText(text:
+                  Cw.instance.commonText(text:
                   networkData.connectionStatus,
                       textAlign: TextAlign.center,
                       color: Colors.white,

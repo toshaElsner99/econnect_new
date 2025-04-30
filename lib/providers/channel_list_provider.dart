@@ -51,12 +51,12 @@ class ChannelListProvider extends ChangeNotifier{
 
   /// GET FAVORITE LIST IN HOME SCREEN ///
   Future<void> getFavoriteList()async{
-    print("userID>>>> ${signInModel.data?.user?.id}");
+    // print("userID>>>> ${signInModel.data?.user?.id}");
     final requestBody = {
       "userId": signInModel.data?.user?.id,
     };
     final response = await ApiService.instance.request(endPoint: ApiString.favoriteListGet, method: Method.POST,reqBody: requestBody);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       favoriteListModel = FavoriteListModel.fromJson(response);
     }
     NotificationService.setBadgeCount();
@@ -65,24 +65,24 @@ class ChannelListProvider extends ChangeNotifier{
   }
   /// GET CHANNEL LIST IN HOME SCREEN ///
   Future<void> getChannelList()async{
-    print("userID>>>> ${signInModel.data?.user?.id}");
+    // print("userID>>>> ${signInModel.data?.user?.id}");
     final response = await ApiService.instance.request(endPoint: ApiString.channelList, method: Method.GET,);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       channelListModel = ChannelListModel.fromJson(response);
       
       // Debug channel data to verify lastmessage timestamps
-      print("=== Channel List Debug ===");
+      // print("=== Channel List Debug ===");
       if (channelListModel?.data != null) {
         for (var channel in channelListModel!.data!) {
-          print("Channel: ${channel.name}");
-          print("  - lastmessage: ${channel.lastmessage != null ? 'exists' : 'null'}");
+          // print("Channel: ${channel.name}");
+          // print("  - lastmessage: ${channel.lastmessage != null ? 'exists' : 'null'}");
           if (channel.lastmessage != null) {
-            print("  - lastmessage.createdAt: ${channel.lastmessage!.createdAt}");
+            // print("  - lastmessage.createdAt: ${channel.lastmessage!.createdAt}");
           }
-          print("  - updatedAt: ${channel.updatedAt}");
-          print("  - createdAt: ${channel.createdAt}");
-          print("  - unreadCount: ${channel.unreadCount}");
-          print("---------------------");
+          // print("  - updatedAt: ${channel.updatedAt}");
+          // print("  - createdAt: ${channel.createdAt}");
+          // print("  - unreadCount: ${channel.unreadCount}");
+          // print("---------------------");
         }
 
         // Find the channel where isDefault = true
@@ -92,19 +92,19 @@ class ChannelListProvider extends ChangeNotifier{
         );
         if (defaultChannel != null) {
           // Proceed with your logic
-          print("Default Channel ID: ${defaultChannel.sId}");
+          // print("Default Channel ID: ${defaultChannel.sId}");
         } else {
-          print("No default channel found.");
+          // print("No default channel found.");
         }
         if (defaultChannel != null) {
-          print("channelId : ${defaultChannel.sId} & channel : ${defaultChannel.name}");
+          // print("channelId : ${defaultChannel.sId} & channel : ${defaultChannel.name}");
           AppPreferenceConstants.elsnerChannelGetId = defaultChannel.sId ?? "";
-          print("Default Channel ID stored: ${AppPreferenceConstants.elsnerChannelGetId}");
+          // print("Default Channel ID stored: ${AppPreferenceConstants.elsnerChannelGetId}");
 
           // Store the ID in SharedPreferences
           await setData(AppPreferenceConstants.elsnerChannelKey, AppPreferenceConstants.elsnerChannelGetId);
           AppPreferenceConstants.elsnerChannelGetId = await getData(AppPreferenceConstants.elsnerChannelKey);
-          print("Retrieved Default Channel ID: ${AppPreferenceConstants.elsnerChannelGetId}");
+          // print("Retrieved Default Channel ID: ${AppPreferenceConstants.elsnerChannelGetId}");
         }
       }
     }
@@ -114,12 +114,12 @@ class ChannelListProvider extends ChangeNotifier{
   }
   /// GET DIRECT MESSAGE IN HOME SCREEN ///
   Future<void> getDirectMessageList()async{
-    print("userID>>>> ${signInModel.data?.user?.id}");
+    // print("userID>>>> ${signInModel.data?.user?.id}");
     final requestBody = {
       "userId": signInModel.data?.user?.id,
     };
     final response = await ApiService.instance.request(endPoint: ApiString.directMessageChatList, method: Method.POST,reqBody: requestBody);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       directMessageListModel = DirectMessageListModel.fromJson(response);
       // emit(ChannelListInitial());
     }
@@ -139,12 +139,12 @@ class ChannelListProvider extends ChangeNotifier{
       "description": description
     };
     final response = await ApiService.instance.request(endPoint: ApiString.createChannel, method: Method.POST,reqBody: requestBody);
-    if(statusCode200Check(response)){
-      pop();
-      pushScreen(screen: ChannelChatScreen(channelId: response["data"]["_id"]));
+    if(Cf.instance.statusCode200Check(response)){
+      Cf.instance.pop();
+      Cf.instance.pushScreen(screen: ChannelChatScreen(channelId: response["data"]["_id"]));
       getChannelList();
     }else if(response['statusCode'] == 403) {
-        commonShowToast("Channel Name is already used",Colors.red);
+      Cw.instance.commonShowToast("Channel Name is already used",Colors.red);
     }
     notifyListeners();
   }
@@ -175,7 +175,7 @@ void combineUserDataWithChannels() {
        'isPrivate': channel.isPrivate,
      });
    });
-   print("combinedList>>>> ${combinedList.length} items found");
+   // print("combinedList>>>> ${combinedList.length} items found");
  }catch (e){
    print("e>>> $e");
  }finally{
@@ -201,7 +201,7 @@ bool isLoading = false;
     try{
       isLoading = true;
       final response = await ApiService.instance.request(endPoint: ApiString.browseChannel, method: Method.POST, reqBody: requestBody,needLoader: needLoader);
-      if (statusCode200Check(response)) {
+      if (Cf.instance.statusCode200Check(response)) {
         browseAndSearchChannelModel = BrowseAndSearchChannelModel.fromJson(response);
         if(combineList == true){
           combineUserDataWithChannels();
@@ -221,7 +221,7 @@ bool isLoading = false;
     final response = await ApiService.instance.request(
         endPoint: ApiString.userSuggestions,
         method: Method.GET,);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       getUserSuggestions = GetUserSuggestions.fromJson(response);
     }
   }
@@ -232,7 +232,7 @@ bool isLoading = false;
         endPoint: ApiString.searchUser,
         method: Method.POST,
         reqBody: requestBody,);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       searchUserModel = SearchUserModel.fromJson(response);
       // emit(ChannelListInitial());
     }
@@ -251,7 +251,7 @@ bool isLoading = false;
         endPoint: ApiString.removeFromFavorite,
         method: Method.POST,
         reqBody: requestBody);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       getFavoriteList();
       getChannelList();
       getDirectMessageList();
@@ -270,7 +270,7 @@ bool isLoading = false;
     final response = await ApiService.instance.request(
         endPoint: ApiString.removeFromChannelFromFavorite + favoriteChannelID,
         method: Method.PUT,);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       getFavoriteList();
       getChannelList();
       getDirectMessageList();
@@ -293,7 +293,7 @@ bool isLoading = false;
         endPoint: isForMute == false ? ApiString.muteUser : ApiString.unMuteUser,
         method: Method.POST,
         reqBody: isForMute == false ? requestBodyForMuteUser : requestBodyForUnMuteUser);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       getFavoriteList();
       getChannelList();
       getDirectMessageList();
@@ -305,7 +305,7 @@ bool isLoading = false;
     required String conversationUserId,
     required bool isCalledForFav,
   }) async {
-    print("userId>>>${signInModel.data?.user?.id}");
+    // print("userId>>>${signInModel.data?.user?.id}");
     final requestBodyForFav = {
       "userId": signInModel.data!.user!.id,
       "conversationUserId": conversationUserId,
@@ -319,7 +319,7 @@ bool isLoading = false;
         endPoint: ApiString.closeConversation,
         method: Method.POST,
         reqBody: isCalledForFav ? requestBodyForFav : requestBodyNonFav);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       await getFavoriteList();
       await getChannelList();
       await getDirectMessageList();
@@ -351,13 +351,13 @@ Future<void> leaveChannel({
   required String channelId,
   bool isFromMembersScreen = false,
 }) async {
-  print("userId>>>${signInModel.data?.user?.id}");
+  // print("userId>>>${signInModel.data?.user?.id}");
   final response = await ApiService.instance.request(
       endPoint: ApiString.leaveChannel + channelId,
       method: Method.PUT
   );
 
-  if (statusCode200Check(response)) {
+  if (Cf.instance.statusCode200Check(response)) {
     if(isFromMembersScreen) {
       Navigator.pushAndRemoveUntil(
         navigatorKey.currentState!.context,
@@ -387,7 +387,7 @@ Future<void> leaveChannel({
         endPoint: isCallForReadMessage ? "${ApiString.messageSeen}$oppositeUserId/chat" : ApiString.messageUnread + oppositeUserId,
         method: Method.PUT,
         reqBody: requestBody);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       await getFavoriteList();
       await getChannelList();
       await getDirectMessageList();
@@ -400,11 +400,11 @@ Future<void> leaveChannel({
     required String oppositeUserId,
     required bool isCallForReadMessage
   }) async {
-    print("isCallForReadMessage>>> $isCallForReadMessage");
+    // print("isCallForReadMessage>>> $isCallForReadMessage");
     final response = await ApiService.instance.request(
         endPoint: isCallForReadMessage ? "${ApiString.readChannelMessage(oppositeUserId)}" : ApiString.unReadChannelMessage(oppositeUserId),
         method: isCallForReadMessage ? Method.GET : Method.PUT,);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       await getFavoriteList();
       await getChannelList();
       await getDirectMessageList();
@@ -426,7 +426,7 @@ Future<void> addUserToFavorite({
         endPoint: ApiString.addTOFavorite,
         method: Method.POST,
                 reqBody: requestBody);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
           getFavoriteList();
           getChannelList();
           getDirectMessageList();
@@ -444,7 +444,7 @@ Future<void> addChannelToFavorite({
     final response = await ApiService.instance.request(
         endPoint: ApiString.addChannelTOFavorite + channelId,
         method: Method.PUT,);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
           getFavoriteList();
           getChannelList();
           getDirectMessageList();
@@ -464,7 +464,7 @@ Future<void> addChannelToFavorite({
         method: Method.POST,
         reqBody: isMutedChannel ? unMuteBody : muteBody,
         );
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
         if (isMutedChannel) {
           signInModel.data?.user?.muteChannels?.remove(channelId);
         } else {
@@ -501,13 +501,12 @@ Future<void> toggleAdminAndMember(
       Uri.parse(
           ApiString.baseUrl + ApiString.toggleAdminAndMember(channelId)));
   request.body = json.encode({"memberId": userId});
-  print(
-      "URL = ${ApiString.baseUrl + ApiString.toggleAdminAndMember(channelId)}");
-  print("memberId: $userId");
+  // print("URL = ${ApiString.baseUrl + ApiString.toggleAdminAndMember(channelId)}");
+  // print("memberId: $userId");
   request.headers.addAll(headers);
 
   http.StreamedResponse response = await request.send();
-  print("response =${response.statusCode}");
+  // print("response =${response.statusCode}");
   if (response.statusCode == 200) {
     await Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false).getChannelMembersList(channelId);
     socketProvider.memberAdminToggleSC(response: {
@@ -533,23 +532,22 @@ Future<void> removeMember(
       'PUT',
       Uri.parse(
           ApiString.baseUrl + ApiString.removeMember(channelId, userId)));
-  print(
-      "URL = ${ApiString.baseUrl + ApiString.removeMember(channelId, userId)}");
+  // print("URL = ${ApiString.baseUrl + ApiString.removeMember(channelId, userId)}");
   request.headers.addAll(headers);
 
   http.StreamedResponse response = await request.send();
-  print("response status code =${response.statusCode}");
+  // print("response status code =${response.statusCode}");
   
   if (response.statusCode == 200) {
     final responseString = await response.stream.bytesToString();
     final responseData = json.decode(responseString);
-    print("Response data: $responseData");
+    // print("Response data: $responseData");
     List<String> memberIds = [];
     // Extract and print member IDs
     if (responseData['data'] != null && responseData['data']['members'] != null) {
       final members = responseData['data']['members'] as List;
       memberIds = members.map((member) => member['id'].toString()).toList();
-      print("Member IDs: $memberIds");
+      // print("Member IDs: $memberIds");
     }
     
     await channelChatProvider.getChannelMembersList(channelId);
@@ -586,12 +584,12 @@ Future<void> renameChannel({
     "isPrivate": isPrivate,
     "description": description
   });
-  print("URL = ${ApiString.baseUrl + ApiString.renameChannel(channelId)}");
-  print("Request Body: ${request.body}");
+  // print("URL = ${ApiString.baseUrl + ApiString.renameChannel(channelId)}");
+  // print("Request Body: ${request.body}");
   request.headers.addAll(headers);
 
   http.StreamedResponse response = await request.send();
-  print("response =${response.statusCode}");
+  // print("response =${response.statusCode}");
   if (response.statusCode == 200) {
     channelChatProvider.getChannelInfo?.data?.name = name;
     channelChatProvider.getChannelChatApiCall(channelId: channelId, pageNo: 1);
@@ -613,10 +611,10 @@ void combineAllLists() {
       String timestamp = '';
       if (item.latestMessageCreatedAt != null && item.latestMessageCreatedAt!.isNotEmpty) {
         timestamp = item.latestMessageCreatedAt!;
-        print("Favorite User ${item.username}: Using latestMessageCreatedAt: $timestamp");
+        // print("Favorite User ${item.username}: Using latestMessageCreatedAt: $timestamp");
       } else {
         timestamp = item.updatedAt ?? item.lastActiveTime ?? item.createdAt ?? '';
-        print("Favorite User ${item.username}: No latestMessageCreatedAt, using: $timestamp");
+        // print("Favorite User ${item.username}: No latestMessageCreatedAt, using: $timestamp");
       }
       
       combinedAllItems.add({
@@ -635,10 +633,10 @@ void combineAllLists() {
       String timestamp = '';
       if (item.lastMessage != null && item.lastMessage!.isNotEmpty) {
         timestamp = item.lastMessage!;
-        print("Favorite Channel ${item.name}: Using lastMessage: $timestamp");
+        // print("Favorite Channel ${item.name}: Using lastMessage: $timestamp");
       } else {
         timestamp = item.updatedAt ?? item.createdAt ?? '';
-        print("Favorite Channel ${item.name}: No lastMessage, using: $timestamp");
+        // print("Favorite Channel ${item.name}: No lastMessage, using: $timestamp");
       }
       
       combinedAllItems.add({
@@ -662,10 +660,10 @@ void combineAllLists() {
         String timestamp = '';
         if (item.lastmessage?.createdAt != null && item.lastmessage!.createdAt!.isNotEmpty) {
           timestamp = item.lastmessage!.createdAt!;
-          print("Channel ${item.name}: Using lastmessage timestamp: $timestamp");
+          // print("Channel ${item.name}: Using lastmessage timestamp: $timestamp");
         } else {
           timestamp = item.updatedAt ?? item.createdAt ?? '';
-          print("Channel ${item.name}: No lastmessage, using: $timestamp");
+          // print("Channel ${item.name}: No lastmessage, using: $timestamp");
         }
         
         combinedAllItems.add({
@@ -690,10 +688,10 @@ void combineAllLists() {
         String timestamp = '';
         if (item.latestMessageCreatedAt != null && item.latestMessageCreatedAt!.isNotEmpty) {
           timestamp = item.latestMessageCreatedAt!;
-          print("DM ${item.username}: Using latestMessageCreatedAt: $timestamp");
+          // print("DM ${item.username}: Using latestMessageCreatedAt: $timestamp");
         } else {
           timestamp = item.updatedAt ?? item.lastActiveTime ?? item.createdAt ?? '';
-          print("DM ${item.username}: No latestMessageCreatedAt, using: $timestamp");
+          // print("DM ${item.username}: No latestMessageCreatedAt, using: $timestamp");
         }
         
         combinedAllItems.add({
@@ -732,7 +730,7 @@ void combineAllLists() {
     } else {
       name = item['data'].username ?? 'Unknown user';
     }
-    print("Final order #$i: $name - ${item['timestamp']}");
+    // print("Final order #$i: $name - ${item['timestamp']}");
   }
   
   notifyListeners();
@@ -740,14 +738,14 @@ void combineAllLists() {
 
 // Call this method after refreshes or app start
 Future<void> refreshAllLists() async {
-  print("Refreshing all lists...");
+  // print("Refreshing all lists...");
   await getFavoriteList();
   await getChannelList();
   await getDirectMessageList();
   
   // Make sure to combine lists explicitly after all are fetched
   combineAllLists();
-  print("All lists refreshed and combined.");
+  // print("All lists refreshed and combined.");
 }
 
 }

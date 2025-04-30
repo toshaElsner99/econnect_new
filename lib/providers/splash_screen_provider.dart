@@ -11,7 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../main.dart';
-import '../utils/api_service/api_service.dart';
 import '../utils/api_service/api_string_constants.dart';
 import '../utils/app_image_assets.dart';
 import '../utils/app_preference_constants.dart';
@@ -36,7 +35,7 @@ class SplashProvider extends ChangeNotifier {
             NotificationService.pendingNotification!.isNotEmpty && 
             (NotificationService.pendingNotification!.containsKey('type') && 
             NotificationService.pendingNotification!.containsKey('senderId'))) {
-          pushReplacement(screen: const HomeScreen());
+          Cf.instance.pushReplacement(screen: const HomeScreen());
           // Delay notification processing to ensure app is fully initialized
           Timer(const Duration(milliseconds: 300), () {
             try {
@@ -51,12 +50,12 @@ class SplashProvider extends ChangeNotifier {
             }
           });
         } else {
-          pushReplacement(screen: const HomeScreen());
+          Cf.instance.pushReplacement(screen: const HomeScreen());
           // Check user status and update to online if not busy/dnd
           _checkAndUpdateUserStatus();
         }
       } else {
-        pushReplacement(screen: const SignInScreen());
+        Cf.instance.pushReplacement(screen: const SignInScreen());
       }
     });
     notifyListeners();
@@ -145,10 +144,10 @@ class SplashProvider extends ChangeNotifier {
               children: [
                 Image.asset(Platform.isAndroid ? AppImage.playStoreIcon : AppImage.appStoreIcon, height: 20, width: 20),
                 const SizedBox(width: 10),
-                commonText(text: 'Update Required', fontSize: 17),
+                Cw.instance.commonText(text: 'Update Required', fontSize: 17),
               ],
             ),
-            content: commonText(
+            content: Cw.instance.commonText(
               text: isForceUpdate
                   ? 'A new version of the app is available. Please update to continue using the app.'
                   : 'A new version of the app is available. Would you like to update now?',
@@ -168,11 +167,11 @@ class SplashProvider extends ChangeNotifier {
                   if (isForceUpdate) {
                     exit(0);
                   } else {
-                    pop();
+                    Cf.instance.pop();
                     whereToGO();
                   }
                 },
-                child: commonText(
+                child: Cw.instance.commonText(
                   text: isForceUpdate ? 'Cancel' : "Later",
                   fontSize: 15,
                   color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white :Colors.black,
@@ -190,7 +189,7 @@ class SplashProvider extends ChangeNotifier {
                   ),
                 ),
                 onPressed: () => openStore(),
-                child: commonText(text: 'Update', fontSize: 15, color: Colors.white, fontWeight: FontWeight.w600),
+                child: Cw.instance.commonText(text: 'Update', fontSize: 15, color: Colors.white, fontWeight: FontWeight.w600),
               ),
             ],
           ),

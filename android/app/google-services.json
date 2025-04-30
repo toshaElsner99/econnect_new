@@ -12,7 +12,20 @@
           "package_name": "com.elsner.econnect"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "846703694175-brg6nlb0sm7niejuqh9mromcqmiur6l4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.elsner.econnect",
+            "certificate_hash": "9aec683e1ca32628583e471d16acfe1396d11a00"
+          }
+        },
+        {
+          "client_id": "846703694175-81vl8ltd6aqh4kou1kqhc8t9artgti1f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDjf7yu7oh_yKOHq_f3avgT3SjY50yT2io"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "846703694175-81vl8ltd6aqh4kou1kqhc8t9artgti1f.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "846703694175-ptv25v02pjmcg5vi3c7kufknbha4d5ec.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.elsner.econnectApp"
+              }
+            }
+          ]
         }
       }
     }

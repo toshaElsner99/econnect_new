@@ -40,8 +40,8 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
-        leading: commonBackButton(),
-        title:  commonText(
+        leading: Cw.instance.commonBackButton(),
+        title:  Cw.instance.commonText(
           text : 'New Channel',
             fontSize: 20,
         ),
@@ -55,10 +55,10 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                   description: _descriptionController.text.trim(),
                 );
               }else {
-                commonShowToast("Add channel name to proceed");
+                Cw.instance.commonShowToast("Add channel name to proceed");
               }
             },
-            child:  commonText(
+            child:  Cw.instance.commonText(
               text : 'CREATE',
                 color: Colors.white,
                 fontSize: 16,
@@ -84,7 +84,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
 
               KeyboardActions(
                 disableScroll: true,
-                config: keyboardConfigIos(purposeNode),
+                config: Cw.instance.keyboardConfigIos(purposeNode),
                 child: _buildInputField(
                   controller: _purposeController,
                   focusNode: purposeNode,
@@ -128,7 +128,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
                 size: 24,
               ),
               const SizedBox(width: 16),
-              commonText(
+              Cw.instance.commonText(
                 text : 'Make Private',
                   fontSize: 16,
               ),

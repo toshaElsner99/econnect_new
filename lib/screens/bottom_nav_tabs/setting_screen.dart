@@ -79,7 +79,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       color: AppColor.redColor.withOpacity(0.4),
                     ),
                   ),
-                  child: IconButton(onPressed: () => pop(), icon: Icon(Icons.close,color: Colors.white,)),
+                  child: IconButton(onPressed: () => Cf.instance.pop(), icon: Icon(Icons.close,color: Colors.white,)),
                 );
   }
 
@@ -99,16 +99,16 @@ class _SettingScreenState extends State<SettingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          commonImageHolder(radius: 50),
+          Cw.instance.commonImageHolder(radius: 50),
           const SizedBox(height: 16),
-          commonText(
+          Cw.instance.commonText(
             text: signInModel.data?.user?.fullName ?? signInModel.data?.user?.username ?? "",
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
           const SizedBox(height: 8),
-          commonText(
+          Cw.instance.commonText(
             text: "@${signInModel.data?.user?.username}",
             color: Colors.white.withOpacity(0.7),
             fontSize: 14,
@@ -139,11 +139,11 @@ class _SettingScreenState extends State<SettingScreen> {
     print("STATUSS >>> ${commonProvider.getUserModel?.data?.user!.status!}");
     return _buildTile(
       onTap: () => _showStatusBottomSheet(context),
-      leading: getCommonStatusIcons(
+      leading: Cw.instance.getCommonStatusIcons(
         status: "${commonProvider.getUserModel?.data?.user!.status!}",
         assetIcon: false,
       ),
-      title: capitalizeFirstLetter("${commonProvider.getUserModel?.data?.user!.status!}"),
+      title: Cf.instance.capitalizeFirstLetter("${commonProvider.getUserModel?.data?.user!.status!}"),
     );
   }
 
@@ -175,7 +175,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Widget _buildProfileTile() {
     return GestureDetector(
-      onTap: () => commonProfilePreview(context),
+      onTap: () => Cw.instance.commonProfilePreview(context),
       child: _buildTile(
         leading: Image.asset(AppImage.person,width: 22,height: 22,color:  Colors.white.withOpacity(0.8),),
         title: AppString.profile,
@@ -193,7 +193,7 @@ class _SettingScreenState extends State<SettingScreen> {
         width: 24,
         color: AppPreferenceConstants.themeModeBoolValueGet
             ? Colors.white
-            : AppColor.borderColor,
+            : AppColor.white,
       ),
       title: AppString.themMode,
       trailing: Transform.scale(
@@ -209,15 +209,15 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Widget _buildLogoutTile() {
     return _buildTile(
-      onTap: ()=> showLogoutDialog(context),
+      onTap: ()=> Cw.instance.showLogoutDialog(context),
       leading: Image.asset(
         AppImage.logOut,
         height: 24,
         width: 24,
-        color: AppColor.redColor.withOpacity(0.8),
+        color: AppColor.white.withOpacity(0.8),
       ),
       title: AppString.logout,
-      textColor: AppColor.redColor,
+      textColor: AppColor.white,
     );
   }
 
@@ -239,7 +239,7 @@ class _SettingScreenState extends State<SettingScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: commonText(
+              child: Cw.instance.commonText(
                 text: title,
                 color: textColor ?? Colors.white.withOpacity(0.9),
                 fontSize: 15,
@@ -287,7 +287,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 // Status text
                 Padding(
                   padding: EdgeInsets.only(left: 16, bottom: 16),
-                  child: commonText(
+                  child: Cw.instance.commonText(
                     text: AppString.status,
                     color: Colors.black,
                     fontSize: 24,
@@ -354,7 +354,7 @@ class _SettingScreenState extends State<SettingScreen> {
       }) {
     return InkWell(
       onTap: () {
-        pop();
+        Cf.instance.pop();
         commonProvider.updateStatusCall(status: index == 0 ? AppString.online.toLowerCase() : index == 1 ? AppString.away.toLowerCase() : index == 2 ? AppString.busy.toLowerCase() : index == 3 ? AppString.dnd.toLowerCase() : AppString.offline.toLowerCase());
       },
       child: Padding(
@@ -363,7 +363,7 @@ class _SettingScreenState extends State<SettingScreen> {
           children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(width: 16),
-            commonText(
+            Cw.instance.commonText(
               text: text,
               color: Colors.black,
               fontSize: 16,

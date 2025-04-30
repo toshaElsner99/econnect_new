@@ -51,14 +51,14 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
               onPressed: () => Navigator.pop(context),
             ),
             titleSpacing: 0,
-            title: commonText(text: 'Direct Messages', fontSize: 20,),
+            title: Cw.instance.commonText(text: 'Direct Messages', fontSize: 20,),
           ),
           body: Column(
             children: [
               // Search Field
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: commonTextFormField(
+                child: Cw.instance.commonTextFormField(
                   focusNode: node,
                   controller: _searchController,
                   hintText: 'Search names',
@@ -72,14 +72,14 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
                 child: Container(
                     margin: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
                     alignment: Alignment.centerLeft,
-                    child: commonText(text: "${channelListProvider.getUserSuggestions?.data?.suggestions?.length ?? 0} of ${channelListProvider.getUserSuggestions?.data?.totalUsers ?? 0} members")),
+                    child: Cw.instance.commonText(text: "${channelListProvider.getUserSuggestions?.data?.suggestions?.length ?? 0} of ${channelListProvider.getUserSuggestions?.data?.totalUsers ?? 0} members")),
               ) :
               Visibility(
                 visible: channelListProvider.searchUserModel != null,
                 child: Container(
                     margin: EdgeInsets.symmetric(horizontal: 20,vertical: 20),
                     alignment: Alignment.centerLeft,
-                    child: commonText(text: "${channelListProvider.searchUserModel?.data?.totalSearchResults} of ${channelListProvider.searchUserModel?.data?.totalUsers} members")),
+                    child: Cw.instance.commonText(text: "${channelListProvider.searchUserModel?.data?.totalSearchResults} of ${channelListProvider.searchUserModel?.data?.totalUsers} members")),
               ),
 
 
@@ -94,7 +94,7 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
 
                       if (users == null || users.isEmpty) {
                         return Center(
-                          child: commonText(
+                          child: Cw.instance.commonText(
                             text: 'No users found',
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -118,13 +118,13 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      commonText(
+                                      Cw.instance.commonText(
                                         text: user.username ?? "",
                                         fontSize: 15,
                                         fontWeight: FontWeight.w800,
                                       ),
                                       SizedBox(height: 4,),
-                                      commonText(
+                                      Cw.instance.commonText(
                                         text: user.email ?? "",
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,
@@ -136,8 +136,7 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
                               ],
                             ),
                             onTap: () {
-                              print("tapped>>>> ${user.username} ${user.sId} ");
-                              pushReplacement(screen: SingleChatMessageScreen(userName: user.username ?? "", oppositeUserId: user.sId ?? "",needToCallAddMessage: true,)
+                              Cf.instance.pushReplacement(screen: SingleChatMessageScreen(userName: user.username ?? "", oppositeUserId: user.sId ?? "",needToCallAddMessage: true,)
                               );},
                           );
                         },
@@ -156,7 +155,7 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
 
                       if (users == null || users.isEmpty) {
                         return Center(
-                          child: commonText(
+                          child: Cw.instance.commonText(
                             text: 'No users found',
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -180,13 +179,13 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      commonText(
+                                      Cw.instance.commonText(
                                         text: user.username ?? "",
                                         fontSize: 15,
                                         fontWeight: FontWeight.w800,
                                       ),
                                       SizedBox(height: 4,),
-                                      commonText(
+                                      Cw.instance.commonText(
                                         text: user.email ?? "",
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,
@@ -199,8 +198,7 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
                             ),
 
                             onTap: () {
-                              print("tapped>>>> ${user.username} ${user.userId} ");
-                              pushReplacement(screen: SingleChatMessageScreen(userName: user.username ?? "", oppositeUserId: user.userId ?? "",needToCallAddMessage: true)
+                              Cf.instance.pushReplacement(screen: SingleChatMessageScreen(userName: user.username ?? "", oppositeUserId: user.userId ?? "",needToCallAddMessage: true)
                               );},
                           );
                         },

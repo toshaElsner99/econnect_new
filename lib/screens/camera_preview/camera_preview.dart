@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-// import 'package:picker_pro_max_ultra/media_picker_widget.dart';
 import 'package:video_player/video_player.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -365,11 +363,11 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       appBar: AppBar(
         toolbarHeight: 35,
         backgroundColor: Colors.black,
-        leading: commonBackButton(),
+        leading: Cw.instance.commonBackButton(),
         centerTitle: true,
         title: Visibility(
           visible: _isVideoMode,
-          child: commonText(text: "3:00", color: Colors.white)
+          child: Cw.instance.commonText(text: "3:00", color: Colors.white)
         ),
         actions: [
           if (cameras != null && cameras!.length > 1)
@@ -476,7 +474,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                                     ),
                                   ),
                                 ),
-                                commonText(text: !_isVideoMode ? "CAPTURE" : "RECORD",color: Colors.white,fontSize: 13)
+                                Cw.instance.commonText(text: !_isVideoMode ? "CAPTURE" : "RECORD",color: Colors.white,fontSize: 13)
                               ],
                             ),
                           ),

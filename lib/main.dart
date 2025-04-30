@@ -8,7 +8,6 @@ import 'package:e_connect/providers/sign_in_provider.dart';
 import 'package:e_connect/providers/splash_screen_provider.dart';
 import 'package:e_connect/providers/thread_provider.dart';
 import 'package:e_connect/screens/bottom_navigation_screen/bottom_navigation_screen_cubit.dart';
-import 'package:e_connect/screens/channel/channel_chat_screen.dart';
 import 'package:e_connect/screens/splash_screen/splash_screen.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
@@ -20,19 +19,16 @@ import 'package:e_connect/utils/loading_widget/loading_widget.dart';
 import 'package:e_connect/utils/network_connectivity/network_connectivity.dart';
 import 'package:e_connect/utils/theme/theme_cubit.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:oktoast/oktoast.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'model/sign_in_model.dart';
 import 'notificationServices/pushNotificationService.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 late SignInModel signInModel;
-/// CLear Notification Class ///
 /// Global App Lifecycle Observer
 class AppLifecycleObserver with WidgetsBindingObserver {
   static final AppLifecycleObserver _instance = AppLifecycleObserver._internal();
@@ -87,7 +83,7 @@ class AppLifecycleObserver with WidgetsBindingObserver {
         // App is terminated
         commonProvider.updateStatusCall(status: AppString.offline.toLowerCase());
         // Provider.of<SocketIoProvider>(context, listen: false).dispose();
-        print("App is terminating...");
+        // print("App is terminating...");
         break;
         
       default:
@@ -103,8 +99,6 @@ Future<void> main() async {
   await NotificationService.initializeNotifications();
   await NotificationService.clearAllNotifications();
 
-  // await NotificationService.registerFirebaseListeners();
-  // NotificationService.requestPermissions();
   await Permission.notification.isDenied.then(
     (bool value) {
       if (value) {
@@ -117,7 +111,10 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  AppLifecycleObserver().startObserving();
+  final isLoggedIn = await getBool(AppPreferenceConstants.isLoginPrefs) ?? false;
+  if(isLoggedIn){
+    AppLifecycleObserver().startObserving();
+  }
   runApp(const MyApp());
 }
 
@@ -141,7 +138,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SocketIoProvider()),
         ChangeNotifierProvider(create: (_) => SocketIoProvider()),
         ChangeNotifierProvider(create: (_) => ChannelChatProvider()),
         ChangeNotifierProvider(create: (_) => LoadingProvider()),
@@ -167,7 +163,11 @@ class MyApp extends StatelessWidget {
             navigatorKey: navigatorKey,
             home: const SplashScreen(),
             builder: (context, child) {
-              return Loading(child: child!);
+              final mediaQuery = MediaQuery.of(context);
+              return MediaQuery(
+                data: mediaQuery.copyWith(textScaler: const TextScaler.linear(1.0), boldText: false),
+                child: Loading(child: child!),
+              );
             },
           );
         },),

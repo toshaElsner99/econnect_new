@@ -122,7 +122,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     _record = AudioRecorder();
     bool hasPermission = await _record.hasPermission();
     if (!hasPermission) {
-      print("Recording permission denied!");
+      // print("Recording permission denied!");
     }
   }
 
@@ -162,7 +162,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         _showAudioPreview = true;
         _previewAudioPath = path;
       });
-      print("Recording saved at: $_audioPath");
+      // print("Recording saved at: $_audioPath");
     } else {
       if (await _record.hasPermission()) {
         final path = await _getFilePath();
@@ -194,7 +194,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       try {
         final uploadedFiles =
             await chatProvider.uploadFilesForAudio([_audioPath!]);
-        print("uploadFiles>>>> $uploadedFiles");
+        // print("uploadFiles>>>> $uploadedFiles");
         // Send the message with the uploaded files
         await chatProvider.sendMessage(
           content: "",
@@ -209,7 +209,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           _recordingDuration = Duration.zero;
         });
       } catch (e) {
-        print("Error sending audio message: $e");
+        // print("Error sending audio message: $e");
         // You might want to show an error message to the user here
       }
     }
@@ -248,7 +248,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   initializeScreen(int pageNo,bool isfromJump,String msgGroup,String msgId){
     scrollController.addListener(() {_saveScrollPosition();});
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      print("inside post frame $oppositeUserId");
+      // print("inside post frame $oppositeUserId");
       messageGroupId = msgGroup;
       messageId = msgId;
       
@@ -257,7 +257,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       
       socketProvider.userTypingEvent(oppositeUserId: oppositeUserId, isReplyMsg: false, isTyping: 0,);
       _fetchAndCacheUserDetails();
-      print("oppositeUserId in init==> ${oppositeUserId}");
+      // print("oppositeUserId in init==> ${oppositeUserId}");
       if(!isfromJump) {
         /// this is for pagination ///
         pagination(oppositeUserId: oppositeUserId);
@@ -356,7 +356,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
   void jumpToMessage({required List<MessageGroups> sortedGroups,required String messageGroupId,required String messageId}){
     if(Provider.of<ChatProvider>(context,listen: false).idChatListLoading == false){
-      print("messageGroupId $messageGroupId");
+      // print("messageGroupId $messageGroupId");
       // log("messageGroupId $sortedGroups");
       final  index = sortedGroups.indexWhere((test)=> test.sId == messageGroupId.split(" ")[0]);
       final msgIndex = sortedGroups[index].messages!.indexWhere((element) => element.sId == messageId);
@@ -368,40 +368,40 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
       Map<String, String> messages = {};
       for(var group in sortedGroups.reversed) {
-        print("Date = ${group.sId}");
+        // print("Date = ${group.sId}");
         List<Messages> perGroupMessages = (group.messages ?? [])
           ..sort((a, b) => a.createdAt!.compareTo(b.createdAt!));
         for (var msg in perGroupMessages){
-          print("msg = ${msg.content}");
+          // print("msg = ${msg.content}");
           // messages.addAll({msg.id! : msg.content!});
           messages[msg.sId!] = msg.content!;
-          print("INdex in loop =${messages.keys.toList().indexOf(msg.sId!)}");
+          // print("INdex in loop =${messages.keys.toList().indexOf(msg.sId!)}");
         }
       }
-      print("messages = ${messages.length}");
+      // print("messages = ${messages.length}");
       int newIndex = messages.keys.toList().indexOf(messageId);
-      print("Single Chat New Index $newIndex");
+      // print("Single Chat New Index $newIndex");
       if (newIndex != -1) {
         double itemHeight; // Approximate height of each message
         if(newIndex >= (messages.length-5)  && newIndex <= (messages.length-1)){
           itemHeight = 0;
-          print("itemHeight1 = $itemHeight");
+          // print("itemHeight1 = $itemHeight");
         }else if(newIndex >= (messages.length-10)  && newIndex <= (messages.length-4)){
           itemHeight = 5;
-          print("itemHeight2 = $itemHeight");
+          // print("itemHeight2 = $itemHeight");
         }else if(newIndex >= (messages.length-15)  && newIndex <= (messages.length-9)){
           itemHeight = 40;
-          print("itemHeight3 = $itemHeight");
+          // print("itemHeight3 = $itemHeight");
         }else if(newIndex >= (messages.length-20)  && newIndex <= (messages.length-16)){
           itemHeight = 60;
-          print("itemHeight4 = $itemHeight");
+          // print("itemHeight4 = $itemHeight");
         }else{
           itemHeight = 120;
-          print("itemHeight5 = $itemHeight");
+          // print("itemHeight5 = $itemHeight");
         }
         final messagesInPage = (messages.length) - (newIndex % (messages.length));
         final targetPosition = messagesInPage * itemHeight;
-        print("targetPosition = $targetPosition");
+        // print("targetPosition = $targetPosition");
         // Scroll to the message with animation
         scrollController.animateTo(
           targetPosition,
@@ -475,7 +475,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   height: 1,
                 ),
                 if(chatProvider.idChatListLoading || commonProvider.isLoadingGetUser || reloading)...{
-                  Flexible(child: ShimmerLoading.chatShimmer(context))
+                  Flexible(child: ShimmerLoading.instance.chatShimmer(context))
                 }else...{
                   if(userDetails != null && chatProvider.messageGroups.isEmpty )...{
                     Expanded(
@@ -545,7 +545,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         child: IconButton(
           icon: Icon(CupertinoIcons.back, color: Colors.white),
           onPressed: () {
-            pop();
+            Cf.instance.pop();
             // if(widget.isFromNotification ?? false) {
             //   pushAndRemoveUntil(screen: HomeScreen());
             // }else{
@@ -566,7 +566,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           Row(
             children: [
               Flexible(
-                child: commonText(
+                child: Cw.instance.commonText(
                   text: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -585,17 +585,17 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              getCommonStatusIcons(
+              Cw.instance.getCommonStatusIcons(
                 size: 15,
                 status: userDetails?.data?.user?.status ?? "offline",
                 assetIcon: false,
               ),
               const SizedBox(width: 5),
               Flexible(
-                child: commonText(
+                child: Cw.instance.commonText(
                   text: (oppositeUserId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1 && chatProvider.isTypingFor == false)
                       ? "Typing..."
-                      : getLastOnlineStatus(
+                      : Cf.instance.getLastOnlineStatus(
                     userDetails?.data?.user?.status ?? ".....",
                     userDetails?.data?.user?.lastActiveTime,
                   ),
@@ -624,7 +624,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
               /// Pinned Messages & Navigation
               GestureDetector(
-                onTap: () => pushScreen(
+                onTap: () => Cf.instance.pushScreen(
                   screen: PinnedPostsScreen(
                     userName: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
                     oppositeUserId: oppositeUserId,
@@ -633,7 +633,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 ),
                 child: Row(
                   children: [
-                    commonText(
+                    Cw.instance.commonText(
                       text: "${commonProvider.getUserModelSecondUser?.data?.user?.pinnedMessageCount ?? 0}",
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -648,7 +648,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
               /// File & Navigation
               GestureDetector(
-                onTap: () => pushScreen(
+                onTap: () => Cf.instance.pushScreen(
                   screen: FilesListingScreen(
                       userName: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
                       oppositeUserId: oppositeUserId
@@ -664,21 +664,21 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         IconButton(
           icon: const Icon(Icons.search, color: AppColor.whiteColor),
           onPressed: () {
-            pushScreen(screen: FindMessageScreen()).then((value) {
-              print("value>>> $value");
+            Cf.instance.pushScreen(screen: FindMessageScreen()).then((value) {
+              // print("value>>> $value");
               if(value != null){
                 if(!value['needToOpenChannelChat']){
                   // if(!(oppositeUserId == value['id'])){
                   setState(() {
                     oppositeUserId = signInModel.data!.user!.id == value['id'] ? value['oppositeUserID'] : value['id'] ;
-                    print("UserId ${oppositeUserId}");
+                    // print("UserId ${oppositeUserId}");
                     userName = signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'];
                     // NeedTocallJumpToMessage = true;
                     scrollController.dispose();
                     scrollController = ScrollController();
-                    print("PageNoooo ${value['pageNO']}");
-                    print("messageGroupId ${value['messageGroupId']}");
-                    print("messageId ${value['messageId']}");
+                    // print("PageNoooo ${value['pageNO']}");
+                    // print("messageGroupId ${value['messageGroupId']}");
+                    // print("messageId ${value['messageId']}");
                     initializeScreen(value['pageNO'],true,value['messageGroupId'],value['messageId']);
                     NeedTocallJumpToMessage = true;
                     isFromJump = true;
@@ -689,10 +689,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   // }
 
                 }else{
-                  print("Channel Id : ${value['channelId']}");
-                  pushReplacement(screen: ChannelChatScreen(channelId: value['channelId'] ?? "",isFromJump: true,jumpData: value));
+                  // print("Channel Id : ${value['channelId']}");
+                  Cf.instance.pushReplacement(screen: ChannelChatScreen(channelId: value['channelId'] ?? "",isFromJump: true,jumpData: value));
                 }
-                print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
+                // print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
               }
 
               // if(value != null){
@@ -721,7 +721,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         IconButton(
           icon: const Icon(Icons.more_vert, color: AppColor.whiteColor),
           onPressed: () {
-            showChatSettingsBottomSheet(userId: oppositeUserId);
+            Cw.instance.showChatSettingsBottomSheet(userId: oppositeUserId);
           },
         ),
       ],
@@ -729,7 +729,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
 
   sendMsg() async{
-    final plainText = _messageController.text.trim();
+    final plainText = Cf.instance.processContent(_messageController.text.trim());
     if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty || plainText.isNotEmpty) {
       if (fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty) {
         final filesOfList = await chatProvider.uploadFiles(AppString.singleChat);
@@ -803,7 +803,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   link: _layerLink,
                                   child: KeyboardActions(
                                     disableScroll: true,
-                                    config: keyboardConfigIos(_focusNode),
+                                    config: Cw.instance.keyboardConfigIos(_focusNode),
                                     child: TextField(
                                       maxLines: 5,
                                       minLines: 1,
@@ -915,7 +915,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         GestureDetector(
                           onTap: () {
                             _focusNode.unfocus();
-                            pushScreen(screen: CameraScreen(screenName: AppString.singleChat,));
+                            Cf.instance.pushScreen(screen: CameraScreen(screenName: AppString.singleChat,));
                           },
                           child: Container(
                             margin: EdgeInsets.symmetric(horizontal: 5),
@@ -938,7 +938,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   ],
                 ),
               ),
-              selectedFilesWidget(screenName: AppString.singleChat),
+              Cw.instance.selectedFilesWidget(screenName: AppString.singleChat),
             ],
           ),
         ),
@@ -983,7 +983,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               }),
               _optionItem(context, Icons.camera_alt_outlined, "Camera", "Capture image and video",(){
                 // FileServiceProvider.instance.captureImageAndVideo(AppString.singleChat);
-                pushScreen(screen: CameraScreen(screenName: AppString.singleChat,));
+                Cf.instance.pushScreen(screen: CameraScreen(screenName: AppString.singleChat,));
               }),
             ],
           ),
@@ -1050,7 +1050,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             if(!isFromJump && value.totalPages > value.currentPagea) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: customLoading(),
+                child: Cw.instance.customLoading(),
               );
             }else if(value.totalPages == value.currentPagea){
               return ChatProfileHeader(
@@ -1083,8 +1083,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         color: AppColor.blueColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: commonText(
-                        text: formatDateTime(DateTime.parse(date)),
+                      child: Cw.instance.commonText(
+                        text: Cf.instance.formatDateTime(DateTime.parse(date)),
                         fontSize: 12,
                         color: AppColor.whiteColor,
                       ),
@@ -1162,7 +1162,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           children: [
             Visibility(
                 visible: (messageList.isSeen == false && userId != signInModel.data?.user?.id),
-                child: newMessageDivider()),
+                child: Cw.instance.newMessageDivider()),
             Visibility(
                 visible: pinnedMsg,
                 child: Padding(
@@ -1172,7 +1172,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                        child: commonText(text: "Pinned",color: AppColor.blueColor),
+                        child: Cw.instance.commonText(text: "Pinned",color: AppColor.blueColor),
                       ),
                     ],
                   ),
@@ -1185,13 +1185,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(
+                    child: Cw.instance.profileIconWithStatus(
                         userID: "${user?.data!.user!.sId}",
                         status: "${user?.data!.user!.status}",
                         otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',
                         radius: 17,
                         needToShowIcon: false,
-                        borderColor: AppColor.blueColor, userName: user?.data!.user!.username ?? user?.data!.user!.fullName
+                        borderColor: AppColor.blueColor, userName: user?.data?.user?.username ?? user?.data?.user?.fullName ?? ""
                     ),
                   )
                 } else ...{
@@ -1206,7 +1206,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            commonText(
+                            Cw.instance.commonText(
                                 height: 1.2,
                                 text:
                                 user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', fontWeight: FontWeight.bold),
@@ -1230,9 +1230,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             },
                             Padding(
                               padding: const EdgeInsets.only(left: 5.0),
-                              child: commonText(
+                              child: Cw.instance.commonText(
                                   height: 1.2,
-                                  text: formatTime(time), color: Colors.grey, fontSize: 12
+                                  text: Cf.instance.formatTime(time), color: Colors.grey, fontSize: 12
                               ),
                             ),
                           ],
@@ -1249,7 +1249,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: commonHTMLText(message: message),
+                                    child: Cw.instance.commonHTMLText(message: message),
                                   ),
 
                                   if (isEdited)
@@ -1270,7 +1270,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                               color: AppColor.borderColor,
                                             ),
                                             const SizedBox(width: 2),
-                                            commonText(
+                                            Cw.instance.commonText(
                                               text: "Edited",
                                               fontSize: 10,
                                               color: AppColor.borderColor,
@@ -1300,11 +1300,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                Cw.instance.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(
+                                    Cw.instance.profileIconWithStatus(
                                         userID: messageList.senderOfForward?.id ?? "" ,
                                         status: messageList.senderOfForward?.status ?? "offline",
                                         needToShowIcon: false,
@@ -1317,9 +1317,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          commonText(text: "${messageList.senderOfForward?.username}"),
+                                          Cw.instance.commonText(text: "${messageList.senderOfForward?.username}"),
                                           SizedBox(height: 3),
-                                          commonText(text: formatDateString("${messageList.forwardInfo?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          Cw.instance.commonText(text: Cf.instance.formatDateString("${messageList.forwardInfo?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),
@@ -1327,7 +1327,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 ),
                                 Visibility(
                                     visible: messageList.forwardInfo?.content != "",
-                                    child: commonHTMLText(message: "${messageList.forwardInfo?.content}")),
+                                    child: Cw.instance.commonHTMLText(message: "${messageList.forwardInfo?.content}")),
                                 Visibility(
                                   visible: messageList.forwardInfo?.files.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -1336,9 +1336,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                     physics: NeverScrollableScrollPhysics(),
                                     itemBuilder: (context, index) {
                                       final filesUrl = messageList.forwardInfo?.files[index];
-                                      String originalFileName = getFileName(messageList.forwardInfo!.files[index]);
-                                      String formattedFileName = formatFileName(originalFileName);
-                                      String fileType = getFileExtension(originalFileName);
+                                      String originalFileName = Cf.instance.getFileName(messageList.forwardInfo!.files[index]);
+                                      String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                                      String fileType = Cf.instance.getFileExtension(originalFileName);
                                       // print("FILENAME :- ${messageList.forwardInfo!.files[index]}");
                                       // print("FILENAME :- $originalFileName");
                                       // print("FILENAME :- $formattedFileName");
@@ -1346,7 +1346,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                           fileType.toLowerCase() == 'mp3' ||
                                           fileType.toLowerCase() == 'wav';
                                       if (isAudioFile) {
-                                        print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
+                                        // print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
                                         return AudioPlayerWidget(
                                           audioUrl: filesUrl ?? "",
                                           audioPlayers: _audioPlayers,
@@ -1366,12 +1366,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                         ),
                                         child: Row(
                                           children: [
-                                            getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                            Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                             SizedBox(width: 20,),
                                             Flexible(
                                                 flex: 10,
                                                 fit: FlexFit.loose,
-                                                child: commonText(text: formattedFileName,maxLines: 1)),
+                                                child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                             Spacer(),
                                             GestureDetector(
                                                 onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -1394,22 +1394,22 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           physics: NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
                             final filesUrl = messageList.files![index];
-                            print("File URL: $filesUrl");
-                            String originalFileName = getFileName(messageList.files![index]);
-                            print("Original File Name: $originalFileName");
-                            String formattedFileName = formatFileName(originalFileName);
-                            String fileType = getFileExtension(originalFileName);
-                            print("File Type: $fileType");
+                            // print("File URL: $filesUrl");
+                            String originalFileName = Cf.instance.getFileName(messageList.files![index]);
+                            // print("Original File Name: $originalFileName");
+                            String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                            String fileType = Cf.instance.getFileExtension(originalFileName);
+                            // print("File Type: $fileType");
 
                             // Check if file is audio
                             bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
                                 fileType.toLowerCase() == 'mp3' ||
                                 fileType.toLowerCase() == 'wav';
 
-                            print("Is Audio File: $isAudioFile");
+                            // print("Is Audio File: $isAudioFile");
 
                             if (isAudioFile) {
-                              print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
+                              // print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
                               return AudioPlayerWidget(
                                 audioUrl: filesUrl,
                                 audioPlayers: _audioPlayers,
@@ -1430,12 +1430,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                  Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                   SizedBox(width: 20),
                                   Flexible(
                                     flex: 10,
                                     fit: FlexFit.loose,
-                                    child: commonText(text: formattedFileName, maxLines: 1),
+                                    child: Cw.instance.commonText(text: formattedFileName, maxLines: 1),
                                   ),
                                   Spacer(),
                                   GestureDetector(
@@ -1459,15 +1459,15 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         visible: messageList.replies?.isNotEmpty ?? false,
                         child: GestureDetector(
                           onTap: () {
-                            print("Simple Passing = ${messageId.toString()}");
-                            pushScreen(screen:
+                            // print("Simple Passing = ${messageId.toString()}");
+                            Cf.instance.pushScreen(screen:
                             ReplyMessageScreen(
                               userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
                               messageId: messageId.toString(),
                               receiverId: oppositeUserId,
                             ),
                             ).then((value) {
-                              print("value>>> $value");
+                              // print("value>>> $value");
                               if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                                 for (var reply in messageList.replies!) {
                                   if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
@@ -1492,7 +1492,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                         Stack(
                                           clipBehavior: Clip.none,
                                           children: [
-                                            profileIconWithStatus(
+                                            Cw.instance.profileIconWithStatus(
                                               userName: messageList.repliesSenderInfo![0].username,
                                               userID: messageList.repliesSenderInfo![0].id,
                                               status: "",
@@ -1504,7 +1504,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                             if (messageList.repliesSenderInfo!.length > 1)
                                               Positioned(
                                                 left: 16,
-                                                child: profileIconWithStatus(
+                                                child: Cw.instance.profileIconWithStatus(
                                                   userName: messageList.repliesSenderInfo![0].username,
                                                   userID: messageList.repliesSenderInfo![1].id,
                                                   status: "",
@@ -1550,7 +1550,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   ),
                                 ),
 
-                                commonText(
+                                Cw.instance.commonText(
                                   text: "${messageList.replyCount} ${messageList.replyCount! > 1 ? 'replies' : 'reply'}",
                                   fontSize: 12,
                                   color: AppColor.borderColor,
@@ -1560,8 +1560,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 Flexible(
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
-                                    child: commonText(
-                                      text: getTimeAgo(
+                                    child: Cw.instance.commonText(
+                                      text: Cf.instance.getTimeAgo(
                                           (messageList.replies != null && messageList.replies!.isNotEmpty)
                                               ? messageList.replies!.last.createdAt.toString()
                                               : DateTime.now().toString()
@@ -1624,7 +1624,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                                   width: 1.5,
                                                 ),
                                               ),
-                                              child: profileIconWithStatus(
+                                              child: Cw.instance.profileIconWithStatus(
                                                   userID: visibleUsers[i] ?? "",
                                                   status: "",
                                                   needToShowIcon: false,
@@ -1650,7 +1650,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   spacing: 4,
                                   runSpacing: 4,
                                   alignment: WrapAlignment.start,
-                                  children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                  children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
                                     reaction.userId == signInModel.data?.user?.id &&
                                         reaction.emoji == entry.key);
@@ -1711,16 +1711,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 ),
                 Visibility(
                     visible: userDetails?.data?.user?.isLeft == false,
-                    child: popMenu2(context,
+                    child: Cw.instance.popMenu2(context,
                         isPinned: pinnedMsg,
                         hasAudioFile: (messageList.files?.any((file) {
-                          String fileType = getFileExtension(getFileName(file));
+                          String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
                           return fileType.toLowerCase() == 'm4a' || 
                                  fileType.toLowerCase() == 'mp3' || 
                                  fileType.toLowerCase() == 'wav';
                         }) ?? false) || 
                         (messageList.forwardInfo?.files.any((file) {
-                          String fileType = getFileExtension(getFileName(file));
+                          String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
                           return fileType.toLowerCase() == 'm4a' || 
                                  fileType.toLowerCase() == 'mp3' || 
                                  fileType.toLowerCase() == 'wav';
@@ -1728,14 +1728,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         onOpened: () {},
                         onClosed: () {},
                         onReact: () {
-                          showReactionBar(context, messageId.toString(), oppositeUserId, "Chat");
+                          Cw.instance.showReactionBar(context, messageId.toString(), oppositeUserId, "Chat");
                         },
                         isForwarded: messageList.isForwarded! ? false : true,
                         opened: false,
                         createdAt: messageList.createdAt!,
                         currentUserId: userId,
-                        onForward: ()=> pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,)),
-                        onReply: () => pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: oppositeUserId,)).then((value) {
+                        onForward: ()=> Cf.instance.pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: Cf.instance.formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,)),
+                        onReply: () => Cf.instance.pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: oppositeUserId,)).then((value) {
                           // print("value>>> $value");
                           if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                             for (var reply in messageList.replies!) {
@@ -1747,16 +1747,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           }
                         }),
                         onPin: () => chatProvider.pinUnPinMessage(receiverId: oppositeUserId, messageId: messageId.toString(), pinned: pinnedMsg = !pinnedMsg ),
-                        onCopy: () => copyToClipboard(context, parse(message).body?.text ?? ""),
+                        onCopy: () => Cf.instance.copyToClipboard(context, parse(message).body?.text ?? ""),
                         onEdit: () => setState(() {
                           _messageController.clear();
                           FocusScope.of(context).requestFocus(_focusNode);
                           int position = _messageController.text.length;
                           currentUserMessageId = messageId;
-                          print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
+                          // print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                           _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                         }),
-                        onDelete: () => deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: oppositeUserId)))),
+                        onDelete: () => Cw.instance.deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: oppositeUserId)))),
               ],
             ),
           ],
@@ -2014,9 +2014,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
 
     // Handle both Users object and special mention map
     String mentionText;
-    print("User type = ${user.runtimeType}");
+    // print("User type = ${user.runtimeType}");
     if (user is Users) { // Users from user_mention_model.dart
-      print("user = ${user.username}");
+      // print("user = ${user.username}");
       mentionText = '@${user.username} ';
     }else if (user is SecondUser) {
       mentionText = '@${user.username} ';
@@ -2025,8 +2025,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     } else if (user is User) {
       mentionText = '@${user.username} ';
     } else {
-      print("user = ${user.username}");
-      return; // Invalid user object
+      // print("user = ${user.username}");
+      return; // Invalid us er object
     }
 
     // Update the TextField with corrected mention text
@@ -2177,7 +2177,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
                         children: [
-                          profileIconWithStatus(
+                          Cw.instance.profileIconWithStatus(
                               userID: userId,
                               status: "",
                               needToShowIcon: false,
@@ -2226,36 +2226,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     );
   }
 
-  Future<Duration?> _getAudioDuration(String url) async {
-    try {
-      if (_audioDurations.containsKey(url)) {
-        return _audioDurations[url];
-      }
-
-      await _audioPlayer.setUrl("${ApiString.profileBaseUrl}$url");
-      final duration = _audioPlayer.duration;
-      if (duration != null) {
-        _audioDurations[url] = duration;
-      }
-      return duration;
-    } catch (e) {
-      print("Error getting audio duration: $e");
-      return null;
-    }
-  }
-
-  Future<void> _stopAllAudio() async {
-    // Stop the currently playing player if any
-    if (_currentlyPlayingPlayer != null) {
-      _currentlyPlayingPlayer!.stop();
-      setState(() => _currentlyPlayingPlayer = null);
-    }
-
-    // Stop all other players
-    for (var player in _audioPlayers.values) {
-      player.stop();
-    }
-  }
 
   void _handleAudioPlayback(String audioUrl, AudioPlayer player) {
     // If there's already an audio playing and it's different from the new one

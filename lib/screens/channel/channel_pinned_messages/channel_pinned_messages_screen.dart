@@ -37,7 +37,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: commonBackButton(),
+        leading: Cw.instance.commonBackButton(),
         bottom: PreferredSize(
           preferredSize: Size.zero,
           child: Divider(color: Colors.grey.shade800, height: 1),
@@ -45,10 +45,10 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            commonText(text: "Pinned Posts", fontSize: 16),
+            Cw.instance.commonText(text: "Pinned Posts", fontSize: 16),
             Padding(
               padding: const EdgeInsets.only(left: 5),
-              child: commonText(
+              child: Cw.instance.commonText(
                 text: " | ${widget.channelName}",
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -87,14 +87,14 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
               color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.appBarColor,
             ),
             const SizedBox(height: 16),
-            commonText(
+            Cw.instance.commonText(
               text: "No pinned posts yet",
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppColor.whiteColor,
             ),
             const SizedBox(height: 12),
-            commonText(
+            Cw.instance.commonText(
               text: "Pin important messages which are visible to the whole channel. Open the context menu on a message and choose Pin to Channel to save it here.",
               textAlign: TextAlign.center,
               fontSize: 14,
@@ -127,8 +127,8 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                         color: AppColor.blueColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: commonText(
-                        text: formatDateWithYear(pinnedMessageList?.sId ?? ""),
+                      child: Cw.instance.commonText(
+                        text: Cf.instance.formatDateWithYear(pinnedMessageList?.sId ?? ""),
                         fontSize: 12,
                         color: AppColor.whiteColor,
                       ),
@@ -185,7 +185,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: profileIconWithStatus(userID: messageList.senderInfo?.sId ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderInfo?.username ?? ""),
+                    child: Cw.instance.profileIconWithStatus(userID: messageList.senderInfo?.sId ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderInfo?.username ?? ""),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -199,7 +199,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            commonText(height: 1.2, text: messageList.senderInfo?.username ?? "", fontWeight: FontWeight.bold),
+                            Cw.instance.commonText(height: 1.2, text: messageList.senderInfo?.username ?? "", fontWeight: FontWeight.bold),
                             Visibility(
                               visible: (messageList.senderInfo?.customStatusEmoji != "" && messageList.senderInfo?.customStatusEmoji != null)? true : false,
                               child: Padding(
@@ -211,7 +211,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                 ),),
                             ),
                             Padding(padding: const EdgeInsets.only(left: 5.0),
-                              child: commonText(height: 1.2, text: formatTime(time), color: Colors.grey, fontSize: 12),
+                              child: Cw.instance.commonText(height: 1.2, text: Cf.instance.formatTime(time), color: Colors.grey, fontSize: 12),
                             ),
                             Spacer(),
                             Container(
@@ -233,7 +233,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                       children: [
                                         Image.asset(AppImage.pinTiltIcon, height: 20, width: 20, color: Colors.white),
                                         SizedBox(width: 10),
-                                        commonText(text: 'Unpin from Channel', color: Colors.white),
+                                        Cw.instance.commonText(text: 'Unpin from Channel', color: Colors.white),
                                       ],
                                     ),
                                   ),
@@ -245,7 +245,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                         ),
                       Visibility(
                           visible: message.isNotEmpty,
-                          child: commonHTMLText(message: message)),
+                          child: Cw.instance.commonHTMLText(message: message)),
                       Visibility(
                           visible: messageList.isForwarded ?? false,
                           child: Container(
@@ -259,25 +259,25 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                Cw.instance.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.senderOfForward?.sId ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl ?? "",userName: messageList.senderOfForward?.username ?? ""),
+                                    Cw.instance.profileIconWithStatus(userID: messageList.senderOfForward?.sId ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.thumbnailAvatarUrl ?? "",userName: messageList.senderOfForward?.username ?? ""),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          commonText(text: messageList.senderOfForward?.username ?? "unknown"),
+                                          Cw.instance.commonText(text: messageList.senderOfForward?.username ?? "unknown"),
                                           SizedBox(height: 3),
-                                          commonText(text: formatDateString(messageList.forwards?.createdAt ?? ""),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          Cw.instance.commonText(text: Cf.instance.formatDateString(messageList.forwards?.createdAt ?? ""),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),
                                   ],),
                                 ),
-                                commonHTMLText(message: "${messageList.forwards?.content}"),
+                                Cw.instance.commonHTMLText(message: "${messageList.forwards?.content}"),
                                 Visibility(
                                   visible: messageList.forwards?.files?.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -286,9 +286,9 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                     physics: NeverScrollableScrollPhysics(),
                                     itemBuilder: (context, index) {
                                       final filesUrl = messageList.forwards?.files?[index];
-                                      String originalFileName = getFileName(messageList.forwards!.files?[index]);
-                                      String formattedFileName = formatFileName(originalFileName);
-                                      String fileType = getFileExtension(originalFileName);
+                                      String originalFileName = Cf.instance.getFileName(messageList.forwards!.files?[index]);
+                                      String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                                      String fileType = Cf.instance.getFileExtension(originalFileName);
                                       return Container(
                                         margin: EdgeInsets.only(top: 5,right: 10),
                                         padding: EdgeInsets.symmetric(horizontal: 20,vertical: 15),
@@ -298,12 +298,12 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                         ),
                                         child: Row(
                                           children: [
-                                            getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                            Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                             SizedBox(width: 20,),
                                             Flexible(
                                                 flex: 10,
                                                 fit: FlexFit.loose,
-                                                child: commonText(text: formattedFileName,maxLines: 1)),
+                                                child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                             Spacer(),
                                             GestureDetector(
                                                 onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -326,9 +326,9 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                           physics: NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
                             final filesUrl = messageList.files?[index];
-                            String originalFileName = getFileName(messageList.files![index]);
-                            String formattedFileName = formatFileName(originalFileName);
-                            String fileType = getFileExtension(originalFileName);
+                            String originalFileName = Cf.instance.getFileName(messageList.files![index]);
+                            String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                            String fileType = Cf.instance.getFileExtension(originalFileName);
                             // IconData fileIcon = getFileIcon(fileType);
                             return Container(
                               margin: EdgeInsets.only(top: 4,right: 10),
@@ -339,12 +339,12 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                  Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                   SizedBox(width: 20,),
                                   Flexible(
                                       flex: 10,
                                       fit: FlexFit.loose,
-                                      child: commonText(text: formattedFileName,maxLines: 1)),
+                                      child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                   Spacer(),
                                   GestureDetector(
                                       onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -359,7 +359,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                         child: GestureDetector(
                           onTap: () {
                             print("Simple Passing = ${messageId.toString()}");
-                            pushScreen(screen:
+                            Cf.instance.pushScreen(screen:
                               ReplyMessageScreenChannel(channelId: widget.channelId, channelName: widget.channelName, msgID: messageId,),
                             ).then((value) {
                               print("value>>> $value");
@@ -387,7 +387,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                         Stack(
                                           clipBehavior: Clip.none,
                                           children: [
-                                            profileIconWithStatus(
+                                            Cw.instance.profileIconWithStatus(
                                               userName: messageList.repliesSenderInfo?[0].username ?? "",
                                               userID: messageList.repliesSenderInfo?[0].sId ?? "",
                                               status: "",
@@ -398,7 +398,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                             if (messageList.repliesSenderInfo!.length > 1)
                                               Positioned(
                                                 left: 16,
-                                                child: profileIconWithStatus(
+                                                child: Cw.instance.profileIconWithStatus(
                                                   userName: messageList.repliesSenderInfo?[1].sId ?? "",
                                                   userID: messageList.repliesSenderInfo?[1].sId ?? "",
                                                   status: "",
@@ -447,7 +447,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                   ),
                                 ),
 
-                                commonText(
+                                Cw.instance.commonText(
                                   text: "${messageList.replyCount} ${messageList.replyCount! > 1 ? 'replies' : 'reply'}",
                                   fontSize: 12,
                                   color: AppColor.borderColor,
@@ -457,8 +457,8 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                 Flexible(
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
-                                    child: commonText(
-                                      text: getTimeAgo(
+                                    child: Cw.instance.commonText(
+                                      text: Cf.instance.getTimeAgo(
                                           (messageList.replies != null && messageList.replies!.isNotEmpty)
                                               ? messageList.replies!.last.createdAt.toString()
                                               : DateTime.now().toString()

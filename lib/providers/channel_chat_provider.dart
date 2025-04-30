@@ -55,150 +55,15 @@ class ChannelChatProvider extends ChangeNotifier{
   }
 
 
-  // getTypingUpdate() {
-  //   try {
-  //     socketProvider.socket.onAny((event, data) {
-  //       print("Event: $event >>> Data: $data");
-  //       if (data['type'] == "userTyping" && data['data'] is List) {
-  //         var typingData = data['data'];
-  //         if (typingData.isNotEmpty) {
-  //           msgLength = data['msgLength'] ?? 0;
-  //           oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
-  //           notifyListeners();
-  //           print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength");
-  //         } else {
-  //           msgLength = 0;
-  //           oppUserIdForTyping = "";
-  //           notifyListeners();
-  //           print("Data array is empty.");
-  //         }
-  //       } else {
-  //         print("Received data is not of the expected structure.");
-  //       }
-  //     });
-  //   } catch (e) {
-  //     print("Error processing the socket event: $e");
-  //   } finally {
-  //     notifyListeners();
-  //   }
-  // }
   int msgLength = 0;
   List<Map<String, dynamic>> typingUsers = [];
-  // getTypingUpdate() {
-  //   try {
-  //     socketProvider.socket.onAny((event, data) {
-  //       print("Event: $event >>> Data: $data");
-  //       if (data['type'] == "userTyping" && data['data'] is List) {
-  //         var typingData = data['data'];
-  //         if (typingData.isNotEmpty) {
-  //           msgLength = data['msgLength'] ?? 0;
-  //           String senderId = typingData[0]['sender'];
-  //           String username = data['userData']['username'];
-  //
-  //           if (msgLength > 0) {
-  //             // Check if the user already exists in the list
-  //             bool alreadyExists = typingUsers.any((user) => user['sender'] == senderId);
-  //
-  //             if (!alreadyExists) {
-  //               // Add the user to the list
-  //               typingUsers.add({
-  //                 'sender': senderId,
-  //                 'username': username,
-  //               });
-  //             }
-  //           } else {
-  //             // Remove user from the list if typing stops
-  //             typingUsers.removeWhere((user) => user['sender'] == senderId);
-  //           }
-  //
-  //           notifyListeners();
-  //           print("Currently Typing Users: $typingUsers");
-  //         } else {
-  //           // Clear the list if no user is typing
-  //           typingUsers.clear();
-  //           notifyListeners();
-  //         }
-  //       } else {
-  //         print("Received data is not of the expected structure.");
-  //       }
-  //     });
-  //   } catch (e) {
-  //     print("Error processing the socket event: $e");
-  //   } finally {
-  //     notifyListeners();
-  //   }
-  // }
-  // 42["user_typing",{"message":"","type":"userTyping",
-  // "data":[{"sender":"67bf0f57d75f40cdb0b9c391","receivers":"677b7adc3f5bb1fd3416ca3e"}],
-  // "time":"2025-03-11T13:37:33.040Z","message_type":"message","routeId":"67bf0f57d75f40cdb0b9c391","tagged_users":[],"msgLength":0,
-  // "userData":{"username":"Tosha_Shah","user_id":"676d5d2de010e883aec47240"},"isChannel":true,"isReply":false,"parentId":""}]
-  // getTypingUpdate(bool isChannel) {
-  //   try {
-  //     if(isChannel == false){
-  //       return;
-  //     }
-  //     socketProvider.socket.onAny((event, data) {
-  //       print("Event: $event >>> Data: $data");
-  //       if (data['type'] == "userTyping" && data['data'] is List) {
-  //         var typingData = data['data'];
-  //         if (typingData.isNotEmpty) {
-  //           msgLength = data['msgLength'] ?? 0;
-  //           String userId = data['userData']['user_id'] ?? ""; // Use user_id instead of sender
-  //           String username = data['userData']['username'] ?? "";
-  //           String routeId = data['routeId'] ?? "";
-  //
-  //           print("userId >>> $userId");
-  //           print("routeId >>> $routeId"); // Print the routeId for debugging
-  //
-  //           // Prevent adding your own user in the list
-  //           if (userId.toString() == signInModel.data?.user?.id.toString()) {
-  //             // Also, make sure you remove yourself if already added (just in case)
-  //             typingUsers.removeWhere((user) => user['user_id'] == signInModel.data?.user?.id.toString());
-  //             notifyListeners();
-  //             return; // Exit early if it's the signed-in user
-  //           }
-  //
-  //           if (msgLength > 0) {
-  //             // Check if the user already exists in the list
-  //             bool alreadyExists = typingUsers.any((user) => user['sender'] == userId);
-  //
-  //             if (!alreadyExists) {
-  //               // Add the user to the list
-  //               typingUsers.add({
-  //                 'sender': userId,
-  //                 'username': username,
-  //                 'routeId': routeId, // Optionally store routeId if needed
-  //               });
-  //             }
-  //           } else {
-  //             // Remove user from the list if typing stops
-  //             typingUsers.removeWhere((user) => user['sender'] == userId);
-  //           }
-  //
-  //           notifyListeners();
-  //           print("Currently Typing Users: $typingUsers");
-  //         } else {
-  //           // Clear the list if no user is typing
-  //           typingUsers.clear();
-  //           notifyListeners();
-  //         }
-  //       } else {
-  //         print("Received data is not of the expected structure.");
-  //       }
-  //     });
-  //   } catch (e) {
-  //     print("Error processing the socket event: $e");
-  //   } finally {
-  //     notifyListeners();
-  //   }
-  // }
   getTypingUpdate(bool isChannel) {
     try {
       if (isChannel == false) {
         return;
       }
       socketProvider.socket.onAny((event, data) {
-        print("Event: $event >>> Data: $data");
+        // print("Event: $event >>> Data: $data");
         if (data['type'] == "userTyping" && data['data'] is List) {
           var typingData = data['data'];
           if (typingData.isNotEmpty) {
@@ -209,10 +74,10 @@ class ChannelChatProvider extends ChangeNotifier{
             bool isReply = data['isReply'] ?? false;
             String parentId = data['parentId'] ?? "";
 
-            print("userId >>> $userId");
-            print("routeId >>> $routeId");
-            print("isReply >>> $isReply");
-            print("parentId >>> $parentId");
+            // print("userId >>> $userId");
+            // print("routeId >>> $routeId");
+            // print("isReply >>> $isReply");
+            // print("parentId >>> $parentId");
 
             // Prevent adding your own user in the list
             if (userId.toString() == signInModel.data?.user?.id.toString()) {
@@ -269,7 +134,7 @@ class ChannelChatProvider extends ChangeNotifier{
 
   unPinOnlyFromPinnedMessages({required String channelID,required String messageId,}) async {
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, false), method: Method.PUT);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       getChannelChatApiCall(channelId: channelID, pageNo: 1,onlyReadInChat: true);
       getChannelPinnedMessage(channelID: channelID,needLoader: false);
       getChannelInfoApiCall(channelId: channelID, callFroHome: false);
@@ -278,7 +143,7 @@ class ChannelChatProvider extends ChangeNotifier{
 
   Future<void> pinUnPinMessage({required String channelID,required String messageId,required bool pinned,bool isCalledForReply = false})async{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       print("pinUnPinMessage = Success");
       socketProvider.pinUnPinMessageEventChannelChat(senderId: signInModel.data?.user?.id ?? "", channelId: channelID);
       if(isCalledForReply) {
@@ -318,7 +183,7 @@ class ChannelChatProvider extends ChangeNotifier{
 
   Future<List<String>> uploadFiles(String screenName) async {
     try {
-      startLoading();
+      Cw.instance.startLoading();
       List<PlatformFile> selectedFiles = FileServiceProvider.instance.getFilesForScreen(screenName);
       List<File> filesToUpload = selectedFiles.map((platformFile) {
         return File(platformFile.path!);
@@ -360,7 +225,7 @@ class ChannelChatProvider extends ChangeNotifier{
     }catch (e){
       throw Exception("$e");
     }finally{
-      stopLoading();
+      Cw.instance.stopLoading();
     }
   }
 
@@ -394,7 +259,7 @@ class ChannelChatProvider extends ChangeNotifier{
     final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
     final response = await ApiService.instance.request(endPoint: ApiString.sendChannelMessage, method: Method.POST, reqBody: requestBody);
     
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       /// Socket Emit ///
       socketProvider.sendMessagesSC(response: response['data'], emitReplyMsg: replyId != null ? true : false);
 
@@ -562,7 +427,7 @@ class ChannelChatProvider extends ChangeNotifier{
                   // Check if the response has success field and it's true
                   if (karmaResponse['success'] == true) {
                     print("Karma sent successfully: ${karmaResponse['message']}");
-                    commonShowToast("${karmaResponse['message']}", Colors.green);
+                    Cw.instance.commonShowToast("${karmaResponse['message']}", Colors.green);
                   } else {
                     // If karma API fails with specific messages, don't send the message
                     print("Karma send failed: ${karmaResponse['message']}");
@@ -570,37 +435,37 @@ class ChannelChatProvider extends ChangeNotifier{
                         karmaResponse['message'] == "Insufficient Waffle balance") {
                       shouldSendMessage = false;
                       // Show error message to the user
-                      commonShowToast("${karmaResponse['message']}", Colors.red);
+                      Cw.instance.commonShowToast("${karmaResponse['message']}", Colors.red);
                       return;
                     } else {
                       // Handle other error cases
                       shouldSendMessage = false;
-                      commonShowToast("${karmaResponse['message']}", Colors.red);
+                      Cw.instance.commonShowToast("${karmaResponse['message']}", Colors.red);
                       return;
                     }
                   }
                 } catch (e) {
                   print("Error sending karma: $e");
-                  commonShowToast("Failed to send karma. Please try again.", Colors.red);
+                  Cw.instance.commonShowToast("Failed to send karma. Please try again.", Colors.red);
                   shouldSendMessage = false;
                   return;
                 }
               } else {
                 print("Cannot send Karma to yourself");
-                commonShowToast("You cannot send Waffle to yourself", Colors.red);
+                Cw.instance.commonShowToast("You cannot send Waffle to yourself", Colors.red);
                 shouldSendMessage = false;
                 return;
               }
             } else {
               print("User not found in channel members");
-              commonShowToast("User not found in channel members", Colors.red);
+              Cw.instance.commonShowToast("User not found in channel members", Colors.red);
               shouldSendMessage = false;
               return;
             }
           }
         } catch (e) {
           print("Error processing karma message: $e");
-          commonShowToast("Error processing karma message", Colors.red);
+          Cw.instance.commonShowToast("Error processing karma message", Colors.red);
           shouldSendMessage = false;
           return;
         }
@@ -616,7 +481,7 @@ class ChannelChatProvider extends ChangeNotifier{
         reqBody: requestBody
       );
 
-      if (statusCode200Check(response)) {
+      if (Cf.instance.statusCode200Check(response)) {
         /// Socket Emit ///
         socketProvider.sendMessagesSC(response: response['data'], emitReplyMsg: replyId != null ? true : false);
 
@@ -660,7 +525,7 @@ class ChannelChatProvider extends ChangeNotifier{
       }
     } catch (e) {
       print("Error sending message: $e");
-      commonShowToast("Failed to send message. Please try again.", Colors.red);
+      Cw.instance.commonShowToast("Failed to send message. Please try again.", Colors.red);
     }
     notifyListeners();
   }
@@ -676,7 +541,7 @@ class ChannelChatProvider extends ChangeNotifier{
   Future<void> getChannelPinnedMessage({required String channelID,bool needLoader = true})async{
     final requestBody = {"channelId": channelID};
     final response = await ApiService.instance.request(endPoint: ApiString.getChannelPinnedMessage, method: Method.POST,reqBody: requestBody,needLoader: needLoader);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       channelPinnedMessageModel = ChannelPinnedMessageModel.fromJson(response);
       notifyListeners();
     }
@@ -702,19 +567,23 @@ class ChannelChatProvider extends ChangeNotifier{
     firstInitialPageNo = pageNo;
     notifyListeners();
   }
-  Future<void> getChannelChatApiCall({required String channelId,required int pageNo,bool isFromMsgListen = false,bool? isFromJump,bool onlyReadInChat = false, bool needToReload = false})async {
+  Future<void> getChannelChatApiCall({required String channelId,required int pageNo,bool isFromMsgListen = false,bool? isFromJump,bool onlyReadInChat = false, bool needToReload = false, bool needLoaderFromInItState = false})async {
    try{
      if(isFromJump ?? false){
        currentPage = pageNo;
        messageGroups.clear();
-       print("CCCCCC >>>>> $pageNo");
      }
+
      if (lastOpenedChannelId != channelId || needToReload) {
        messageGroups.clear();
        totalPages = 0;
-       currentPage =isFromJump ?? false ? pageNo :  1;
+       currentPage = isFromJump ?? false ? pageNo :  1;
      }
-     isChannelChatLoading = true;
+     if(needLoaderFromInItState){
+       isChannelChatLoading = true;
+       notifyListeners();
+     }
+
      final requestBody = {
        "channelId": channelId,
        "pageNo": pageNo.toString()
@@ -724,7 +593,7 @@ class ChannelChatProvider extends ChangeNotifier{
        currentPage = 1;
      }
      final response  = await ApiService.instance.request(endPoint: ApiString.getChannelChat, method: Method.POST,reqBody: requestBody);
-     if(statusCode200Check(response)){
+     if(Cf.instance.statusCode200Check(response)){
        if(isFromMsgListen){
          for (var newItem in (response['data']['messages'] as List).map((message) => msg.MessageGroup.fromJson(message)).toList()) {
            int existingIndex = messageGroups.indexWhere((item) => item.id == newItem.id);
@@ -739,21 +608,6 @@ class ChannelChatProvider extends ChangeNotifier{
        }
        isChannelChatLoading = false;
        notifyListeners();
-       // Check for waffle messages in new messages
-       // if (channelId == "67d2a08db7b8f099e41e4dc4") {
-       //   final loggedInUserId = signInModel.data?.user?.id;
-       //   for (var messageGroup in messageGroups) {
-       //     for (var message in messageGroup.messages ?? []) {
-       //       if (message.isSeen == false &&
-       //           message.content?.contains(":waffle") == true &&
-       //           !(message.readBy?.contains(loggedInUserId) ?? false) &&
-       //           (message.taggedUsers?.contains(loggedInUserId) ?? false)) {
-       //         // Notify that confetti should be played
-       //         notifyListeners();
-       //       }
-       //     }
-       //   }
-       // }
      }
      if(onlyReadInChat == true){
        await Provider.of<ChannelListProvider>(navigatorKey.currentState!.context, listen: false)
@@ -779,7 +633,7 @@ class ChannelChatProvider extends ChangeNotifier{
   Future<void> getChannelMembersList(String channelId) async {
     print("channelId>>>> $channelId");
     final response = await ApiService.instance.request(endPoint: ApiString.getChannelMembersList(channelId), method: Method.GET);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       channelMembersList = (response['data']['memberDetails'] as List).map((list) => MemberDetails.fromJson(list as Map<String, dynamic>)).toList();
     }
     notifyListeners();
@@ -824,11 +678,8 @@ class ChannelChatProvider extends ChangeNotifier{
 
   Future<void> getChannelInfoApiCall({required String channelId,required bool callFroHome})async{
     final response  = await ApiService.instance.request(endPoint: ApiString.getChannelInfo(channelId), method: Method.GET,);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       getChannelInfo = GetChannelInfo.fromJson(response);
-      if(callFroHome == true && getChannelInfo != null){
-        // addChannelApiCall(channelName: getChannelInfo?.data?.name ?? "", isPrivate: getChannelInfo?.data?.isPrivate ?? false, description: getChannelInfo?.data?.description ?? "");
-      }
       notifyListeners();
     }
   }
@@ -838,7 +689,7 @@ class ChannelChatProvider extends ChangeNotifier{
   Future<void> getFileListingInChannelChat({required String channelId})async{
     final requestBody = {"channelId": channelId};
     final response = await ApiService.instance.request(endPoint: ApiString.getFilesListingInChannelChat, method: Method.POST,reqBody: requestBody);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       filesListingInChannelChatModel = FilesListingInChannelChatModel.fromJson(response);
     }
     notifyListeners();
@@ -859,7 +710,7 @@ class ChannelChatProvider extends ChangeNotifier{
       "messageId": msgId
     };
     final response = await ApiService.instance.request(endPoint: ApiString.getRepliesMsg, method: Method.POST,reqBody: requestBody);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       getReplyMessageChannelModel = GetReplyMessageChannelModel.fromJson(response);
     }
     lastOpenedUserMSGId = msgId;
@@ -875,10 +726,10 @@ class ChannelChatProvider extends ChangeNotifier{
       socketProvider.socket.off("reply_notification");
 
       socketProvider.socket.on("reply_notification", (data) {
-        print("Event: reply_notification >>> Data: $data");
+        // print("Event: reply_notification >>> Data: $data");
 
-        print("mId = $mId");
-        print("replyTo socket = ${data['replyTo']}");
+        // print("mId = $mId");
+        // print("replyTo socket = ${data['replyTo']}");
 
         // Ensure we update only when replyTo matches the current message
         if (mId == data['replyTo']) {
@@ -924,7 +775,7 @@ class ChannelChatProvider extends ChangeNotifier{
           endPoint: ApiString.deleteMessageFromChannel(messageId),
           method: Method.DELETE
       );
-      if (statusCode200Check(response)) {
+      if (Cf.instance.statusCode200Check(response)) {
         print("Message Deleted");
         removeMessageFromModelList(messageId);
         socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
@@ -939,11 +790,11 @@ class ChannelChatProvider extends ChangeNotifier{
   /// API ///
   Future<void> deleteMessageForReplyChannel({required String messageId, required firsMessageId})async{
     final response = await ApiService.instance.request(endPoint: ApiString.deleteMessageFromChannel(messageId), method: Method.DELETE);
-    if(statusCode200Check(response)){
+    if(Cf.instance.statusCode200Check(response)){
       socketProvider.deleteMessagesFromChannelSC(response: {"data": response['data']});
       deleteMessageFromReplyModel(messageId);
       if(firsMessageId == messageId) {
-        pop();
+        Cf.instance.pop();
         removeMessageFromModelList(messageId);
       }
     }
@@ -969,16 +820,6 @@ class ChannelChatProvider extends ChangeNotifier{
     notifyListeners();
   }
 
-  // void removeMessageFromReplyModelList(String messageId) {
-  //   for (var msgGrp in getReplyMessageChannelModel?.data?.messagesList ?? []) {
-  //     msgGrp.messagesGroupList?.removeWhere((message) => message.sId == messageId);
-  //     if (msgGrp.messagesGroupList?.isEmpty ?? true) {
-  //       messageGroups.remove(msgGrp);
-  //       break;
-  //     }
-  //   }
-  //   notifyListeners();
-  // }
 
 addChannelApiCall({required String channelName,required bool isPrivate,required String description})async{
     final requestBody = {
@@ -1005,7 +846,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
         endPoint: ApiString.reactMessage,
         method: Method.POST,
         reqBody: reqBody);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       print("Reacted Successfully");
       print("isFrom = $isFrom");
       if (isFrom == "Channel") {
@@ -1098,7 +939,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
     print("reactionRemove Fun");
     final response = await ApiService.instance.request(
         endPoint: ApiString.removeReact, method: Method.POST, reqBody: reqBody);
-    if (statusCode200Check(response)) {
+    if (Cf.instance.statusCode200Check(response)) {
       print("React removed Successfully");
       print("isFrom = $isFrom");
 

@@ -1,1 +1,0 @@
-// enum UserStatus { online, offline, busy, away, doNotDisturb}

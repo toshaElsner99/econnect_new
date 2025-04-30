@@ -104,28 +104,28 @@ class NotificationService {
     Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
     Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false).getUserByIDCall();
     }
-    await pushScreen(
-    screen: SingleChatMessageScreen(
-    userName: "",
-    oppositeUserId: senderId,
-    needToCallAddMessage: false,
-    isFromNotification: true,
-    ),
+    await Cf.instance.pushScreen(
+      screen: SingleChatMessageScreen(
+        userName: "",
+        oppositeUserId: senderId,
+        needToCallAddMessage: false,
+        isFromNotification: true,
+      ),
     );
-    }
+  }
 
   static Future<void> _navigateToChannelScreen(String channelId) async {
     if (_isUserSignedIn()) {
     Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
     Provider.of<CommonProvider>(navigatorKey.currentState!.context, listen: false).getUserByIDCall();
     }
-    await pushScreen(
-    screen: ChannelChatScreen(
-    channelId: channelId,
-    isFromNotification: true,
-    ),
+    await Cf.instance.pushScreen(
+      screen: ChannelChatScreen(
+        channelId: channelId,
+        isFromNotification: true,
+      ),
     );
-    }
+  }
 
   static bool _isUserSignedIn() {
     return signInModel.data?.user?.id != null && signInModel.data?.user?.id != "";

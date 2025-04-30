@@ -23,7 +23,7 @@ class ChatProfileHeader extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          profileIconWithStatus(
+          Cw.instance.profileIconWithStatus(
             userID: userId,
             status: userStatus,
             userName: userName,
@@ -33,13 +33,13 @@ class ChatProfileHeader extends StatelessWidget {
             containerSize: 20,
           ),
           const SizedBox(height: 12),
-          commonText(
+          Cw.instance.commonText(
             text: userName,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
           const SizedBox(height: 8),
-          commonText(
+          Cw.instance.commonText(
             text:
             'This is the start of your conversation\nwith $userName. Messages and files\nshared here are not shown to anyone\nelse.',
             textAlign: TextAlign.center,

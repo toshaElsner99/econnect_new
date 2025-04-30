@@ -7,28 +7,26 @@ import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:http/http.dart' as http;
-import 'package:insta_image_viewer/insta_image_viewer.dart';
 import 'package:intl/intl.dart';
-import 'package:pinch_zoom/pinch_zoom.dart';
-import 'package:provider/provider.dart';
-import 'package:photo_view/photo_view.dart';
-import 'package:photo_view/photo_view_gallery.dart';
 import '../../screens/image_viewer_screen.dart';
 
 import '../../main.dart';
-import '../../providers/file_service_provider.dart';
-import '../app_preference_constants.dart';
-import '../theme/theme_cubit.dart';
 
-bool isKeyboardOpen(BuildContext context) {
-  return MediaQuery.of(context).viewInsets.bottom > 0;
-}
+class Cf {
+  Cf._privateConstructor();
+  static final Cf instance = Cf._privateConstructor();
 
+String processContent(String content) {
+  final urlRegex = RegExp(
+    r'(https?:\/\/[^\s]+)',
+    caseSensitive: false,
+  );
 
-clearSelectedFiles(){
-
+  return content.replaceAllMapped(urlRegex, (match) {
+    final url = match.group(0);
+    return '<a href="$url" target="_blank" class="renderer_link">$url</a>';
+  });
 }
 
 String formatDateString1(String dateString) {
@@ -42,15 +40,8 @@ String formatTime(String utcTime) {
   return DateFormat('hh:mm a').format(dateTime); // Format in 12-hour AM/PM format
 }
 
-// String formatDateWithYear(String dateHeader){
-//   DateTime date = DateTime.parse(dateHeader);
-//   String formattedDate = DateFormat('MMMM dd,yyyy').format(date);
-//   return formattedDate;
-// }
-
 String formatDateWithYear(String dateHeader) {
   try {
-    print("Parsing date: $dateHeader");
     DateTime date = DateTime.parse(dateHeader);
     String formattedDate = DateFormat('MMMM dd, yyyy').format(date);
     return formattedDate;
@@ -141,7 +132,7 @@ Future<String> fetchFileSize(String url) async {
   } catch (e) {
     print("Error fetching file size: $e");
   }
-  return ""; // Return empty if size is unknown
+  return "";
 }
 
 String formatFileSize(int bytes) {
@@ -248,74 +239,12 @@ String getFileType(String path) {
 }
 
 
-class NoLeadingSpacesFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    // Remove leading spaces from the new value
-    final newText = newValue.text.trimLeft();
-
-    // Ensure that the selection range is adjusted correctly
-    final newSelection = _adjustSelection(
-      newValue.selection,
-      newText,
-    );
-
-    return TextEditingValue(
-      text: newText,
-      selection: newSelection,
-      composing: newValue.composing,
-    );
-  }
-
-  TextSelection _adjustSelection(TextSelection selection, String newText) {
-    final newBase = selection.baseOffset;
-    final newExtent = selection.extentOffset;
-
-    // Ensure selection indices are within the new text bounds
-    final adjustedBase = newBase.clamp(0, newText.length);
-    final adjustedExtent = newExtent.clamp(0, newText.length);
-
-    return TextSelection(
-      baseOffset: adjustedBase,
-      extentOffset: adjustedExtent,
-    );
-  }
-}
-// Future<dynamic> pushScreenWithTransition(Widget screen,) {
-//  return Navigator.of(navigatorKey.currentState!.context).push(
-//     PageRouteBuilder(
-//       transitionDuration: const Duration(milliseconds: 300),
-//       pageBuilder: (context, animation, secondaryAnimation) => screen,
-//       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-//         return SlideTransition(
-//           position: Tween<Offset>(
-//             begin: const Offset(0, 1), // Start from bottom
-//             end: Offset.zero, // Move to normal position
-//           ).animate(animation),
-//           child: child,
-//         );
-//       },
-//     ),
-//   );
-// }
-
 Future<dynamic> pushScreen({required Widget screen}) async {
  return Navigator.push(
     navigatorKey.currentState!.context,
     MaterialPageRoute(builder: (context) => screen,),
-  )/*.then((_) {})*/;
+  );
 }
-
-void setTransparentStatusBar() {
-//   final themeProvider = Provider.of<ThemeProvider>(navigatorKey.currentState!.context, listen: false);
-//   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-//     statusBarColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
-//     systemNavigationBarColor: themeProvider.themeData.appBarTheme.backgroundColor,
-//     systemNavigationBarIconBrightness: Brightness.light,
-//   ));
-}
-
 
 Future<void> pushReplacement({required Widget screen}) async {
   Navigator.pushReplacement(
@@ -385,7 +314,6 @@ String? validatePassword(TextEditingController controller, String? value) {
   return null;
 }
 
-
 String? validatePhoneNumber(String? value) {
   if (value == null || value.isEmpty) {
     return 'Phone number cannot be empty';
@@ -404,7 +332,6 @@ String? validateTwoControllerMatch(String? value,TextEditingController textContr
   }
   return null;
 }
-
 
 String? validateNonEmpty(String? value, String returnMsg) {
   if (value == null || value.isEmpty) {
@@ -478,15 +405,48 @@ String formatDateTime2(String dateTimeStr) {
   if (parsedDate.year == now.year &&
       parsedDate.month == now.month &&
       parsedDate.day == now.day) {
-    // Show time with AM/PM if it's today
     return DateFormat('hh:mm a').format(parsedDate);
   } else if (parsedDate.year == yesterday.year &&
       parsedDate.month == yesterday.month &&
       parsedDate.day == yesterday.day) {
-    // Show "Yesterday" if it was yesterday
     return "Yesterday";
   } else {
-    // Show in dd-MM-yyyy format for other dates
     return DateFormat('dd-MM-yyyy').format(parsedDate);
+  }
+}
+
+}
+class NoLeadingSpacesFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
+    // Remove leading spaces from the new value
+    final newText = newValue.text.trimLeft();
+
+    // Ensure that the selection range is adjusted correctly
+    final newSelection = _adjustSelection(
+      newValue.selection,
+      newText,
+    );
+
+    return TextEditingValue(
+      text: newText,
+      selection: newSelection,
+      composing: newValue.composing,
+    );
+  }
+
+  TextSelection _adjustSelection(TextSelection selection, String newText) {
+    final newBase = selection.baseOffset;
+    final newExtent = selection.extentOffset;
+
+    // Ensure selection indices are within the new text bounds
+    final adjustedBase = newBase.clamp(0, newText.length);
+    final adjustedExtent = newExtent.clamp(0, newText.length);
+
+    return TextSelection(
+      baseOffset: adjustedBase,
+      extentOffset: adjustedExtent,
+    );
   }
 }

@@ -31,14 +31,14 @@ class ChannelInfoScreen extends StatelessWidget {
       // backgroundColor: Colors.black,
       appBar: AppBar(
         // backgroundColor: Colors.black,
-        leading: commonBackButton(),
+        leading: Cw.instance.commonBackButton(),
         title: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            commonText(text: "Info", fontSize: 16),
+            Cw.instance.commonText(text: "Info", fontSize: 16),
             const SizedBox(height: 4),
-            commonText(text: channelName,maxLines: 1,fontSize: 12,color: AppColor.borderColor),
+            Cw.instance.commonText(text: channelName,maxLines: 1,fontSize: 12,color: AppColor.borderColor),
           ],
         ),
       ),
@@ -141,7 +141,7 @@ class ChannelInfoScreen extends StatelessWidget {
                 icon: Icons.people_outline,
                 title: 'Members',
                 count: provider.channelMembersList.length.toString(),
-                onTap: () => pushScreen(screen: ChannelMembersInfo(channelId: channelId, channelName: channelName)),
+                onTap: () => Cf.instance.pushScreen(screen: ChannelMembersInfo(channelId: channelId, channelName: channelName)),
               );
             },
           ),
@@ -153,7 +153,7 @@ class ChannelInfoScreen extends StatelessWidget {
                 count: provider.getChannelInfo?.data?.pinnedMessagesCount != null ?
                 provider.getChannelInfo?.data?.pinnedMessagesCount.toString() :
                 '0',
-                onTap: () => pushScreen(screen: ChannelPinnedPostsScreen(channelName: channelName, channelId: channelId)),
+                onTap: () => Cf.instance.pushScreen(screen: ChannelPinnedPostsScreen(channelName: channelName, channelId: channelId)),
               );
             }
           ),
@@ -162,7 +162,7 @@ class ChannelInfoScreen extends StatelessWidget {
             icon: Icons.folder_outlined,
             title: 'Files',
             count: value.filesListingInChannelChatModel?.data?.messages?.length.toString() ?? "0",
-            onTap: () => pushScreen(screen: FilesListingScreen(channelName: channelName, channelId: channelId)),
+            onTap: () => Cf.instance.pushScreen(screen: FilesListingScreen(channelName: channelName, channelId: channelId)),
           );
         },),
         ],

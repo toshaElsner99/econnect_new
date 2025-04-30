@@ -4,9 +4,10 @@ import '../app_color_constants.dart';
 import '../app_preference_constants.dart';
 
 class ShimmerLoading {
-  // ... existing methods ...
-  
-  static Widget chatShimmer(BuildContext context) {
+  ShimmerLoading._privateConstructor();
+  static final ShimmerLoading instance = ShimmerLoading._privateConstructor();
+
+   Widget chatShimmer(BuildContext context) {
     final isDarkMode = AppPreferenceConstants.themeModeBoolValueGet;
     
     return Shimmer.fromColors(

@@ -11,18 +11,14 @@ import 'package:e_connect/screens/chat/reply_message_screen/reply_message_screen
 import 'package:e_connect/screens/create_channel_screen/create_channel_screen.dart';
 import 'package:e_connect/screens/find_channel_screen/find_channel_screen.dart';
 import 'package:e_connect/screens/open_direct_message/open_direct_message.dart';
-import 'package:e_connect/screens/thread/thread_screen.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
-import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../main.dart';
-import '../../model/channel_list_model.dart';
-import '../../model/direct_message_list_model.dart';
 import '../../notificationServices/pushNotificationService.dart';
 import '../../providers/channel_list_provider.dart';
 import '../../providers/common_provider.dart';
@@ -45,17 +41,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     OptionItem(
       icon: Icons.add,
       title: "Create New Channel",
-      onTap: () => pushScreen(screen: CreateChannelScreen()),
+      onTap: () => Cf.instance.pushScreen(screen: CreateChannelScreen()),
     ),
     OptionItem(
       icon: Icons.public,
       title: "Browse Channels",
-      onTap: () => pushScreen(screen:BrowseAndSearchChannel()),
+      onTap: () => Cf.instance.pushScreen(screen:BrowseAndSearchChannel()),
     ),
     OptionItem(
       icon: Icons.message,
       title: "Open a Direct Message",
-      onTap: () => pushScreen(screen:OpenDirectMessage()),
+      onTap: () => Cf.instance.pushScreen(screen:OpenDirectMessage()),
     ),
   ];
   final Map<String, bool> _isExpanded = {
@@ -223,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         children: [
                           // Show count only for Threads tab
                           if (index == 3 && threadProvider.unreadThreadCount > 0) ...[
-                            commonText(
+                            Cw.instance.commonText(
                               text: threadProvider.unreadThreadCount.toString(),
                               color: AppColor.lightBlueBgColor,
                               fontSize: 14,
@@ -231,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             ),
                             SizedBox(width: 8),
                           ],
-                          commonText(
+                          Cw.instance.commonText(
                             text: _tabTitles[index],
                             color: _selectedTabIndex != index
                                 ? AppColor.white
@@ -406,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           color: Colors.white,
           size: 25,
         ),
-        onPressed: () => pushScreen(screen: SettingScreen()).then((value) async{
+        onPressed: () => Cf.instance.pushScreen(screen: SettingScreen()).then((value) async{
           await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
           await Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
         },),
@@ -446,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.mark_chat_unread_outlined, size: 20),
                   SizedBox(width: 10),
-                  commonText(
+                  Cw.instance.commonText(
                       text: (favorite?.unseenMessagesCount ?? 0) > 0
                           ? "Mark as read"
                           : "Mark as unread"),
@@ -460,7 +456,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.star, size: 20),
                   SizedBox(width: 10),
-                  commonText(text: "Unfavorite"),
+                  Cw.instance.commonText(text: "Unfavorite"),
                 ],
               ),
             ),
@@ -475,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           : Icons.notifications_off_outlined,
                       size: 20),
                   SizedBox(width: 10),
-                  commonText(
+                  Cw.instance.commonText(
                       text: commonProvider.getUserModel?.data?.user!.muteUsers!.contains(favorite?.sId) !=
                           true
                           ? "Mute Conversation"
@@ -490,7 +486,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.exit_to_app, size: 20, color: Colors.red),
                   SizedBox(width: 10),
-                  commonText(text: "Close Conversation", color: Colors.red,),
+                  Cw.instance.commonText(text: "Close Conversation", color: Colors.red,),
                 ],
               ),
             ),
@@ -534,7 +530,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.mark_chat_unread_outlined, size: 20),
                   SizedBox(width: 10),
-                  commonText(
+                  Cw.instance.commonText(
                       text: chatLisDirectMessage!.unseenMessagesCount! > 0
                           ? "Mark as read"
                           : "Mark as unread"),
@@ -548,7 +544,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.star_border, size: 20),
                   SizedBox(width: 10),
-                  commonText(text: "Favorite"),
+                  Cw.instance.commonText(text: "Favorite"),
                 ],
               ),
             ),
@@ -563,7 +559,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           : Icons.notifications_off_outlined,
                       size: 20),
                   SizedBox(width: 10),
-                  commonText(
+                  Cw.instance.commonText(
                       text: commonProvider.getUserModel?.data?.user?.muteUsers?.contains(chatLisDirectMessage.sId) != true
                           ? "Mute Conversation"
                           : "Unmute Conversation"),
@@ -577,7 +573,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.exit_to_app, size: 20, color: Colors.red),
                   SizedBox(width: 10),
-                  commonText(text: "Close Conversation", color: Colors.red),
+                  Cw.instance.commonText(text: "Close Conversation", color: Colors.red),
                 ],
               ),
             ),
@@ -617,7 +613,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.mark_chat_unread_outlined, size: 20),
                   SizedBox(width: 10),
-                  commonText(text: favouriteChannels!.unseenMessagesCount! > 0 ? "Mark as read" : "Mark as unread"),
+                  Cw.instance.commonText(text: favouriteChannels!.unseenMessagesCount! > 0 ? "Mark as read" : "Mark as unread"),
                 ],
               ),
             ),
@@ -628,7 +624,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon( Icons.star, size: 20),
                   SizedBox(width: 10),
-                  commonText(text:"Unfavorite"),
+                  Cw.instance.commonText(text:"Unfavorite"),
                 ],
               ),
             ),
@@ -639,7 +635,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(signInModel.data?.user?.muteChannels!.contains(favouriteChannels.sId) ?? false ? Icons.notifications_none : Icons.notifications_off_outlined, size: 20),
                   SizedBox(width: 10),
-                  commonText(text: signInModel.data?.user?.muteChannels!.contains(favouriteChannels.sId) ?? false ? "Unmute Channel" : "Mute Channel" ),
+                  Cw.instance.commonText(text: signInModel.data?.user?.muteChannels!.contains(favouriteChannels.sId) ?? false ? "Unmute Channel" : "Mute Channel" ),
                 ],
               ),
             ),
@@ -650,7 +646,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.exit_to_app, size: 20, color: Colors.red),
                   SizedBox(width: 10),
-                  commonText(text: "Leave Channel", color: Colors.red),
+                  Cw.instance.commonText(text: "Leave Channel", color: Colors.red),
                 ],
               ),
             ),
@@ -689,7 +685,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.mark_chat_unread_outlined, size: 20),
                   SizedBox(width: 10),
-                  commonText(text: channelListModel!.unreadCount ! > 0 ? "Mark as read" : "Mark as unread"),
+                  Cw.instance.commonText(text: channelListModel!.unreadCount ! > 0 ? "Mark as read" : "Mark as unread"),
                 ],
               ),
             ),
@@ -700,7 +696,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.star_border, size: 20),
                   SizedBox(width: 10),
-                  commonText(text:"Favorite"),
+                  Cw.instance.commonText(text:"Favorite"),
                 ],
               ),
             ),
@@ -711,7 +707,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(signInModel.data?.user!.muteChannels!.contains(channelListModel.sId) ?? false ? Icons.notifications_none : Icons.notifications_off_outlined , size: 20),
                   SizedBox(width: 10),
-                  commonText(text: signInModel.data?.user!.muteChannels!.contains(channelListModel.sId) ?? false ? "Unmute Channel" : "Mute Channel"),
+                  Cw.instance.commonText(text: signInModel.data?.user!.muteChannels!.contains(channelListModel.sId) ?? false ? "Unmute Channel" : "Mute Channel"),
                 ],
               ),
             ),
@@ -722,7 +718,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Icon(Icons.exit_to_app, size: 20, color: Colors.red),
                   SizedBox(width: 10),
-                  commonText(text: "Leave Channel", color: Colors.red),
+                  Cw.instance.commonText(text: "Leave Channel", color: Colors.red),
                 ],
               ),
             ),
@@ -750,16 +746,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                               child: Row(
                                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                 children: [
-                                                  commonText(text: "Confirm Leave Channel",color: Colors.white),
+                                                  Cw.instance.commonText(text: "Confirm Leave Channel",color: Colors.white),
                                                   GestureDetector(
-                                                      onTap: () => pop(),
+                                                      onTap: () => Cf.instance.pop(),
                                                       child: Icon(Icons.close,color: Colors.white,)),
                                                 ],
                                               ),
                                             ),
                                             Padding(
                                               padding: const EdgeInsets.symmetric(vertical: 20.0,horizontal: 20),
-                                              child: commonText(text: "Are you sure you want to Leave this Channel?"),
+                                              child: Cw.instance.commonText(text: "Are you sure you want to Leave this Channel?"),
                                             ),
                                             Divider(),
                                             Padding(
@@ -768,19 +764,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                                 mainAxisAlignment: MainAxisAlignment.end,
                                                 children: [
                                                   GestureDetector(
-                                                    onTap: () => pop(),
+                                                    onTap: () => Cf.instance.pop(),
                                                     child: Container(
                                                       decoration: BoxDecoration(
                                                           borderRadius: BorderRadius.circular(5),
                                                           color: Colors.grey.withOpacity(0.1)
                                                       ),
                                                       padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
-                                                      child: commonText(text: "Cancel"),
+                                                      child: Cw.instance.commonText(text: "Cancel"),
                                                     ),
                                                   ),
                                                   GestureDetector(
                                                     onTap: () {
-                                                      pop();
+                                                      Cf.instance.pop();
                                                       channelListProvider.leaveChannel(channelId: channelId ?? "");
                                                     },
                                                     child: Container(
@@ -790,7 +786,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                                         color: AppColor.redColor,
                                                       ),
                                                       padding: EdgeInsets.symmetric(horizontal: 20,vertical: 10),
-                                                      child: commonText(text: "Leave",color: Colors.white),
+                                                      child: Cw.instance.commonText(text: "Leave",color: Colors.white),
                                                     ),
                                                   ),
                                                 ],),
@@ -810,7 +806,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   // Add this widget after _buildHeader
   Widget _buildSearchField() {
     return GestureDetector(
-      onTap: () => pushScreen(screen:FindChannelScreen()),
+      onTap: () => Cf.instance.pushScreen(screen:FindChannelScreen()),
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12,horizontal: 12),
         margin: const EdgeInsets.symmetric(vertical: 16),
@@ -823,7 +819,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           Icon(CupertinoIcons.search,
             color: AppColor.white,size: 20),
           SizedBox(width: 10),
-          commonText(text: "Search...",color: AppColor.white,fontWeight: FontWeight.w400)
+          Cw.instance.commonText(text: "Search...",color: AppColor.white,fontWeight: FontWeight.w400)
         ],),
       ),
     );
@@ -844,7 +840,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: Row(
             children: [
               // User profile image
-              profileIconWithStatus(
+              Cw.instance.profileIconWithStatus(
                   userID: commonProvider.getUserModel?.data?.user?.sId ?? "",
                   status: commonProvider.getUserModel?.data?.user?.status ?? "offline",
                   otherUserProfile: commonProvider.getUserModel?.data?.user?.thumbnailAvatarUrl ?? '',
@@ -862,7 +858,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 children: [
                   Row(
                     children: [
-                      commonText(
+                      Cw.instance.commonText(
                         text: (commonProvider.getUserModel?.data?.user?.fullName ?? commonProvider.getUserModel?.data?.user?.username ?? ""),
                           color: AppColor.white,
                           fontSize: 16,
@@ -879,7 +875,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ),
                   if ((commonProvider.getUserModel?.data?.user?.customStatus ?? "").isNotEmpty) ...[
                     SizedBox(height: 4),
-                    commonText(
+                    Cw.instance.commonText(
                       text: commonProvider.getUserModel?.data?.user?.customStatus ?? "",
                       color: AppColor.whiteColor.withOpacity(0.7),
                       fontSize: 12,
@@ -897,7 +893,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   openSettings(){
-    pushScreen(screen: SettingScreen()).then((value) async{
+    Cf.instance.pushScreen(screen: SettingScreen()).then((value) async{
       await Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
       await Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
     });
@@ -967,7 +963,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
      // color: muteConversation ? AppColor.borderColor.withOpacity(0.05) : null,
      margin: const EdgeInsets.symmetric(vertical: 6),
      child: InkWell(
-       onTap: () => pushScreen(screen: SingleChatMessageScreen(userName: username, oppositeUserId: userId,calledForFavorite: true,)),
+       onTap: () => Cf.instance.pushScreen(screen: SingleChatMessageScreen(userName: username, oppositeUserId: userId,calledForFavorite: true,)),
        onLongPress: () {
          // Get the appropriate provider data based on the type
          dynamic itemData;
@@ -1010,7 +1006,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
          child: Row(
            children: [
-             profileIconWithStatus(
+             Cw.instance.profileIconWithStatus(
                userName: username,
                userID: userId,
                otherUserProfile: imageUrl,
@@ -1020,7 +1016,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
              const SizedBox(width: 12),
              ConstrainedBox(
                constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
-               child: commonText(
+               child: Cw.instance.commonText(
                  text: username,
                  color: muteConversation ? AppColor.borderColor : Colors.white.withOpacity(0.9),
                  fontSize: 14,
@@ -1031,7 +1027,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                visible: userId == signInModel.data?.user?.id,
                child: Padding(
                  padding: const EdgeInsets.only(left: 5.0),
-                 child: commonText(text: "(you)",color: muteConversation ? AppColor.borderColor : Colors.white),
+                 child: Cw.instance.commonText(text: "(you)",color: muteConversation ? AppColor.borderColor : Colors.white),
                )
              ),
              Visibility(
@@ -1064,7 +1060,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: InkWell(
         onTap: () {
           print("Channel Tapped");
-          pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", /*channelName: channel.name!*/));
+          Cf.instance.pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", /*channelName: channel.name!*/));
         },
         onLongPress: () {
           showOptionsDialog(
@@ -1083,11 +1079,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           child: Row(
             children: [
-              commonChannelIcon(isPrivate: channel.isPrivate == true ? true : false,isMuted: muteChannel),
+              Cw.instance.commonChannelIcon(isPrivate: channel.isPrivate == true ? true : false,isMuted: muteChannel),
               const SizedBox(width: 12),
               ConstrainedBox(
                 constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
-                child: commonText(
+                child: Cw.instance.commonText(
                   text: channel.name ?? "",
                   color: muteChannel ? AppColor.borderColor : Colors.white.withOpacity(0.9),
                   fontSize: 14,
@@ -1122,7 +1118,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
               padding: EdgeInsets.symmetric(vertical: 3,horizontal: 7),
               margin: EdgeInsets.only(left: 5),
-              child: commonText(text: "$count",color: Colors.black),
+              child: Cw.instance.commonText(text: "$count",color: Colors.black),
             ));
   }
 
@@ -1166,7 +1162,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildOptionItem(OptionItem option) {
     return InkWell(
       onTap: () {
-        pop();
+        Cf.instance.pop();
         option.onTap();
       },
       child: Padding(
@@ -1179,7 +1175,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               size: 24,
             ),
             const SizedBox(width: 16),
-            commonText(
+            Cw.instance.commonText(
               text: option.title,
               color: Colors.grey[800],
               fontSize: 16,
@@ -1202,7 +1198,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       margin: const EdgeInsets.symmetric(vertical: 6),
       // color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
       child: InkWell(
-        onTap: ()=> pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", /*channelName: channel.name!*/)),
+        onTap: ()=> Cf.instance.pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", /*channelName: channel.name!*/)),
         onLongPress: () {
           showOptionsDialog(
             context: context,
@@ -1220,11 +1216,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           child: Row(
             children: [
-              commonChannelIcon(isPrivate: isPrivate ?? false,isMuted: muteChannel),
+              Cw.instance.commonChannelIcon(isPrivate: isPrivate ?? false,isMuted: muteChannel),
               const SizedBox(width: 12),
               ConstrainedBox(
                 constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
-                child: commonText(
+                child: Cw.instance.commonText(
                   text: name ?? "",
                   color: muteChannel ? AppColor.borderColor : Colors.white.withOpacity(0.9),
                   fontSize: 14,
@@ -1276,7 +1272,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
-          formatDateTime2(date ?? ""),
+          Cf.instance.formatDateTime2(date ?? ""),
           style: TextStyle(
             color: mutedConversation ? AppColor.borderColor : Colors.white,
           ),
@@ -1298,7 +1294,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: commonText(
+              child: Cw.instance.commonText(
                 text: unSeenMsgCount.toString(),
                 color: Colors.white,
                 fontSize: 15, // Increased font size
@@ -1589,7 +1585,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return GestureDetector(
       onTap: () {
         if(isChannelMessage) {
-          pushScreen(
+          Cf.instance.pushScreen(
             screen: ReplyMessageScreenChannel(
               msgID: thread.sId ?? "",
               channelName: channelName,
@@ -1599,7 +1595,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             updateThreads();
           });
         }else{
-          pushScreen(
+          Cf.instance.pushScreen(
             screen: ReplyMessageScreen(
               userName: thread.mainMessageSenderInfo?.fullName ?? thread.mainMessageSenderInfo?.username ?? "",
               messageId: thread.sId ?? "",
@@ -1632,7 +1628,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               //     overflow: TextOverflow.ellipsis,
               //   ),
               // ), 
-              commonText(
+              Cw.instance.commonText(
                 text: channelName.toUpperCase(),
                 color: AppColor.borderColor,
                 fontSize: 12,
@@ -1645,7 +1641,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                profileIconWithStatus(
+                Cw.instance.profileIconWithStatus(
                   userName: thread.mainMessageSenderInfo?.fullName ?? thread.mainMessageSenderInfo?.username ?? "",
                   userID: thread.mainMessageSenderInfo?.sId ?? "",
                   otherUserProfile: thread.mainMessageSenderInfo?.thumbnailAvatarUrl ?? "",
@@ -1657,7 +1653,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      commonText(
+                      Cw.instance.commonText(
                         text: thread.mainMessageSenderInfo?.fullName ?? thread.mainMessageSenderInfo?.username ?? "",
                         color: AppColor.white,
                         fontSize: 14,
@@ -1666,7 +1662,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 4),
-                      commonHTMLText(
+                      Cw.instance.commonHTMLText(
                         message: thread.mainMessageContent ?? "",
                         color: AppColor.white
                       ),
@@ -1679,7 +1675,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             color: AppColor.white.withOpacity(0.6),
                           ),
                           SizedBox(width: 8),
-                          commonText(
+                          Cw.instance.commonText(
                             text: "${thread.totalUnseenReplies} new ${thread.totalUnseenReplies == 1 ? 'reply' : 'replies'}",
                             color: AppColor.white.withOpacity(0.6),
                             fontSize: 12,
@@ -1724,7 +1720,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             children: options.map((option) {
               return InkWell(
                 onTap: () {
-                  pop();
+                  Cf.instance.pop();
                   option['onTap']?.call();
                 },
                 child: Container(
@@ -1752,7 +1748,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       ),
                       SizedBox(width: 16),
                       Expanded(
-                        child: commonText(
+                        child: Cw.instance.commonText(
                           text: option['title'] ?? '',
                           color: option['color'] ?? Colors.white,
                           fontSize: 16,

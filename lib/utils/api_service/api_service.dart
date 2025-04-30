@@ -41,21 +41,21 @@ class ApiService {
     final header = {
       'Authorization': "Bearer ${signInModel.data?.authToken}",};
     if (!_networkStatusService.connectionValue) {
-      commonShowToast("No Internet Connection");
+      Cw.instance.commonShowToast("No Internet Connection");
       return;
     }
 
     Uri uri = Uri.parse(isKarmaUrl ? ApiString.karmaBaseUrl + endPoint : ApiString.baseUrl + endPoint).replace(queryParameters: queryParams);
     http.Response? response;
     Map<String, String> requestHeaders = {};
-    if (!endPoint.contains(ApiString.login) || !endPoint.contains(ApiString.getAppVersion)) {
+    if (!endPoint.contains(ApiString.login) || !endPoint.contains(ApiString.getAppVersion) || !endPoint.contains(ApiString.googleSignIn)) {
       requestHeaders.addAll(header);
     }
 
     _logRequest('$uri', method, reqBody, requestHeaders);
 
     try {
-      if(needLoader == true) startLoading();
+      if(needLoader == true) Cw.instance.startLoading();
       if(endPoint == ApiString.closeConversation || endPoint == ApiString.sendMessage || endPoint == ApiString.sendChannelMessage || endPoint == ApiString.addDeviceToken || endPoint == ApiString.removeDeviceToken){
         print("IN close");
         requestHeaders.clear();
@@ -72,7 +72,6 @@ class ApiService {
         final responseData = json.decode(response.body);
         _handleToastMessage(responseData);
       }
-      print("response>>>>>>>>>${jsonDecode(response.body)}");
 
       if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403 || response.statusCode == 404 ) {
         return json.decode(response.body);
@@ -91,7 +90,7 @@ class ApiService {
       // commonShowToast("Something Went Wrong $e", Colors.red);
       throw Exception("Something Went Wrong ${e.toString()}");
     } finally {
-      stopLoading();
+      Cw.instance.stopLoading();
     }
   }
 
@@ -140,7 +139,7 @@ class ApiService {
     if (responseData is Map<String, dynamic> && responseData.containsKey('message')) {
       final String message = responseData['message'].toString();
       final bool isSuccess = (responseData['statusCode'] == 200 || responseData['statusCode'] == 201 || responseData['status'] == 1);
-      commonShowToast(message, isSuccess ? Colors.green : Colors.red);
+      Cw.instance.commonShowToast(message, isSuccess ? Colors.green : Colors.red);
     }
   }
 }

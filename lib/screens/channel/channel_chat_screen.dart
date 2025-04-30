@@ -631,8 +631,6 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   void initState() {
       _confettiController1 = ConfettiController(duration: const Duration(seconds: 5));
       _confettiController2 = ConfettiController(duration: const Duration(seconds: 5));
-      // _confettiController1.play();
-      // _confettiController2.play();
     super.initState();
     Provider.of<CommonProvider>(context,listen: false).getUserApi(id: signInModel.data?.user?.id ?? "");
     channelID = widget.channelId;
@@ -652,33 +650,28 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
 
   initializedScreen(int pageNo,bool isfromJump,String msgGroup,String msgId){
     _messageController.addListener(_onTextChanged);
-    print("CHANNELID>>> ${channelID}");
-    print("CHANNELID>>> ${pageNo}");
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      socketProvider.userTypingEventChannel(channelId: channelID, isReplyMsg: false, isTyping:  0);
-      channelChatProviderInit.getTypingUpdate(true);
       messageGroupId = msgGroup;
-
-      /// this for socket listen in channel chat for new message and delete //
-      socketProvider.listenForChannelChatScreen(channelId: channelID);
-        if(!isfromJump){
-          pagination(channelId: channelID);
-          downStreamPagination(channelId: channelID);
-        }
-        channelChatProviderInit.getChannelInfoApiCall(channelId: channelID,callFroHome: true);
+      channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: pageNo, isFromJump: isfromJump,onlyReadInChat: true,needLoaderFromInItState: true);
       Provider.of<ChannelChatProvider>(context,listen: false).changeCurrentPageValue(pageNo);
-      channelChatProviderInit.getChannelChatApiCall(channelId: channelID,pageNo: pageNo, isFromJump: isfromJump,onlyReadInChat: true);
+      channelChatProviderInit.getChannelInfoApiCall(channelId: channelID,callFroHome: true);
       channelChatProviderInit.getChannelMembersList(channelID);
       channelChatProviderInit.getFileListingInChannelChat(channelId: channelID);
+      socketProvider.listenForChannelChatScreen(channelId: channelID);
+      if(!isfromJump){
+        pagination(channelId: channelID);
+        downStreamPagination(channelId: channelID);
+      }
       if(isFromJump){
         Future.delayed(Duration(seconds: 3), (){
           jumpToMessage(sortedGroups: channelChatProviderInit.messageGroups,messageGroupId: msgGroup,messageId: msgId);
         });
       }
-      // if(isfromJump){
-      //   Future.delayed(Duration(seconds: 5),()=> jumpToMessage(sortedGroups: channelChatProviderInit.messageGroups,messageGroupId: msgGroup,messageId: msgId));
-      // }
+
+      /// this for socket listen in channel chat for new message and delete //
+      socketProvider.userTypingEventChannel(channelId: channelID, isReplyMsg: false, isTyping:  0);
+      channelChatProviderInit.getTypingUpdate(true);
+
     },);
   }
 
@@ -691,7 +684,6 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   }
   @override
   void dispose() {
-    // Clean up all chat-related socket listeners
     socketProvider.cleanupChatListeners();
     for (var player in _audioPlayers.values) {
       player.dispose();
@@ -743,7 +735,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  commonText(
+                  Cw.instance.commonText(
                     text: "Rename Channel",
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -755,7 +747,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              commonText(
+              Cw.instance.commonText(
                 text: "Display Name",
                 fontSize: 14,
                 color: AppColor.borderColor,
@@ -789,7 +781,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: commonText(
+                    child: Cw.instance.commonText(
                       text: "Cancel",
                       color: AppColor.whiteColor,
                     ),
@@ -811,12 +803,12 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             name: newName,
                             isPrivate: channelChatProv.getChannelInfo?.data?.isPrivate ?? false
                         )
-                            .then((_) => pop());
+                            .then((_) => Cf.instance.pop());
                       }else {
-                        commonShowToast("Add channel name to proceed");
+                        Cw.instance.commonShowToast("Add channel name to proceed");
                       }
                     },
-                    child: commonText(
+                    child: Cw.instance.commonText(
                       text: "Save",
                       color: AppColor.whiteColor,
                     ),
@@ -854,7 +846,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   }
 
   sendMsg(channelChatProvider) async{
-    var plainText = _messageController.text.trim();
+    // var plainText = _messageController.text.trim();
+    var plainText = Cf.instance.processContent(_messageController.text.trim());
     if (plainText.contains(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'))) {
       plainText = plainText.replaceAll(RegExp(r':[Ww][Aa][Ff][Ff][Ll][Ee]'), ':waffle');
     }
@@ -925,7 +918,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   link: _layerLink,
                                   child: KeyboardActions(
                                     disableScroll: true,
-                                    config: keyboardConfigIos(_focusNode),
+                                    config: Cw.instance.keyboardConfigIos(_focusNode),
                                     child: TextField(
                                       maxLines: 5,
                                       minLines: 1,
@@ -1039,7 +1032,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             onTap: () {
                               _focusNode.unfocus();
                               // showCameraOptionsBottomSheet(context,AppString.channelChat);
-                              pushScreen(screen: CameraScreen(screenName: AppString.channelChat,));
+                              Cf.instance.pushScreen(screen: CameraScreen(screenName: AppString.channelChat,));
                             },
                             child : Container(
                               margin: EdgeInsets.symmetric(horizontal: 5),
@@ -1061,7 +1054,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   ],
                 ),
               ),
-              selectedFilesWidget(screenName: AppString.channelChat),
+              Cw.instance.selectedFilesWidget(screenName: AppString.channelChat),
             ],
           ),
         ),
@@ -1105,7 +1098,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               }),
               _optionItem(context, Icons.camera_alt_outlined, "Camera", "Capture image and video",(){
                 // FileServiceProvider.instance.captureImageAndVideo(AppString.channelChat);
-                pushScreen(screen: CameraScreen(screenName: AppString.channelChat,));
+                Cf.instance.pushScreen(screen: CameraScreen(screenName: AppString.channelChat,));
               }),
             ],
           ),
@@ -1168,7 +1161,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               leading: IconButton(
                 icon: Icon(CupertinoIcons.back, color: Colors.white),
                 onPressed: () {
-                  pop();
+                  Cf.instance.pop();
                   // if(widget.isFromNotification ?? false) {
                   //   // pushAndRemoveUntil(screen: HomeScreen());
                   //
@@ -1184,7 +1177,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   Row(
                     children: [
                       Flexible(
-                        child: commonText(
+                        child: Cw.instance.commonText(
                           text: channelChatProvider.isChannelChatLoading ? "Loading..." :  channelChatProvider.getChannelInfo?.data?.name ?? "",
                           maxLines: 1,
                           fontSize: 14,
@@ -1214,7 +1207,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       GestureDetector(
                         onTap: () {
                           if (channelChatProvider.getChannelInfo?.data?.members?.isNotEmpty ?? false) {
-                            pushScreen(
+                            Cf.instance.pushScreen(
                               screen: ChannelMembersInfo(
                                 channelId: channelID,
                                 channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
@@ -1228,7 +1221,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             children: [
                               Image.asset(AppImage.person, height: 18, width: 18, color: AppColor.white),
                               SizedBox(width: 4),
-                              commonText(
+                              Cw.instance.commonText(
                                 text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",
                                 fontSize: 15,
                                 color: AppColor.white,
@@ -1240,7 +1233,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       ),
                       /// Pin Messages & Navigation ///
                       GestureDetector(
-                        onTap: () => pushScreen(
+                        onTap: () => Cf.instance.pushScreen(
                           screen: ChannelPinnedPostsScreen(
                             channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
                             channelId: channelID,
@@ -1252,7 +1245,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             children: [
                               Image.asset(AppImage.pinIcon, height: 18, width: 18, color: Colors.white),
                               SizedBox(width: 4),
-                              commonText(
+                              Cw.instance.commonText(
                                 text: "${channelChatProvider.getChannelInfo?.data?.pinnedMessagesCount ?? 0}",
                                 fontSize: 15,
                                 color: AppColor.white,
@@ -1264,7 +1257,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       ),
                       /// File & Navigation ///
                       GestureDetector(
-                        onTap: () => pushScreen(
+                        onTap: () => Cf.instance.pushScreen(
                           screen: FilesListingScreen(
                             channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
                             channelId: channelID,
@@ -1283,7 +1276,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 IconButton(
                   icon: const Icon(Icons.search, color: AppColor.whiteColor),
                   onPressed: () {
-                    pushScreen(screen:FindMessageScreen()).then((value) {
+                    Cf.instance.pushScreen(screen:FindMessageScreen()).then((value) {
                       print("value>>> $value");
                       // if(value != null){
                       //   if(value['needToOpenChannelChat']){
@@ -1316,7 +1309,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           // }
                         }else{
                           print("userName : ${value['name']} && userId ${value['id']}");
-                          pushReplacement(screen: SingleChatMessageScreen(userName: signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'], oppositeUserId:signInModel.data!.user!.id == value['id'] ?value['oppositeUserID'] : value['id'],isFromJump: true,jumpData: value,));
+                          Cf.instance.pushReplacement(screen: SingleChatMessageScreen(userName: signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'], oppositeUserId:signInModel.data!.user!.id == value['id'] ?value['oppositeUserID'] : value['id'],isFromJump: true,jumpData: value,));
                         }
                         print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
                       }
@@ -1327,7 +1320,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 ),
                 IconButton(
                   icon: Icon(Icons.info, color: AppColor.whiteColor),
-                  onPressed: () => pushScreen(
+                  onPressed: () => Cf.instance.pushScreen(
                     screen: ChannelInfoScreen(
                       channelId: channelID,
                       channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",
@@ -1358,7 +1351,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   children: [
                     Divider(color: Colors.grey.shade800, height: 1,),
                     if(channelChatProvider.isChannelChatLoading || reloading)...{
-                      Flexible(child: ShimmerLoading.chatShimmer(context))
+                      Flexible(child: ShimmerLoading.instance.chatShimmer(context))
                     }else...{
                       // Expanded(
                       //   child: ListView(
@@ -1431,7 +1424,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         child: Column(
                           children: [
                             if (typingMessage.isNotEmpty)
-                              commonText(
+                              Cw.instance.commonText(
                                 text: typingMessage,
                                 fontSize: 14,
                                 color: Colors.grey.shade600,
@@ -1524,9 +1517,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
+            Cw.instance.commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
             SizedBox(height: 10),
-            commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
+            Cw.instance.commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${Cf.instance.formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
                 fontSize: 14,height: 1.35),
             Visibility(
               visible: isCurrentUserAdmin,
@@ -1571,7 +1564,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
             if(!isFromJump && channelChatProvider.totalPages > channelChatProvider.currentPage) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: customLoading(),
+                child: Cw.instance.customLoading(),
               );
             }else if(channelChatProvider.totalPages == channelChatProvider.currentPage){
               return Padding(
@@ -1580,9 +1573,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
+                    Cw.instance.commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
                     SizedBox(height: 10),
-                    commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
+                    Cw.instance.commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${Cf.instance.formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
                         fontSize: 14,height: 1.35),
                     Visibility(
                       visible: isCurrentUserAdmin,
@@ -1642,8 +1635,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         color: AppColor.blueColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: commonText(
-                        text: formatDateTime(DateTime.parse(date)),
+                      child: Cw.instance.commonText(
+                        text: Cf.instance.formatDateTime(DateTime.parse(date)),
                         fontSize: 12,
                         color: AppColor.whiteColor,
                       ),
@@ -1845,7 +1838,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
           children: [
             Visibility(
                 visible: (messageList.isSeen == false && userId != signInModel.data?.user?.id),
-                child: newMessageDivider()),
+                child: Cw.instance.newMessageDivider()),
             Visibility(
                 visible: pinnedMsg,
                 child: Padding(
@@ -1855,7 +1848,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                        child: commonText(text: "Pinned",color: AppColor.blueColor),
+                        child: Cw.instance.commonText(text: "Pinned",color: AppColor.blueColor),
                       ),
                     ],
                   ),
@@ -1869,7 +1862,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
                     // child: profileIconWithStatus(userID: messageList.senderInfo?.id ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? "",radius: 17),
-                    child: profileIconWithStatus(userID:  messageList.senderInfo?.id ?? user?.sId ?? "", status:  messageList.senderInfo?.status ?? user?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? user?.avatarUrl ?? "",radius: 17,userName: messageList.senderInfo?.username ?? ""),
+                    child: Cw.instance.profileIconWithStatus(userID:  messageList.senderInfo?.id ?? user?.sId ?? "", status:  messageList.senderInfo?.status ?? user?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? user?.avatarUrl ?? "",radius: 17,userName: messageList.senderInfo?.username ?? ""),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -1883,7 +1876,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            commonText(height: 1.2, text: messageList.senderInfo?.username ?? user?.username ?? "", fontWeight: FontWeight.bold),
+                            Cw.instance.commonText(height: 1.2, text: messageList.senderInfo?.username ?? user?.username ?? "", fontWeight: FontWeight.bold),
                             Visibility(
                               visible: (messageList.senderInfo?.customStatusEmoji != null && messageList.senderInfo!.customStatusEmoji!.isNotEmpty) ||
                                   (user?.customStatusEmoji != null && user!.customStatusEmoji!.isNotEmpty),
@@ -1897,7 +1890,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               ),
                             ),
                             Padding(padding: const EdgeInsets.only(left: 5.0),
-                              child: commonText(height: 1.2, text: formatTime(time), color: Colors.grey, fontSize: 12),
+                              child: Cw.instance.commonText(height: 1.2, text: Cf.instance.formatTime(time), color: Colors.grey, fontSize: 12),
                             ),
                           ],
                         ),
@@ -1925,7 +1918,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: commonHTMLText(message: message.replaceAll(":waffle", ""),userId: messageList.senderInfo?.id ?? "",isLog: messageList.isLog ?? false,userName: messageList.senderInfo?.username ?? ""),
+                                    child: Cw.instance.commonHTMLText(message: message.replaceAll(":waffle", ""),userId: messageList.senderInfo?.id ?? "",isLog: messageList.isLog ?? false,userName: messageList.senderInfo?.username ?? ""),
                                   ),
                                   if (isEdited)
                                     WidgetSpan(
@@ -1947,7 +1940,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                               color: AppColor.borderColor,
                                             ),
                                             const SizedBox(width: 2),
-                                            commonText(
+                                            Cw.instance.commonText(
                                               text: "Edited",
                                               fontSize: 10,
                                               color: AppColor.borderColor,
@@ -1978,19 +1971,19 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                Cw.instance.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl ?? "",userName: messageList.senderOfForward?.username ?? ''),
+                                    Cw.instance.profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl ?? "",userName: messageList.senderOfForward?.username ?? ''),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          commonText(text: messageList.senderOfForward?.username ?? "unknown"),
+                                          Cw.instance.commonText(text: messageList.senderOfForward?.username ?? "unknown"),
                                           SizedBox(height: 3),
-                                          commonText(text: formatDateString("${messageList.forwards?.createdAt ?? ""}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          Cw.instance.commonText(text: Cf.instance.formatDateString("${messageList.forwards?.createdAt ?? ""}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),
@@ -1998,7 +1991,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                 ),
                                 Visibility(
                                     visible: messageList.forwards?.content != "",
-                                    child: commonHTMLText(message: "${messageList.forwards?.content}")),
+                                    child: Cw.instance.commonHTMLText(message: "${messageList.forwards?.content}")),
                                 Visibility(
                                   visible: messageList.forwards?.files?.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -2007,9 +2000,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                     physics: NeverScrollableScrollPhysics(),
                                     itemBuilder: (context, index) {
                                       final filesUrl = messageList.forwards?.files?[index];
-                                      String originalFileName = getFileName(messageList.forwards!.files?[index]);
-                                      String formattedFileName = formatFileName(originalFileName);
-                                      String fileType = getFileExtension(originalFileName);
+                                      String originalFileName = Cf.instance.getFileName(messageList.forwards!.files?[index]);
+                                      String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                                      String fileType = Cf.instance.getFileExtension(originalFileName);
                                       bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
                                           fileType.toLowerCase() == 'mp3' ||
                                           fileType.toLowerCase() == 'wav';
@@ -2033,12 +2026,12 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                         ),
                                         child: Row(
                                           children: [
-                                            getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                            Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                             SizedBox(width: 20,),
                                             Flexible(
                                                 flex: 10,
                                                 fit: FlexFit.loose,
-                                                child: commonText(text: formattedFileName,maxLines: 1)),
+                                                child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                             Spacer(),
                                             GestureDetector(
                                                 onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -2061,9 +2054,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           physics: NeverScrollableScrollPhysics(),
                           itemBuilder: (context, index) {
                             final filesUrl = messageList.files?[index];
-                            String originalFileName = getFileName(messageList.files![index]);
-                            String formattedFileName = formatFileName(originalFileName);
-                            String fileType = getFileExtension(originalFileName);
+                            String originalFileName = Cf.instance.getFileName(messageList.files![index]);
+                            String formattedFileName = Cf.instance.formatFileName(originalFileName);
+                            String fileType = Cf.instance.getFileExtension(originalFileName);
                             // IconData fileIcon = getFileIcon(fileType);
                             bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
                                 fileType.toLowerCase() == 'mp3' ||
@@ -2088,12 +2081,12 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
+                                  Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$filesUrl"),
                                   SizedBox(width: 20,),
                                   Flexible(
                                       flex: 10,
                                       fit: FlexFit.loose,
-                                      child: commonText(text: formattedFileName,maxLines: 1)),
+                                      child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
                                   Spacer(),
                                   GestureDetector(
                                       onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -2108,7 +2101,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         child: GestureDetector(
                           onTap: () {
                             print("Simple Passing = ${messageId.toString()}");
-                            pushScreen(screen:
+                            Cf.instance.pushScreen(screen:
                             ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,))
                             .then((value) {
                               print("value>>> $value");
@@ -2139,7 +2132,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                         Stack(
                                           clipBehavior: Clip.none,
                                           children: [
-                                            profileIconWithStatus(
+                                            Cw.instance.profileIconWithStatus(
                                               userID: messageList.repliesSenderInfo?[0].id ?? "",
                                               userName: messageList.repliesSenderInfo?[0].username ?? "",
                                               status: "",
@@ -2150,7 +2143,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                             if (messageList.repliesSenderInfo!.length > 1)
                                               Positioned(
                                                 left: 16,
-                                                child: profileIconWithStatus(
+                                                child: Cw.instance.profileIconWithStatus(
                                                   userID: messageList.repliesSenderInfo?[1].id ?? "",
                                                   userName: messageList.repliesSenderInfo?[1].username ?? "",
                                                   status: "",
@@ -2211,7 +2204,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   ),
                                 ),
 
-                                commonText(
+                                Cw.instance.commonText(
                                   text: "${messageList.replyCount} ${messageList.replyCount! > 1 ? 'replies' : 'reply'}",
                                   fontSize: 12,
                                   color: AppColor.borderColor,
@@ -2221,8 +2214,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                 Flexible(
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
-                                    child: commonText(
-                                      text: getTimeAgo(
+                                    child: Cw.instance.commonText(
+                                      text: Cf.instance.getTimeAgo(
                                           (messageList.replies != null && messageList.replies!.isNotEmpty)
                                               ? messageList.replies!.last.createdAt.toString()
                                               : DateTime.now().toString()
@@ -2299,7 +2292,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                                 ),
                                               ),
                                               child: i < 2 || remainingUsers == 0 ?
-                                              profileIconWithStatus(
+                                              Cw.instance.profileIconWithStatus(
                                                 userID: visibleUsers[i],
                                                 userName: i < usernames.length ? usernames[i] : "",
                                                 status: "",
@@ -2343,7 +2336,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   spacing: 4,
                                   runSpacing: 4,
                                   alignment: WrapAlignment.start,
-                                  children: groupReactions(messageList.reactions!).entries.map((entry) {
+                                  children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
                                     reaction.userId == signInModel.data?.user?.id &&
                                         reaction.emoji == entry.key);
@@ -2405,16 +2398,16 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 // Spacer(),
                 Visibility(
                   visible: !(messageList.isLog ?? false),
-                  child: popMenu2(
+                  child: Cw.instance.popMenu2(
                       context,
                       hasAudioFile: (messageList.files?.any((file) {
-                        String fileType = getFileExtension(getFileName(file));
+                        String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
                         return fileType.toLowerCase() == 'm4a' ||
                             fileType.toLowerCase() == 'mp3' ||
                             fileType.toLowerCase() == 'wav';
                       }) ?? false) ||
                           (messageList.forwards?.files?.any((file) {
-                            String fileType = getFileExtension(getFileName(file));
+                            String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
                             return fileType.toLowerCase() == 'm4a' ||
                                 fileType.toLowerCase() == 'mp3' ||
                                 fileType.toLowerCase() == 'wav';
@@ -2425,14 +2418,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       onOpened: () {},
                       onClosed: () {},
                       onReact: () {
-                        showReactionBar(context, messageId, channelID, "Channel");
+                        Cw.instance.showReactionBar(context, messageId, channelID, "Channel");
                       },
                       isForwarded: messageList.isForwarded! ? false : true,
                       opened: false,
-                      onForward: () => pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,)),
-                      onReply: () => pushScreen(screen: ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)),
+                      onForward: () => Cf.instance.pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: Cf.instance.formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,)),
+                      onReply: () => Cf.instance.pushScreen(screen: ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)),
                       onPin: () => channelChatProvider.pinUnPinMessage(channelID: channelID, messageId: messageId, pinned: pinnedMsg = !pinnedMsg ),
-                      onCopy: () => copyToClipboard(context, parse(message).body?.text ?? ""),
+                      onCopy: () => Cf.instance.copyToClipboard(context, parse(message).body?.text ?? ""),
                       onEdit: () => setState(() {
                         _messageController.clear();
                         FocusScope.of(context).requestFocus(_focusNode);
@@ -2441,7 +2434,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                         _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                       }),
-                      onDelete: () => deleteMessageDialog(context, ()=> Provider.of<ChannelChatProvider>(context,listen: false).deleteMessageFromChannel(messageId: messageId,))
+                      onDelete: () => Cw.instance.deleteMessageDialog(context, ()=> Provider.of<ChannelChatProvider>(context,listen: false).deleteMessageFromChannel(messageId: messageId,))
                   ),
                 )
               ],
@@ -2502,7 +2495,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
                         children: [
-                          profileIconWithStatus(
+                          Cw.instance.profileIconWithStatus(
                             userID: userId,
                             userName: user?.username ?? '',
                             status: "",

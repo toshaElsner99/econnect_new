@@ -108,8 +108,8 @@ class SocketIoProvider extends ChangeNotifier{
     });
 
     socket.onAny((event, data) {
-      print("connected>>>> ${socket.connected}");
-      print("Received event: $event >>> $data");
+      // print("connected>>>> ${socket.connected}");
+      // print("Received event: $event >>> $data");
     });
 
     // Remove duplicate listeners and implement a single optimized handler
@@ -148,7 +148,6 @@ class SocketIoProvider extends ChangeNotifier{
     required int isTyping,
     String msgId = ""
   }) {
-    print("CALLLED_userTypingEvent>>>>>>>");
 
     Map<String, dynamic> data = {
       "senderId": signInModel.data?.user?.id ?? "",
@@ -166,7 +165,6 @@ class SocketIoProvider extends ChangeNotifier{
 
 
   userTypingEventChannel({required String channelId,required int isTyping, required bool isReplyMsg,String msgId = ""}){
-    print("CALLLED_userTypingEventChannel>>>>>>> ");
     Map<String, dynamic> data = {
       "senderId": signInModel.data?.user?.id ?? "",
       "channelId": channelId,

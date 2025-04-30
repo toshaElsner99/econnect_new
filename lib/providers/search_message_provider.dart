@@ -1,7 +1,6 @@
 import 'package:e_connect/model/searchMessages.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
-import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../utils/common/common_function.dart';
@@ -19,7 +18,7 @@ class SearchMessageProvider extends ChangeNotifier{
     print("Request $requestBody");
     try{
       final response = await ApiService.instance.request(endPoint: ApiString.searchMessages, method: Method.POST, reqBody: requestBody,needLoader: true);
-      if (statusCode200Check(response)) {
+      if (Cf.instance.statusCode200Check(response)) {
         print("Response>> $response");
 
         messageGroups.clear();
@@ -53,7 +52,7 @@ class SearchMessageProvider extends ChangeNotifier{
     print("Request $requestBody");
     try{
       final response = await ApiService.instance.request(endPoint: ApiString.messageJump, method: Method.POST, reqBody: requestBody,needLoader: true);
-      if (statusCode200Check(response)) {
+      if (Cf.instance.statusCode200Check(response)) {
         print("Response>> $response");
 
         return response['data']['pageNumber'];
