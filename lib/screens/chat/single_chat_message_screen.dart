@@ -455,7 +455,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == true)...{
-                    userLeftedText()
+                    if(commonProvider.getUserModelSecondUser?.data?.user?.sId == "681d8ff1deb78a151b87a770")...{
+                      userNotPutAnyMessageText(commonProvider.getUserModelSecondUser!.data!.user!.fullName!)
+                    }else...{
+                      userLeftedText()
+                    }
+
                   }else...{
                     inputTextFieldWithEditor()
                   }
@@ -532,6 +537,31 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               ),
             ),
             TextSpan(text: '. New messages cannot be posted.'),
+          ],
+        ),
+      ),
+    );
+  }
+  Container userNotPutAnyMessageText(String userName) {
+    return Container(
+      decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: AppColor.borderColor))
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 30,vertical: 20),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          style: TextStyle(
+            color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black, // Default text color
+            fontSize: 16, // Default font size
+          ),
+          children: <TextSpan>[
+
+            TextSpan(text: '$userName',  style: TextStyle(
+          fontWeight:
+          FontWeight.bold, // Make this part bold
+        ),),
+            TextSpan(text: ' cannot receive messages. Check your user list for others to chat with.'),
           ],
         ),
       ),

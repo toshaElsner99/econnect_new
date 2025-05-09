@@ -66,8 +66,9 @@ class SignInProvider extends ChangeNotifier {
 
   Future<void> signInWithGoogle(BuildContext? context) async {
     try {
-      await googleSignIn.signOut();
-
+      if(await googleSignIn.isSignedIn()){
+        await googleSignIn.signOut();
+      }
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
         // User canceled the sign-in flow
@@ -76,9 +77,9 @@ class SignInProvider extends ChangeNotifier {
       }
 
       final email = googleUser.email;
-      final domain = email.split('@').last;
+      // final domain = email.split('@').last;
 
-      if (domainList.contains(domain)) {
+      // if (domainList.contains(domain)) {
         try {
           final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
           final String? idToken = googleAuth.idToken;
@@ -92,9 +93,9 @@ class SignInProvider extends ChangeNotifier {
           print("❌ Google authentication failed: $e");
           Cw.instance.commonShowToast("❌ Authentication failed: $e", Colors.white);
         }
-      } else {
-        Cw.instance.commonShowToast("❌ Email domain not allowed", Colors.white);
-      }
+      // } else {
+      //   Cw.instance.commonShowToast("❌ Email domain not allowed", Colors.white);
+      // }
     } catch (e) {
       print("❌ Google sign-in failed: $e");
       Cw.instance.commonShowToast("❌ Google sign-in failed", Colors.white);
