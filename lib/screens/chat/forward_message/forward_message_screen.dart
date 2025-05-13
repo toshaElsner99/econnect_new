@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:e_connect/main.dart';
 import 'package:e_connect/providers/chat_provider.dart';
 import 'package:flutter/cupertino.dart';
@@ -18,6 +20,7 @@ class ForwardMessageScreen extends StatefulWidget {
   final String userName;
   final String time;
   final String forwardMsgId;
+  final bool? isForBdy;
 
   const ForwardMessageScreen({
     super.key,
@@ -26,7 +29,7 @@ class ForwardMessageScreen extends StatefulWidget {
     required this.userID,
     required this.msgToForward,
     required this.otherUserProfile,
-    required this.forwardMsgId,
+    required this.forwardMsgId, this.isForBdy,
   });
 
   @override
@@ -44,6 +47,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
   void initState() {
     super.initState();
     itemInfo.clear();
+    log("UserId : ${widget.userID}");
     WidgetsBinding.instance.addPostFrameCallback((_) {
       provider.clearList();
       provider.searchController.addListener(() {
@@ -266,7 +270,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0,vertical: 5),
-                      child: Cw.instance.commonHTMLText(message: widget.msgToForward),
+                      child: widget.isForBdy?? false ? Cw.instance.HtmlTextOnly(htmltext: widget.msgToForward)  : Cw.instance.commonHTMLText(message: widget.msgToForward),
                     ),
                   ],
                 ),

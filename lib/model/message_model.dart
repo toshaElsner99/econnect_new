@@ -535,6 +535,7 @@ class Forward {
   // List<Reactions> reactions;
   DateTime createdAt;
   DateTime updatedAt;
+  String? hrms_bdy;
   int v;
 
   Forward({
@@ -557,6 +558,7 @@ class Forward {
     // required this.reactions,
     required this.createdAt,
     required this.updatedAt,
+    required this.hrms_bdy,
     required this.v,
   });
 
@@ -584,6 +586,7 @@ class Forward {
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
       v: json['__v'],
+      hrms_bdy: json['hrms_birthday_email'] ?? '',
     );
   }
 

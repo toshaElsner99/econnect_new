@@ -131,8 +131,8 @@ class ApiService {
   }
 
   void _logResponse(http.Response response) {
-    logger.log("✅ RESPONSE[${response.statusCode}] => PATH: ${response.request!.url} \n DATA: ${jsonDecode(response.body)}",
-        printFullText: true);
+    // logger.log("✅ RESPONSE[${response.statusCode}] => PATH: ${response.request!.url} \n DATA: ${jsonDecode(response.body)}",
+    //     printFullText: true);
   }
 
   void _handleToastMessage(dynamic responseData) {

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/main.dart';
 import 'package:e_connect/screens/chat/single_chat_message_screen.dart';
@@ -8,6 +10,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:html/parser.dart';
@@ -28,6 +31,7 @@ import '../app_fonts_constants.dart';
 import '../app_string_constants.dart';
 import 'common_function.dart';
 import 'package:e_connect/providers/chat_provider.dart';
+import 'package:html/parser.dart' as parser;
 
 class ProfilePreviewSheet extends StatelessWidget {
   const ProfilePreviewSheet({super.key});
@@ -1299,6 +1303,7 @@ class Cw {
   }
 
   String htmlToPlainText(String htmlString) {
+
     final document = parse(htmlString);
     return document.body?.text ?? '';
   }
@@ -1463,6 +1468,133 @@ class Cw {
     );
   }
 
+  Widget HtmlTextOnly({required String htmltext}){
+
+    log("Images1 ");
+    String a = '''$htmltext''';
+    final Map<String, String> imageMap = {};
+
+    // Split by <img to isolate each image tag
+    final parts = a.toString().split('<img');
+
+    for (var part in parts) {
+      if (part.contains('class=') && part.contains('src=')) {
+        // Extract class name
+        final classPart = part.split('class=')[1].split(RegExp(r'[ >]'))[0];
+        final className = classPart.replaceAll('"', '').replaceAll("'", "");
+
+        // Extract src
+        final srcPart = part.split('src=')[1].split(RegExp(r'[ >]'))[0];
+        final src = srcPart.replaceAll('"', '').replaceAll("'", "");
+
+        imageMap[className] = src;
+      }
+    }
+    log("Images2 $imageMap");
+
+    final document = parse(a);
+    final text = document.body?.text ?? '';
+    // Step 1: Split by line breaks
+    final lines = text.split('\n');
+
+    // Step 2: Clean each line and remove empty ones
+    final cleanLines = lines
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+
+
+
+    // If you need it as a List<String>
+    print('\nAs a List<String>:');
+    log("cleanLines $cleanLines");
+
+
+    List<TextSpan> spans = [];
+    bool needMore = true;
+    for (int i = 2; i < cleanLines.length; i++) {
+      String msg = cleanLines[i];
+
+      // Convert to lowercase for matching without affecting original case
+      String lowerMsg = msg.toLowerCase();
+      int wishingIndex = lowerMsg.indexOf("wishing");
+      int aIndex = lowerMsg.indexOf(" a");
+
+      if (wishingIndex != -1 && aIndex > wishingIndex && needMore) {
+        // Separate the parts
+        String before = msg.substring(0, wishingIndex + 7); // includes "wishing"
+        String bold = msg.substring(wishingIndex + 7, aIndex); // in between
+        String after = msg.substring(aIndex); // from " a" to end
+
+        spans.addAll([
+          TextSpan(text: before),
+          TextSpan(
+            text: bold,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          TextSpan(text: after + " "), // Add space after each sentence
+        ]);
+        needMore = false; // Stop after the first match
+      } else {
+        // If "wishing" or " a" is not found, just add plain text
+        spans.add(TextSpan(text: msg + " "));
+      }
+    }
+
+    return Container(
+     width: double.infinity,
+     decoration: BoxDecoration(
+       color: Color(0xFF005282),
+       borderRadius: BorderRadius.circular(20),
+     ),
+     child: Column(
+       children: [
+         Padding(
+           padding: const EdgeInsets.only(top: 16.0,bottom: 18),
+           child: ClipRRect(  borderRadius: BorderRadius.circular(75), // half of width
+                  child: CachedNetworkImage(imageUrl: imageMap['emp_img']!,width: 100,)),
+         ),
+         Text(cleanLines[0],style: TextStyle(color:Color(0xFFFFFFFF),fontSize: 30,fontWeight: FontWeight.bold),),
+         Padding(
+           padding: const EdgeInsets.only(top: 15.0,bottom: 25),
+           child: Image.network(imageMap['bdy_img']!.trim()),
+         ),
+         Text(cleanLines[1],style: TextStyle(color:Color(0xFFFFFFFF),fontSize: 18,fontWeight: FontWeight.w600),),
+         Padding(
+           padding: const EdgeInsets.only(top: 24.0,right: 20,left: 20,bottom: 24),
+           // child: MarkdownBody(data: "We have the pleasure of wishing **Mr. Kartik Trivedi** a very happy birthday. May your day be filled with joy, laughter, and all the happiness you deserve. Wishing you a fantastic birthday!",style: TextStyle(color:Color(0xFFFFFFFF),fontSize: 14),textAlign: TextAlign.center,),
+           child: Text.rich(
+              TextSpan(
+               style: TextStyle(color: Colors.white, fontSize: 14),
+               children: spans,
+             ),
+             textAlign: TextAlign.center,
+           ),
+         ),
+
+       ],
+     ) ,
+   );
+    // return HtmlWidget(htmltext,
+    //   customWidgetBuilder: (element){
+    //
+    //   return Container(
+    //     width: double.infinity,
+    //     decoration: BoxDecoration(
+    //       color: Color(0xFF005282),
+    //       borderRadius: BorderRadius.circular(20),
+    //     ),
+    //     child: Column(
+    //         children: [
+    //           SizedBox(width: 140,child: CachedNetworkImage(imageUrl: imageMap['emp_img']!))
+    //         ],
+    //     ),
+    //   );
+    //
+    //   },
+    //   enableCaching: true,
+    // );
+  }
   /// ✅ Function to Open URL in Browser
 
   void _openUrl(String url) async {

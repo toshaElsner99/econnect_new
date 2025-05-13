@@ -138,6 +138,7 @@ class Message {
   List<dynamic>? receiverInfo;
   Forward? forwards;
   SenderInfo? senderOfForward;
+  String? hrms_bdy;
 
   Message({
     this.id,
@@ -168,6 +169,7 @@ class Message {
     this.receiverInfo,
     this.forwards,
     this.senderOfForward,
+    this.hrms_bdy,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -207,6 +209,7 @@ class Message {
       receiverInfo: json['receiverInfo'] != null ? List<dynamic>.from(json['receiverInfo']) : null,
       forwards: json['forwards'] != null ? Forward.fromJson(json['forwards']) : null,
       senderOfForward: json['senderOfForward'] != null ? SenderInfo.fromJson(json['senderOfForward']) : null,
+      hrms_bdy: json['hrms_birthday_email'] ?? '',
     );
   }
 
@@ -453,6 +456,8 @@ class Forward {
   DateTime? createdAt;
   DateTime? updatedAt;
   int? v;
+  String? hrms_bdy;
+
 
   Forward({
     this.id,
@@ -474,6 +479,7 @@ class Forward {
     this.createdAt,
     this.updatedAt,
     this.v,
+    this.hrms_bdy
   });
 
   factory Forward.fromJson(Map<String, dynamic> json) {
@@ -497,6 +503,7 @@ class Forward {
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
       v: json['__v'],
+      hrms_bdy: json['hrms_birthday_email'] ?? '',
     );
   }
 

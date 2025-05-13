@@ -1918,7 +1918,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: Cw.instance.commonHTMLText(message: message.replaceAll(":waffle", ""),userId: messageList.senderInfo?.id ?? "",isLog: messageList.isLog ?? false,userName: messageList.senderInfo?.username ?? ""),
+                                    child:messageList.hrms_bdy != '' ? Cw.instance.HtmlTextOnly(htmltext: message) : Cw.instance.commonHTMLText(message: message.replaceAll(":waffle", ""),userId: messageList.senderInfo?.id ?? "",isLog: messageList.isLog ?? false,userName: messageList.senderInfo?.username ?? ""),
                                   ),
                                   if (isEdited)
                                     WidgetSpan(
@@ -1989,9 +1989,10 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                     ),
                                   ],),
                                 ),
+                                messageList.forwards != null ?
                                 Visibility(
-                                    visible: messageList.forwards?.content != "",
-                                    child: Cw.instance.commonHTMLText(message: "${messageList.forwards?.content}")),
+                                    visible:messageList.forwards?.content != "",
+                                    child: messageList.forwards!.hrms_bdy != '' ? Cw.instance.HtmlTextOnly(htmltext: "${messageList.forwards?.content!}") : Cw.instance.commonHTMLText(message: "${messageList.forwards?.content}")) : SizedBox(),
                                 Visibility(
                                   visible: messageList.forwards?.files?.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -2422,7 +2423,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       },
                       isForwarded: messageList.isForwarded! ? false : true,
                       opened: false,
-                      onForward: () => Cf.instance.pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: Cf.instance.formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,)),
+                      onForward: () => Cf.instance.pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: Cf.instance.formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,isForBdy: messageList.hrms_bdy != '' ? true : false,)),
                       onReply: () => Cf.instance.pushScreen(screen: ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)),
                       onPin: () => channelChatProvider.pinUnPinMessage(channelID: channelID, messageId: messageId, pinned: pinnedMsg = !pinnedMsg ),
                       onCopy: () => Cf.instance.copyToClipboard(context, parse(message).body?.text ?? ""),
