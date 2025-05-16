@@ -51,9 +51,9 @@ class ChannelListProvider extends ChangeNotifier{
 
   /// GET FAVORITE LIST IN HOME SCREEN ///
   Future<void> getFavoriteList()async{
-    // print("userID>>>> ${signInModel.data?.user?.id}");
+    // print("userID>>>> ${signInModel!.data?.user?.id}");
     final requestBody = {
-      "userId": signInModel.data?.user?.id,
+      "userId": signInModel!.data?.user?.id,
     };
     final response = await ApiService.instance.request(endPoint: ApiString.favoriteListGet, method: Method.POST,reqBody: requestBody);
     if(Cf.instance.statusCode200Check(response)){
@@ -65,7 +65,7 @@ class ChannelListProvider extends ChangeNotifier{
   }
   /// GET CHANNEL LIST IN HOME SCREEN ///
   Future<void> getChannelList()async{
-    // print("userID>>>> ${signInModel.data?.user?.id}");
+    // print("userID>>>> ${signInModel!.data?.user?.id}");
     final response = await ApiService.instance.request(endPoint: ApiString.channelList, method: Method.GET,);
     if(Cf.instance.statusCode200Check(response)){
       channelListModel = ChannelListModel.fromJson(response);
@@ -114,9 +114,9 @@ class ChannelListProvider extends ChangeNotifier{
   }
   /// GET DIRECT MESSAGE IN HOME SCREEN ///
   Future<void> getDirectMessageList()async{
-    // print("userID>>>> ${signInModel.data?.user?.id}");
+    // print("userID>>>> ${signInModel!.data?.user?.id}");
     final requestBody = {
-      "userId": signInModel.data?.user?.id,
+      "userId": signInModel!.data?.user?.id,
     };
     final response = await ApiService.instance.request(endPoint: ApiString.directMessageChatList, method: Method.POST,reqBody: requestBody);
     if(Cf.instance.statusCode200Check(response)){
@@ -195,7 +195,7 @@ bool isLoading = false;
 /// BROWSE AND SEARCH ///
   Future<void> browseAndSearchChannel({required String search,bool? needLoader = false,bool? combineList = false}) async {
     final requestBody = {
-      "userId": signInModel.data?.user?.id,
+      "userId": signInModel!.data?.user?.id,
       "searchTerm": search.isEmpty ? "" : search,
     };
     try{
@@ -244,7 +244,7 @@ bool isLoading = false;
     bool? needToUpdateGetUserModel,
   }) async {
     final requestBody = {
-      "userId": signInModel.data?.user?.id,
+      "userId": signInModel!.data?.user?.id,
       "favouriteUserId": favouriteUserId,
     };
     final response = await ApiService.instance.request(
@@ -305,14 +305,14 @@ bool isLoading = false;
     required String conversationUserId,
     required bool isCalledForFav,
   }) async {
-    // print("userId>>>${signInModel.data?.user?.id}");
+    // print("userId>>>${signInModel!.data?.user?.id}");
     final requestBodyForFav = {
-      "userId": signInModel.data!.user!.id,
+      "userId": signInModel!.data!.user!.id,
       "conversationUserId": conversationUserId,
       "fav": true
     };
     final requestBodyNonFav = {
-      "userId": signInModel.data!.user!.id,
+      "userId": signInModel!.data!.user!.id,
       "conversationUserId": conversationUserId,
     };
     final response = await ApiService.instance.request(
@@ -332,9 +332,9 @@ bool isLoading = false;
   // }) async {
   //   // emit(ChannelListInitial());
   //   // final header = {
-  //   //   'Authorization': "Bearer ${signInModel.data!.authToken}",
+  //   //   'Authorization': "Bearer ${signInModel!.data!.authToken}",
   //   // };
-  //   print("userId>>>${signInModel.data?.user?.id}");
+  //   print("userId>>>${signInModel!.data?.user?.id}");
   //   final response = await ApiService.instance.request(
   //       endPoint: ApiString.leaveChannel + channelId,
   //       method: Method.PUT);
@@ -351,7 +351,7 @@ Future<void> leaveChannel({
   required String channelId,
   bool isFromMembersScreen = false,
 }) async {
-  // print("userId>>>${signInModel.data?.user?.id}");
+  // print("userId>>>${signInModel!.data?.user?.id}");
   final response = await ApiService.instance.request(
       endPoint: ApiString.leaveChannel + channelId,
       method: Method.PUT
@@ -419,7 +419,7 @@ Future<void> addUserToFavorite({
     bool? needToUpdateGetUserModel,
   }) async {
     final requestBody = {
-      "userId": signInModel.data?.user?.id,
+      "userId": signInModel!.data?.user?.id,
       "favouriteUserId": favouriteUserId,
     };
     final response = await ApiService.instance.request(
@@ -466,11 +466,11 @@ Future<void> addChannelToFavorite({
         );
     if (Cf.instance.statusCode200Check(response)) {
         if (isMutedChannel) {
-          signInModel.data?.user?.muteChannels?.remove(channelId);
+          signInModel!.data?.user?.muteChannels?.remove(channelId);
         } else {
-          signInModel.data?.user?.muteChannels?.add(channelId);
+          signInModel!.data?.user?.muteChannels?.add(channelId);
         }
-          signInModel.saveToPrefs();
+          signInModel!.saveToPrefs();
           await SignInModel.loadFromPrefs();
           getFavoriteList();
           getChannelList();
@@ -480,7 +480,7 @@ Future<void> addChannelToFavorite({
   }
 
   Future<void> addUserToChatList({required String selectedUserId}) async {
-    final requestBody ={"userId": signInModel.data?.user?.id, "selectedUserId": selectedUserId};
+    final requestBody ={"userId": signInModel!.data?.user?.id, "selectedUserId": selectedUserId};
     final response = await ApiService.instance.request(
       endPoint: ApiString.addUserToChatList,
       method: Method.POST,
@@ -493,7 +493,7 @@ Future<void> toggleAdminAndMember(
     {required String channelId, required String userId}) async {
   var headers = {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer ${signInModel.data!.authToken}',
+    'Authorization': 'Bearer ${signInModel!.data!.authToken}',
   };
 
   var request = http.Request(
@@ -511,7 +511,7 @@ Future<void> toggleAdminAndMember(
     await Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false).getChannelMembersList(channelId);
     socketProvider.memberAdminToggleSC(response: {
       "data": {
-        "senderId": signInModel.data!.user!.id,
+        "senderId": signInModel!.data!.user!.id,
         "channelId": channelId
       }
     });
@@ -525,7 +525,7 @@ Future<void> removeMember(
     {required String channelId, required String userId}) async {
   var headers = {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer ${signInModel.data!.authToken}',
+    'Authorization': 'Bearer ${signInModel!.data!.authToken}',
   };
 
   var request = http.Request(
@@ -554,7 +554,7 @@ Future<void> removeMember(
     await channelChatProvider.getChannelInfoApiCall(callFroHome: false,channelId: channelId);
     await channelChatProvider.getChannelChatApiCall(channelId: channelId,pageNo: 1);
     socketProvider.memberRemoveSC(response: {
-      "senderId": signInModel.data!.user!.id,
+      "senderId": signInModel!.data!.user!.id,
       "removeduser": userId,
       "receiverId": memberIds,
       "channelId": channelId});
@@ -572,7 +572,7 @@ Future<void> renameChannel({
 }) async {
   var headers = {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer ${signInModel.data!.authToken}',
+    'Authorization': 'Bearer ${signInModel!.data!.authToken}',
   };
 
   var request = http.Request(

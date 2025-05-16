@@ -32,14 +32,18 @@ class ApiService {
     bool? needLoader = false,
     bool isKarmaUrl = false,
   }) async {
-    if (signInModel.data?.authToken != null ) {
+    Map<String,String> header = {};
+    if(signInModel != null){
+    if (signInModel!.data?.authToken != null ) {
       SignInModel? loadedModel = await SignInModel.loadFromPrefs();
       if (loadedModel != null) {
         signInModel = loadedModel;
       }
     }
-    final header = {
-      'Authorization': "Bearer ${signInModel.data?.authToken}",};
+    header = {
+      'Authorization': "Bearer ${signInModel!.data?.authToken}",};
+    }
+
     if (!_networkStatusService.connectionValue) {
       Cw.instance.commonShowToast("No Internet Connection");
       return;
@@ -48,7 +52,7 @@ class ApiService {
     Uri uri = Uri.parse(isKarmaUrl ? ApiString.karmaBaseUrl + endPoint : ApiString.baseUrl + endPoint).replace(queryParameters: queryParams);
     http.Response? response;
     Map<String, String> requestHeaders = {};
-    if (!endPoint.contains(ApiString.login) || !endPoint.contains(ApiString.getAppVersion) || !endPoint.contains(ApiString.googleSignIn)) {
+    if (!endPoint.contains(ApiString.login) || !endPoint.contains(ApiString.getAppVersion) || !endPoint.contains(ApiString.googleSignIn) || !endPoint.contains(ApiString.allowGoogleSignIN)) {
       requestHeaders.addAll(header);
     }
 
@@ -61,7 +65,7 @@ class ApiService {
         requestHeaders.clear();
         requestHeaders.addAll({
           'Content-Type': 'application/json',
-          'Authorization': "Bearer ${signInModel.data!.authToken}"
+          'Authorization': "Bearer ${signInModel!.data!.authToken}"
         });
         reqBody = jsonEncode(reqBody);
       }

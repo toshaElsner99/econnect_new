@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:e_connect/screens/bottom_nav_tabs/home_screen.dart';
 import 'package:e_connect/screens/sign_in_screen/sign_in_Screen.dart';
+import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
@@ -25,6 +26,7 @@ import 'common_provider.dart';
 
 class SplashProvider extends ChangeNotifier {
   bool isForceUpdate = false;
+  bool isNeedToShowGoogleSignIn = false;
   whereToGO() async {
     signInModel = (await SignInModel.loadFromPrefs()) ?? SignInModel();
     final isLoggedIn = await getBool(AppPreferenceConstants.isLoginPrefs) ?? false;
@@ -74,6 +76,15 @@ class SplashProvider extends ChangeNotifier {
           commonProvider.updateStatusCall(status: AppString.online.toLowerCase());
         }
       });
+    }
+  }
+  void getAllowOrNotGoogleSignIn()async{
+
+    final response = await ApiService.instance.request(endPoint: ApiString.allowGoogleSignIN, method: Method.GET);
+    if(Cf.instance.statusCode200Check(response)){
+      print("Login Response: ${response}");
+      isNeedToShowGoogleSignIn = response['data']['needToShowGoogleLogin'] ?? false;
+      notifyListeners();
     }
   }
 

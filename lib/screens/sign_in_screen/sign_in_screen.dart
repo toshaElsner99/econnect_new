@@ -1,3 +1,4 @@
+import 'package:e_connect/providers/splash_screen_provider.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
 import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
@@ -72,7 +73,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
     return Scaffold(
       backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
       resizeToAvoidBottomInset: true,
-      body: Consumer<SignInProvider>(builder: (context, signInProvider, child) {
+      body: Consumer2<SignInProvider,SplashProvider>(builder: (context, signInProvider,splashProvider, child) {
         return SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -86,7 +87,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                       const SizedBox(height: 40),
                       _buildHeader(),
                       const SizedBox(height: 40),
-                      _buildLoginCard(signInProvider),
+                      _buildLoginCard(signInProvider,splashProvider),
                     ],
                   ),
                 ),
@@ -131,7 +132,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildLoginCard(SignInProvider signInProvider) {
+  Widget _buildLoginCard(SignInProvider signInProvider,SplashProvider splashProvider) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -177,9 +178,9 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
             const SizedBox(height: 24),
             _buildSignInButton(signInProvider),
             const SizedBox(height: 20),
-            _buildDividerWithText(),
+            splashProvider.isNeedToShowGoogleSignIn ? _buildDividerWithText() : SizedBox(),
             const SizedBox(height: 20),
-            _buildGoogleSignInGif(signInProvider, context),
+            splashProvider.isNeedToShowGoogleSignIn?_buildGoogleSignInGif(signInProvider, context):SizedBox(),
             const SizedBox(height: 20),
             _buildFooter(),
           ],

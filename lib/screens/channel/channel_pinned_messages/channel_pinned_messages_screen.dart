@@ -365,7 +365,7 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                               print("value>>> $value");
                               // if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                               //   for (var reply in messageList.replies!) {
-                              //     if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
+                              //     if (reply.receiverId == signInModel!.data?.user!.id && reply.isSeen == false) {
                               //       setState(() =>
                               //       reply.isSeen = true);
                               //     }
@@ -419,13 +419,13 @@ class _ChannelPinnedPostsScreenState extends State<ChannelPinnedPostsScreen> {
                                 //   replacement: SizedBox.shrink(),
                                 //   visible: true,
                                 //   // visible: messageList.replies != null && messageList.replies!.isNotEmpty &&
-                                //   //     messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false),
+                                //   //     messageList.replies!.any((reply) => reply.receiverId == signInModel!.data?.user!.id && reply.isSeen == false),
                                 //   child: Container(
                                 //     margin:EdgeInsets.only(right: 5),
                                 //     width: 10,
                                 //     height: 10,
-                                //     // width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
-                                //     // height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                //     // width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel!.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                //     // height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel!.data?.user!.id && reply.isSeen == false) ? 10 : 0,
                                 //     decoration: const BoxDecoration(
                                 //       color: Colors.red,
                                 //       shape: BoxShape.circle,

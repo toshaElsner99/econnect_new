@@ -286,7 +286,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
               ),
               Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
                 var filteredTypingUsers = channelChatProvider.typingUsers
-                    .where((user) => user['user_id'].toString() != signInModel.data?.user?.id.toString()
+                    .where((user) => user['user_id'].toString() != signInModel!.data?.user?.id.toString()
                     && user['routeId'] == widget.channelId
                     && user['isReply'] == true
                     && user['parentId'] == widget.msgID).toList();
@@ -735,7 +735,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
                                   alignment: WrapAlignment.start,
                                   children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
-                                    reaction.userId!.sId == signInModel.data?.user?.id &&
+                                    reaction.userId!.sId == signInModel!.data?.user?.id &&
                                         reaction.emoji == entry.key);
 
                                     return GestureDetector(
@@ -1346,7 +1346,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
     if (searchQuery?.isEmpty ?? true) {
       // Add current user first
       final currentUser = allMembers.firstWhere(
-        (member) => member.sId == signInModel.data?.user?.id,
+        (member) => member.sId == signInModel!.data?.user?.id,
         orElse: () => allMembers.isNotEmpty ? allMembers[0] : MemberDetails(),
       );
       initialUsers.add(currentUser);
@@ -1354,7 +1354,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
       // Add first member who is not the current user
       if (allMembers.length > 1) {
         final otherMember = allMembers.firstWhere(
-          (member) => member.sId != signInModel.data?.user?.id,
+          (member) => member.sId != signInModel!.data?.user?.id,
           orElse: () => allMembers[0],
         );
         if (otherMember.sId != currentUser.sId) {

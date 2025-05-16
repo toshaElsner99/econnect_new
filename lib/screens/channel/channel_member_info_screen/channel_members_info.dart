@@ -109,7 +109,7 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
                 builder: (context, provider, child) {
                   final isCurrentUserAdmin = adminMembers.any((member) =>
                   member.isAdmin == true &&
-                      member.sId == signInModel.data?.user?.id);
+                      member.sId == signInModel!.data?.user?.id);
                   if (isCurrentUserAdmin) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(
@@ -267,7 +267,7 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
             if (member.isAdmin == true) {
               // Admin options
               return [
-                if (member.sId != signInModel.data?.user?.id) ...[
+                if (member.sId != signInModel!.data?.user?.id) ...[
                   const PopupMenuItem(
                     value: 'make_member',
                     child: Text(
@@ -599,7 +599,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                 // Filter the users list
                 final filteredUsers = users.where((user) =>
                 // Exclude current user
-                user.sId != signInModel.data?.user?.id &&
+                user.sId != signInModel!.data?.user?.id &&
                     // Exclude already selected users
                     !selectedUsers.any((selectedUser) => selectedUser.id == user.sId) &&
                     // Exclude existing channel members

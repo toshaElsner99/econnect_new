@@ -77,12 +77,12 @@ class ChannelInfoScreen extends StatelessWidget {
                       },
                     ),
                     _buildActionButton(
-                      icon: signInModel.data?.user?.muteChannels?.contains(channelId) ?? false ? Icons.notifications_off_outlined : Icons.notifications_active_outlined,
-                      label: signInModel.data?.user?.muteChannels?.contains(channelId) ?? false ? 'Muted' : 'Mute',
+                      icon: signInModel!.data?.user?.muteChannels?.contains(channelId) ?? false ? Icons.notifications_off_outlined : Icons.notifications_active_outlined,
+                      label: signInModel!.data?.user?.muteChannels?.contains(channelId) ?? false ? 'Muted' : 'Mute',
                       onTap: () {
                         channelListProvider.muteUnMuteChannels(
                           channelId: channelId,
-                          isMutedChannel: signInModel.data?.user?.muteChannels?.contains(channelId) ?? false,
+                          isMutedChannel: signInModel!.data?.user?.muteChannels?.contains(channelId) ?? false,
                         );
                       },
                     ),

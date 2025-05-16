@@ -203,6 +203,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     // Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).checkForForceUpdate(context);
     Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).whereToGO();
+    Provider.of<SplashProvider>(navigatorKey.currentState!.context, listen: false).getAllowOrNotGoogleSignIn();
   }
 
   @override

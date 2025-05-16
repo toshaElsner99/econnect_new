@@ -51,7 +51,7 @@ class SignInProvider extends ChangeNotifier {
         fcmTokenSendInAPI();
         await setBool(AppPreferenceConstants.isLoginPrefs, true);
         signInModel = SignInModel.fromJson(response);
-        signInModel.saveToPrefs();
+        signInModel!.saveToPrefs();
         await SignInModel.loadFromPrefs();
         signInModel = (await SignInModel.loadFromPrefs())!;
         Cf.instance.pushAndRemoveUntil(screen: const HomeScreen());
@@ -118,7 +118,7 @@ class SignInProvider extends ChangeNotifier {
         // Create and save the SignInModel before sending FCM token
         if (response['data'] != null) {
           signInModel = SignInModel.fromJson(response);
-          await signInModel.saveToPrefs();
+          await signInModel!.saveToPrefs();
           await SignInModel.loadFromPrefs();
           signInModel = (await SignInModel.loadFromPrefs())!;
           
@@ -146,7 +146,7 @@ class SignInProvider extends ChangeNotifier {
     await setData(AppPreferenceConstants.fcmToken, fcmToken ?? "");
 
     print("FCM_Token From login :::::> $fcmToken");
-    if (fcmToken != null && signInModel.data?.authToken != null) {
+    if (fcmToken != null && signInModel!.data?.authToken != null) {
       final requestBody = {"deviceToken": fcmToken};
       try {
         final response = await ApiService.instance.request(

@@ -700,9 +700,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 if(!value['needToOpenChannelChat']){
                   // if(!(oppositeUserId == value['id'])){
                   setState(() {
-                    oppositeUserId = signInModel.data!.user!.id == value['id'] ? value['oppositeUserID'] : value['id'] ;
+                    oppositeUserId = signInModel!.data!.user!.id == value['id'] ? value['oppositeUserID'] : value['id'] ;
                     // print("UserId ${oppositeUserId}");
-                    userName = signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'];
+                    userName = signInModel!.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'];
                     // NeedTocallJumpToMessage = true;
                     scrollController.dispose();
                     scrollController = ScrollController();
@@ -729,8 +729,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               //   if(!value['needToOpenChannelChat']){
               //     if(!(oppositeUserId == value['id'])){
               //       setState(() {
-              //         oppositeUserId = signInModel.data!.user!.id == value['id'] ? value['oppositeUserID'] : value['id'] ;
-              //         userName = signInModel.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'];
+              //         oppositeUserId = signInModel!.data!.user!.id == value['id'] ? value['oppositeUserID'] : value['id'] ;
+              //         userName = signInModel!.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'];
               //         initializeScreen();
               //         // chatProvider.messageGroups.indexWhere((test)=> test.)
               //       });
@@ -1191,7 +1191,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         child: Column(
           children: [
             Visibility(
-                visible: (messageList.isSeen == false && userId != signInModel.data?.user?.id),
+                visible: (messageList.isSeen == false && userId != signInModel!.data?.user?.id),
                 child: Cw.instance.newMessageDivider()),
             Visibility(
                 visible: pinnedMsg,
@@ -1240,7 +1240,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 height: 1.2,
                                 text:
                                 user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', fontWeight: FontWeight.bold),
-                            if (signInModel.data?.user!.id == user?.data!.user!.sId) ...{
+                            if (signInModel!.data?.user!.id == user?.data!.user!.sId) ...{
                               if (commonProvider.customStatusUrl.isNotEmpty) ...{
                                 SizedBox(width: 8,),
                                 CachedNetworkImage(
@@ -1504,7 +1504,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               // print("value>>> $value");
                               if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                                 for (var reply in messageList.replies!) {
-                                  if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
+                                  if (reply.receiverId == signInModel!.data?.user!.id && reply.isSeen == false) {
                                     setState(() =>
                                     reply.isSeen = true);
                                   }
@@ -1558,11 +1558,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 Visibility(
                                   replacement: SizedBox.shrink(),
                                   visible: messageList.replies != null && messageList.replies!.isNotEmpty &&
-                                      messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false),
+                                      messageList.replies!.any((reply) => reply.receiverId == signInModel!.data?.user!.id && reply.isSeen == false),
                                   child: Container(
                                     margin:EdgeInsets.only(right: 5),
-                                    width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
-                                    height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                    width: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel!.data?.user!.id && reply.isSeen == false) ? 10 : 0,
+                                    height: messageList.replies != null && messageList.replies!.isNotEmpty && messageList.replies!.any((reply) => reply.receiverId == signInModel!.data?.user!.id && reply.isSeen == false) ? 10 : 0,
                                     decoration: const BoxDecoration(
                                       color: Colors.red,
                                       shape: BoxShape.circle,
@@ -1686,7 +1686,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   alignment: WrapAlignment.start,
                                   children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
-                                    reaction.userId == signInModel.data?.user?.id &&
+                                    reaction.userId == signInModel!.data?.user?.id &&
                                         reaction.emoji == entry.key);
 
                                     return GestureDetector(
@@ -1773,7 +1773,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           // print("value>>> $value");
                           if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                             for (var reply in messageList.replies!) {
-                              if (reply.receiverId == signInModel.data?.user!.id && reply.isSeen == false) {
+                              if (reply.receiverId == signInModel!.data?.user!.id && reply.isSeen == false) {
                                 setState(() =>
                                 reply.isSeen = true);
                               }
@@ -2078,7 +2078,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
     final List<dynamic> initialUsers = [];
     final allUsers = provider.getUserMentionModel?.data?.users ?? [];
-    final bool isSelfChat = oppositeUserId == signInModel.data?.user?.id;
+    final bool isSelfChat = oppositeUserId == signInModel!.data?.user?.id;
 
     // If no search query, show prioritized users
     if (searchQuery?.isEmpty ?? true) {
@@ -2094,7 +2094,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         // For chat with another user, show current user and opposite user first
         try {
           final currentUser = allUsers.firstWhere(
-                (user) => user.sId == signInModel.data?.user?.id,
+                (user) => user.sId == signInModel!.data?.user?.id,
           );
           final oppositeUser = allUsers.firstWhere(
                 (user) => user.sId == oppositeUserId,
@@ -2134,7 +2134,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       // For chat with another user, prioritize current user and opposite user if they match
       try {
         final currentUser = allUsers.firstWhere(
-                (user) => user.sId == signInModel.data?.user?.id &&
+                (user) => user.sId == signInModel!.data?.user?.id &&
                 ((user.username?.toLowerCase().contains(query) ?? false) ||
                     (user.fullName?.toLowerCase().contains(query) ?? false))
         );

@@ -215,7 +215,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
   void _fetchAndCacheUserDetails() async {
     userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.receiverId);
-    // await commonProvider.getUserByIDCallForSecondUser(userId: signInModel.data!.user!.id);
+    // await commonProvider.getUserByIDCallForSecondUser(userId: signInModel!.data!.user!.id);
     setState(()  {
       userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
       userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
@@ -257,7 +257,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   List<dynamic> _getFilteredUsers(String? searchQuery, CommonProvider provider) {
     final List<dynamic> initialUsers = [];
     final allUsers = provider.getUserMentionModel?.data?.users ?? [];
-    final bool isSelfChat = widget.receiverId == signInModel.data?.user?.id;
+    final bool isSelfChat = widget.receiverId == signInModel!.data?.user?.id;
 
     // If no search query, show prioritized users
     if (searchQuery?.isEmpty ?? true) {
@@ -273,7 +273,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
         // For chat with another user, show current user and opposite user first
         try {
           final currentUser = allUsers.firstWhere(
-                (user) => user.sId == signInModel.data?.user?.id,
+                (user) => user.sId == signInModel!.data?.user?.id,
           );
           final oppositeUser = allUsers.firstWhere(
                 (user) => user.sId == widget.receiverId,
@@ -313,7 +313,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
       // For chat with another user, prioritize current user and opposite user if they match
       try {
         final currentUser = allUsers.firstWhere(
-                (user) => user.sId == signInModel.data?.user?.id &&
+                (user) => user.sId == signInModel!.data?.user?.id &&
                 ((user.username?.toLowerCase().contains(query) ?? false) ||
                     (user.fullName?.toLowerCase().contains(query) ?? false))
         );
@@ -789,7 +789,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                   alignment: WrapAlignment.start,
                                   children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
-                                    reaction.userId!.sId == signInModel.data?.user?.id &&
+                                    reaction.userId!.sId == signInModel!.data?.user?.id &&
                                         reaction.emoji == entry.key);
 
                                     return GestureDetector(

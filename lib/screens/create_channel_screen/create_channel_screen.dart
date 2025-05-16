@@ -35,7 +35,7 @@ class _CreateChannelScreenState extends State<CreateChannelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isAdmin = signInModel.data?.user?.roleName == "Admin";
+    bool isAdmin = signInModel!.data?.user?.roleName == "Admin";
 
     return Scaffold(
       appBar: AppBar(

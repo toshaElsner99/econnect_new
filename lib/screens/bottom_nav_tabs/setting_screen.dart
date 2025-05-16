@@ -102,14 +102,14 @@ class _SettingScreenState extends State<SettingScreen> {
           Cw.instance.commonImageHolder(radius: 50),
           const SizedBox(height: 16),
           Cw.instance.commonText(
-            text: signInModel.data?.user?.fullName ?? signInModel.data?.user?.username ?? "",
+            text: signInModel!.data?.user?.fullName ?? signInModel!.data?.user?.username ?? "",
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
           const SizedBox(height: 8),
           Cw.instance.commonText(
-            text: "@${signInModel.data?.user?.username}",
+            text: "@${signInModel!.data?.user?.username}",
             color: Colors.white.withOpacity(0.7),
             fontSize: 14,
             fontWeight: FontWeight.w500,

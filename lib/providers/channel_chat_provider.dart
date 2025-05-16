@@ -80,8 +80,8 @@ class ChannelChatProvider extends ChangeNotifier{
             // print("parentId >>> $parentId");
 
             // Prevent adding your own user in the list
-            if (userId.toString() == signInModel.data?.user?.id.toString()) {
-              typingUsers.removeWhere((user) => user['user_id'] == signInModel.data?.user?.id.toString());
+            if (userId.toString() == signInModel!.data?.user?.id.toString()) {
+              typingUsers.removeWhere((user) => user['user_id'] == signInModel!.data?.user?.id.toString());
               notifyListeners();
               return;
             }
@@ -145,7 +145,7 @@ class ChannelChatProvider extends ChangeNotifier{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(Cf.instance.statusCode200Check(response)){
       print("pinUnPinMessage = Success");
-      socketProvider.pinUnPinMessageEventChannelChat(senderId: signInModel.data?.user?.id ?? "", channelId: channelID);
+      socketProvider.pinUnPinMessageEventChannelChat(senderId: signInModel!.data?.user?.id ?? "", channelId: channelID);
       if(isCalledForReply) {
         // Update in reply messages
         if (getReplyMessageChannelModel?.data?.messagesList != null) {
@@ -191,7 +191,7 @@ class ChannelChatProvider extends ChangeNotifier{
       print("<<<<<<<<<<SUIIIII>>>>>>>>>>>");
       var request = http.MultipartRequest('POST', Uri.parse(ApiString.baseUrl + ApiString.uploadFileForMessageMedia));
       request.headers.addAll({
-        'Authorization': "Bearer ${signInModel.data?.authToken}",
+        'Authorization': "Bearer ${signInModel!.data?.authToken}",
       });
       for (var file in filesToUpload) {
         request.files.add(
@@ -405,9 +405,9 @@ class ChannelChatProvider extends ChangeNotifier{
 
             if (mentionedMember != null) {
               // Check if user is not sending karma to themselves
-              if (mentionedMember.email != signInModel.data?.user?.email) {
+              if (mentionedMember.email != signInModel!.data?.user?.email) {
                 final karmaRequestBody = {
-                  "sender_email": signInModel.data?.user?.email ?? "",
+                  "sender_email": signInModel!.data?.user?.email ?? "",
                   "receiver_email": mentionedMember.email,
                   "transaction_type": "manualy_send",
                   "message": contentWithoutMention.trim(),
@@ -646,7 +646,7 @@ class ChannelChatProvider extends ChangeNotifier{
   }) async {
     var headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ${signInModel.data!.authToken}',
+      'Authorization': 'Bearer ${signInModel!.data!.authToken}',
     };
     var request = http.Request('PUT', Uri.parse(ApiString.baseUrl + ApiString.addMembersToChannel(channelId)));
     request.body = json.encode({
@@ -662,7 +662,7 @@ class ChannelChatProvider extends ChangeNotifier{
       log("Response data: $responseData");
       Map<String, dynamic> passInSocket = {
         "data": {
-          "senderId": signInModel.data!.user!.id,
+          "senderId": signInModel!.data!.user!.id,
           "receiverId": userIds,
           "channelId": channelId
         }
@@ -860,7 +860,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
               // Check if user already reacted with this emoji
               final existingReactionIndex = message.reactions!.indexWhere(
                       (reaction) =>
-                  reaction.userId == signInModel.data?.user?.id &&
+                  reaction.userId == signInModel!.data?.user?.id &&
                       reaction.emoji == reactUrl);
 
               if (existingReactionIndex != -1) {
@@ -871,8 +871,8 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
 
                 message.reactions!.add(Reaction(
                   emoji: reactUrl,
-                  userId: signInModel.data?.user?.id,
-                  username: signInModel.data?.user?.username,
+                  userId: signInModel!.data?.user?.id,
+                  username: signInModel!.data?.user?.username,
                   id: DateTime.now().toString(), // Temporary ID
                 ));
 
@@ -895,7 +895,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
               // Check if user already reacted with this emoji
               final existingReactionIndex = message.reactions!.indexWhere(
                       (reaction) =>
-                  reaction.userId?.sId == signInModel.data?.user?.id &&
+                  reaction.userId?.sId == signInModel!.data?.user?.id &&
                       reaction.emoji == reactUrl);
 
               if (existingReactionIndex != -1) {
@@ -906,8 +906,8 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
                 message.reactions!.add(Reactions(
                   emoji: reactUrl,
                   userId: UserId(
-                    sId: signInModel.data?.user?.id,
-                    username: signInModel.data?.user?.username,
+                    sId: signInModel!.data?.user?.id,
+                    username: signInModel!.data?.user?.username,
                   ),
                   sId: DateTime.now().toString(), // Temporary ID
                 ));
@@ -921,7 +921,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
       }
       socketProvider.reactMessagesInChannelSC(response: {
         "channelId": channelId, // Channel ID
-        "senderId": signInModel.data?.user?.id,
+        "senderId": signInModel!.data?.user?.id,
       });
 
     }
@@ -951,7 +951,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
               // Find and remove the reaction
               final existingReactionIndex = message.reactions!.indexWhere(
                       (reaction) =>
-                  reaction.userId == signInModel.data?.user?.id &&
+                  reaction.userId == signInModel!.data?.user?.id &&
                       reaction.emoji == reactUrl);
               if (existingReactionIndex != -1) {
                 message.reactions!.removeAt(existingReactionIndex);
@@ -969,7 +969,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
               // Find and remove the reaction
               final existingReactionIndex = message.reactions!.indexWhere(
                       (reaction) =>
-                  reaction.userId?.sId == signInModel.data?.user?.id &&
+                  reaction.userId?.sId == signInModel!.data?.user?.id &&
                       reaction.emoji == reactUrl);
               if (existingReactionIndex != -1) {
                 message.reactions!.removeAt(existingReactionIndex);
@@ -983,7 +983,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
 
       socketProvider.reactMessagesInChannelSC(response: {
         "channelId": channelId,// Channel ID
-        "senderId": signInModel.data?.user?.id,
+        "senderId": signInModel!.data?.user?.id,
       });
 
     }

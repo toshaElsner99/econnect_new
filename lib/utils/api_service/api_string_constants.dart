@@ -14,6 +14,7 @@ class ApiString{
   /// End Point , Don't Change Belows End Point until didn't confirm through backend ///
   static const login = "user/login";
   static const googleSignIn = "user/googleSSOLginApp";
+  static const allowGoogleSignIN = "user/alloawgoogleSSOLogin";
   static const updateStatus = "user/update";
   static const getUserById = "user/getUserById";
   static const favoriteListGet = "favouriteLists/get";

@@ -186,13 +186,13 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                   Colors.grey[200],
                                                   child: ClipOval(
                                                     child: CachedNetworkImage(
-                                                      imageUrl: signInModel.data
+                                                      imageUrl: signInModel!.data
                                                           ?.user?.id ==
                                                           message.senderInfo
                                                               ?.id
                                                           ? ApiString
                                                           .profileBaseUrl +
-                                                          (signInModel
+                                                          (signInModel!
                                                               .data!
                                                               .user!
                                                               .thumbnailAvatarUrl ??

@@ -99,7 +99,7 @@ class ChatProvider extends  ChangeNotifier {
           endPoint: ApiString.getMessages,
           method: Method.POST,
           reqBody: {
-            "userId": signInModel.data!.user!.id,
+            "userId": signInModel!.data!.user!.id,
             "oppositeUserId": oppositeUserId,
             "pageNo": currentPage.toString()
           });
@@ -258,7 +258,7 @@ class ChatProvider extends  ChangeNotifier {
      print("<<<<<<<<<<SUIIIII>>>>>>>>>>>");
      var request = http.MultipartRequest('POST', Uri.parse(ApiString.baseUrl + ApiString.uploadFileForMessageMedia));
      request.headers.addAll({
-       'Authorization': "Bearer ${signInModel.data?.authToken}",
+       'Authorization': "Bearer ${signInModel!.data?.authToken}",
      });
      for (var file in filesToUpload) {
        request.files.add(
@@ -309,7 +309,7 @@ class ChatProvider extends  ChangeNotifier {
 
       var request = http.MultipartRequest('POST', Uri.parse(ApiString.baseUrl + ApiString.uploadFileForMessageMedia));
       request.headers.addAll({
-        'Authorization': "Bearer ${signInModel.data?.authToken}",
+        'Authorization': "Bearer ${signInModel!.data?.authToken}",
       });
 
       request.files.add(
@@ -347,7 +347,7 @@ class ChatProvider extends  ChangeNotifier {
     final requestBody = {
       "content": content,
       "receiverId": receiverId,
-      "senderId": signInModel.data?.user?.id,
+      "senderId": signInModel!.data?.user?.id,
     };
     if (replyId != null && replyId.isNotEmpty) {
       requestBody['isReply'] = true;
@@ -464,7 +464,7 @@ class ChatProvider extends  ChangeNotifier {
         }
       }
       // _updatePinnedStatus(messageId, pinned);
-      socketProvider.pinUnPinMessageEventSingleChat(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
+      socketProvider.pinUnPinMessageEventSingleChat(senderId: signInModel!.data?.user?.id ?? "", receiverId: receiverId);
     }
   }
 
@@ -477,7 +477,7 @@ class ChatProvider extends  ChangeNotifier {
         unpinMessageModelUpdate();
       }
       _updatePinnedStatus(messageId, pinned);
-      socketProvider.pinUnPinMessageEventSingleChat(senderId: signInModel.data?.user?.id ?? "", receiverId: receiverId);
+      socketProvider.pinUnPinMessageEventSingleChat(senderId: signInModel!.data?.user?.id ?? "", receiverId: receiverId);
     }
   }
   void _updatePinnedStatus(String messageId, bool pinned) {
@@ -538,7 +538,7 @@ class ChatProvider extends  ChangeNotifier {
           socketProvider.socket.emit('reply_notification', {
             'messageId': messageId,
             'replyTo': messageId,
-            'senderId': signInModel.data?.user?.id,
+            'senderId': signInModel!.data?.user?.id,
           });
           return;
         }
@@ -562,7 +562,7 @@ class ChatProvider extends  ChangeNotifier {
         method: Method.POST,
         reqBody: reqBody);
     if (Cf.instance.statusCode200Check(response)) {
-      socketProvider.reactMessagesSC(response: {"receiverId": receiverId, "senderId": signInModel.data?.user?.id});
+      socketProvider.reactMessagesSC(response: {"receiverId": receiverId, "senderId": signInModel!.data?.user?.id});
       print("Reacted Successfully");
       print("isFrom = $isFrom");
       if (isFrom == "Chat") {
@@ -576,7 +576,7 @@ class ChatProvider extends  ChangeNotifier {
               // Check if user already reacted with this emoji
               final existingReactionIndex = message.reactions!.indexWhere(
                   (reaction) =>
-                      reaction.userId == signInModel.data?.user?.id &&
+                      reaction.userId == signInModel!.data?.user?.id &&
                       reaction.emoji == reactUrl);
 
               if (existingReactionIndex != -1) {
@@ -587,8 +587,8 @@ class ChatProvider extends  ChangeNotifier {
 
                 message.reactions!.add(msg.Reaction(
                   emoji: reactUrl,
-                  userId: signInModel.data?.user?.id,
-                  username: signInModel.data?.user?.username,
+                  userId: signInModel!.data?.user?.id,
+                  username: signInModel!.data?.user?.username,
                   id: DateTime.now().toString(), // Temporary ID
                 ));
 
@@ -611,7 +611,7 @@ class ChatProvider extends  ChangeNotifier {
               // Check if user already reacted with this emoji
               final existingReactionIndex = message.reactions!.indexWhere(
                   (reaction) =>
-                      reaction.userId?.sId == signInModel.data?.user?.id &&
+                      reaction.userId?.sId == signInModel!.data?.user?.id &&
                       reaction.emoji == reactUrl);
 
               if (existingReactionIndex != -1) {
@@ -622,8 +622,8 @@ class ChatProvider extends  ChangeNotifier {
                 message.reactions!.add(reply.Reactions(
                   emoji: reactUrl,
                   userId: reply.UserId(
-                    sId: signInModel.data?.user?.id,
-                    username: signInModel.data?.user?.username,
+                    sId: signInModel!.data?.user?.id,
+                    username: signInModel!.data?.user?.username,
                   ),
                   sId: DateTime.now().toString(), // Temporary ID
                 ));
@@ -653,7 +653,7 @@ class ChatProvider extends  ChangeNotifier {
     if (Cf.instance.statusCode200Check(response)) {
       socketProvider.reactMessagesSC(response: {
         "receiverId": receiverId,
-        "senderId": signInModel.data?.user?.id,
+        "senderId": signInModel!.data?.user?.id,
       });
       print("React removed Successfully");
       print("isFrom = $isFrom");
@@ -666,7 +666,7 @@ class ChatProvider extends  ChangeNotifier {
               // Find and remove the reaction
               final existingReactionIndex = message.reactions!.indexWhere(
                   (reaction) =>
-                      reaction.userId == signInModel.data?.user?.id &&
+                      reaction.userId == signInModel!.data?.user?.id &&
                       reaction.emoji == reactUrl);
               if (existingReactionIndex != -1) {
                 message.reactions!.removeAt(existingReactionIndex);
@@ -684,7 +684,7 @@ class ChatProvider extends  ChangeNotifier {
               // Find and remove the reaction
               final existingReactionIndex = message.reactions!.indexWhere(
                   (reaction) =>
-                      reaction.userId?.sId == signInModel.data?.user?.id &&
+                      reaction.userId?.sId == signInModel!.data?.user?.id &&
                       reaction.emoji == reactUrl);
               if (existingReactionIndex != -1) {
                 message.reactions!.removeAt(existingReactionIndex);

@@ -128,7 +128,7 @@ class NotificationService {
   }
 
   static bool _isUserSignedIn() {
-    return signInModel.data?.user?.id != null && signInModel.data?.user?.id != "";
+    return signInModel!.data?.user?.id != null && signInModel!.data?.user?.id != "";
   }
 
   static Future<void> _openDownloadedFile(String filePath) async {

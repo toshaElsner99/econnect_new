@@ -105,11 +105,11 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
             // Expanded(
             //   child: ListView.builder(
             //     itemCount: channelListProvider.browseAndSearchChannelModel?.data?.channels
-            //         ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel.data?.user?.id) ?? false))
+            //         ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel!.data?.user?.id) ?? false))
             //         .length ?? 0,
             //     itemBuilder: (context, index) {
             //       final filteredChannels = channelListProvider.browseAndSearchChannelModel?.data?.channels
-            //           ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel.data?.user?.id) ?? false))
+            //           ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel!.data?.user?.id) ?? false))
             //           .toList();
             //
             //       final channelListing = filteredChannels?[index];
@@ -165,7 +165,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
               child: Builder(
                 builder: (context) {
                   final filteredChannels = channelListProvider.browseAndSearchChannelModel?.data?.channels
-                      ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel.data?.user?.id) ?? false))
+                      ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel!.data?.user?.id) ?? false))
                       .toList();
 
                   if (filteredChannels == null || filteredChannels.isEmpty) {

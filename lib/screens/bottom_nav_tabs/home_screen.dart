@@ -600,7 +600,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             }else if(value == "favorite"){
               channelListProvider.removeChannelFromFavorite(favoriteChannelID: favouriteChannels?.sId ?? "");
             }else if(value == "mute"){
-              channelListProvider.muteUnMuteChannels(channelId: favouriteChannels?.sId ?? "",isMutedChannel: signInModel.data?.user?.muteChannels!.contains(favouriteChannels?.sId ?? "") ?? false);
+              channelListProvider.muteUnMuteChannels(channelId: favouriteChannels?.sId ?? "",isMutedChannel: signInModel!.data?.user?.muteChannels!.contains(favouriteChannels?.sId ?? "") ?? false);
             }else if(value == "leave"){
               leaveChannelDialog(favouriteChannels?.sId ?? "");
             }
@@ -633,9 +633,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               value: "mute",
               child: Row(
                 children: [
-                  Icon(signInModel.data?.user?.muteChannels!.contains(favouriteChannels.sId) ?? false ? Icons.notifications_none : Icons.notifications_off_outlined, size: 20),
+                  Icon(signInModel!.data?.user?.muteChannels!.contains(favouriteChannels.sId) ?? false ? Icons.notifications_none : Icons.notifications_off_outlined, size: 20),
                   SizedBox(width: 10),
-                  Cw.instance.commonText(text: signInModel.data?.user?.muteChannels!.contains(favouriteChannels.sId) ?? false ? "Unmute Channel" : "Mute Channel" ),
+                  Cw.instance.commonText(text: signInModel!.data?.user?.muteChannels!.contains(favouriteChannels.sId) ?? false ? "Unmute Channel" : "Mute Channel" ),
                 ],
               ),
             ),
@@ -672,7 +672,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             }else if(value == "favorite"){
               channelListProvider.addChannelToFavorite(channelId: channelListModel?.sId ?? "");
             }else if(value == "mute"){
-              channelListProvider.muteUnMuteChannels(channelId: channelListModel?.sId ?? "", isMutedChannel: signInModel.data?.user!.muteChannels!.contains(channelListModel?.sId) ?? false);
+              channelListProvider.muteUnMuteChannels(channelId: channelListModel?.sId ?? "", isMutedChannel: signInModel!.data?.user!.muteChannels!.contains(channelListModel?.sId) ?? false);
             }else if(value == "leave"){
               leaveChannelDialog(channelListModel?.sId ?? "");
             }
@@ -705,9 +705,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               value: "mute",
               child: Row(
                 children: [
-                  Icon(signInModel.data?.user!.muteChannels!.contains(channelListModel.sId) ?? false ? Icons.notifications_none : Icons.notifications_off_outlined , size: 20),
+                  Icon(signInModel!.data?.user!.muteChannels!.contains(channelListModel.sId) ?? false ? Icons.notifications_none : Icons.notifications_off_outlined , size: 20),
                   SizedBox(width: 10),
-                  Cw.instance.commonText(text: signInModel.data?.user!.muteChannels!.contains(channelListModel.sId) ?? false ? "Unmute Channel" : "Mute Channel"),
+                  Cw.instance.commonText(text: signInModel!.data?.user!.muteChannels!.contains(channelListModel.sId) ?? false ? "Unmute Channel" : "Mute Channel"),
                 ],
               ),
             ),
@@ -1024,7 +1024,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                ),
              ),
              Visibility(
-               visible: userId == signInModel.data?.user?.id,
+               visible: userId == signInModel!.data?.user?.id,
                child: Padding(
                  padding: const EdgeInsets.only(left: 5.0),
                  child: Cw.instance.commonText(text: "(you)",color: muteConversation ? AppColor.borderColor : Colors.white),
@@ -1053,7 +1053,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Widget _buildChannelRow(ChannelList channel) {
     // print("channelID _buildChannelRow >>> ${channel.sId}");
-    final muteChannel = signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false;
+    final muteChannel = signInModel!.data?.user?.muteChannels?.contains(channel.sId) ?? false;
     return Container(
       // color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -1094,9 +1094,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
               // countMsgContainer(count : channel.unreadCount ?? 0,isMuted: muteChannel),
               Spacer(),
-              dateAndColumnWidget(date: channel.lastmessage?.createdAt ?? "",unSeenMsgCount: channel.unreadCount ?? 0,mutedConversation: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false),
+              dateAndColumnWidget(date: channel.lastmessage?.createdAt ?? "",unSeenMsgCount: channel.unreadCount ?? 0,mutedConversation: signInModel!.data?.user?.muteChannels?.contains(channel.sId) ?? false),
               // Visibility(
-              //   visible: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false,
+              //   visible: signInModel!.data?.user?.muteChannels?.contains(channel.sId) ?? false,
               //   child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteChannel ? AppColor.borderColor : Colors.white,)
               // ),
               // Comment out popup menu button
@@ -1192,7 +1192,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final isPrivate = channel.isPrivate;
     final name = channel.name;
     final unSeenCount = channel.unseenMessagesCount;
-    final muteChannel = signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false;
+    final muteChannel = signInModel!.data?.user?.muteChannels?.contains(channel.sId) ?? false;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -1229,11 +1229,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              // countMsgContainer(count : unSeenCount ?? 0,isMuted: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false),
+              // countMsgContainer(count : unSeenCount ?? 0,isMuted: signInModel!.data?.user?.muteChannels?.contains(channel.sId) ?? false),
 
               Spacer(),
               // Visibility(
-              //   visible: signInModel.data?.user?.muteChannels?.contains(channel.sId) ?? false,
+              //   visible: signInModel!.data?.user?.muteChannels?.contains(channel.sId) ?? false,
               //   child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteChannel ? AppColor.borderColor : Colors.white,)
               // ),
               ...children,
@@ -1388,7 +1388,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           favoriteChannel,
           // Removed popup menu button
           [
-            dateAndColumnWidget(date: favoriteChannel.lastMessage.toString(),unSeenMsgCount: favoriteChannel.unseenMessagesCount ?? 0,mutedConversation:signInModel.data?.user?.muteChannels?.contains(favoriteChannel.sId) ?? false)
+            dateAndColumnWidget(date: favoriteChannel.lastMessage.toString(),unSeenMsgCount: favoriteChannel.unseenMessagesCount ?? 0,mutedConversation:signInModel!.data?.user?.muteChannels?.contains(favoriteChannel.sId) ?? false)
           ]
         );
       
@@ -1851,7 +1851,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         )
       });
     } else {
-      final isMuted = signInModel.data?.user?.muteChannels?.contains(itemId) ?? false;
+      final isMuted = signInModel!.data?.user?.muteChannels?.contains(itemId) ?? false;
       options.add({
         'icon': Icon(
           isMuted ? Icons.notifications_none : Icons.notifications_off_outlined,
