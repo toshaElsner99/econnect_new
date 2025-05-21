@@ -6,5 +6,5 @@ class AppPreferenceConstants{
   static const String fcmToken = "fcmToken";
   static bool themeModeBoolValueGet = false;
   static const String elsnerChannelKey = "elsnerChannelKey";
-  static String elsnerChannelGetId = "";
+  static String elsnerChannelGetId = "6752c01136682054c04e0874";
 }
