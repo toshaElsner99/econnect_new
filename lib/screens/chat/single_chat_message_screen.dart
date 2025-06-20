@@ -19,6 +19,7 @@ import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:e_connect/utils/app_string_constants.dart';
 import 'package:e_connect/utils/common/common_function.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
+import 'package:e_connect/utils/common/prefrance_function.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'package:flutter/material.dart';
@@ -208,6 +209,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           _showAudioPreview = false;
           _recordingDuration = Duration.zero;
         });
+        
+        // Clear draft message after sending audio
+        await _clearDraftMessage();
       } catch (e) {
         // print("Error sending audio message: $e");
         // You might want to show an error message to the user here
@@ -242,6 +246,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       initializeScreen(1,isFromJump,"","");
     }
     _initializeRecorder();
+    _loadDraftMessage();
   }
 
 
@@ -307,6 +312,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   }
   @override
   void dispose() {
+    // Save draft message before disposing
+    _saveDraftMessage(_messageController.text);
+    
     // Dispose all audio players
     for (var player in _audioPlayers.values) {
       player.dispose();
@@ -333,6 +341,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     _messageController.clear();
     _messageController.clear();
     FocusScope.of(context).unfocus();
+    // Clear draft message when input is cleared
+    _clearDraftMessage();
   }
   void _removeMentionOverlay() {
     _overlayEntry?.remove();
@@ -779,6 +789,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           }),
         );
       }
+      // Clear draft message after sending
+      await _clearDraftMessage();
       _clearInputAndDismissKeyboard();
     }
   }
@@ -1789,6 +1801,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           currentUserMessageId = messageId;
                           // print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                           _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
+                          // Clear draft message when editing
+                          _clearDraftMessage();
                         }),
                         onDelete: () => Cw.instance.deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: oppositeUserId)))),
               ],
@@ -1808,6 +1822,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     setState(() {
       _isTextFieldEmpty = text.isEmpty;
     });
+
+    // Save draft message
+    _saveDraftMessage(text);
 
     if (cursorPosition > 0) {
       // Check if @ was just typed
@@ -2267,6 +2284,33 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       _currentlyPlayingPlayer!.stop();
     }
     setState(() => _currentlyPlayingPlayer = player);
+  }
+
+  // Draft message methods
+  String _getDraftKey() {
+    return "${AppPreferenceConstants.draftMessageKey}${oppositeUserId}";
+  }
+
+  Future<void> _saveDraftMessage(String message) async {
+    if (message.trim().isNotEmpty) {
+      await setData(_getDraftKey(), message);
+    } else {
+      await _clearDraftMessage();
+    }
+  }
+
+  Future<void> _loadDraftMessage() async {
+    final draftMessage = await getData(_getDraftKey());
+    if (draftMessage != null && draftMessage.trim().isNotEmpty) {
+      setState(() {
+        _messageController.text = draftMessage;
+        _isTextFieldEmpty = false;
+      });
+    }
+  }
+
+  Future<void> _clearDraftMessage() async {
+    await removeData(_getDraftKey());
   }
 }
 

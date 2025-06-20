@@ -7,4 +7,5 @@ class AppPreferenceConstants{
   static bool themeModeBoolValueGet = false;
   static const String elsnerChannelKey = "elsnerChannelKey";
   static String elsnerChannelGetId = "6752c01136682054c04e0874";
+  static const String draftMessageKey = "draftMessage_";
 }
