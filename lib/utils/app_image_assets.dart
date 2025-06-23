@@ -1,5 +1,4 @@
-class AppImage{
-
+class AppImage {
   static const path = "assets/images";
 
   /// PNG ///
@@ -45,20 +44,18 @@ class AppImage{
   static const appStoreIcon = "$path/app-store.png";
   static const wafflePNG = "$path/waffle.png";
   static const googleSignIn = "$path/google.gif";
-
-
-
-
-
-
-
+  static const changePassword = "$path/change_password.png";
 
   /// networkUrls
   ///
-  static const inMeetingUrl = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f4c5.png";
-  static const outForLunchUrl = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f354.png";
-  static const outSickUrl = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f927.png";
-  static const workingFromHomeUrl = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f3e1.png";
-  static const onVacationUrl = "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f334.png";
-
+  static const inMeetingUrl =
+      "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f4c5.png";
+  static const outForLunchUrl =
+      "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f354.png";
+  static const outSickUrl =
+      "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f927.png";
+  static const workingFromHomeUrl =
+      "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f3e1.png";
+  static const onVacationUrl =
+      "https://cdn.jsdelivr.net/npm/emoji-datasource-apple/img/apple/64/1f334.png";
 }

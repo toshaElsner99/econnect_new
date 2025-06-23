@@ -79,8 +79,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
       Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
     }
-    //getFCM();
-    Future.delayed(Duration(seconds: 5),(){
+    getFCM();
+    Future.delayed(const Duration(seconds: 5), () {
       setBadge();
     });
     setState(() {
@@ -1024,7 +1024,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                ),
              ),
              Visibility(
-               visible: userId == signInModel!.data?.user?.sId,
+               visible: userId == signInModel!.data?.user?.id,
                child: Padding(
                  padding: const EdgeInsets.only(left: 5.0),
                  child: Cw.instance.commonText(text: "(you)",color: muteConversation ? AppColor.borderColor : Colors.white),

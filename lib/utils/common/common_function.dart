@@ -325,7 +325,7 @@ String? validatePhoneNumber(String? value) {
 }
 String? validateTwoControllerMatch(String? value,TextEditingController textController,String? returnMsg) {
   if (value == null || value.isEmpty) {
-    return 'Phone number cannot be empty';
+    return 'Password cannot be empty';
   }
   if (value != textController.text.trim()) {
     return returnMsg ?? 'Field not matched';

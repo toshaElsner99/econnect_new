@@ -9,16 +9,18 @@ class ChangePasswordProvider extends ChangeNotifier {
   bool isLoading = false;
 
   Future<void> changePasswordCall({
-    required String newPassword
+    required String newPassword,
   }) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      final requestBody = {"password": newPassword, "user_id": signInModel!.data!.user!.sId};
+      final requestBody = {
+        "password": newPassword,
+      };
 
       final response = await ApiService.instance.request(
-        endPoint: ApiString.updateStatus,
+        endPoint: ApiString.updateUserDetails,
         method: Method.POST,
         reqBody: requestBody,
         needLoader: true,
@@ -26,12 +28,12 @@ class ChangePasswordProvider extends ChangeNotifier {
 
       if (Cf.instance.statusCode200Check(response)) {
         Cw.instance.commonShowToast(
-          response['message'] ?? "Password changed successfully",
+          "Password changed successfully",
           Colors.green,
         );
       } else {
         Cw.instance.commonShowToast(
-          response['message'] ?? "Failed to change password",
+          "Failed to change password",
           Colors.red,
         );
       }
