@@ -2,15 +2,14 @@ import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:flutter/material.dart';
 
 ThemeData lightMode = ThemeData(
-  useMaterial3: true,
+    useMaterial3: true,
     // brightness: Brightness.light,
     scaffoldBackgroundColor: Colors.white,
     // scaffoldBackgroundColor: AppColor.appBarColor,
     primaryColor: AppColor.commonAppColor,
     hintColor: Colors.black,
     dialogBackgroundColor: Colors.white,
-    dialogTheme: const DialogTheme(surfaceTintColor: Colors.white),
-
+    dialogTheme: DialogThemeData(surfaceTintColor: Colors.white),
     switchTheme: SwitchThemeData(
       trackOutlineColor: WidgetStatePropertyAll(AppColor.blackColor),
       thumbColor: WidgetStatePropertyAll(AppColor.appBarColor),
@@ -45,7 +44,8 @@ ThemeData lightMode = ThemeData(
       ),
       focusedBorder: OutlineInputBorder(
         borderSide: BorderSide(color: Colors.black, width: 1.5),
-      ),),
+      ),
+    ),
     iconTheme: const IconThemeData(color: Colors.black),
     iconButtonTheme: const IconButtonThemeData(
         style: ButtonStyle(iconColor: MaterialStatePropertyAll(Colors.black))));
@@ -58,10 +58,9 @@ ThemeData darkMode = ThemeData(
     hintColor: Colors.white,
     dialogBackgroundColor: const Color(0xFF212121),
     // bottomSheetTheme: ,
-    dialogTheme: const DialogTheme(surfaceTintColor: Colors.black),
-    checkboxTheme: CheckboxThemeData(
-      checkColor: WidgetStatePropertyAll(AppColor.white)
-    ),
+    dialogTheme: DialogThemeData(surfaceTintColor: Colors.black),
+    checkboxTheme:
+        CheckboxThemeData(checkColor: WidgetStatePropertyAll(AppColor.white)),
     switchTheme: SwitchThemeData(
       trackColor: WidgetStatePropertyAll(AppColor.white),
     ),
@@ -84,7 +83,9 @@ ThemeData darkMode = ThemeData(
         selectedItemColor: Colors.white, unselectedItemColor: Colors.grey),
     inputDecorationTheme: const InputDecorationTheme(
       labelStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-      hintStyle: TextStyle(color: Colors.grey,),
+      hintStyle: TextStyle(
+        color: Colors.grey,
+      ),
       errorStyle: TextStyle(color: Colors.red),
       activeIndicatorBorder: BorderSide(color: Colors.white),
       border: OutlineInputBorder(
@@ -95,4 +96,5 @@ ThemeData darkMode = ThemeData(
       ),
     ),
     iconTheme: const IconThemeData(color: Colors.white),
-    iconButtonTheme: const IconButtonThemeData(style: ButtonStyle(iconColor: MaterialStatePropertyAll(Colors.white))));
+    iconButtonTheme: const IconButtonThemeData(
+        style: ButtonStyle(iconColor: MaterialStatePropertyAll(Colors.white))));

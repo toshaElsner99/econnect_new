@@ -79,4 +79,6 @@ class ApiString{
   // Threads
   static const getUnreadThread = "messages/getUnreadThread";
   static const getUnreadThreadCounts = "messages/getUnreadThreadCounts";
+
+  static const updateUserDetails = "user/updateUserDetails";
 }
