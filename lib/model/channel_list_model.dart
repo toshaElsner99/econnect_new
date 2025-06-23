@@ -70,7 +70,7 @@ class ChannelList {
 
   ChannelList.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
-    name = json['name'];
+    name = json['channelName'];
     description = json['description'];
     isPrivate = json['isPrivate'];
     isDeleted = json['isDeleted'];
@@ -82,7 +82,7 @@ class ChannelList {
     updatedAt = json['updatedAt'];
     iV = json['__v'];
     unreadCount = json['unreadCount'];
-    lastmessage = json['lastmessage'] != null ? Lastmessage.fromJson(json['lastmessage']) : null;
+    lastmessage = json['lastMessage'] != null ? Lastmessage.fromJson(json['lastMessage']) : null;
     ownerId = json['ownerId'];
   }
 
