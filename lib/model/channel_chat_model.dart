@@ -182,14 +182,14 @@ class Message {
       isMedia: json['isMedia'],
       replyTo: json['replyTo'],
       isReply: json['isReply'],
-      isLog: json['isLog'],
+      isLog: json['isLogMessage'],
       isForwarded: json['isForwarded'],
       isEdited: json['isEdited'],
       forwardFrom: json['forwardFrom'],
       readBy: json['readBy'] != null ? List<String>.from(json['readBy']) : null,
-      isSeen: json['is_seen'],
+      isSeen: json['isSeen'],
       isDeleted: json['isDeleted'],
-      taggedUsers: json['tagged_users'] != null ? List<dynamic>.from(json['tagged_users']) : null,
+      taggedUsers: json['taggedUsers'] != null ? List<dynamic>.from(json['taggedUsers']) : null,
       reactions: json['reactions'] != null
           ? List<Reaction>.from(json['reactions'].map((x) => Reaction.fromJson(x)))
           : null,
@@ -402,17 +402,17 @@ class SenderInfo {
   factory SenderInfo.fromJson(Map<String, dynamic> json) {
     return SenderInfo(
       id: json['_id'],
-      username: json['username'],
+      username: json['userName'],
       email: json['email'],
       status: json['status'],
       isActive: json['isActive'],
-      customStatus: json['custom_status'],
-      customStatusEmoji: json['custom_status_emoji'],
+      customStatus: json['custom_status'] ?? "",
+      customStatusEmoji: json['customStatusEmoji'] ?? "",
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
       avatarUrl: json['avatarUrl'],
-      thumbnailAvatarUrl: json['thumbnail_avatarUrl'],
-      lastActiveTime: json['last_active_time'] != null ? DateTime.parse(json['last_active_time']) : null,
+      thumbnailAvatarUrl: json['thumbnailAvatarUrl'],
+      lastActiveTime: json['lastActiveTime'] != null ? DateTime.parse(json['lastActiveTime']) : null,
       elsnerEmail: json['elsner_email'],
     );
   }

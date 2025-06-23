@@ -5,9 +5,10 @@ class ApiString{
 
 
   static const String baseUrl= 'https://dev-econnect-sass.elsnerdev.co/v1/'; /// THIS NEW DEVELOPMENT URL
+  static const String profileBaseUrl = 'https://dev-econnect-sass.elsnerdev.co/'; /// Profile Image
 
   //static const String baseUrl = 'https://e-connect.elsner.com/v1/'; /// THIS LIVE URL
-  static const String profileBaseUrl = 'https://e-connect.elsner.com/public/'; /// Profile Image
+  // static const String profileBaseUrl = 'https://e-connect.elsner.com/public/'; /// Profile Image
 
   // static const String karmaBaseUrl = "https://dev-hrms.elsner.com/";
   static const String karmaBaseUrl = "https://hrms.elsner.com/";
@@ -64,9 +65,9 @@ class ApiString{
   static getChannelMembersList(String channelId) => "channels/getChannelMembers/$channelId";
   static addMembersToChannel(String channelId) => "channels/addMember/$channelId";
   static getChannelInfo(String channelId) => "channels/getChannel/$channelId";
-  static readChannelMessage(String channelId) => "messages/channel/channel-message-seen/$channelId";
+  static readChannelMessage(String channelId) => "channelMessage/seenMessage/$channelId";
   static unReadChannelMessage(String channelId) => "channels/message-unread/$channelId";
-  static const getChannelChat = "messages/channel/get-message";
+  static const getChannelChat = "channelMessage/getMessages";
   static toggleAdminAndMember(String channelId) => "channels/toggleAdmin/$channelId";
   static removeMember(String channelId, String memberId) => "channels/removeMember/$channelId/$memberId";
   static renameChannel(String channelId) => "channels/update/$channelId";
