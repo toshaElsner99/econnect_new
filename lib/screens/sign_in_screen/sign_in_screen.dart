@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/sign_in_provider.dart';
 import '../../utils/app_color_constants.dart';
+import '../../providers/forgot_password_provider.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -175,6 +176,21 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
               prefixIcon: const Icon(Icons.lock_open,color: Colors.black,),
               isPassword: true,
             ),
+            // Forgot Password Link
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => _showForgotPasswordDialog(context),
+                child: Text(
+                  'Forgot Your Password?',
+                  style: TextStyle(
+                    color: Colors.blue[800],
+                    decoration: TextDecoration.underline,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             _buildSignInButton(signInProvider),
             const SizedBox(height: 20),
@@ -292,6 +308,82 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
           color: Colors.grey[600],
         ),
       ],
+    );
+  }
+
+  void _showForgotPasswordDialog(BuildContext context) {
+    final emailController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColor.whiteColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Forgot Password',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColor.commonAppColor,
+            ),
+          ),
+          content: Consumer<ForgotPasswordProvider>(
+            builder: (context, forgotPasswordProvider, child) {
+              return Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Enter your email to receive a password reset link.',
+                      style: TextStyle(color: AppColor.commonAppColor),
+                    ),
+                    const SizedBox(height: 16),
+                    Cw.instance.commonTextFormField(
+                      controller: emailController,
+                      hintText: 'Email',
+                      prefixIcon: Icon(Icons.email, color: AppColor.commonAppColor),
+                      validator: (value) => Cf.instance.validateEmail(value, emailController),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: AppColor.commonAppColor),
+              ),
+            ),
+            Consumer<ForgotPasswordProvider>(
+              builder: (context, forgotPasswordProvider, child) {
+                return ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColor.commonAppColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () {
+                    if (formKey.currentState!.validate()) {
+                      forgotPasswordProvider.forgotPasswordCall(
+                        email: emailController.text.trim(),
+                      );
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: Text('Send Reset Link'),
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

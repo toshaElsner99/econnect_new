@@ -124,15 +124,15 @@ class Users {
 
 class Channels {
   String? sId;
-  String? name;
+  String? channelName;
   bool? isPrivate;
   List<Members>? members;
 
-  Channels({this.sId, this.name, this.isPrivate, this.members});
+  Channels({this.sId, this.channelName, this.isPrivate, this.members});
 
   Channels.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
-    name = json['name'];
+    channelName = json['channelName'];
     isPrivate = json['isPrivate'];
     members = (json['members'] as List?)?.map((v) => Members.fromJson(v)).toList() ?? [];
   }
@@ -140,7 +140,7 @@ class Channels {
   Map<String, dynamic> toJson() {
     return {
       '_id': sId,
-      'name': name,
+      'channelName': channelName,
       'isPrivate': isPrivate,
       'members': members?.map((v) => v.toJson()).toList() ?? [],
     };

@@ -1164,7 +1164,7 @@ class _HomeScreenState extends State<HomeScreen>
                ),
              ),
              Visibility(
-               visible: userId == signInModel!.data?.user?.id,
+               visible: userId == signInModel!.data?.user?.sId,
                child: Padding(
                  padding: const EdgeInsets.only(left: 5.0),
                  child: Cw.instance.commonText(text: "(you)",color: muteConversation ? AppColor.borderColor : Colors.white),

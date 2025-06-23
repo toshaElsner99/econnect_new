@@ -8,6 +8,7 @@ import 'package:e_connect/providers/sign_in_provider.dart';
 import 'package:e_connect/providers/splash_screen_provider.dart';
 import 'package:e_connect/providers/thread_provider.dart';
 import 'package:e_connect/providers/change_password_provider.dart';
+import 'package:e_connect/providers/forgot_password_provider.dart';
 import 'package:e_connect/screens/bottom_navigation_screen/bottom_navigation_screen_cubit.dart';
 import 'package:e_connect/screens/splash_screen/splash_screen.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
@@ -155,6 +156,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SearchMessageProvider()),
         ChangeNotifierProvider(create: (_) => ThreadProvider()),
         ChangeNotifierProvider(create: (_) => ChangePasswordProvider()),
+        ChangeNotifierProvider(create: (_) => ForgotPasswordProvider()),
       ],
       child: OKToast(
         child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {

@@ -293,7 +293,7 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                           chatProvider.forwardMessage(forwardBody: {
                             "content": contentController.text.trim(),
                             "receiverId": item['id'],
-                            "senderId": signInModel!.data?.user!.id,
+                            "senderId": signInModel!.data?.user!.sId,
                             "isForwarded": true.toString(),
                             "forwardFrom": widget.forwardMsgId
                           }, );

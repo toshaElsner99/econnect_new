@@ -67,7 +67,7 @@ class ProfilePreviewSheet extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 24.0),
                     child: _buildProfileField(
                       title: 'Username',
-                      value: signInModel!.data?.user?.username ?? '',
+                      value: signInModel!.data?.user?.userName ?? '',
                       readOnly: true,
                     ),
                   ),
@@ -363,7 +363,7 @@ class Cw {
         .difference(createdTime)
         .inHours < 24;
     final isCurrentUser = currentUserId ==
-        signInModel!.data?.user?.id; // Check if message belongs to the user
+        signInModel!.data?.user?.sId; // Check if message belongs to the user
 
     return Container(
       // color: Colors.red,
@@ -476,7 +476,7 @@ class Cw {
     final isEditable = now
         .difference(createdTime)
         .inHours < 24;
-    final isCurrentUser = currentUserId == signInModel!.data?.user?.id;
+    final isCurrentUser = currentUserId == signInModel!.data?.user?.sId;
 
     return Container(
       alignment: Alignment.topCenter,
@@ -590,7 +590,7 @@ class Cw {
     final isEditable = now
         .difference(createdTime)
         .inHours < 24;
-    final isCurrentUser = currentUserId == signInModel!.data?.user?.id;
+    final isCurrentUser = currentUserId == signInModel!.data?.user?.sId;
 
     return Container(
       alignment: Alignment.topCenter,
@@ -735,20 +735,20 @@ class Cw {
     Color borderColor = AppColor.blueColor,
     void Function()? onTap
   }) {
-    String imageUrl = signInModel!.data?.user?.id == userID
+    String imageUrl = signInModel!.data?.user?.sId == userID
         ? ApiString.profileBaseUrl +
         (signInModel!.data!.user!.thumbnailAvatarUrl ?? '')
         : ApiString.profileBaseUrl + (otherUserProfile ?? '');
 
     return GestureDetector(
       onTap: onTap ?? () {
-        if (userID == signInModel!.data?.user?.id) {
+        if (userID == signInModel!.data?.user?.sId) {
           showUserProfilePopup(
               navigatorKey.currentState!.context,
               userId: userID,
-              username: signInModel!.data!.user!.username ?? '',
+              username: signInModel!.data!.user!.userName ?? '',
               fullName: signInModel!.data!.user!.fullName ?? '',
-              email: signInModel!.data!.user!.elsnerEmail ?? '',
+              email: signInModel!.data!.user!.companyEmail ?? '',
               avatarUrl: signInModel!.data!.user!.avatarUrl ?? '',
               status: status
           );
@@ -799,8 +799,8 @@ class Cw {
                         strokeWidth: 2,
                       ),
                   errorWidget: (context, url, error) {
-                    String name = signInModel!.data?.user?.id == userID
-                        ? signInModel!.data?.user?.username ?? ''
+                    String name = signInModel!.data?.user?.sId == userID
+                        ? signInModel!.data?.user?.userName ?? ''
                         : userName; // Ensure 'userName' is defined if it's for another user
                     String firstLetter = name.isNotEmpty
                         ? name[0].toUpperCase()
@@ -1314,7 +1314,7 @@ class Cw {
       {required String message, String userId = "", bool isLog = false, String userName = "", color}) {
     final commonProvider = Provider.of<CommonProvider>(
         navigatorKey.currentState!.context, listen: false);
-    final currentUserId = signInModel!.data?.user?.id ?? "";
+    final currentUserId = signInModel!.data?.user?.sId ?? "";
 
     // First process @mentions
     String processedMessage = message.replaceAllMapped(
@@ -1415,7 +1415,7 @@ class Cw {
           final commonProvider = Provider.of<CommonProvider>(
               navigatorKey.currentState!.context, listen: false);
           if (commonProvider.getUserMentionModel == null) {
-            commonProvider.getUserApi(id: signInModel!.data!.user!.id!);
+            commonProvider.getUserApi(id: signInModel!.data!.user!.sId!);
             return {};
           }
 
@@ -2357,7 +2357,7 @@ class Cw {
     required String avatarUrl,
     required String status,
   }) {
-    final bool isCurrentUser = userId == signInModel!.data?.user?.id;
+    final bool isCurrentUser = userId == signInModel!.data?.user?.sId;
 
     showDialog(
       context: context,

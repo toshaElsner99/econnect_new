@@ -62,7 +62,7 @@ class CommonProvider extends ChangeNotifier {
   Future<void> updateStatusCall({required String status}) async {
     final requestBody = {
       "status": status,
-      "user_id": signInModel!.data?.user?.id ?? "",
+      "user_id": signInModel!.data?.user?.sId ?? "",
       "isAutomatic": false.toString(),
       "is_status": true.toString(),
     };
@@ -78,7 +78,7 @@ class CommonProvider extends ChangeNotifier {
   Future<void> updateCustomStatusCall({required String status, String emojiUrl = ""}) async {
     final requestBody = {
       "custom_status": status,
-      "user_id": signInModel!.data?.user?.id,
+      "user_id": signInModel!.data?.user?.sId,
       "is_custom_status": "true",
       if (emojiUrl.isNotEmpty) "custom_status_emoji": emojiUrl,
     };
@@ -102,7 +102,7 @@ class CommonProvider extends ChangeNotifier {
 
 
   Future<void> getUserByIDCall() async {
-    final response = await ApiService.instance.request(endPoint: "${ApiString.getUserById}/${/*userId ?? */signInModel!.data?.user?.id ?? ""}", method: Method.POST,isRawPayload: false);
+    final response = await ApiService.instance.request(endPoint: "${ApiString.getUserById}/${/*userId ?? */signInModel!.data?.user?.sId ?? ""}", method: Method.POST,isRawPayload: false);
     if (Cf.instance.statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
       // getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
@@ -138,7 +138,7 @@ class CommonProvider extends ChangeNotifier {
 
   Future<GetUserModel?> getUserByIDCall2({String? userId}) async {
     final response = await ApiService.instance.request(
-        endPoint: "${ApiString.getUserById}/${userId ?? signInModel!.data?.user?.id}",
+        endPoint: "${ApiString.getUserById}/${userId ?? signInModel!.data?.user?.sId}",
         method: Method.GET,);
     if (Cf.instance.statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);

@@ -52,10 +52,10 @@ class ChannelListProvider extends ChangeNotifier{
   /// GET FAVORITE LIST IN HOME SCREEN ///
   Future<void> getFavoriteList()async{
     // print("userID>>>> ${signInModel!.data?.user?.id}");
-    final requestBody = {
-      "userId": signInModel!.data?.user?.id,
-    };
-    final response = await ApiService.instance.request(endPoint: ApiString.favoriteListGet, method: Method.POST,reqBody: requestBody);
+    // final requestBody = {
+    //   "userId": signInModel!.data?.user?.id,
+    // };
+    final response = await ApiService.instance.request(endPoint: ApiString.favoriteListGet, method: Method.GET);
     if(Cf.instance.statusCode200Check(response)){
       favoriteListModel = FavoriteListModel.fromJson(response);
     }
@@ -115,10 +115,10 @@ class ChannelListProvider extends ChangeNotifier{
   /// GET DIRECT MESSAGE IN HOME SCREEN ///
   Future<void> getDirectMessageList()async{
     // print("userID>>>> ${signInModel!.data?.user?.id}");
-    final requestBody = {
-      "userId": signInModel!.data?.user?.id,
-    };
-    final response = await ApiService.instance.request(endPoint: ApiString.directMessageChatList, method: Method.POST,reqBody: requestBody);
+    // final requestBody = {
+    //   "userId": signInModel!.data?.user?.id,
+    // };
+    final response = await ApiService.instance.request(endPoint: ApiString.directMessageChatList, method: Method.GET);
     if(Cf.instance.statusCode200Check(response)){
       directMessageListModel = DirectMessageListModel.fromJson(response);
       // emit(ChannelListInitial());
@@ -134,7 +134,7 @@ class ChannelListProvider extends ChangeNotifier{
     String? isPrivateChannel,
     })async{
     final requestBody = {
-      "name": channelName,
+      "channelName": channelName,
       "isPrivate": isPrivateChannel,
       "description": description
     };
@@ -171,7 +171,7 @@ void combineUserDataWithChannels() {
      combinedList.add({
        'type': 'channel',
        'id': channel.sId,
-       'name': channel.name,
+       'name': channel.channelName,
        'isPrivate': channel.isPrivate,
      });
    });
@@ -195,7 +195,7 @@ bool isLoading = false;
 /// BROWSE AND SEARCH ///
   Future<void> browseAndSearchChannel({required String search,bool? needLoader = false,bool? combineList = false}) async {
     final requestBody = {
-      "userId": signInModel!.data?.user?.id,
+      "userId": signInModel!.data?.user?.sId,
       "searchTerm": search.isEmpty ? "" : search,
     };
     try{
@@ -244,8 +244,8 @@ bool isLoading = false;
     bool? needToUpdateGetUserModel,
   }) async {
     final requestBody = {
-      "userId": signInModel!.data?.user?.id,
-      "favouriteUserId": favouriteUserId,
+      "userId": signInModel!.data?.user?.sId,
+      "favoriteUserId": favouriteUserId,
     };
     final response = await ApiService.instance.request(
         endPoint: ApiString.removeFromFavorite,
@@ -267,9 +267,13 @@ bool isLoading = false;
     required String favoriteChannelID,
     Function? callOtherApi,
   }) async {
+    final requestBody = {
+      "userId": signInModel!.data?.user?.sId,
+      "favoriteChannelId": favoriteChannelID
+    };
     final response = await ApiService.instance.request(
-        endPoint: ApiString.removeFromChannelFromFavorite + favoriteChannelID,
-        method: Method.PUT,);
+        endPoint: ApiString.removeFromChannelFromFavorite,
+        method: Method.POST,reqBody: requestBody);
     if (Cf.instance.statusCode200Check(response)) {
       getFavoriteList();
       getChannelList();
@@ -307,12 +311,12 @@ bool isLoading = false;
   }) async {
     // print("userId>>>${signInModel!.data?.user?.id}");
     final requestBodyForFav = {
-      "userId": signInModel!.data!.user!.id,
+      "userId": signInModel!.data!.user!.sId,
       "conversationUserId": conversationUserId,
       "fav": true
     };
     final requestBodyNonFav = {
-      "userId": signInModel!.data!.user!.id,
+      "userId": signInModel!.data!.user!.sId,
       "conversationUserId": conversationUserId,
     };
     final response = await ApiService.instance.request(
@@ -419,8 +423,8 @@ Future<void> addUserToFavorite({
     bool? needToUpdateGetUserModel,
   }) async {
     final requestBody = {
-      "userId": signInModel!.data?.user?.id,
-      "favouriteUserId": favouriteUserId,
+      "userId": signInModel!.data?.user?.sId,
+      "favoriteUserId": favouriteUserId,
     };
     final response = await ApiService.instance.request(
         endPoint: ApiString.addTOFavorite,
@@ -442,8 +446,11 @@ Future<void> addChannelToFavorite({
   Function? callOtherApi ,
   }) async {
     final response = await ApiService.instance.request(
-        endPoint: ApiString.addChannelTOFavorite + channelId,
-        method: Method.PUT,);
+        endPoint: ApiString.addChannelTOFavorite,
+        method: Method.POST,reqBody: {
+      "favoriteChannelId": channelId,
+      "userId": signInModel!.data?.user?.sId,
+    });
     if (Cf.instance.statusCode200Check(response)) {
           getFavoriteList();
           getChannelList();
@@ -457,12 +464,12 @@ Future<void> addChannelToFavorite({
     required String channelId,
     required bool isMutedChannel
   }) async {
-    final unMuteBody = {"channelIdToUnmute": channelId};
-    final muteBody = {"channelIdToMute": channelId};
+    print("Mute/Unmute Channel ID: $channelId, isMuted: $isMutedChannel");
+    final muteBody = {"channelId": channelId};
     final response = await ApiService.instance.request(
         endPoint: isMutedChannel ? ApiString.unMuteChannel : ApiString.muteChannel,
         method: Method.POST,
-        reqBody: isMutedChannel ? unMuteBody : muteBody,
+        reqBody: muteBody,
         );
     if (Cf.instance.statusCode200Check(response)) {
         if (isMutedChannel) {
@@ -470,6 +477,7 @@ Future<void> addChannelToFavorite({
         } else {
           signInModel!.data?.user?.muteChannels?.add(channelId);
         }
+          print("Added to mute list =${signInModel!.data?.user?.muteChannels}");
           signInModel!.saveToPrefs();
           await SignInModel.loadFromPrefs();
           getFavoriteList();
@@ -480,7 +488,7 @@ Future<void> addChannelToFavorite({
   }
 
   Future<void> addUserToChatList({required String selectedUserId}) async {
-    final requestBody ={"userId": signInModel!.data?.user?.id, "selectedUserId": selectedUserId};
+    final requestBody ={"userId": signInModel!.data?.user?.sId, "selectedUserId": selectedUserId};
     final response = await ApiService.instance.request(
       endPoint: ApiString.addUserToChatList,
       method: Method.POST,
@@ -511,7 +519,7 @@ Future<void> toggleAdminAndMember(
     await Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false).getChannelMembersList(channelId);
     socketProvider.memberAdminToggleSC(response: {
       "data": {
-        "senderId": signInModel!.data!.user!.id,
+        "senderId": signInModel!.data!.user!.sId,
         "channelId": channelId
       }
     });
@@ -554,7 +562,7 @@ Future<void> removeMember(
     await channelChatProvider.getChannelInfoApiCall(callFroHome: false,channelId: channelId);
     await channelChatProvider.getChannelChatApiCall(channelId: channelId,pageNo: 1);
     socketProvider.memberRemoveSC(response: {
-      "senderId": signInModel!.data!.user!.id,
+      "senderId": signInModel!.data!.user!.sId,
       "removeduser": userId,
       "receiverId": memberIds,
       "channelId": channelId});
@@ -580,7 +588,7 @@ Future<void> renameChannel({
       Uri.parse(ApiString.baseUrl + ApiString.renameChannel(channelId))
   );
   request.body = json.encode({
-    "name": name,
+    "channelName": name,
     "isPrivate": isPrivate,
     "description": description
   });
@@ -627,6 +635,8 @@ void combineAllLists() {
         'timestamp': timestamp
       });
     }
+
+
   }
   
   // Add favorite channels
@@ -641,7 +651,7 @@ void combineAllLists() {
         timestamp = item.updatedAt ?? item.createdAt ?? '';
         // print("Favorite Channel ${item.name}: No lastMessage, using: $timestamp");
       }
-      
+      print("AddIng fav channel = ${item.name} with timestamp: $timestamp");
       combinedAllItems.add({
         'type': 'favoriteChannel',
         'data': item,

@@ -80,8 +80,8 @@ class ChannelChatProvider extends ChangeNotifier{
             // print("parentId >>> $parentId");
 
             // Prevent adding your own user in the list
-            if (userId.toString() == signInModel!.data?.user?.id.toString()) {
-              typingUsers.removeWhere((user) => user['user_id'] == signInModel!.data?.user?.id.toString());
+            if (userId.toString() == signInModel!.data?.user?.sId.toString()) {
+              typingUsers.removeWhere((user) => user['user_id'] == signInModel!.data?.user?.sId.toString());
               notifyListeners();
               return;
             }
@@ -145,7 +145,7 @@ class ChannelChatProvider extends ChangeNotifier{
     final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
     if(Cf.instance.statusCode200Check(response)){
       print("pinUnPinMessage = Success");
-      socketProvider.pinUnPinMessageEventChannelChat(senderId: signInModel!.data?.user?.id ?? "", channelId: channelID);
+      socketProvider.pinUnPinMessageEventChannelChat(senderId: signInModel!.data?.user?.sId ?? "", channelId: channelID);
       if(isCalledForReply) {
         // Update in reply messages
         if (getReplyMessageChannelModel?.data?.messagesList != null) {
@@ -662,7 +662,7 @@ class ChannelChatProvider extends ChangeNotifier{
       log("Response data: $responseData");
       Map<String, dynamic> passInSocket = {
         "data": {
-          "senderId": signInModel!.data!.user!.id,
+          "senderId": signInModel!.data!.user!.sId,
           "receiverId": userIds,
           "channelId": channelId
         }
@@ -862,7 +862,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
               // Check if user already reacted with this emoji
               final existingReactionIndex = message.reactions!.indexWhere(
                       (reaction) =>
-                  reaction.userId == signInModel!.data?.user?.id &&
+                  reaction.userId == signInModel!.data?.user?.sId &&
                       reaction.emoji == reactUrl);
 
               if (existingReactionIndex != -1) {
@@ -873,8 +873,8 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
 
                 message.reactions!.add(Reaction(
                   emoji: reactUrl,
-                  userId: signInModel!.data?.user?.id,
-                  username: signInModel!.data?.user?.username,
+                  userId: signInModel!.data?.user?.sId,
+                  username: signInModel!.data?.user?.userName,
                   id: DateTime.now().toString(), // Temporary ID
                 ));
 
@@ -897,7 +897,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
               // Check if user already reacted with this emoji
               final existingReactionIndex = message.reactions!.indexWhere(
                       (reaction) =>
-                  reaction.userId?.sId == signInModel!.data?.user?.id &&
+                  reaction.userId?.sId == signInModel!.data?.user?.sId &&
                       reaction.emoji == reactUrl);
 
               if (existingReactionIndex != -1) {
@@ -908,8 +908,8 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
                 message.reactions!.add(Reactions(
                   emoji: reactUrl,
                   userId: UserId(
-                    sId: signInModel!.data?.user?.id,
-                    username: signInModel!.data?.user?.username,
+                    sId: signInModel!.data?.user?.sId,
+                    username: signInModel!.data?.user?.userName,
                   ),
                   sId: DateTime.now().toString(), // Temporary ID
                 ));
@@ -923,7 +923,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
       }
       socketProvider.reactMessagesInChannelSC(response: {
         "channelId": channelId, // Channel ID
-        "senderId": signInModel!.data?.user?.id,
+        "senderId": signInModel!.data?.user?.sId,
       });
 
     }
@@ -953,7 +953,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
               // Find and remove the reaction
               final existingReactionIndex = message.reactions!.indexWhere(
                       (reaction) =>
-                  reaction.userId == signInModel!.data?.user?.id &&
+                  reaction.userId == signInModel!.data?.user?.sId &&
                       reaction.emoji == reactUrl);
               if (existingReactionIndex != -1) {
                 message.reactions!.removeAt(existingReactionIndex);
@@ -971,7 +971,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
               // Find and remove the reaction
               final existingReactionIndex = message.reactions!.indexWhere(
                       (reaction) =>
-                  reaction.userId?.sId == signInModel!.data?.user?.id &&
+                  reaction.userId?.sId == signInModel!.data?.user?.sId &&
                       reaction.emoji == reactUrl);
               if (existingReactionIndex != -1) {
                 message.reactions!.removeAt(existingReactionIndex);
@@ -985,7 +985,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
 
       socketProvider.reactMessagesInChannelSC(response: {
         "channelId": channelId,// Channel ID
-        "senderId": signInModel!.data?.user?.id,
+        "senderId": signInModel!.data?.user?.sId,
       });
 
     }

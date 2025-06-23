@@ -80,7 +80,7 @@ class SocketIoProvider extends ChangeNotifier{
       socketBaseUrl,
       IO.OptionBuilder()
           .setTransports(['websocket'])
-          .setQuery({'userId': signInModel!.data?.user?.id})
+          .setQuery({'userId': signInModel!.data?.user?.sId})
           .enableAutoConnect()
           .build(),
     );
@@ -120,7 +120,7 @@ class SocketIoProvider extends ChangeNotifier{
   }
 
   joinRoomEvent(){
-    socket.emit(joinRoom,{{'userId': signInModel!.data?.user?.id}});
+    socket.emit(joinRoom,{{'userId': signInModel!.data?.user?.sId}});
     socket.on(joinRoom, (data) => pragma("joinRoomEvent>>>> $data"),);
   }
 
@@ -153,7 +153,7 @@ class SocketIoProvider extends ChangeNotifier{
   }) {
 
     Map<String, dynamic> data = {
-      "senderId": signInModel!.data?.user?.id ?? "",
+      "senderId": signInModel!.data?.user?.sId ?? "",
       "receiverId": oppositeUserId,
       "inputValue": isTyping,
       "isReply": isReplyMsg,
@@ -169,11 +169,11 @@ class SocketIoProvider extends ChangeNotifier{
 
   userTypingEventChannel({required String channelId,required int isTyping, required bool isReplyMsg,String msgId = ""}){
     Map<String, dynamic> data = {
-      "senderId": signInModel!.data?.user?.id ?? "",
+      "senderId": signInModel!.data?.user?.sId ?? "",
       "channelId": channelId,
       "inputValue":isTyping,
-      "username": signInModel!.data?.user?.username ?? "",
-      "userId": signInModel!.data?.user?.id ?? "",
+      "username": signInModel!.data?.user?.userName ?? "",
+      "userId": signInModel!.data?.user?.sId ?? "",
       "isReply":isReplyMsg
     };
     if (msgId.isNotEmpty) {

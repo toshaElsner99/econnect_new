@@ -165,7 +165,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
               child: Builder(
                 builder: (context) {
                   final filteredChannels = channelListProvider.browseAndSearchChannelModel?.data?.channels
-                      ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel!.data?.user?.id) ?? false))
+                      ?.where((channel) => !hideJoined || !(channel.members?.any((member) => member.id == signInModel!.data?.user?.sId) ?? false))
                       .toList();
 
                   if (filteredChannels == null || filteredChannels.isEmpty) {
@@ -203,7 +203,7 @@ class _BrowseAndSearchChannelState extends State<BrowseAndSearchChannel> {
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Cw.instance.commonText(text: "${channelListing.name}", height: 1.2),
+                                  Cw.instance.commonText(text: "${channelListing.channelName}", height: 1.2),
                                   const SizedBox(height: 10),
                                   Row(
                                     children: [
