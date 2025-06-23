@@ -480,7 +480,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     if (searchQuery?.isEmpty ?? true) {
       // Add current user first
       final currentUser = allMembers.firstWhere(
-            (member) => member.sId == signInModel!.data?.user?.id,
+            (member) => member.sId == signInModel!.data?.user?.sId,
         orElse: () => allMembers.isNotEmpty ? allMembers[0] : MemberDetails(),
       );
       initialUsers.add(currentUser);
@@ -488,7 +488,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       // Add first member who is not the current user
       if (allMembers.length > 1) {
         final otherMember = allMembers.firstWhere(
-              (member) => member.sId != signInModel!.data?.user?.id,
+              (member) => member.sId != signInModel!.data?.user?.sId,
           orElse: () => allMembers[0],
         );
         if (otherMember.sId != currentUser.sId) {
@@ -639,7 +639,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       _confettiController1 = ConfettiController(duration: const Duration(seconds: 5));
       _confettiController2 = ConfettiController(duration: const Duration(seconds: 5));
     super.initState();
-    Provider.of<CommonProvider>(context,listen: false).getUserApi(id: signInModel!.data?.user?.id ?? "");
+    Provider.of<CommonProvider>(context,listen: false).getUserApi(id: signInModel!.data?.user?.sId ?? "");
     channelID = widget.channelId;
     isFromJump = widget.isFromJump ?? false;
 
@@ -1200,7 +1200,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       ),
                       if (channelChatProvider.getChannelInfo?.data?.members
                           ?.any((member) => member.isAdmin == true &&
-                          member.id == signInModel!.data?.user?.id) ?? false)...{
+                          member.sId == signInModel!.data?.user?.sId) ?? false)...{
                           SizedBox(width: 10),
                           GestureDetector(
                             onTap: () => _showRenameChannelDialog(),
@@ -1324,7 +1324,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                           // }
                         }else{
                           print("userName : ${value['name']} && userId ${value['id']}");
-                          Cf.instance.pushReplacement(screen: SingleChatMessageScreen(userName: signInModel!.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'], oppositeUserId:signInModel!.data!.user!.id == value['id'] ?value['oppositeUserID'] : value['id'],isFromJump: true,jumpData: value,));
+                          Cf.instance.pushReplacement(screen: SingleChatMessageScreen(userName: signInModel!.data!.user!.sId == value['id'] ? value['oppositeUserName'] : value['name'], oppositeUserId:signInModel!.data!.user!.sId == value['id'] ?value['oppositeUserID'] : value['id'],isFromJump: true,jumpData: value,));
                         }
                         print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
                       }
@@ -1384,7 +1384,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     // SizedBox(height: 20),
                     // Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
                     //   var filteredTypingUsers = channelChatProvider.typingUsers
-                    //       .where((user) => user['user_id'].toString() != signInModel!.data?.user?.id.toString()
+                    //       .where((user) => user['user_id'].toString() != signInModel!.data?.user?.sId.toString()
                     //       && user['routeId'] == channelID).toList();
                     //   String typingMessage;
                     //
@@ -1417,7 +1417,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                     // },),
                     Consumer<ChannelChatProvider>(builder: (context, channelChatProvider, child) {
                       var filteredTypingUsers = channelChatProvider.typingUsers
-                          .where((user) => user['user_id'].toString() != signInModel!.data?.user?.id.toString()
+                          .where((user) => user['user_id'].toString() != signInModel!.data?.user?.sId.toString()
                           && user['routeId'] == channelID
                           && user['isReply'] == false).toList();
 
@@ -1504,7 +1504,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
           .toList();
       final isCurrentUserAdmin = adminMembers.any((member) =>
       member.isAdmin == true &&
-          member.sId == signInModel!.data?.user?.id);
+          member.sId == signInModel!.data?.user?.sId);
 
       // Sort and merge message groups by date
       Map<String, List<Message>> mergedMessagesByDate = {};
@@ -1782,7 +1782,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
 
       // if (channelID == "67fdfe38eb1f5907bf48e624" && messageList.isSeen == false) {
       if (channelID == AppPreferenceConstants.elsnerChannelGetId && messageList.isSeen == false) {
-        final loggedInUserId = signInModel!.data?.user?.id;
+        final loggedInUserId = signInModel!.data?.user?.sId;
 
         // Ensure exactly one :waffle is present
         bool hasOneWaffle = RegExp(r':waffle', caseSensitive: false).allMatches(message).length == 1;
@@ -1852,7 +1852,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         child: Column(
           children: [
             Visibility(
-                visible: (messageList.isSeen == false && userId != signInModel!.data?.user?.id),
+                visible: (messageList.isSeen == false && userId != signInModel!.data?.user?.sId),
                 child: Cw.instance.newMessageDivider()),
             Visibility(
                 visible: pinnedMsg,
@@ -2123,11 +2123,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               print("value>>> $value");
                               if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                                 for (var reply in messageList.replies!) {
-                                  if (!(reply.readBy?.contains(signInModel!.data?.user!.id) ?? false) && (reply.isSeen ?? false) == false) {
+                                  if (!(reply.readBy?.contains(signInModel!.data?.user!.sId) ?? false) && (reply.isSeen ?? false) == false) {
                                     reply.isSeen = true;
                                     reply.readBy ??= [];
-                                    if (!reply.readBy!.contains(signInModel!.data!.user!.id!)) {
-                                      reply.readBy!.add(signInModel!.data!.user!.id!);
+                                    if (!reply.readBy!.contains(signInModel!.data!.user!.sId!)) {
+                                      reply.readBy!.add(signInModel!.data!.user!.sId!);
                                     }
                                   }
                                 }
@@ -2183,20 +2183,20 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   visible: messageList.replies != null &&
                                       messageList.replies!.isNotEmpty &&
                                       messageList.replies!.any((reply) =>
-                                      !(reply.readBy?.contains(signInModel!.data?.user!.id) ?? false) &&
+                                      !(reply.readBy?.contains(signInModel!.data?.user!.sId) ?? false) &&
                                           (reply.isSeen ?? false) == false),
                                   child: Container(
                                     margin:EdgeInsets.only(right: 5),
                                     width: messageList.replies != null &&
                                         messageList.replies!.isNotEmpty &&
                                         messageList.replies!.any((reply) =>
-                                        !(reply.readBy?.contains(signInModel!.data?.user!.id) ?? false) &&
+                                        !(reply.readBy?.contains(signInModel!.data?.user!.sId) ?? false) &&
                                             (reply.isSeen ?? false) == false)
                                         ? 10 : 0,
                                     height: messageList.replies != null &&
                                         messageList.replies!.isNotEmpty &&
                                         messageList.replies!.any((reply) =>
-                                        !(reply.readBy?.contains(signInModel!.data?.user!.id) ?? false) &&
+                                        !(reply.readBy?.contains(signInModel!.data?.user!.sId) ?? false) &&
                                             (reply.isSeen ?? false) == false)
                                         ? 10 : 0,
                                     decoration: const BoxDecoration(
@@ -2354,7 +2354,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   alignment: WrapAlignment.start,
                                   children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
-                                    reaction.userId == signInModel!.data?.user?.id &&
+                                    reaction.userId == signInModel!.data?.user?.sId &&
                                         reaction.emoji == entry.key);
 
                                     return GestureDetector(

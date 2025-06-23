@@ -201,7 +201,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
         ),
       ),
       title: Cw.instance.commonText(
-        text: channel.name ?? "",
+        text: channel.channelName ?? "",
         // color: Colors.black87,
         fontSize: 15,
         fontWeight: FontWeight.w500,

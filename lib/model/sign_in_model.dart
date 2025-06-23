@@ -75,122 +75,126 @@ class Data {
 }
 
 class User {
-  String? id;
+  String? sId;
   String? fullName;
-  String? username;
+  String? userName;
   String? email;
   String? status;
   bool? isActive;
-  List<dynamic>? loginActivity; // Fixed issue here
   String? customStatus;
+  String? customStatusEmoji;
   List<String>? muteUsers;
   List<String>? muteChannels;
+  String? lastActiveTime;
   bool? isLeft;
-  List<CustomStatusHistory>? customStatusHistory;
   String? createdAt;
   String? updatedAt;
   LastActiveChat? lastActiveChat;
+  String? position;
   String? avatarUrl;
   String? thumbnailAvatarUrl;
-  String? chatList;
-  bool? isAutomatic;
-  String? lastActiveTime;
-  String? elsnerEmail;
-  String? password;
   String? roleId;
   String? roleName;
+  String? companyId;
+  String? companyName;
+  String? companyEmail;
+  String? domain;
+  String? companyLogoUrl;
+  String? companyFavIcoUrl;
+  String? deffaultchannels;
 
-  User({
-    this.id,
-    this.fullName,
-    this.username,
-    this.email,
-    this.status,
-    this.isActive,
-    this.loginActivity,
-    this.customStatus,
-    this.muteUsers,
-    this.muteChannels,
-    this.isLeft,
-    this.customStatusHistory,
-    this.createdAt,
-    this.updatedAt,
-    this.lastActiveChat,
-    this.avatarUrl,
-    this.thumbnailAvatarUrl,
-    this.chatList,
-    this.isAutomatic,
-    this.lastActiveTime,
-    this.elsnerEmail,
-    this.password,
-    this.roleId,
-    this.roleName
-  });
+  User(
+      {this.sId,
+        this.fullName,
+        this.userName,
+        this.email,
+        this.status,
+        this.isActive,
+        this.customStatus,
+        this.customStatusEmoji,
+        this.muteUsers,
+        this.muteChannels,
+        this.lastActiveTime,
+        this.isLeft,
+        this.createdAt,
+        this.updatedAt,
+        this.lastActiveChat,
+        this.position,
+        this.avatarUrl,
+        this.thumbnailAvatarUrl,
+        this.roleId,
+        this.roleName,
+        this.companyId,
+        this.companyName,
+        this.companyEmail,
+        this.domain,
+        this.companyLogoUrl,
+        this.companyFavIcoUrl,
+        this.deffaultchannels});
 
   User.fromJson(Map<String, dynamic> json) {
-    id = json['_id'];
+    sId = json['_id'];
     fullName = json['fullName'];
-    username = json['username'];
+    userName = json['userName'];
     email = json['email'];
     status = json['status'];
     isActive = json['isActive'];
-    loginActivity = json['loginActivity'] ?? []; // Fixed issue here
-    customStatus = json['custom_status'];
-    muteUsers = json['mute_users']?.cast<String>();
-    muteChannels = json['mute_channels']?.cast<String>();
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
+    muteUsers = json['muteUsers']?.cast<String>() ?? [];
+    muteChannels = json['muteChannels']?.cast<String>() ?? [];
+    lastActiveTime = json['lastActiveTime'];
     isLeft = json['isLeft'];
-    if (json['custom_status_history'] != null) {
-      customStatusHistory = (json['custom_status_history'] as List)
-          .map((v) => CustomStatusHistory.fromJson(v))
-          .toList();
-    }
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     lastActiveChat = json['lastActiveChat'] != null
-        ? LastActiveChat.fromJson(json['lastActiveChat'])
+        ? new LastActiveChat.fromJson(json['lastActiveChat'])
         : null;
+    position = json['position'];
     avatarUrl = json['avatarUrl'];
-    thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
-    chatList = json['chatList'];
-    isAutomatic = json['isAutomatic'];
-    lastActiveTime = json['last_active_time'];
-    elsnerEmail = json['elsner_email'];
-    password = json['password'];
-    roleId = json['role_id'];
-    roleName = json['role_name'];
+    thumbnailAvatarUrl = json['thumbnailAvatarUrl'];
+    roleId = json['roleId'];
+    roleName = json['roleName'];
+    companyId = json['companyId'];
+    companyName = json['companyName'];
+    companyEmail = json['companyEmail'];
+    domain = json['domain'];
+    companyLogoUrl = json['companyLogoUrl'];
+    companyFavIcoUrl = json['companyFavIcoUrl'];
+    deffaultchannels = json['deffaultchannels'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {};
-    data['_id'] = id;
-    data['fullName'] = fullName;
-    data['username'] = username;
-    data['email'] = email;
-    data['status'] = status;
-    data['isActive'] = isActive;
-    data['loginActivity'] = loginActivity; // Fixed issue here
-    data['custom_status'] = customStatus;
-    data['mute_users'] = muteUsers;
-    data['mute_channels'] = muteChannels;
-    data['isLeft'] = isLeft;
-    if (customStatusHistory != null) {
-      data['custom_status_history'] =
-          customStatusHistory!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['_id'] = this.sId;
+    data['fullName'] = this.fullName;
+    data['userName'] = this.userName;
+    data['email'] = this.email;
+    data['status'] = this.status;
+    data['isActive'] = this.isActive;
+    data['customStatus'] = this.customStatus;
+    data['customStatusEmoji'] = this.customStatusEmoji;
+    data['muteUsers'] = muteUsers;
+    data['muteChannels'] = muteChannels;
+    data['lastActiveTime'] = this.lastActiveTime;
+    data['isLeft'] = this.isLeft;
+    data['createdAt'] = this.createdAt;
+    data['updatedAt'] = this.updatedAt;
+    if (this.lastActiveChat != null) {
+      data['lastActiveChat'] = this.lastActiveChat!.toJson();
     }
-    data['createdAt'] = createdAt;
-    data['updatedAt'] = updatedAt;
-    if (lastActiveChat != null) {
-      data['lastActiveChat'] = lastActiveChat!.toJson();
-    }
-    data['avatarUrl'] = avatarUrl;
-    data['thumbnail_avatarUrl'] = thumbnailAvatarUrl;
-    data['chatList'] = chatList;
-    data['isAutomatic'] = isAutomatic;
-    data['last_active_time'] = lastActiveTime;
-    data['elsner_email'] = elsnerEmail;
-    data['password'] = password;
-    data['role_id'] = roleId;
-    data['role_name'] = roleName;
+    data['position'] = this.position;
+    data['avatarUrl'] = this.avatarUrl;
+    data['thumbnailAvatarUrl'] = this.thumbnailAvatarUrl;
+    data['roleId'] = this.roleId;
+    data['roleName'] = this.roleName;
+    data['companyId'] = this.companyId;
+    data['companyName'] = this.companyName;
+    data['companyEmail'] = this.companyEmail;
+    data['domain'] = this.domain;
+    data['companyLogoUrl'] = this.companyLogoUrl;
+    data['companyFavIcoUrl'] = this.companyFavIcoUrl;
+    data['deffaultchannels'] = this.deffaultchannels;
     return data;
   }
 }

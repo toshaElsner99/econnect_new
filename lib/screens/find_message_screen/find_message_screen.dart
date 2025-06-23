@@ -187,7 +187,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                   child: ClipOval(
                                                     child: CachedNetworkImage(
                                                       imageUrl: signInModel!.data
-                                                          ?.user?.id ==
+                                                          ?.user?.sId ==
                                                           message.senderInfo
                                                               ?.id
                                                           ? ApiString

@@ -294,8 +294,8 @@ class Data {
     if (json['chatList'] != null) {
       chatList = (json['chatList'] as List).map((v) => ChatList.fromJson(v)).toList();
     }
-    if (json['favouriteChannels'] != null) {
-      favouriteChannels = (json['favouriteChannels'] as List).map((v) => FavouriteChannels.fromJson(v)).toList();
+    if (json['favoriteChannels'] != null) {
+      favouriteChannels = (json['favoriteChannels'] as List).map((v) => FavouriteChannels.fromJson(v)).toList();
     }
   }
 
@@ -306,7 +306,7 @@ class Data {
       data['chatList'] = this.chatList!.map((v) => v.toJson()).toList();
     }
     if (this.favouriteChannels != null) {
-      data['favouriteChannels'] = this.favouriteChannels!.map((v) => v.toJson()).toList();
+      data['favoriteChannels'] = this.favouriteChannels!.map((v) => v.toJson()).toList();
     }
     return data;
   }
@@ -537,7 +537,7 @@ class FavouriteChannels {
 
   FavouriteChannels.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
-    name = json['name'];
+    name = json['channelName'];
     description = json['description'];
     isPrivate = json['isPrivate'];
     if (json['members'] != null) {
@@ -561,7 +561,7 @@ class FavouriteChannels {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
     data['_id'] = this.sId;
-    data['name'] = this.name;
+    data['channelName'] = this.name;
     data['description'] = this.description;
     data['isPrivate'] = this.isPrivate;
     if (this.members != null) {

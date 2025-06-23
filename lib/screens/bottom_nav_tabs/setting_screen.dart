@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/common_provider.dart';
+import '../../providers/change_password_provider.dart';
 import '../../utils/app_preference_constants.dart';
 import '../../widgets/set_Custom_status_bottom_sheet.dart';
 
@@ -27,60 +28,61 @@ class _SettingScreenState extends State<SettingScreen> {
   @override
   Widget build(BuildContext context) {
     return Consumer2<CommonProvider,ThemeProvider>(builder: (context, commonProvider,themeProvider, child) {
-      return GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Scaffold(
+        return GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Scaffold(
           backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
-          body: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: _buildProfileHeader(),
-              ),
-
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    _buildSection(
-                      children: [
-                        _buildStatusTile(commonProvider),
-                        _buildCustomStatusTile(commonProvider),
-                      ],
-                    ),
-                    _buildSection(
-                      children: [
-                        _buildProfileTile(),
-                        _buildThemeModeTile(themeProvider),
-                      ],
-                    ),
-                    _buildSection(
-                      children: [
-                        _buildLogoutTile(),
-                      ],
-                    ),
-                    closeScreen()
-                  ],
+            body: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: _buildProfileHeader(),
                 ),
-              ),
-            ],
+
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      _buildSection(
+                        children: [
+                          _buildStatusTile(commonProvider),
+                          _buildCustomStatusTile(commonProvider),
+                        ],
+                      ),
+                      _buildSection(
+                        children: [
+                          _buildProfileTile(),
+                          _buildThemeModeTile(themeProvider),
+                        _buildChangePasswordTile()
+                        ],
+                      ),
+                      _buildSection(
+                        children: [
+                          _buildLogoutTile(),
+                        ],
+                      ),
+                      closeScreen()
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      );
+        );
     },);
   }
 
   Container closeScreen() {
     return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColor.borderColor.withOpacity(0.15),
-                    // borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColor.redColor.withOpacity(0.4),
-                    ),
-                  ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColor.borderColor.withOpacity(0.15),
+        // borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColor.redColor.withOpacity(0.4),
+        ),
+      ),
                   child: IconButton(onPressed: () => Cf.instance.pop(), icon: Icon(Icons.close,color: Colors.white,)),
-                );
+    );
   }
 
   Widget _buildProfileHeader() {
@@ -102,14 +104,14 @@ class _SettingScreenState extends State<SettingScreen> {
           Cw.instance.commonImageHolder(radius: 50),
           const SizedBox(height: 16),
           Cw.instance.commonText(
-            text: signInModel!.data?.user?.fullName ?? signInModel!.data?.user?.username ?? "",
+            text: signInModel!.data?.user?.fullName ?? signInModel!.data?.user?.userName ?? "",
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
           const SizedBox(height: 8),
           Cw.instance.commonText(
-            text: (signInModel!.data?.user?.username ??"").isEmpty?"Not Available":"@${signInModel!.data?.user?.username}",
+            text: "@${signInModel!.data?.user?.userName}",
             color: Colors.white.withOpacity(0.7),
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -136,13 +138,14 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   Widget _buildStatusTile(CommonProvider commonProvider) {
+    print("STATUSS >>> ${commonProvider.getUserModel?.data?.user!.status!}");
     return _buildTile(
       onTap: () => _showStatusBottomSheet(context),
       leading: Cw.instance.getCommonStatusIcons(
-        status: commonProvider.getUserModel?.data?.user?.status??"",
+        status: "${commonProvider.getUserModel?.data?.user!.status!}",
         assetIcon: false,
       ),
-      title: Cf.instance.capitalizeFirstLetter(commonProvider.getUserModel?.data?.user?.status??"Not Set"),
+      title: Cf.instance.capitalizeFirstLetter("${commonProvider.getUserModel?.data?.user!.status!}"),
     );
   }
 
@@ -152,20 +155,20 @@ class _SettingScreenState extends State<SettingScreen> {
       onTap: () => showCustomStatusSheet(context),
       child: _buildTile(
           leading: commonProvider.customStatusUrl.isNotEmpty ? CachedNetworkImage(imageUrl: commonProvider.customStatusUrl,width: 24,height: 24,) : Image.asset(
-            AppImage.setStatusIcon,
-            width: 24,
-            height: 24,
-            color: Colors.white.withOpacity(0.8),
-          ),
+                  AppImage.setStatusIcon,
+                  width: 24,
+                  height: 24,
+                  color: Colors.white.withOpacity(0.8),
+                ),
           title: commonProvider.customStatusTitle.isNotEmpty ? commonProvider.customStatusTitle : AppString.setACustomStatus,
           trailing: commonProvider.customStatusTitle.isNotEmpty ? GestureDetector(
             onTap: () => commonProvider.updateCustomStatusCall(status: "", emojiUrl: ""),
-            child: Container(
-                margin: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
+                  child: Container(
+                      margin: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
                 child: Icon(Icons.close,size: 22,color: Colors.red,)),
           ) : SizedBox.shrink()
       ),
@@ -178,6 +181,21 @@ class _SettingScreenState extends State<SettingScreen> {
       child: _buildTile(
         leading: Image.asset(AppImage.person,width: 22,height: 22,color:  Colors.white.withOpacity(0.8),),
         title: AppString.profile,
+      ),
+    );
+  }
+
+  Widget _buildChangePasswordTile() {
+    return GestureDetector(
+      onTap: () => _showChangePasswordBottomSheet(context),
+      child: _buildTile(
+        leading: Image.asset(
+          AppImage.changePassword,
+          width: 22,
+          height: 22,
+          color: Colors.white.withOpacity(0.8),
+        ),
+        title: AppString.changePassword,
       ),
     );
   }
@@ -266,91 +284,91 @@ class _SettingScreenState extends State<SettingScreen> {
             borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
           child: Consumer<CommonProvider>(builder: (context, commonProvider, child) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Bottom sheet indicator
-                Center(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[600],
-                      borderRadius: BorderRadius.circular(2),
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Bottom sheet indicator
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[600],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
 
-                // Status text
-                Padding(
-                  padding: EdgeInsets.only(left: 16, bottom: 16),
-                  child: Cw.instance.commonText(
-                    text: AppString.status,
-                    color: Colors.black,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                  // Status text
+                  Padding(
+                    padding: EdgeInsets.only(left: 16, bottom: 16),
+                    child: Cw.instance.commonText(
+                      text: AppString.status,
+                      color: Colors.black,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
 
-                // Status options
-                _buildStatusOption(
-                  commonProvider: commonProvider,
-                  context,
-                  icon: Icons.check_circle,
-                  color: Colors.green,
-                  text: AppString.online,
-                  index: 0,
-                ),
-                _buildStatusOption(
-                  commonProvider: commonProvider,
-                  context,
-                  icon: Icons.access_time_filled_outlined,
-                  color: Colors.orange,
-                  text: AppString.away,
-                  index: 1,
-                ),
-                _buildStatusOption(
-                  commonProvider: commonProvider,
-                  context,
-                  icon: Icons.remove_circle,
-                  color: Colors.blue,
-                  text: AppString.busy,
-                  index: 2,
-                ),
-                _buildStatusOption(
-                  commonProvider: commonProvider,
-                  context,
-                  icon: Icons.remove_circle,
-                  color: Colors.red,
-                  text: AppString.dnd,
-                  index: 3,
-                ),
-                _buildStatusOption(
-                  commonProvider: commonProvider,
-                  context,
-                  icon: Icons.circle_outlined,
-                  color: AppColor.borderColor,
-                  text: AppString.offline,
-                  index: 4,
-                ),
-                const SizedBox(height: 16),
-              ],
-            );
+                  // Status options
+                  _buildStatusOption(
+                    commonProvider: commonProvider,
+                    context,
+                    icon: Icons.check_circle,
+                    color: Colors.green,
+                    text: AppString.online,
+                    index: 0,
+                  ),
+                  _buildStatusOption(
+                    commonProvider: commonProvider,
+                    context,
+                    icon: Icons.access_time_filled_outlined,
+                    color: Colors.orange,
+                    text: AppString.away,
+                    index: 1,
+                  ),
+                  _buildStatusOption(
+                    commonProvider: commonProvider,
+                    context,
+                    icon: Icons.remove_circle,
+                    color: Colors.blue,
+                    text: AppString.busy,
+                    index: 2,
+                  ),
+                  _buildStatusOption(
+                    commonProvider: commonProvider,
+                    context,
+                    icon: Icons.remove_circle,
+                    color: Colors.red,
+                    text: AppString.dnd,
+                    index: 3,
+                  ),
+                  _buildStatusOption(
+                    commonProvider: commonProvider,
+                    context,
+                    icon: Icons.circle_outlined,
+                    color: AppColor.borderColor,
+                    text: AppString.offline,
+                    index: 4,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
           },),
         ),
       ),
     );
   }
   Widget _buildStatusOption(
-      BuildContext context, {
-        required CommonProvider commonProvider,
-        required IconData icon,
-        required Color color,
-        required String text,
-        required int index,
-      }) {
+    BuildContext context, {
+    required CommonProvider commonProvider,
+    required IconData icon,
+    required Color color,
+    required String text,
+    required int index,
+  }) {
     return InkWell(
       onTap: () {
         Cf.instance.pop();
@@ -368,6 +386,172 @@ class _SettingScreenState extends State<SettingScreen> {
               fontSize: 16,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showChangePasswordBottomSheet(BuildContext context) {
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isNewPasswordVisible = true;
+    bool isConfirmPasswordVisible = true;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => SingleChildScrollView(
+          child: Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Consumer<ChangePasswordProvider>(
+              builder: (context, changePasswordProvider, child) {
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Bottom sheet indicator
+                        Center(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 12),
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[600],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+
+                        // Title
+                        Cw.instance.commonText(
+                          text: AppString.changePassword,
+                          color: Colors.black,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // New Password Field
+                        Cw.instance.commonText(
+                          text: "New Password",
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Cw.instance.commonTextFormField(
+                            controller: newPasswordController,
+                            hintText: "Enter new password",
+                            obscureText: isNewPasswordVisible,
+                            prefixIcon: Icon(Icons.lock_outline,
+                                color: AppColor.commonAppColor),
+                            suffixIcon: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  isNewPasswordVisible = !isNewPasswordVisible;
+                                });
+                              },
+                              child: Icon(
+                                isNewPasswordVisible
+                                    ? CupertinoIcons.eye_slash
+                                    : CupertinoIcons.eye,
+                                color: AppColor.commonAppColor,
+                              ),
+                            ),
+                            validator: (value) => Cf.instance.validatePassword(
+                              newPasswordController,
+                              value,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Confirm Password Field
+                        Cw.instance.commonText(
+                          text: "Confirm New Password",
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Cw.instance.commonTextFormField(
+                            controller: confirmPasswordController,
+                            hintText: "Confirm new password",
+                            obscureText: isConfirmPasswordVisible,
+                            prefixIcon: Icon(Icons.lock_outline,
+                                color: AppColor.commonAppColor),
+                            suffixIcon: InkWell(
+                              onTap: () {
+                                setState(() {
+                                  isConfirmPasswordVisible =
+                                      !isConfirmPasswordVisible;
+                                });
+                              },
+                              child: Icon(
+                                isConfirmPasswordVisible
+                                    ? CupertinoIcons.eye_slash
+                                    : CupertinoIcons.eye,
+                                color: AppColor.commonAppColor,
+                              ),
+                            ),
+                            validator: (value) =>
+                                Cf.instance.validateTwoControllerMatch(
+                              value,
+                              newPasswordController,
+                              "Passwords do not match",
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Submit Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: Cw.instance.commonElevatedButton(
+                            onPressed: () {
+                              if (formKey.currentState!.validate()) {
+                                changePasswordProvider.changePasswordCall(
+                                  newPassword:
+                                      newPasswordController.text.trim(),
+                                );
+                                Cf.instance.pop();
+                              }
+                            },
+                            buttonText: "Change Password",
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );

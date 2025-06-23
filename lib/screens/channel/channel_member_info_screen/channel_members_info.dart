@@ -32,7 +32,7 @@ class User {
   // Update factory constructor to match searchUserModel's data structure
   factory User.fromSearchResult(dynamic user) {
     return User(
-      id: user.sId,
+      id: user.userId,
       username: user.username,
       fullName: user.fullName,
       avatarUrl: ApiString.profileBaseUrl + (user.avatarUrl ?? ''),  // Add base URL
@@ -109,7 +109,7 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
                 builder: (context, provider, child) {
                   final isCurrentUserAdmin = adminMembers.any((member) =>
                   member.isAdmin == true &&
-                      member.sId == signInModel!.data?.user?.id);
+                      member.sId == signInModel!.data?.user?.sId);
                   if (isCurrentUserAdmin) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(
@@ -267,7 +267,7 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
             if (member.isAdmin == true) {
               // Admin options
               return [
-                if (member.sId != signInModel!.data?.user?.id) ...[
+                if (member.sId != signInModel!.data?.user?.sId) ...[
                   const PopupMenuItem(
                     value: 'make_member',
                     child: Text(
@@ -397,9 +397,10 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
     }
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
       if (mounted) {
-        context.read<ChannelListProvider>().searchUserByName(
-            search: _searchController.text
-        );
+        // context.read<ChannelListProvider>().searchUserByName(
+        //     search: _searchController.text
+        // );
+        context.read<ChannelListProvider>().browseAndSearchChannel(search: _searchController.text,combineList: false);
       }
     });
   }
@@ -509,7 +510,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  user.username ?? '',
+                                  user.fullName ?? '',
                                   style: const TextStyle(
                                     // color: Colors.white,
                                     fontSize: 14,
@@ -537,7 +538,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                                 ),
                               ],
                             ),
-                          )).toList(),
+                          )),
                           // Search TextField
                           Container(
                             constraints: const BoxConstraints(minWidth: 100),
@@ -585,7 +586,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                   return Container();
                 }
 
-                final users = provider.searchUserModel?.data?.users;
+                final users = provider.browseAndSearchChannelModel?.data?.users;
 
                 if (users == null || users.isEmpty) {
                   return const Center(
@@ -599,12 +600,12 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                 // Filter the users list
                 final filteredUsers = users.where((user) =>
                 // Exclude current user
-                user.sId != signInModel!.data?.user?.id &&
+                user.userId != signInModel!.data?.user?.sId &&
                     // Exclude already selected users
-                    !selectedUsers.any((selectedUser) => selectedUser.id == user.sId) &&
+                    !selectedUsers.any((selectedUser) => selectedUser.id == user.userId) &&
                     // Exclude existing channel members
                     !context.read<ChannelChatProvider>().channelMembersList
-                        .any((member) => member.sId == user.sId)
+                        .any((member) => member.sId == user.userId)
                 ).toList();
 
                 if (filteredUsers.isEmpty) {
@@ -622,7 +623,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                     return ListTile(
                       leading: Cw.instance.profileIconWithStatus(
                         userName: user.username.toString(),
-                        userID: user.sId ?? '',
+                        userID: user.userId ?? '',
                         otherUserProfile: user.avatarUrl,
                         status: '',
                       ),

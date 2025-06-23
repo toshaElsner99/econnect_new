@@ -1,5 +1,3 @@
-
-
 class ApiString{
 
 
@@ -21,19 +19,19 @@ class ApiString{
   static const allowGoogleSignIN = "user/alloawgoogleSSOLogin";
   static const updateStatus = "user/updateUserDetails"; ///New User update api end-point
   static const getUserById = "user/getUserDetails"; ///New Get UserDetails Api end-point
-  static const favoriteListGet = "favouriteLists/get";
+  /*Changed*/static const favoriteListGet = "favorite/getFavoriteChatList";
   static const String channelList="channelManage/getChannel";  ///New Get Channel List Api End-Point
-  static const directMessageChatList = "chatList/get";
+  /*Changed*/static const directMessageChatList = "chatList/getChatList";
   static const createChannel = "channelManage/addChannel"; ///New Add Channel Api End-point
-  static const browseChannel = "user/search-user-channel";
-  static const removeFromFavorite = "favouriteLists/removeFromFavourite";
-  static const removeFromChannelFromFavorite = "favouriteLists/channel/remove/";
+  /*Changed*/static const browseChannel = "search/searchUserChannel";
+  /*Changed*/static const removeFromFavorite = "favorite/removeFavoriteChat";
+  /*Changed*/static const removeFromChannelFromFavorite = "favorite/removeFavoriteChannel";
   static const muteUser = "user/mute-user";
   static const unMuteUser = "user/unmute-user";
   static const closeConversation = "chatList/close-conversation";
   static const messageUnread = "messages/message-unread/";
   static const messageSeen = "messages/message-seen/";
-  static const addTOFavorite = "favouriteLists/add";
+  /*Changed*/static const addTOFavorite = "favorite/addFavoriteChat";
   static const leaveChannel = "channels/leaveChannel/";
   static const userSuggestions = "user/user-suggestions";
   static const searchUser = "user/search-user";
@@ -45,9 +43,9 @@ class ApiString{
   static const getMessages = "messages/get-message";
   // static const readChannelMessage = "messages/channel/channel-message-seen/";
   // static const unReadChannelMessage = "channels/message-unread/";
-  static const addChannelTOFavorite = "favouriteLists/channel/add/";
-  static const unMuteChannel = "user/unmute-channel";
-  static const muteChannel = "user/mute-channel";
+  /*Changed*/static const addChannelTOFavorite = "/favorite/addFavoriteChannel";
+  /*Changed*/static const unMuteChannel = "muteManage/unmuteChannel";
+  /*Changed*/static const muteChannel = "muteManage/muteChannel";
   static const addUserToChatList = "chatList/add";
   static const sendMessage = "messages/send-message";
   static const sendChannelMessage = "messages/channel/send-message";
@@ -62,20 +60,22 @@ class ApiString{
   static String removeReact = "messages/message-reaction-remove";
 
   // Channel
-  static getChannelMembersList(String channelId) => "channels/getChannelMembers/$channelId";
-  static addMembersToChannel(String channelId) => "channels/addMember/$channelId";
-  static getChannelInfo(String channelId) => "channels/getChannel/$channelId";
+  /*Changed*/static getChannelMembersList(String channelId) => "channelManage/getChannelMembers/$channelId";
+  /*Changed*/static addMembersToChannel(String channelId) => "channelManage/addMember/$channelId";
+  /*Changed*/static getChannelInfo(String channelId) => "channelManage/getChannelById/$channelId";
   static readChannelMessage(String channelId) => "channelMessage/seenMessage/$channelId";
-  static unReadChannelMessage(String channelId) => "channels/message-unread/$channelId";
+  /*Changed*/static unReadChannelMessage(String channelId) => "channelManage/unreadMessage/$channelId";
   static const getChannelChat = "channelMessage/getMessages";
-  static toggleAdminAndMember(String channelId) => "channels/toggleAdmin/$channelId";
-  static removeMember(String channelId, String memberId) => "channels/removeMember/$channelId/$memberId";
-  static renameChannel(String channelId) => "channels/update/$channelId";
+  /*Changed*/static toggleAdminAndMember(String channelId) => "channelManage/toggleAdmin/$channelId";
+  /*Changed*/static removeMember(String channelId, String memberId) => "channelManage/removeMember/$channelId/$memberId";
+  /*Changed*/static renameChannel(String channelId) => "channelManage/editChannel/$channelId";
   static const getFilesListingInChannelChat = "messages/channel/getFilesListingForChannel";
   static const getChannelPinnedMessage = "messages/channel/get-pinned-message-for-channel";
+  // static deleteMessageFromChannel (String messageId) => "messages/delete/$messageId";
+  static const String addChannelTO = "channels/add";
 
-  ///New Delete Message Api End-point
-  static deleteMessageFromChannel (String messageId) => "chatMessageAction/deleteMessage/$messageId";
+  ///New Delete Message Api End-point`
+  /*Changed*/static String deleteMessageFromChannel  (String messageId) => "chatMessageAction/deleteMessage/$messageId";
   /// New Search Message Api End-Point
   static const searchMessages = "searchMessage/search";
   ///New Message Jump Api End-point
@@ -84,4 +84,5 @@ class ApiString{
   static const getUnreadThread = "unreadThread/getUnreadThread";
   ///New Get Thread list account api
   static const getUnreadThreadCounts = "unreadThread/getUnreadThreadCount";
+  /*Changed*/static const forgotPassword = "auth/forgtpassword";
 }

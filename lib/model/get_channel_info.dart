@@ -29,9 +29,11 @@ class Data {
   String? sId;
   String? name;
   OwnerId? ownerId;
+  String? companyId;
   String? description;
   bool? isPrivate;
   List<Members>? members;
+  int? totalMembers;
   bool? isDeleted;
   bool? isDefault;
   dynamic updatedBy;
@@ -47,9 +49,11 @@ class Data {
     this.sId,
     this.name,
     this.ownerId,
+    this.companyId,
     this.description,
     this.isPrivate,
     this.members,
+    this.totalMembers,
     this.isDeleted,
     this.isDefault,
     this.updatedBy,
@@ -66,7 +70,9 @@ class Data {
     sId = json['_id'];
     name = json['channelName'];
     ownerId = json['ownerId'] != null ? OwnerId.fromJson(json['ownerId']) : null;
+    companyId = json['companyId'];
     description = json['description'];
+    totalMembers = json['totalMembers'];
     isPrivate = json['isPrivate'];
     if (json['members'] != null) {
       members = (json['members'] as List).map((v) => Members.fromJson(v)).toList();
@@ -79,18 +85,20 @@ class Data {
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
-    isFavourite = json['isFavourite'];
+    isFavourite = json['isFavorite'];
     pinnedMessagesCount = json['pinnedMessagesCount'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
     data['_id'] = sId;
-    data['name'] = name;
+    data['channelName'] = name;
+    data['companyId'] = companyId;
     if (ownerId != null) {
       data['ownerId'] = ownerId!.toJson();
     }
     data['description'] = description;
+    data['totalMembers'] = totalMembers;
     data['isPrivate'] = isPrivate;
     if (members != null) {
       data['members'] = members!.map((v) => v.toJson()).toList();
@@ -103,7 +111,7 @@ class Data {
     data['createdAt'] = createdAt;
     data['updatedAt'] = updatedAt;
     data['__v'] = iV;
-    data['isFavourite'] = isFavourite;
+    data['isFavorite'] = isFavourite;
     data['pinnedMessagesCount'] = pinnedMessagesCount;
     return data;
   }
@@ -114,16 +122,15 @@ class OwnerId {
   String? username;
   String? email;
   String? fullName;
-  String? elsnerEmail;
+  // String? elsnerEmail;
 
-  OwnerId({this.sId, this.username, this.email, this.fullName, this.elsnerEmail});
+  OwnerId({this.sId, this.username, this.email, this.fullName});
 
   OwnerId.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     username = json['username'];
     email = json['email'];
     fullName = json['fullName'];
-    elsnerEmail = json['elsner_email'];
   }
 
   Map<String, dynamic> toJson() {
@@ -132,7 +139,6 @@ class OwnerId {
     data['username'] = username;
     data['email'] = email;
     data['fullName'] = fullName;
-    data['elsner_email'] = elsnerEmail;
     return data;
   }
 }
