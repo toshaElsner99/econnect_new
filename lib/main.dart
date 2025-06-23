@@ -28,7 +28,7 @@ import 'model/sign_in_model.dart';
 import 'notificationServices/pushNotificationService.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-  SignInModel? signInModel;
+   SignInModel? signInModel;
 /// Global App Lifecycle Observer
 class AppLifecycleObserver with WidgetsBindingObserver {
   static final AppLifecycleObserver _instance = AppLifecycleObserver._internal();
