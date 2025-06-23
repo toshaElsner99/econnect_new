@@ -102,7 +102,7 @@ class CommonProvider extends ChangeNotifier {
 
 
   Future<void> getUserByIDCall() async {
-    final response = await ApiService.instance.request(endPoint: "${ApiString.getUserById}//${/*userId ?? */signInModel!.data?.user?.id ?? ""}", method: Method.GET,);
+    final response = await ApiService.instance.request(endPoint: "${ApiString.getUserById}/${/*userId ?? */signInModel!.data?.user?.id ?? ""}", method: Method.POST,isRawPayload: false);
     if (Cf.instance.statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
       // getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);

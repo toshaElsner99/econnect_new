@@ -601,7 +601,10 @@ Future<void> renameChannel({
 }
 
 /// COMBINE ALL LISTS INTO ONE LIST FOR ALL TAB ///
+  bool isChattingLoading = false;
 void combineAllLists() {
+  isChattingLoading = true;
+  notifyListeners();
   combinedAllItems.clear();
   
   // Add favorite users
@@ -732,7 +735,8 @@ void combineAllLists() {
     }
     // print("Final order #$i: $name - ${item['timestamp']}");
   }
-  
+
+  isChattingLoading=false;
   notifyListeners();
 }
 

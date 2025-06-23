@@ -314,7 +314,9 @@ class Cw {
           ? Image.asset(
         AppImage.dndIcon, color: Colors.blue, height: size, width: size,)
           : Icon(Icons.remove_circle, size: size, color: AppColor.blueColor,);
-    } else if (status == AppString.dnd.toLowerCase()) {
+    }
+    //dnd => do_not_disturb
+    else if (status == "do_not_disturb") {
       return assetIcon ? Image.asset(
         AppImage.dndIcon, height: size, width: size,) : Icon(
         Icons.do_not_disturb_on, size: size, color: AppColor.redColor,);

@@ -17,8 +17,11 @@ import '../utils/common/prefrance_function.dart';
 
 class SocketIoProvider extends ChangeNotifier{
 
+  //Old Socket URl
+  //static const socketBaseUrl = 'wss://e-connect-socket.elsner.com';
 
-  static const socketBaseUrl = 'wss://e-connect-socket.elsner.com';
+  //New Socket URL
+  static const socketBaseUrl = 'wss://dev-econnect-sass-socket.elsnerdev.co/';
   late IO.Socket socket;
 
   String connection = "connection";

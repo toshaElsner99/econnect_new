@@ -820,6 +820,7 @@ class ChannelChatProvider extends ChangeNotifier{
     notifyListeners();
   }
 
+/*
 
 addChannelApiCall({required String channelName,required bool isPrivate,required String description})async{
     final requestBody = {
@@ -829,6 +830,7 @@ addChannelApiCall({required String channelName,required bool isPrivate,required 
     };
     final response = await ApiService.instance.request(endPoint: ApiString.addChannelTO, method: Method.POST,reqBody: requestBody);
 }
+*/
 
 
 // Reaction of message

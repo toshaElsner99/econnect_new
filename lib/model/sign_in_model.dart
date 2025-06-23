@@ -61,7 +61,7 @@ class Data {
 
   Data.fromJson(Map<String, dynamic> json) {
     user = json['user'] != null ? User.fromJson(json['user']) : null;
-    authToken = json['auth_token'];
+    authToken = json['authToken'];
   }
 
   Map<String, dynamic> toJson() {
@@ -69,7 +69,7 @@ class Data {
     if (user != null) {
       data['user'] = user!.toJson();
     }
-    data['auth_token'] = authToken;
+    data['authToken'] = authToken;
     return data;
   }
 }

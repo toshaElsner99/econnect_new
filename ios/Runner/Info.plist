@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -34,30 +36,30 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-    <string>This app requires camera access to take photos or videos for uploads and profile pictures.</string>
-    <key>NSPhotoLibraryUsageDescription</key>
-    <string>This app requires access to your photo library to upload and select images.</string>
-    <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>This app requires permission to save images to your gallery.</string>
-    <key>NSUserNotificationCenterUsageDescription</key>
-    <string>This app requires notification permissions to alert you about updates and messages.</string>
-    <key>NSMicrophoneUsageDescription</key>
-    <string>This app requires microphone access for audio chat and video recording.</string>
+	<string>This app requires camera access to take photos or videos for uploads and profile pictures.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to your photo library to upload and select images.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app requires permission to save images to your gallery.</string>
+	<key>NSUserNotificationCenterUsageDescription</key>
+	<string>This app requires notification permissions to alert you about updates and messages.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires microphone access for audio chat and video recording.</string>
 	<key>NSUserNotificationAlert</key>
 	<string>YES</string>
 	<key>GIDClientID</key>
-    <string>846703694175-ptv25v02pjmcg5vi3c7kufknbha4d5ec.apps.googleusercontent.com</string>
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>com.googleusercontent.apps.846703694175-ptv25v02pjmcg5vi3c7kufknbha4d5ec</string>
-            </array>
-        </dict>
-    </array>
+	<string>846703694175-ptv25v02pjmcg5vi3c7kufknbha4d5ec.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.846703694175-ptv25v02pjmcg5vi3c7kufknbha4d5ec</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSUserNotificationBadge</key>
 	<string>YES</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
@@ -71,9 +73,9 @@
 		<string>processing</string>
 	</array>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
-    <array>
-        <string>com.elsner.econnectApp.refresh</string>
-    </array>
+	<array>
+		<string>com.elsner.econnectApp.refresh</string>
+	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

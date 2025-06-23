@@ -23,72 +23,65 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
+
+
   @override
   Widget build(BuildContext context) {
-    return Consumer2<CommonProvider, ThemeProvider>(
-      builder: (context, commonProvider, themeProvider, child) {
-        return GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: Scaffold(
-            backgroundColor: AppPreferenceConstants.themeModeBoolValueGet
-                ? AppColor.darkAppBarColor
-                : AppColor.appBarColor,
-            body: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: _buildProfileHeader(),
+    return Consumer2<CommonProvider,ThemeProvider>(builder: (context, commonProvider,themeProvider, child) {
+      return GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Scaffold(
+          backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : AppColor.appBarColor,
+          body: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: _buildProfileHeader(),
+              ),
+
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    _buildSection(
+                      children: [
+                        _buildStatusTile(commonProvider),
+                        _buildCustomStatusTile(commonProvider),
+                      ],
+                    ),
+                    _buildSection(
+                      children: [
+                        _buildProfileTile(),
+                        _buildThemeModeTile(themeProvider),
+                      ],
+                    ),
+                    _buildSection(
+                      children: [
+                        _buildLogoutTile(),
+                      ],
+                    ),
+                    closeScreen()
+                  ],
                 ),
-                SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      _buildSection(
-                        children: [
-                          _buildStatusTile(commonProvider),
-                          _buildCustomStatusTile(commonProvider),
-                        ],
-                      ),
-                      _buildSection(
-                        children: [
-                          _buildProfileTile(),
-                          _buildThemeModeTile(themeProvider),
-                          _buildChangePasswordTile(),
-                        ],
-                      ),
-                      _buildSection(
-                        children: [
-                          _buildLogoutTile(),
-                        ],
-                      ),
-                      closeScreen()
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        );
-      },
-    );
+        ),
+      );
+    },);
   }
 
   Container closeScreen() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColor.borderColor.withOpacity(0.15),
-        // borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColor.redColor.withOpacity(0.4),
-        ),
-      ),
-      child: IconButton(
-          onPressed: () => Cf.instance.pop(),
-          icon: Icon(
-            Icons.close,
-            color: Colors.white,
-          )),
-    );
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColor.borderColor.withOpacity(0.15),
+                    // borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColor.redColor.withOpacity(0.4),
+                    ),
+                  ),
+                  child: IconButton(onPressed: () => Cf.instance.pop(), icon: Icon(Icons.close,color: Colors.white,)),
+                );
   }
 
   Widget _buildProfileHeader() {
@@ -110,9 +103,7 @@ class _SettingScreenState extends State<SettingScreen> {
           Cw.instance.commonImageHolder(radius: 50),
           const SizedBox(height: 16),
           Cw.instance.commonText(
-            text: signInModel!.data?.user?.fullName ??
-                signInModel!.data?.user?.username ??
-                "",
+            text: signInModel!.data?.user?.fullName ?? signInModel!.data?.user?.username ?? "",
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -153,47 +144,33 @@ class _SettingScreenState extends State<SettingScreen> {
         status: "${commonProvider.getUserModel?.data?.user!.status!}",
         assetIcon: false,
       ),
-      title: Cf.instance.capitalizeFirstLetter(
-          "${commonProvider.getUserModel?.data?.user!.status!}"),
+      title: Cf.instance.capitalizeFirstLetter("${commonProvider.getUserModel?.data?.user!.status!}"),
     );
   }
+
 
   Widget _buildCustomStatusTile(CommonProvider commonProvider) {
     return GestureDetector(
       onTap: () => showCustomStatusSheet(context),
       child: _buildTile(
-          leading: commonProvider.customStatusUrl.isNotEmpty
-              ? CachedNetworkImage(
-                  imageUrl: commonProvider.customStatusUrl,
-                  width: 24,
-                  height: 24,
-                )
-              : Image.asset(
-                  AppImage.setStatusIcon,
-                  width: 24,
-                  height: 24,
-                  color: Colors.white.withOpacity(0.8),
+          leading: commonProvider.customStatusUrl.isNotEmpty ? CachedNetworkImage(imageUrl: commonProvider.customStatusUrl,width: 24,height: 24,) : Image.asset(
+            AppImage.setStatusIcon,
+            width: 24,
+            height: 24,
+            color: Colors.white.withOpacity(0.8),
+          ),
+          title: commonProvider.customStatusTitle.isNotEmpty ? commonProvider.customStatusTitle : AppString.setACustomStatus,
+          trailing: commonProvider.customStatusTitle.isNotEmpty ? GestureDetector(
+            onTap: () => commonProvider.updateCustomStatusCall(status: "", emojiUrl: ""),
+            child: Container(
+                margin: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
                 ),
-          title: commonProvider.customStatusTitle.isNotEmpty
-              ? commonProvider.customStatusTitle
-              : AppString.setACustomStatus,
-          trailing: commonProvider.customStatusTitle.isNotEmpty
-              ? GestureDetector(
-                  onTap: () => commonProvider.updateCustomStatusCall(
-                      status: "", emojiUrl: ""),
-                  child: Container(
-                      margin: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.close,
-                        size: 22,
-                        color: Colors.red,
-                      )),
-                )
-              : SizedBox.shrink()),
+                child: Icon(Icons.close,size: 22,color: Colors.red,)),
+          ) : SizedBox.shrink()
+      ),
     );
   }
 
@@ -201,12 +178,7 @@ class _SettingScreenState extends State<SettingScreen> {
     return GestureDetector(
       onTap: () => Cw.instance.commonProfilePreview(context),
       child: _buildTile(
-        leading: Image.asset(
-          AppImage.person,
-          width: 22,
-          height: 22,
-          color: Colors.white.withOpacity(0.8),
-        ),
+        leading: Image.asset(AppImage.person,width: 22,height: 22,color:  Colors.white.withOpacity(0.8),),
         title: AppString.profile,
       ),
     );
@@ -253,7 +225,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Widget _buildLogoutTile() {
     return _buildTile(
-      onTap: () => Cw.instance.showLogoutDialog(context),
+      onTap: ()=> Cw.instance.showLogoutDialog(context),
       leading: Image.asset(
         AppImage.logOut,
         height: 24,
@@ -271,8 +243,7 @@ class _SettingScreenState extends State<SettingScreen> {
     required String title,
     Widget? trailing,
     Color? textColor,
-  }) {
-    return InkWell(
+  }) {return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -295,8 +266,7 @@ class _SettingScreenState extends State<SettingScreen> {
           ],
         ),
       ),
-    );
-  }
+    );}
 
   void _showStatusBottomSheet(BuildContext context) {
     showModalBottomSheet(
@@ -306,115 +276,102 @@ class _SettingScreenState extends State<SettingScreen> {
       useSafeArea: true,
       builder: (context) => SingleChildScrollView(
         child: Container(
-          padding:
-              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           decoration: BoxDecoration(
             // color: Color(0xFF1B1E23),
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
-          child: Consumer<CommonProvider>(
-            builder: (context, commonProvider, child) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Bottom sheet indicator
-                  Center(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 12),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[600],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+          child: Consumer<CommonProvider>(builder: (context, commonProvider, child) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Bottom sheet indicator
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[600],
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
+                ),
 
-                  // Status text
-                  Padding(
-                    padding: EdgeInsets.only(left: 16, bottom: 16),
-                    child: Cw.instance.commonText(
-                      text: AppString.status,
-                      color: Colors.black,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                // Status text
+                Padding(
+                  padding: EdgeInsets.only(left: 16, bottom: 16),
+                  child: Cw.instance.commonText(
+                    text: AppString.status,
+                    color: Colors.black,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
+                ),
 
-                  // Status options
-                  _buildStatusOption(
-                    commonProvider: commonProvider,
-                    context,
-                    icon: Icons.check_circle,
-                    color: Colors.green,
-                    text: AppString.online,
-                    index: 0,
-                  ),
-                  _buildStatusOption(
-                    commonProvider: commonProvider,
-                    context,
-                    icon: Icons.access_time_filled_outlined,
-                    color: Colors.orange,
-                    text: AppString.away,
-                    index: 1,
-                  ),
-                  _buildStatusOption(
-                    commonProvider: commonProvider,
-                    context,
-                    icon: Icons.remove_circle,
-                    color: Colors.blue,
-                    text: AppString.busy,
-                    index: 2,
-                  ),
-                  _buildStatusOption(
-                    commonProvider: commonProvider,
-                    context,
-                    icon: Icons.remove_circle,
-                    color: Colors.red,
-                    text: AppString.dnd,
-                    index: 3,
-                  ),
-                  _buildStatusOption(
-                    commonProvider: commonProvider,
-                    context,
-                    icon: Icons.circle_outlined,
-                    color: AppColor.borderColor,
-                    text: AppString.offline,
-                    index: 4,
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              );
-            },
-          ),
+                // Status options
+                _buildStatusOption(
+                  commonProvider: commonProvider,
+                  context,
+                  icon: Icons.check_circle,
+                  color: Colors.green,
+                  text: AppString.online,
+                  index: 0,
+                ),
+                _buildStatusOption(
+                  commonProvider: commonProvider,
+                  context,
+                  icon: Icons.access_time_filled_outlined,
+                  color: Colors.orange,
+                  text: AppString.away,
+                  index: 1,
+                ),
+                _buildStatusOption(
+                  commonProvider: commonProvider,
+                  context,
+                  icon: Icons.remove_circle,
+                  color: Colors.blue,
+                  text: AppString.busy,
+                  index: 2,
+                ),
+                _buildStatusOption(
+                  commonProvider: commonProvider,
+                  context,
+                  icon: Icons.remove_circle,
+                  color: Colors.red,
+                  text: AppString.dnd,
+                  index: 3,
+                ),
+                _buildStatusOption(
+                  commonProvider: commonProvider,
+                  context,
+                  icon: Icons.circle_outlined,
+                  color: AppColor.borderColor,
+                  text: AppString.offline,
+                  index: 4,
+                ),
+                const SizedBox(height: 16),
+              ],
+            );
+          },),
         ),
       ),
     );
   }
-
   Widget _buildStatusOption(
-    BuildContext context, {
-    required CommonProvider commonProvider,
-    required IconData icon,
-    required Color color,
-    required String text,
-    required int index,
-  }) {
+      BuildContext context, {
+        required CommonProvider commonProvider,
+        required IconData icon,
+        required Color color,
+        required String text,
+        required int index,
+      }) {
     return InkWell(
       onTap: () {
         Cf.instance.pop();
-        commonProvider.updateStatusCall(
-            status: index == 0
-                ? AppString.online.toLowerCase()
-                : index == 1
-                    ? AppString.away.toLowerCase()
-                    : index == 2
-                        ? AppString.busy.toLowerCase()
-                        : index == 3
-                            ? AppString.dnd.toLowerCase()
-                            : AppString.offline.toLowerCase());
+        commonProvider.updateStatusCall(status: index == 0 ? AppString.online.toLowerCase() : index == 1 ? AppString.away.toLowerCase() : index == 2 ? AppString.busy.toLowerCase() : index == 3 ? /*AppString.dnd.toLowerCase()*/'do_not_disturb' : AppString.offline.toLowerCase());
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
