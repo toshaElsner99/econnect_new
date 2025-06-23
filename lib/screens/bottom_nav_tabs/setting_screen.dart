@@ -109,7 +109,7 @@ class _SettingScreenState extends State<SettingScreen> {
           ),
           const SizedBox(height: 8),
           Cw.instance.commonText(
-            text: "@${signInModel!.data?.user?.username}",
+            text: (signInModel!.data?.user?.username ??"").isEmpty?"Not Available":"@${signInModel!.data?.user?.username}",
             color: Colors.white.withOpacity(0.7),
             fontSize: 14,
             fontWeight: FontWeight.w500,
@@ -136,14 +136,13 @@ class _SettingScreenState extends State<SettingScreen> {
   }
 
   Widget _buildStatusTile(CommonProvider commonProvider) {
-    print("STATUSS >>> ${commonProvider.getUserModel?.data?.user!.status!}");
     return _buildTile(
       onTap: () => _showStatusBottomSheet(context),
       leading: Cw.instance.getCommonStatusIcons(
-        status: "${commonProvider.getUserModel?.data?.user!.status!}",
+        status: commonProvider.getUserModel?.data?.user?.status??"",
         assetIcon: false,
       ),
-      title: Cf.instance.capitalizeFirstLetter("${commonProvider.getUserModel?.data?.user!.status!}"),
+      title: Cf.instance.capitalizeFirstLetter(commonProvider.getUserModel?.data?.user?.status??"Not Set"),
     );
   }
 
@@ -355,7 +354,7 @@ class _SettingScreenState extends State<SettingScreen> {
     return InkWell(
       onTap: () {
         Cf.instance.pop();
-        commonProvider.updateStatusCall(status: index == 0 ? AppString.online.toLowerCase() : index == 1 ? AppString.away.toLowerCase() : index == 2 ? AppString.busy.toLowerCase() : index == 3 ? AppString.dnd.toLowerCase() : AppString.offline.toLowerCase());
+        commonProvider.updateStatusCall(status: index == 0 ? AppString.online.toLowerCase() : index == 1 ? AppString.away.toLowerCase() : index == 2 ? AppString.busy.toLowerCase() : index == 3 ? /*AppString.dnd.toLowerCase()*/'do_not_disturb' : AppString.offline.toLowerCase());
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

@@ -22,8 +22,6 @@ class ApiService {
 
   final _networkStatusService = NetworkStatusService();
 
-
-
   Future<dynamic> request({
     required String endPoint,
     required Method method,
@@ -31,17 +29,19 @@ class ApiService {
     Map<String, dynamic>? queryParams,
     bool? needLoader = false,
     bool isKarmaUrl = false,
+    bool isRawPayload = true, // Default to raw JSON payload
   }) async {
-    Map<String,String> header = {};
-    if(signInModel != null){
-    if (signInModel!.data?.authToken != null ) {
-      SignInModel? loadedModel = await SignInModel.loadFromPrefs();
-      if (loadedModel != null) {
-        signInModel = loadedModel;
+    Map<String, String> header = {};
+    if (signInModel != null) {
+      if (signInModel!.data?.authToken != null) {
+        SignInModel? loadedModel = await SignInModel.loadFromPrefs();
+        if (loadedModel != null) {
+          signInModel = loadedModel;
+        }
       }
-    }
-    header = {
-      'Authorization': "Bearer ${signInModel!.data?.authToken}",};
+      header = {
+        'Authorization': "Bearer ${signInModel!.data?.authToken}",
+      };
     }
 
     if (!_networkStatusService.connectionValue) {
@@ -49,35 +49,54 @@ class ApiService {
       return;
     }
 
-    Uri uri = Uri.parse(isKarmaUrl ? ApiString.karmaBaseUrl + endPoint : ApiString.baseUrl + endPoint).replace(queryParameters: queryParams);
+    Uri uri = Uri.parse(isKarmaUrl
+            ? ApiString.karmaBaseUrl + endPoint
+            : ApiString.baseUrl + endPoint)
+        .replace(queryParameters: queryParams);
     http.Response? response;
     Map<String, String> requestHeaders = {};
-    if (!endPoint.contains(ApiString.login) || !endPoint.contains(ApiString.getAppVersion) || !endPoint.contains(ApiString.googleSignIn) || !endPoint.contains(ApiString.allowGoogleSignIN)) {
+
+    // Add authorization header for endpoints that require it
+    if (!endPoint.contains(ApiString.login) ||
+        !endPoint.contains(ApiString.getAppVersion) ||
+        !endPoint.contains(ApiString.googleSignIn) ||
+        !endPoint.contains(ApiString.allowGoogleSignIN)) {
       requestHeaders.addAll(header);
+    }
+
+    // Set content type based on payload type
+    if (isRawPayload && method != Method.GET && method != Method.MULTIPART) {
+      requestHeaders['Content-Type'] = 'application/json';
     }
 
     _logRequest('$uri', method, reqBody, requestHeaders);
 
     try {
-      if(needLoader == true) Cw.instance.startLoading();
-      if(endPoint == ApiString.closeConversation || endPoint == ApiString.sendMessage || endPoint == ApiString.sendChannelMessage || endPoint == ApiString.addDeviceToken || endPoint == ApiString.removeDeviceToken){
-        print("IN close");
-        requestHeaders.clear();
-        requestHeaders.addAll({
-          'Content-Type': 'application/json',
-          'Authorization': "Bearer ${signInModel!.data!.authToken}"
-        });
-        reqBody = jsonEncode(reqBody);
+      if (needLoader == true) Cw.instance.startLoading();
+
+      // Encode request body as JSON for raw payload
+      dynamic processedBody = reqBody;
+      if (isRawPayload &&
+          reqBody != null &&
+          method != Method.GET &&
+          method != Method.MULTIPART) {
+        processedBody = jsonEncode(reqBody);
       }
-      response = await _makeRequest(method, uri, reqBody, requestHeaders);
+
+      response = await _makeRequest(method, uri, processedBody, requestHeaders);
       _logResponse(response);
 
-      if(endPoint.contains(ApiString.login)){
+      if (endPoint.contains(ApiString.login)) {
         final responseData = json.decode(response.body);
         _handleToastMessage(responseData);
       }
 
-      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403 || response.statusCode == 404 ) {
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 400 ||
+          response.statusCode == 401 ||
+          response.statusCode == 403 ||
+          response.statusCode == 404) {
         return json.decode(response.body);
       } else if (response.statusCode == 500) {
         throw Exception("Server Error");
@@ -119,11 +138,11 @@ class ApiService {
       case Method.POST:
         return await http.post(uri, body: reqBody, headers: headers);
       case Method.DELETE:
-        return await http.delete(uri, body: jsonEncode(reqBody), headers: headers);
+        return await http.delete(uri, body: reqBody, headers: headers);
       case Method.PATCH:
-        return await http.patch(uri, body: jsonEncode(reqBody), headers: headers);
+        return await http.patch(uri, body: reqBody, headers: headers);
       case Method.PUT:
-        return await http.put(uri, body: jsonEncode(reqBody), headers: headers);
+        return await http.put(uri, body: reqBody, headers: headers);
       default:
         return await http.get(uri, headers: headers);
     }
@@ -147,4 +166,3 @@ class ApiService {
     }
   }
 }
-

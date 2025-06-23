@@ -276,7 +276,7 @@ class User {
   final bool? isAutomatic;
   final String? lastActiveTime;
   final String? elsnerEmail;
-  final Favourites? favourites;
+  final List<Favourites>? favourites;
   final List<PinMessage>? pinMessage;
   final bool? isMuted;
   final bool? isFavourite;
@@ -340,9 +340,10 @@ class User {
       isAutomatic: json['isAutomatic'] as bool?,
       lastActiveTime: json['last_active_time'] as String?,
       elsnerEmail: json['elsner_email'] as String?,
-      favourites: json['favourites'] != null
-          ? Favourites.fromJson(json['favourites'])
-          : null,
+
+   /*   favourites: (json['favourites'] as List<Favourites>?)
+          ?.map((e) => Favourites.fromJson(e as Map<String, dynamic>))
+          .toList(),*/
       pinMessage: (json['pinmessage'] as List<dynamic>?)
           ?.map((e) => PinMessage.fromJson(e))
           .toList(),

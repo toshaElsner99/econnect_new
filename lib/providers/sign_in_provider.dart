@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:e_connect/model/sign_in_model.dart';
@@ -48,6 +49,7 @@ class SignInProvider extends ChangeNotifier {
         reqBody: requestBody,
       );
       if (Cf.instance.statusCode200Check(response)) {
+        log("Response >>>>>>>>>>>>>: ${jsonEncode(response)}");
         fcmTokenSendInAPI();
         await setBool(AppPreferenceConstants.isLoginPrefs, true);
         signInModel = SignInModel.fromJson(response);

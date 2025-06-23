@@ -2,25 +2,28 @@
 
 class ApiString{
 
-  // static const String baseUrl= 'https://dev-econnect.elsnerdev.co/v1/'; /// THIS DEVELOPMENT URL
-  static const String baseUrl = 'https://e-connect.elsner.com/v1/'; /// THIS LIVE URL
+
+
+  static const String baseUrl= 'https://dev-econnect-sass.elsnerdev.co/v1/'; /// THIS NEW DEVELOPMENT URL
+
+  //static const String baseUrl = 'https://e-connect.elsner.com/v1/'; /// THIS LIVE URL
   static const String profileBaseUrl = 'https://e-connect.elsner.com/public/'; /// Profile Image
-  ///
+
   // static const String karmaBaseUrl = "https://dev-hrms.elsner.com/";
   static const String karmaBaseUrl = "https://hrms.elsner.com/";
 
   static const getAppVersion = "updateFCM_Mobile/get";
 
   /// End Point , Don't Change Belows End Point until didn't confirm through backend ///
-  static const login = "user/login";
+  static const login = "auth/userLogin"; ///New Login End point
   static const googleSignIn = "user/googleSSOLginApp";
   static const allowGoogleSignIN = "user/alloawgoogleSSOLogin";
-  static const updateStatus = "user/update";
-  static const getUserById = "user/getUserById";
+  static const updateStatus = "user/updateUserDetails"; ///New User update api end-point
+  static const getUserById = "user/getUserDetails"; ///New Get UserDetails Api end-point
   static const favoriteListGet = "favouriteLists/get";
-  static const channelList = "channels/get";
+  static const String channelList="channelManage/getChannel";  ///New Get Channel List Api End-Point
   static const directMessageChatList = "chatList/get";
-  static const createChannel = "channels/add";
+  static const createChannel = "channelManage/addChannel"; ///New Add Channel Api End-point
   static const browseChannel = "user/search-user-channel";
   static const removeFromFavorite = "favouriteLists/removeFromFavourite";
   static const removeFromChannelFromFavorite = "favouriteLists/channel/remove/";
@@ -69,14 +72,15 @@ class ApiString{
   static renameChannel(String channelId) => "channels/update/$channelId";
   static const getFilesListingInChannelChat = "messages/channel/getFilesListingForChannel";
   static const getChannelPinnedMessage = "messages/channel/get-pinned-message-for-channel";
-  static deleteMessageFromChannel (String messageId) => "messages/delete/$messageId";
-  static const String addChannelTO = "channels/add";
 
-  // Search Message
-  static const searchMessages = "messages/search";
-  static const messageJump = "messages/get-message-jump";
-
-  // Threads
-  static const getUnreadThread = "messages/getUnreadThread";
-  static const getUnreadThreadCounts = "messages/getUnreadThreadCounts";
+  ///New Delete Message Api End-point
+  static deleteMessageFromChannel (String messageId) => "chatMessageAction/deleteMessage/$messageId";
+  /// New Search Message Api End-Point
+  static const searchMessages = "searchMessage/search";
+  ///New Message Jump Api End-point
+  static const messageJump = "chatMessage/getMessageJump";
+  ///New Get Thread Unread List api
+  static const getUnreadThread = "unreadThread/getUnreadThread";
+  ///New Get Thread list account api
+  static const getUnreadThreadCounts = "unreadThread/getUnreadThreadCount";
 }

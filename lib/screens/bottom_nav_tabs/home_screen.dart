@@ -79,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       Provider.of<CommonProvider>(context,listen: false).getUserByIDCall();
       Provider.of<ChannelListProvider>(context,listen: false).refreshAllLists();
     }
-    getFCM();
+    //getFCM();
     Future.delayed(Duration(seconds: 5),(){
       setBadge();
     });
