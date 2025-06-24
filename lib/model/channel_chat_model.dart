@@ -187,7 +187,7 @@ class Message {
       isEdited: json['isEdited'],
       forwardFrom: json['forwardFrom'],
       readBy: json['readBy'] != null ? List<String>.from(json['readBy']) : null,
-      isSeen: json['isSeen'],
+      isSeen: json['is_seen'],
       isDeleted: json['isDeleted'],
       taggedUsers: json['taggedUsers'] != null ? List<dynamic>.from(json['taggedUsers']) : null,
       reactions: json['reactions'] != null
