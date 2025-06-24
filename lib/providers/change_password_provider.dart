@@ -20,7 +20,7 @@ class ChangePasswordProvider extends ChangeNotifier {
       };
 
       final response = await ApiService.instance.request(
-        endPoint: ApiString.updateUserDetails,
+        endPoint: ApiString.updateStatus,
         method: Method.POST,
         reqBody: requestBody,
         needLoader: true,
