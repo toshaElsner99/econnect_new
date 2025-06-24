@@ -64,7 +64,7 @@ class Data {
 
   Data.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
-    name = json['name'];
+    name = json['channelName'];
     ownerId = json['ownerId'] != null ? OwnerId.fromJson(json['ownerId']) : null;
     description = json['description'];
     isPrivate = json['isPrivate'];
