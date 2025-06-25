@@ -22,7 +22,7 @@ class SocketIoProvider extends ChangeNotifier{
   //static const socketBaseUrl = 'wss://e-connect-socket.elsner.com';
 
   //New Socket URL
-  static const socketBaseUrl = 'wss://dev-econnect-sass-socket.elsnerdev.co/';
+  static final socketBaseUrl = 'wss://dev-econnect-sass-socket.elsnerdev.co/?userId=${signInModel!.data?.user?.sId}&transport=websocket';
   late IO.Socket socket;
 
   String connection = "connection";
@@ -137,7 +137,7 @@ class SocketIoProvider extends ChangeNotifier{
 
     // Remove duplicate listeners and implement a single optimized handler
     listenForNotifications();
-    // registerUser();
+    registerUser();
   }
 
   joinRoomEvent(){
@@ -302,7 +302,8 @@ class SocketIoProvider extends ChangeNotifier{
         NotificationService.setBadgeCount();
       });
     });
-
+    // Calling Feature Listeners
+    listenSignalForCall();
     getCallFromAnyUser();
   }
 
@@ -535,12 +536,18 @@ class SocketIoProvider extends ChangeNotifier{
     print("User deregistered from socket");
   }
 
-  giveSignalForCall(String callToUserId, description){
+  sendSignalForCall(String callToUserId, RTCSessionDescription description){
     socket.off(signal);
     socket.emit(signal, {
       "toUserId" : callToUserId,
-      "data": {"description": description}
+      "data": {
+        'description': {
+          'sdp': description.sdp,
+          'type': description.type,
+        }
+      }
     });
+    print("sendSignalForCall");
   }
 
   listenSignalForCall(){
