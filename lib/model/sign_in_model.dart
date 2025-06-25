@@ -90,6 +90,7 @@ class User {
   String? createdAt;
   String? updatedAt;
   LastActiveChat? lastActiveChat;
+  String? chatList;
   String? position;
   String? avatarUrl;
   String? thumbnailAvatarUrl;
@@ -102,6 +103,7 @@ class User {
   String? companyLogoUrl;
   String? companyFavIcoUrl;
   String? deffaultchannels;
+  int? fileUploadSize;
 
   User(
       {this.sId,
@@ -119,6 +121,7 @@ class User {
         this.createdAt,
         this.updatedAt,
         this.lastActiveChat,
+        this.chatList,
         this.position,
         this.avatarUrl,
         this.thumbnailAvatarUrl,
@@ -130,7 +133,9 @@ class User {
         this.domain,
         this.companyLogoUrl,
         this.companyFavIcoUrl,
-        this.deffaultchannels});
+        this.deffaultchannels,
+        this.fileUploadSize
+      });
 
   User.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
@@ -150,6 +155,7 @@ class User {
     lastActiveChat = json['lastActiveChat'] != null
         ? new LastActiveChat.fromJson(json['lastActiveChat'])
         : null;
+    chatList = json["chatList"];
     position = json['position'];
     avatarUrl = json['avatarUrl'];
     thumbnailAvatarUrl = json['thumbnailAvatarUrl'];
@@ -162,6 +168,7 @@ class User {
     companyLogoUrl = json['companyLogoUrl'];
     companyFavIcoUrl = json['companyFavIcoUrl'];
     deffaultchannels = json['deffaultchannels'];
+     fileUploadSize = json['fileUploadSize'];
   }
 
   Map<String, dynamic> toJson() {
@@ -183,6 +190,7 @@ class User {
     if (this.lastActiveChat != null) {
       data['lastActiveChat'] = this.lastActiveChat!.toJson();
     }
+    data['chatList'] =this.chatList;
     data['position'] = this.position;
     data['avatarUrl'] = this.avatarUrl;
     data['thumbnailAvatarUrl'] = this.thumbnailAvatarUrl;
@@ -195,6 +203,7 @@ class User {
     data['companyLogoUrl'] = this.companyLogoUrl;
     data['companyFavIcoUrl'] = this.companyFavIcoUrl;
     data['deffaultchannels'] = this.deffaultchannels;
+    data['fileUploadSize'] = this.fileUploadSize;
     return data;
   }
 }

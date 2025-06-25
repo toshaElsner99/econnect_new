@@ -316,7 +316,7 @@ class User {
     return User(
       sId: json['_id'] as String?,
       fullName: json['fullName'] as String?,
-      username: json['username'] as String?,
+      username: json['userName'] as String?,
       email: json['email'] as String?,
       status: json['status'] as String?,
       isActive: json['isActive'] as bool?,

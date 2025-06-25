@@ -431,7 +431,7 @@ class ChatProvider extends  ChangeNotifier {
     }
   }
   Future<void> deleteMessage({required String messageId,required String receiverId})async{
-    final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE);
+    final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE,isRawPayload: false);
     if(Cf.instance.statusCode200Check(response)){
       // getMessagesList(oppositeUserId: receiverId);
       deleteMessageFromModelSingleChat(messageId);
@@ -439,7 +439,7 @@ class ChatProvider extends  ChangeNotifier {
     }
   }
   Future<void> deleteMessageForReply({required String messageId, required firsMessageId})async{
-    final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE);
+    final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE,isRawPayload: false);
     if(Cf.instance.statusCode200Check(response)){
       deleteMessageFromReplyModel(messageId);
       socketProvider.deleteMessagesSC(response: {"data": response['data']});
