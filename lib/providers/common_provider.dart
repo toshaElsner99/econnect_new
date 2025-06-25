@@ -125,8 +125,10 @@ class CommonProvider extends ChangeNotifier {
         getUserModelSecondUser = null;
         notifyListeners();
       }
+
       final response = await ApiService.instance.request(
-        endPoint: "${ApiString.getUserById}/$userId", method: Method.GET,);
+        endPoint: "${ApiString.getUserById}/$userId", method: Method.POST,isRawPayload: false);
+      print("this is the GetUserModelSecondUser!!! ${response}");
       if (Cf.instance.statusCode200Check(response)) {
         getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
         // print("getUserByIDCallForSecondUser>>>${getUserModelSecondUser?.data?.user?.pinnedMessageCount}");
@@ -142,7 +144,9 @@ class CommonProvider extends ChangeNotifier {
   Future<GetUserModel?> getUserByIDCall2({String? userId}) async {
     final response = await ApiService.instance.request(
         endPoint: "${ApiString.getUserById}/${userId ?? signInModel!.data?.user?.sId}",
-        method: Method.GET,);
+        method: Method.POST,
+    isRawPayload: false
+    );
     if (Cf.instance.statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
       print("getUserByIDCall2>>>${getUserModel?.data?.user?.pinnedMessageCount}");

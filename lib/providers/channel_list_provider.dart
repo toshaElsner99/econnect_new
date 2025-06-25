@@ -288,10 +288,10 @@ bool isLoading = false;
     required bool isForMute,
   }) async {
     final requestBodyForMuteUser = {
-       "userIdToMute": userIdToMute
+       "userId": userIdToMute
     };
     final requestBodyForUnMuteUser = {
-       "userIdToUnmute" : userIdToMute,
+       "userId" : userIdToMute,
     };
     final response = await ApiService.instance.request(
         endPoint: isForMute == false ? ApiString.muteUser : ApiString.unMuteUser,
@@ -358,7 +358,8 @@ Future<void> leaveChannel({
   // print("userId>>>${signInModel!.data?.user?.id}");
   final response = await ApiService.instance.request(
       endPoint: ApiString.leaveChannel + channelId,
-      method: Method.PUT
+      method: Method.POST,
+    isRawPayload: false
   );
 
   if (Cf.instance.statusCode200Check(response)) {
@@ -389,8 +390,10 @@ Future<void> leaveChannel({
     };
     final response = await ApiService.instance.request(
         endPoint: isCallForReadMessage ? "${ApiString.messageSeen}$oppositeUserId/chat" : ApiString.messageUnread + oppositeUserId,
-        method: Method.PUT,
-        reqBody: requestBody);
+        method: Method.POST,
+        reqBody: requestBody,
+      isRawPayload: false
+    );
     if (Cf.instance.statusCode200Check(response)) {
       await getFavoriteList();
       await getChannelList();
@@ -407,7 +410,9 @@ Future<void> leaveChannel({
     // print("isCallForReadMessage>>> $isCallForReadMessage");
     final response = await ApiService.instance.request(
         endPoint: isCallForReadMessage ? "${ApiString.readChannelMessage(oppositeUserId)}" : ApiString.unReadChannelMessage(oppositeUserId),
-        method: isCallForReadMessage ? Method.GET : Method.PUT,);
+        method: isCallForReadMessage ? Method.GET : Method.PUT,
+        isRawPayload: false
+    );
     if (Cf.instance.statusCode200Check(response)) {
       await getFavoriteList();
       await getChannelList();
