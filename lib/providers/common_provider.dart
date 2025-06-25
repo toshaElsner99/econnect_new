@@ -149,7 +149,7 @@ class CommonProvider extends ChangeNotifier {
   }
   Future<void> getUserApi({required String id})async{
     final requestBody = {"type": "message", "id": id};
-    final response = await ApiService.instance.request(endPoint: ApiString.getUser, method: Method.POST,reqBody: requestBody);
+    final response = await ApiService.instance.request(endPoint: ApiString.getUser, method: Method.GET,reqBody: requestBody);
     if (Cf.instance.statusCode200Check(response)) {
       getUserMentionModel = GetUserMentionModel.fromJson(response);
       getUserMentionModel?.saveToPrefs(id);

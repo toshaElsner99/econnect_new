@@ -540,7 +540,7 @@ class ChannelChatProvider extends ChangeNotifier{
 
   Future<void> getChannelPinnedMessage({required String channelID,bool needLoader = true})async{
     final requestBody = {"channelId": channelID};
-    final response = await ApiService.instance.request(endPoint: ApiString.getChannelPinnedMessage, method: Method.POST,reqBody: requestBody,needLoader: needLoader);
+    final response = await ApiService.instance.request(endPoint: ApiString.getChannelPinnedMessage(channelID), method: Method.GET,needLoader: needLoader);
     if(Cf.instance.statusCode200Check(response)){
       channelPinnedMessageModel = ChannelPinnedMessageModel.fromJson(response);
       notifyListeners();
@@ -688,7 +688,7 @@ class ChannelChatProvider extends ChangeNotifier{
 
   Future<void> getFileListingInChannelChat({required String channelId})async{
     final requestBody = {"channelId": channelId};
-    final response = await ApiService.instance.request(endPoint: ApiString.getFilesListingInChannelChat, method: Method.POST,reqBody: requestBody);
+    final response = await ApiService.instance.request(endPoint: ApiString.getFilesListingInChannelChat(channelId), method: Method.GET);
     if(Cf.instance.statusCode200Check(response)){
       filesListingInChannelChatModel = FilesListingInChannelChatModel.fromJson(response);
     }

@@ -65,7 +65,7 @@ class ApiService {
     }
 
     // Set content type based on payload type
-    if (isRawPayload && method != Method.GET && method != Method.MULTIPART) {
+    if (isRawPayload && method != Method.GET && method != Method.MULTIPART && method != Method.PUT) {
       requestHeaders['Content-Type'] = 'application/json';
     }
 
