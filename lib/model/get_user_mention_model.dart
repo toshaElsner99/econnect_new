@@ -84,9 +84,9 @@ class Data {
 
   Data.fromJson(Map<String, dynamic> json) {
     totalUsers = json['total_users'];
-    if (json['users'] != null) {
+    if (json['suggestions'] != null) {
       users = <Users>[];
-      json['users'].forEach((v) {
+      json['suggestions'].forEach((v) {
         users!.add(new Users.fromJson(v));
       });
     }
@@ -96,7 +96,7 @@ class Data {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['total_users'] = this.totalUsers;
     if (this.users != null) {
-      data['users'] = this.users!.map((v) => v.toJson()).toList();
+      data['suggestions'] = this.users!.map((v) => v.toJson()).toList();
     }
     return data;
   }
@@ -118,7 +118,7 @@ class Users {
 
   Users.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
-    username = json['username'];
+    username = json['userName'];
     avatarUrl = json['avatarUrl'];
     thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
     fullName = json['fullName'];
@@ -126,7 +126,7 @@ class Users {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['_id'] = this.sId;
+    data['userId'] = this.sId;
     data['username'] = this.username;
     data['avatarUrl'] = this.avatarUrl;
     data['thumbnail_avatarUrl'] = this.thumbnailAvatarUrl;
