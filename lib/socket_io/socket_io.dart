@@ -134,10 +134,10 @@ class SocketIoProvider extends ChangeNotifier{
       // print("connected>>>> ${socket.connected}");
       // print("Received event: $event >>> $data");
     });
-
+    registerUser();
     // Remove duplicate listeners and implement a single optimized handler
     listenForNotifications();
-    registerUser();
+
   }
 
   joinRoomEvent(){
@@ -536,23 +536,18 @@ class SocketIoProvider extends ChangeNotifier{
     print("User deregistered from socket");
   }
 
-  sendSignalForCall(String callToUserId, RTCSessionDescription description){
+  sendSignalForCall(String callToUserId, dynamic description){
     socket.off(signal);
     socket.emit(signal, {
       "toUserId" : callToUserId,
-      "data": {
-        'description': {
-          'sdp': description.sdp,
-          'type': description.type,
-        }
-      }
+      "data": description
     });
     print("sendSignalForCall");
   }
 
   listenSignalForCall(){
     socket.on(signal, (data) {
-      print("Signal received >>> $data");
+      print("Signal received >>> ");
 
     });
   }
@@ -574,7 +569,6 @@ class SocketIoProvider extends ChangeNotifier{
   }
 
   getCallFromAnyUser(){
-    socket.off(callIncoming);
     socket.on(callIncoming, (data) {
       print("Call Incoming >>> $data");
       // Handle incoming call data

@@ -1,6 +1,7 @@
 import 'package:e_connect/main.dart';
 import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/providers/sign_in_provider.dart';
+import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:flutter/cupertino.dart';
@@ -52,6 +53,8 @@ class CommonProvider extends ChangeNotifier {
 
   Future<void> logOut() async {
     var signInProvider = Provider.of<SignInProvider>(navigatorKey.currentState!.context,listen: false);
+    var socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
+    socketProvider.deRegisterUser();
     signInProvider.fcmTokenRemoveInAPI();
     await clearData();
     Cf.instance.pushAndRemoveUntil(screen: SignInScreen());

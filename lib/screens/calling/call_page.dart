@@ -74,9 +74,9 @@ class _CallPageState extends State<CallPage> {
 
     final offer = await _peerConnection!.createOffer();
     await _peerConnection!.setLocalDescription(offer);
-    final desc = _peerConnection!.getLocalDescription();
+    final desc = await _peerConnection!.getLocalDescription();
     debugPrint('📞 Created offer: ${offer.sdp}');
-    socketProvider.sendSignalForCall(widget.oppositeUserId, offer);
+    socketProvider.sendSignalForCall(widget.oppositeUserId, desc!.toMap());
     socketProvider.callAnyUser(widget.oppositeUserId, signInModel!.data!.user!.sId!, signInModel!.data!.user!.fullName ?? signInModel!.data!.user!.userName ?? '', offer);
     // socket.emit('callUser', {
     //   'toUserId': widget.oppositeUserId,

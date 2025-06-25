@@ -31,6 +31,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
     super.initState();
     clearBadge();
     _setupAnimations();
+    Provider.of<SignInProvider>(context, listen: false).clearField();
     /// Domain api call ///
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   Provider.of<SignInProvider>(context, listen: false).getDomainsCall();

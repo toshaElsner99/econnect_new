@@ -10,8 +10,11 @@ import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:path/path.dart';
+import 'package:provider/provider.dart';
 
 import '../main.dart';
+import '../socket_io/socket_io.dart';
 import '../utils/app_preference_constants.dart';
 import '../utils/common/common_function.dart';
 import '../utils/common/prefrance_function.dart';
@@ -57,7 +60,8 @@ class SignInProvider extends ChangeNotifier {
         await SignInModel.loadFromPrefs();
         signInModel = (await SignInModel.loadFromPrefs())!;
         Cf.instance.pushAndRemoveUntil(screen: const HomeScreen());
-        clearField();
+        // clearField();
+        Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
       }
     } else {
       Cw.instance.commonShowToast("Please enter your email and password", Colors.red);
@@ -128,7 +132,8 @@ class SignInProvider extends ChangeNotifier {
           await fcmTokenSendInAPI();
           
           Cf.instance.pushAndRemoveUntil(screen: const HomeScreen());
-          clearField();
+          // clearField();
+          Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
         } else {
           Cw.instance.commonShowToast("Invalid login response", Colors.white);
         }

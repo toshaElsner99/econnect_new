@@ -1101,8 +1101,8 @@ class Cw {
   }
 
   Widget commonLogoutDialog() {
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
       child: Dialog(
         insetPadding: EdgeInsets.symmetric(horizontal: 15),
         shape: RoundedRectangleBorder(
