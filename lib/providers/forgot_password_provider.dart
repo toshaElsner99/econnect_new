@@ -19,12 +19,21 @@ class ForgotPasswordProvider extends ChangeNotifier {
         needLoader: true,
       );
       if (Cf.instance.statusCode200Check(response)) {
-        Cw.instance.commonShowToast(
-          response['message'] ?? "Password reset link sent!",
-        );
+        if(response['status'] == 1) {
+          Cw.instance.commonShowToast(
+            response['message'] ?? "Password reset link sent!",
+            Colors.green,
+          );
+        }else{
+          Cw.instance.commonShowToast(
+            response['message'] ?? "Failed to send reset link",
+            Colors.red,
+          );
+        }
       } else {
         Cw.instance.commonShowToast(
           response['message'] ?? "Failed to send reset link",
+          Colors.red,
         );
       }
     } catch (e) {

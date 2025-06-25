@@ -5,6 +5,7 @@ import 'package:e_connect/main.dart';
 import 'package:e_connect/providers/channel_chat_provider.dart';
 import 'package:e_connect/providers/thread_provider.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
@@ -67,6 +68,25 @@ class SocketIoProvider extends ChangeNotifier{
   String channelMemberUpdateNotification= "channel_member_update_notification";
   String sendReplyMessage = "send_reply_message";
 
+  // Calling Feature
+  String register = "register";
+  String deregister = "deregister";
+  String signal = "signal";
+  String userBusy = "userBusy";
+  String callUser = "callUser";
+  String callIncoming = "callIncoming";
+  String acceptCall = "acceptCall";
+  String callAccepted = "callAccepted";
+  String peerMediaToggle = "peer-media-toggle";
+  String rejectCall = "rejectCall";
+  String callRejected = "callRejected";
+  String startScreenShare = "startScreenShare";
+  String stopScreenShare = "stopScreenShare";
+  String getMediaState = "getMediaState";
+  String hangUp = "hangUp";
+  String leaveCall = "leaveCall";
+  String inActive = "inActive";
+
 
   void connectSocket([bool? connectFrom = false]) async {
     final isLoggedIn = await getBool(AppPreferenceConstants.isLoginPrefs) ?? false;
@@ -117,6 +137,7 @@ class SocketIoProvider extends ChangeNotifier{
 
     // Remove duplicate listeners and implement a single optimized handler
     listenForNotifications();
+    // registerUser();
   }
 
   joinRoomEvent(){
@@ -281,6 +302,8 @@ class SocketIoProvider extends ChangeNotifier{
         NotificationService.setBadgeCount();
       });
     });
+
+    getCallFromAnyUser();
   }
 
   /// This is for single chat screen ///
@@ -494,5 +517,61 @@ class SocketIoProvider extends ChangeNotifier{
     socket.off(notificationForMessageReactionChannel);
     socket.off("reply_notification");
     socket.off("user_typing");
+  }
+
+/// Calling Feature Methods ///
+
+  registerUser(){
+    print("registerUser");
+    socket.emit(register, signInModel!.data?.user?.sId);
+    socket.on(register, (data) {
+      print("User registered to socket >>> $data");
+    });
+  }
+
+  deRegisterUser(){
+    socket.emit(deregister, signInModel!.data?.user?.sId);
+    socket.off(deregister);
+    print("User deregistered from socket");
+  }
+
+  giveSignalForCall(String callToUserId, description){
+    socket.off(signal);
+    socket.emit(signal, {
+      "toUserId" : callToUserId,
+      "data": {"description": description}
+    });
+  }
+
+  listenSignalForCall(){
+    socket.on(signal, (data) {
+      print("Signal received >>> $data");
+
+    });
+  }
+
+  callAnyUser(String callToUserId, String callFromUserId, String callFromUserName, RTCSessionDescription offer) {
+    socket.emit(callUser, {
+      "toUserId": callToUserId,
+      "fromUserId": callFromUserId,
+      "signal": {
+        "sdp": offer.sdp,
+        "type": offer.type,
+      },
+      "discussionId": callToUserId,
+      "name": callFromUserName,
+      "cameraOn":true,
+      "micOn":true
+    });
+    print("Done Emitting Call User >>> $callToUserId, $callFromUserId, $callFromUserName, ${offer.sdp}, ${offer.type}");
+  }
+
+  getCallFromAnyUser(){
+    socket.off(callIncoming);
+    socket.on(callIncoming, (data) {
+      print("Call Incoming >>> $data");
+      // Handle incoming call data
+      // You can show a dialog or navigate to a call screen here
+    });
   }
 }

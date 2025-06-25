@@ -8,14 +8,20 @@ enum CallDirection { incoming, outgoing }
 
 class CallScreen extends StatefulWidget {
   final String callerName;
+  final String callerId;
   final String imageUrl;
   final CallDirection callDirection;
+  final String? joinedUserName;
+  final String? joinedUserImageUrl;
 
   const CallScreen({
     super.key,
     required this.callerName,
+    required this.callerId,
     required this.imageUrl,
     required this.callDirection,
+    this.joinedUserName,
+    this.joinedUserImageUrl,
   });
 
   @override
@@ -91,32 +97,86 @@ class _CallScreenState extends State<CallScreen> {
           ],
         ),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Spacer(),
-            ClipOval(
-              child: CachedNetworkImage(
-                imageUrl: widget.imageUrl,
-                width: 150,
-                height: 150,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => const CircleAvatar(
-                  radius: 75,
-                  backgroundColor: Colors.grey,
+      body: Stack(
+        children: [
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: widget.imageUrl,
+                    width: 150,
+                    height: 150,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const CircleAvatar(
+                      radius: 75,
+                      backgroundColor: Colors.grey,
+                    ),
+                    errorWidget: (context, url, error) => const CircleAvatar(
+                      radius: 75,
+                      backgroundColor: Colors.grey,
+                      child: Icon(Icons.person, color: Colors.white, size: 75),
+                    ),
+                  ),
                 ),
-                errorWidget: (context, url, error) => const CircleAvatar(
-                  radius: 75,
-                  backgroundColor: Colors.grey,
-                  child: Icon(Icons.person, color: Colors.white, size: 75),
+                const Spacer(),
+                _buildBottomControls(),
+              ],
+            ),
+          ),
+          // Joined user avatar at bottom right
+          if (widget.joinedUserName != null && widget.joinedUserName!.isNotEmpty)
+            Positioned(
+              right: 20,
+              bottom: 40,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: AppColor.commonAppColor,
+                      backgroundImage: (widget.joinedUserImageUrl != null &&
+                              widget.joinedUserImageUrl!.isNotEmpty)
+                          ? NetworkImage(widget.joinedUserImageUrl!)
+                          : null,
+                      child: (widget.joinedUserImageUrl == null ||
+                              widget.joinedUserImageUrl!.isEmpty)
+                          ? Text(
+                              widget.joinedUserName![0].toUpperCase(),
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 22),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      widget.joinedUserName!,
+                      style: TextStyle(
+                        color: AppColor.commonAppColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const Spacer(),
-            _buildBottomControls(),
-          ],
-        ),
+        ],
       ),
     );
   }

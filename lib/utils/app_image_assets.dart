@@ -45,6 +45,7 @@ class AppImage {
   static const wafflePNG = "$path/waffle.png";
   static const googleSignIn = "$path/google.gif";
   static const changePassword = "$path/change_password.png";
+  static const call = "$path/telephone.png";
 
   /// networkUrls
   ///

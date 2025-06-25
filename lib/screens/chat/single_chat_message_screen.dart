@@ -38,6 +38,8 @@ import '../../providers/chat_provider.dart';
 import '../../providers/common_provider.dart';
 import '../../widgets/audio_widget.dart';
 import '../../widgets/chat_profile_header.dart';
+import '../calling/call_page.dart';
+import '../calling/call_screen.dart';
 import '../camera_preview/camera_preview.dart';
 import '../channel/channel_chat_screen.dart';
 import '../find_message_screen/find_message_screen.dart';
@@ -701,6 +703,40 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         ],
       ),
       actions: [
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CallPage(oppositeUserId: oppositeUserId),
+              ),
+            );
+
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(
+            //     builder: (context) => CallScreen(
+            //       callerName: userCache[oppositeUserId]?.data?.user?.fullName ?? userCache[oppositeUserId]?.data?.user?.username ?? "Unknown",
+            //       callerId: oppositeUserId,
+            //       imageUrl:
+            //       userCache[oppositeUserId]?.data?.user?.avatarUrl ??
+            //           userCache[oppositeUserId]?.data?.user?.thumbnailAvatarUrl ??
+            //           "",
+            //       callDirection: CallDirection.outgoing,
+            //       joinedUserName: userCache[oppositeUserId]?.data?.user?.fullName ?? userCache[oppositeUserId]?.data?.user?.username ?? "Unknown",
+            //       joinedUserImageUrl:  userCache[oppositeUserId]?.data?.user?.avatarUrl ??
+            //           userCache[oppositeUserId]?.data?.user?.thumbnailAvatarUrl ??
+            //           "",
+            //     ),
+            //   ),
+            // );
+          },
+          child: Image.asset(
+            AppImage.call,
+            width: 22,height: 22,color: AppColor.whiteColor,
+          ),
+        ),
+        SizedBox(width: 10,),
         IconButton(
           icon: const Icon(Icons.search, color: AppColor.whiteColor),
           onPressed: () {
