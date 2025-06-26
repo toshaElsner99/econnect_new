@@ -439,7 +439,7 @@ class ChatProvider extends  ChangeNotifier {
     }
   }
   Future<void> deleteMessageForReply({required String messageId, required firsMessageId})async{
-    final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE,isRawPayload: false);
+    final response = await ApiService.instance.request(endPoint: ApiString.deleteMessage + messageId, method: Method.DELETE);
     if(Cf.instance.statusCode200Check(response)){
       deleteMessageFromReplyModel(messageId);
       socketProvider.deleteMessagesSC(response: {"data": response['data']});

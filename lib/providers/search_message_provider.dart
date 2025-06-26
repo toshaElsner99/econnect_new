@@ -28,6 +28,7 @@ class SearchMessageProvider extends ChangeNotifier{
       }
     }catch (e){
       print("eroor>> $e");
+      rethrow;
     }finally {
       notifyListeners();
     }

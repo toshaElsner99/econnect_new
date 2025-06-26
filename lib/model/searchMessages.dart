@@ -9,7 +9,7 @@ List<SearchMessage> searchMessageFromJson(String str) => List<SearchMessage>.fro
 String searchMessageToJson(List<SearchMessage> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
 class SearchMessage {
-  DateTime id;
+  DateTime? id;
   List<Message> messages;
   int totalMessages;
   DateTime date;
@@ -22,14 +22,14 @@ class SearchMessage {
   });
 
   factory SearchMessage.fromJson(Map<String, dynamic> json) => SearchMessage(
-    id: DateTime.parse(json["_id"]),
+    id: DateTime.parse(json["_id"]) as DateTime?,
     messages: List<Message>.from(json["messages"].map((x) => Message.fromJson(x))),
     totalMessages: json["totalMessages"],
     date: DateTime.parse(json["date"]),
   );
 
   Map<String, dynamic> toJson() => {
-    "_id": "${id.year.toString().padLeft(4, '0')}-${id.month.toString().padLeft(2, '0')}-${id.day.toString().padLeft(2, '0')}",
+    "_id":id==null?"": "${id!.year.toString().padLeft(4, '0')}-${id!.month.toString().padLeft(2, '0')}-${id!.day.toString().padLeft(2, '0')}",
     "messages": List<dynamic>.from(messages.map((x) => x.toJson())),
     "totalMessages": totalMessages,
     "date": "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}",
