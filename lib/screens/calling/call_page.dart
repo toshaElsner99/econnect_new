@@ -76,8 +76,8 @@ class _CallPageState extends State<CallPage> {
     await _peerConnection!.setLocalDescription(offer);
     final desc = await _peerConnection!.getLocalDescription();
     debugPrint('📞 Created offer: ${offer.sdp}');
-    socketProvider.sendSignalForCall(widget.oppositeUserId, desc!.toMap());
-    socketProvider.callAnyUser(widget.oppositeUserId, signInModel!.data!.user!.sId!, signInModel!.data!.user!.fullName ?? signInModel!.data!.user!.userName ?? '', offer);
+    // socketProvider.sendSignalForCall(widget.oppositeUserId, desc!.toMap());
+    // socketProvider.callAnyUser(widget.oppositeUserId, signInModel!.data!.user!.sId!, signInModel!.data!.user!.fullName ?? signInModel!.data!.user!.userName ?? '', offer);
     // socket.emit('callUser', {
     //   'toUserId': widget.oppositeUserId,
     //   'fromUserId': signInModel!.data!.user!.sId,
@@ -94,10 +94,6 @@ class _CallPageState extends State<CallPage> {
     // Auto hang up after 60 seconds if not answered
     Future.delayed(const Duration(seconds: 60), () {
       if (_peerConnection?.connectionState != RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
-        // socket.emit('hangUp', {
-        //   'toUserId': widget.oppositeUserId,
-        //   'oppositeUserId': signInModel!.data!.user!.sId,
-        // });
         debugPrint('📞 Call timed out');
         if (mounted) Navigator.pop(context);
       }

@@ -705,31 +705,27 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       actions: [
         GestureDetector(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => CallPage(oppositeUserId: oppositeUserId),
-              ),
-            );
-
             // Navigator.push(
             //   context,
             //   MaterialPageRoute(
-            //     builder: (context) => CallScreen(
-            //       callerName: userCache[oppositeUserId]?.data?.user?.fullName ?? userCache[oppositeUserId]?.data?.user?.username ?? "Unknown",
-            //       callerId: oppositeUserId,
-            //       imageUrl:
-            //       userCache[oppositeUserId]?.data?.user?.avatarUrl ??
-            //           userCache[oppositeUserId]?.data?.user?.thumbnailAvatarUrl ??
-            //           "",
-            //       callDirection: CallDirection.outgoing,
-            //       joinedUserName: userCache[oppositeUserId]?.data?.user?.fullName ?? userCache[oppositeUserId]?.data?.user?.username ?? "Unknown",
-            //       joinedUserImageUrl:  userCache[oppositeUserId]?.data?.user?.avatarUrl ??
-            //           userCache[oppositeUserId]?.data?.user?.thumbnailAvatarUrl ??
-            //           "",
-            //     ),
+            //     builder: (_) => CallPage(oppositeUserId: oppositeUserId),
             //   ),
             // );
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => CallScreen(
+                  callerName: userCache[oppositeUserId]?.data?.user?.fullName ?? userCache[oppositeUserId]?.data?.user?.username ?? "Unknown",
+                  callerId: oppositeUserId,
+                  imageUrl:
+                  userCache[oppositeUserId]?.data?.user?.avatarUrl ??
+                      userCache[oppositeUserId]?.data?.user?.thumbnailAvatarUrl ??
+                      "",
+                  callDirection: CallDirection.outgoing
+                ),
+              ),
+            );
           },
           child: Image.asset(
             AppImage.call,

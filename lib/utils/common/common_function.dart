@@ -415,6 +415,22 @@ String formatDateTime2(String dateTimeStr) {
   }
 }
 
+static void showCommonDialog(BuildContext context, String title, String message, {String buttonText = "OK"}) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(buttonText),
+        ),
+      ],
+    ),
+  );
+}
+
 }
 class NoLeadingSpacesFormatter extends TextInputFormatter {
   @override
