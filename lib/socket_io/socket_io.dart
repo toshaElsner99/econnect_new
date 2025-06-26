@@ -43,8 +43,6 @@ class SocketIoProvider extends ChangeNotifier {
   String getUnreadNotification = "get_unread_notification";
   String readNotification = "read_notification";
   String sendMessage = "send_message";
-  String callInitial = "call_initiated";
-  String callReceived = "call_received";
   String pinMessage = "message_pinned";
   String userTyping = "user_typing";
   String messageReaction = "message_reaction";
@@ -133,10 +131,10 @@ class SocketIoProvider extends ChangeNotifier {
       print('Reconnected after $attempt attempts');
     });
 
-    socket.onAny((event, data) {
-      // print("connected>>>> ${socket.connected}");
-      // print("Received event: $event >>> $data");
-    });
+    // socket.onAny((event, data) {
+    //   // print("connected>>>> ${socket.connected}");
+    //   // print("Received event: $event >>> $data");
+    // });
     registerUser();
     // Remove duplicate listeners and implement a single optimized handler
     listenForNotifications();
@@ -309,6 +307,7 @@ class SocketIoProvider extends ChangeNotifier {
     // Calling Feature Listeners
     listenSignalForCall();
     getCallFromAnyUser();
+    listenHangUpCallEvent();
   }
 
   /// This is for single chat screen ///
@@ -336,7 +335,7 @@ class SocketIoProvider extends ChangeNotifier {
       }
     });
 
-    socket.on((deleteMessageForListen), (data) {
+    socket.on(deleteMessageForListen, (data) {
       print("deleteMessageForListen >>> $data");
       if (navigatorKey.currentState?.context != null) {
         Provider.of<ChatProvider>(navigatorKey.currentState!.context,
@@ -416,7 +415,7 @@ class SocketIoProvider extends ChangeNotifier {
       }
     });
 
-    socket.on((deleteMessageChannelListen), (data) {
+    socket.on(deleteMessageChannelListen, (data) {
       print("deleteMessageForListen >>> $data");
       if (navigatorKey.currentState?.context != null) {
         Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,
@@ -487,7 +486,7 @@ class SocketIoProvider extends ChangeNotifier {
 
   void listenDeleteMessageSocketForReply({required String msgId}) {
     socket.off(deleteMessageForListen);
-    socket.on((deleteMessageForListen), (data) {
+    socket.on(deleteMessageForListen, (data) {
       print("deleteMessageForListen >>> $data");
       Provider.of<ChatProvider>(navigatorKey.currentState!.context,
               listen: false)
@@ -499,7 +498,7 @@ class SocketIoProvider extends ChangeNotifier {
 
   void listenDeleteMessageSocketForChannelReply({required String msgId}) {
     socket.off(deleteMessageChannelListen);
-    socket.on((deleteMessageChannelListen), (data) {
+    socket.on(deleteMessageChannelListen, (data) {
       print("deleteMessageForListen >>> $data");
       Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,
               listen: false)
@@ -655,9 +654,31 @@ class SocketIoProvider extends ChangeNotifier {
     }
   }
 
-  listenSignalForCall() {
+  // Enhanced signal listening for both SDP and ICE candidates
+  void listenSignalForCall([Function(dynamic)? callback]) {
+    socket.off(signal);
     socket.on(signal, (data) {
-      print("Signal received >>> ");
+      print("Signal received >>> $data");
+
+      if (data != null && data['data'] != null) {
+        if (data['data']['type'] == 'offer' || data['data']['type'] == 'answer') {
+          // Handle SDP offer/answer
+          print("📞 Received SDP ${data['data']['type']}");
+
+          // Call the callback if provided
+          if (callback != null) {
+            callback(data);
+          }
+        } else if (data['data']['type'] == 'candidate') {
+          // Handle ICE candidate
+          print("🧊 Received ICE candidate");
+
+          // Call the callback if provided
+          if (callback != null) {
+            callback(data);
+          }
+        }
+      }
     });
   }
 
@@ -669,25 +690,28 @@ class SocketIoProvider extends ChangeNotifier {
       "signal": offer.toMap(),
       "discussionId": callToUserId,
       "name": callFromUserName,
-      "cameraOn": true,
+      "cameraOn": false,
       "micOn": true
     });
     print(
-        "Done Emitting Call User >>> $callToUserId, $callFromUserId, $callFromUserName, ${offer.sdp}, ${offer.type}");
+        "Done Emitting Audio Call User >>> $callToUserId, $callFromUserId, $callFromUserName, ${offer.sdp}, ${offer.type}");
   }
 
   getCallFromAnyUser() {
+    socket.off(callIncoming);
     socket.on(callIncoming, (data) {
       print("Call Incoming >>> $data");
       Navigator.push(
         navigatorKey.currentContext!,
         MaterialPageRoute(
           builder: (context) => CallScreen(
+            dataOfSocket: data,
               callerName: 'John Doe',
               callerId: data['fromUserId'],
               imageUrl:
                   'https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg',
-              callDirection: CallDirection.incoming),
+              callDirection: CallDirection.incoming,
+              ),
         ),
       );
       // Handle incoming call data
@@ -696,6 +720,7 @@ class SocketIoProvider extends ChangeNotifier {
   }
 
   bool? checkUserIsBusyOrNot(String callToUserId) {
+    socket.off(userBusy);
     socket.on(userBusy, (data) {
       print("Is userBusy >>> $data");
       print("callToUserId >>> $callToUserId");
@@ -720,15 +745,41 @@ class SocketIoProvider extends ChangeNotifier {
   }
 
   listenHangUpCallEvent(){
+    socket.off(hangUp);
     socket.on(hangUp, (data) {
       print("Hang up call event received >>> $data");
-      // Handle the hang up event, e.g., navigate back or show a message
       Navigator.of(navigatorKey.currentState!.context).pop();
-      Cf.showCommonDialog(
-        navigatorKey.currentState!.context,
-        "Call Ended",
-        "The call has been ended.",
-      );
+    });
+  }
+
+  acceptCallEvent({required String callToUserId,required dynamic signal}) {
+    socket.emit(acceptCall, {
+      'toUserId' : callToUserId,
+      'signal': signal, //answer - which is created by webrtc ~ createAnswer()
+      'discussion': callToUserId
+    });
+    print("acceptCallEvent Emitted");
+  }
+
+  listenAcceptedCallEvent([Function(dynamic)? callback]) {
+    socket.on(callAccepted, (data){
+      print("callAccepted Listened = $data");
+
+      // Handle the call accepted event - both users should now be connected
+      if (data != null && data['signal'] != null) {
+        // For the caller (outgoing call), set the remote description with the answer
+        // This completes the WebRTC handshake
+        print("Call accepted - setting remote description with answer");
+
+        // Call the callback if provided
+        if (callback != null) {
+          callback(data);
+        }
+
+        // You can access the current call screen context here if needed
+        // For now, we'll just log the successful connection
+        print("✅ Call connection established between both users");
+      }
     });
   }
 

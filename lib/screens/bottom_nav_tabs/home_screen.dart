@@ -184,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen>
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const CallScreen(
+                                builder: (context) => CallScreen(
                                   callerName: 'John Doe',
                                   callerId: '12345',
                                   imageUrl:

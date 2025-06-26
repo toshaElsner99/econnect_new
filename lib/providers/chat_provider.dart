@@ -157,14 +157,14 @@ class ChatProvider extends  ChangeNotifier {
 
   getTypingUpdate() {
     try {
-      socketProvider.socket.onAny((event, data) {
-        print("Event: $event >>> Data: $data");
+      socketProvider.socket.on(socketProvider.userTyping, (data){
+        print("Event: >>> Data: $data");
         if (data['type'] == "userTyping" && data['data'] is List) {
           var typingData = data['data'];
           if (typingData.isNotEmpty) {
             msgLength = data['msgLength'] ?? 0;
             isTypingFor = data['isReply'] ?? false;
-              parentId = data['parentId'] ?? "";
+            parentId = data['parentId'] ?? "";
             oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
             notifyListeners();
             // print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor && $parentId ");
@@ -180,6 +180,7 @@ class ChatProvider extends  ChangeNotifier {
           print("Received data is not of the expected structure.");
         }
       });
+
     } catch (e) {
       print("Error processing the socket event: $e");
     } finally {
