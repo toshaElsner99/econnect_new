@@ -773,7 +773,8 @@ class ChannelChatProvider extends ChangeNotifier{
     try {
       final response = await ApiService.instance.request(
           endPoint: ApiString.deleteMessageFromChannel(messageId),
-          method: Method.DELETE
+          method: Method.DELETE,
+          isRawPayload: false
       );
       if (Cf.instance.statusCode200Check(response)) {
         print("Message Deleted");

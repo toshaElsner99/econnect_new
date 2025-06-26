@@ -28,7 +28,7 @@ class ApiString{
   /*Changed*/static const removeFromChannelFromFavorite = "favorite/removeFavoriteChannel";
   /*Changed*/static const muteUser = "muteManage/muteUser"; // done
   /*Changed*/static const unMuteUser = "muteManage/unmuteUser"; // done
-  /*Changed*/static const closeConversation = "chatList/closeConversation";// done
+  /*Changed*/static const closeConversation = "chatList/closeConversation"; // done
   /*Changed*/static const messageUnread = "chatMessageAction/unreadMessage"; // done
   /*Changed*/static const messageSeen = "/chatMessageAction/seenMessage/";  //need to confirm
   /*Changed*/static const addTOFavorite = "favorite/addFavoriteChat";
@@ -48,10 +48,10 @@ class ApiString{
   // static const readChannelMessage = "messages/channel/channel-message-seen/";
   // static const unReadChannelMessage = "channels/message-unread/";
   /*Changed*/static const addChannelTOFavorite = "/favorite/addFavoriteChannel";
-  /*Changed*/static const unMuteChannel = "muteManage/unmuteChannel";
-  /*Changed*/static const muteChannel = "muteManage/muteChannel";
+  /*Changed*/static const unMuteChannel = "muteManage/unmuteChannel"; // done
+  /*Changed*/static const muteChannel = "muteManage/muteChannel"; // done
   /*Changed*/static const addUserToChatList = "chatList/addInChatList"; // just need to check
-  static const sendChannelMessage = "messages/channel/send-message";
+  /*Changed*/static const sendChannelMessage = "channelMessage/sendMessage"; // Done
   /*Changed*/static const deleteMessage = "chatMessageAction/deleteMessage/"; //done
   static const replayMsgSeen = "messages/reply-message-seen";
   static const getRepliesMsg = "messages/get-replies";
@@ -75,10 +75,10 @@ class ApiString{
   static const getFilesListingInChannelChat = "messages/channel/getFilesListingForChannel";
   static const getChannelPinnedMessage = "messages/channel/get-pinned-message-for-channel";
   // static deleteMessageFromChannel (String messageId) => "messages/delete/$messageId";
-  /*Changed*/static const String addChannelTO = "channelManage/addChannel";// need to check
+  /*Changed*/static const String addChannelTO = "channelManage/addChannel";// Done
 
   ///New Delete Message Api End-point`
-  /*Changed*/static String deleteMessageFromChannel  (String messageId) => "chatMessageAction/deleteMessage/$messageId";
+  /*Changed*/static String deleteMessageFromChannel  (String messageId) => "chatMessageAction/deleteMessage/$messageId"; // Done
   /// New Search Message Api End-Point
   /*Changed*/ static const searchMessages = "searchMessage/search"; // need to check
   ///New Message Jump Api End-point
