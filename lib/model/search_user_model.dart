@@ -123,8 +123,8 @@ class Users {
     lastActiveChat = json['lastActiveChat'] != null
         ? LastActiveChat.fromJson(json['lastActiveChat'])
         : null;
-    sId = json['_id'];
-    username = json['username'];
+    sId = json['userId'];
+    username = json['fullName'];
     email = json['email'];
     status = json['status'];
     isActive = json['isActive'];
@@ -143,7 +143,7 @@ class Users {
     chatList = json['chatList'];
     favouriteList = json['favouriteList'];
     avatarUrl = json['avatarUrl'];
-    thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
+    thumbnailAvatarUrl = json['thumbnailAvatarUrl'];
     isAutomatic = json['isAutomatic'];
     lastActiveTime = json['last_active_time'];
     fullName = json['fullName'];
@@ -158,8 +158,8 @@ class Users {
     if (lastActiveChat != null) {
       data['lastActiveChat'] = lastActiveChat!.toJson();
     }
-    data['_id'] = sId;
-    data['username'] = username;
+    data['userId'] = sId;
+    data['fullName'] = username;
     data['email'] = email;
     data['status'] = status;
     data['isActive'] = isActive;
@@ -180,7 +180,7 @@ class Users {
     data['chatList'] = chatList;
     data['favouriteList'] = favouriteList;
     data['avatarUrl'] = avatarUrl;
-    data['thumbnail_avatarUrl'] = thumbnailAvatarUrl;
+    data['thumbnailAvatarUrl'] = thumbnailAvatarUrl;
     data['isAutomatic'] = isAutomatic;
     data['last_active_time'] = lastActiveTime;
     data['fullName'] = fullName;
@@ -228,7 +228,7 @@ class CustomStatusHistory {
     customStatusEmoji = json['custom_status_emoji'];
     updatedBy = json['updatedBy'];
     updatedAt = json['updatedAt'];
-    sId = json['_id'];
+    sId = json['userId'];
   }
 
   Map<String, dynamic> toJson() {
@@ -237,7 +237,7 @@ class CustomStatusHistory {
       'custom_status_emoji': customStatusEmoji,
       'updatedBy': updatedBy,
       'updatedAt': updatedAt,
-      '_id': sId,
+      'userId': sId,
     };
   }
 }

@@ -30,10 +30,10 @@ class _OpenDirectMessageState extends State<OpenDirectMessage> {
 
     _searchController.addListener(() {
       if (_searchController.text.isNotEmpty && _searchController.text.length > 1) {
-        channelListProvider1.searchUserByName(search: _searchController.text);
+        channelListProvider1.searchUserByName(search: _searchController.text,userId: signInModel!.data?.user?.sId ?? "");
       } else if (_searchController.text.isEmpty) {
         channelListProvider1.searchUserModel = SearchUserModel();
-        channelListProvider1.searchUserByName(search: "");
+        channelListProvider1.searchUserByName(search: "",userId: signInModel!.data?.user?.sId ?? "");
       }
     });
   }

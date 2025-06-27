@@ -250,7 +250,7 @@ class _ReplyMessageScreenChannelState extends State<ReplyMessageScreenChannel> {
           appBar: AppBar(
             leading: IconButton(onPressed: () {
               Cf.instance.pop(popValue: true);
-              channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage,onlyReadInChat: false);
+             // channelChatProvider.getChannelChatApiCall(channelId: widget.channelId, pageNo: channelChatProvider.currentPage,onlyReadInChat: false);
             } , icon: Icon(CupertinoIcons.back,color: Colors.white,)),
             bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),
             titleSpacing: 0,

@@ -55,9 +55,9 @@ class Data {
         this.totalMessagesWithoutReplies});
 
   Data.fromJson(Map<String, dynamic> json) {
-    if (json['messageGroups'] != null) {
+    if (json['messages'] != null) {
       messageGroups = <MessageGroups>[];
-      json['messageGroups'].forEach((v) {
+      json['messages'].forEach((v) {
         messageGroups!.add(new MessageGroups.fromJson(v));
       });
     }
@@ -71,7 +71,7 @@ class Data {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     if (this.messageGroups != null) {
-      data['messageGroups'] =
+      data['messages'] =
           this.messageGroups!.map((v) => v.toJson()).toList();
     }
     data['currentPage'] = this.currentPage;
@@ -173,7 +173,7 @@ class Messages {
       content = json['content'];
       files = json['files']?.cast<String>();
       isReply = json['isReply'];
-      isLog = json['isLog'];
+      isLog = json['isLogMessage'];
       isForwarded = json['isForwarded'];
       isEdited = json['isEdited'];
 
@@ -184,12 +184,12 @@ class Messages {
         });
       }
 
-      isSeen = json['is_seen'];
+      isSeen = json['isSeen'];
       isDeleted = json['isDeleted'];
 
-      if (json['tagged_users'] != null) {
+      if (json['taggedUsers'] != null) {
         taggedUsers = <Null>[];
-        json['tagged_users'].forEach((v) {
+        json['taggedUsers'].forEach((v) {
           // taggedUsers!.add(new Null.fromJson(v));
         });
       }
@@ -243,7 +243,7 @@ class Messages {
     data['content'] = this.content;
     data['files'] = this.files;
     data['isReply'] = this.isReply;
-    data['isLog'] = this.isLog;
+    data['isLogMessage'] = this.isLog;
     data['isForwarded'] = this.isForwarded;
     data['isEdited'] = this.isEdited;
 
@@ -251,7 +251,7 @@ class Messages {
       // data['readBy'] = this.readBy!.map((v) => v.toJson()).toList();
     }
 
-    data['is_seen'] = this.isSeen;
+    data['isSeen'] = this.isSeen;
     data['isDeleted'] = this.isDeleted;
 
     if (this.taggedUsers != null) {
@@ -308,7 +308,7 @@ class Reaction {
     emoji = json['emoji'];
     userId = json['userId'];
     id = json['_id'];
-    username = json['username'];
+    username = json['userName'];
   }
 
   Map<String, dynamic> toJson() {
@@ -316,7 +316,7 @@ class Reaction {
     data['emoji'] = emoji;
     data['userId'] = userId;
     data['_id'] = id;
-    data['username'] = username;
+    data['userName'] = username;
     return data;
   }
 }
@@ -378,7 +378,7 @@ class Replies {
     }
     replyTo = json['replyTo'];
     isReply = json['isReply'];
-    isLog = json['isLog'];
+    isLog = json['isLogMessage'];
     isForwarded = json['isForwarded'];
     isEdited = json['isEdited'];
     // forwardFrom = json['forwardFrom'];
@@ -388,11 +388,11 @@ class Replies {
         // readBy!.add(new Null.fromJson(v));
       });
     }
-    isSeen = json['is_seen'];
+    isSeen = json['isSeen'];
     isDeleted = json['isDeleted'];
-    if (json['tagged_users'] != null) {
+    if (json['taggedUsers'] != null) {
       taggedUsers = <Null>[];
-      json['tagged_users'].forEach((v) {
+      json['taggedUsers'].forEach((v) {
         // taggedUsers!.add(new Null.fromJson(v));
       });
     }
@@ -421,14 +421,14 @@ class Replies {
     }
     data['replyTo'] = this.replyTo;
     data['isReply'] = this.isReply;
-    data['isLog'] = this.isLog;
+    data['isLogMessage'] = this.isLog;
     data['isForwarded'] = this.isForwarded;
     data['isEdited'] = this.isEdited;
     // data['forwardFrom'] = this.forwardFrom;
     if (this.readBy != null) {
       // data['readBy'] = this.readBy!.map((v) => v.toJson()).toList();
     }
-    data['is_seen'] = this.isSeen;
+    data['isSeen'] = this.isSeen;
     data['isDeleted'] = this.isDeleted;
     if (this.taggedUsers != null) {
       // data['tagged_users'] = this.taggedUsers!.map((v) => v.toJson()).toList();
@@ -481,17 +481,17 @@ class SenderInfo {
   SenderInfo.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     fullName = json['fullName'];
-    username = json['username'];
+    username = json['userName'];
     email = json['email'];
     status = json['status'];
     isActive = json['isActive'];
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     avatarUrl = json['avatarUrl'];
-    thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
-    lastActiveTime = json['last_active_time'];
+    thumbnailAvatarUrl = json['thumbnailAvatarUrl'];
+    lastActiveTime = json['lastActiveTime'];
     elsnerEmail = json['elsner_email'];
   }
 
@@ -499,17 +499,17 @@ class SenderInfo {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['_id'] = this.sId;
     data['fullName'] = this.fullName;
-    data['username'] = this.username;
+    data['userName'] = this.username;
     data['email'] = this.email;
     data['status'] = this.status;
     data['isActive'] = this.isActive;
-    data['custom_status'] = this.customStatus;
-    data['custom_status_emoji'] = this.customStatusEmoji;
+    data['customStatus'] = this.customStatus;
+    data['customStatusEmoji'] = this.customStatusEmoji;
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
     data['avatarUrl'] = this.avatarUrl;
-    data['thumbnail_avatarUrl'] = this.thumbnailAvatarUrl;
-    data['last_active_time'] = this.lastActiveTime;
+    data['thumbnailAvatarUrl'] = this.thumbnailAvatarUrl;
+    data['lastActiveTime'] = this.lastActiveTime;
     data['elsner_email'] = this.elsnerEmail;
     return data;
   }
@@ -574,14 +574,14 @@ class Forward {
       files: List<String>.from(json['files']),
       replyTo: json['replyTo'],
       isReply: json['isReply'],
-      isLog: json['isLog'],
+      isLog: json['isLogMessage'],
       isForwarded: json['isForwarded'],
       isEdited: json['isEdited'],
       forwardFrom: json['forwardFrom'],
       readBy: List<String>.from(json['readBy']),
-      isSeen: json['is_seen'],
+      isSeen: json['isSeen'],
       isDeleted: json['isDeleted'],
-      taggedUsers: List<String>.from(json['tagged_users']),
+      taggedUsers: List<String>.from(json['taggedUsers']),
       // reactions: json['reactions'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
@@ -601,14 +601,14 @@ class Forward {
       'files': files,
       'replyTo': replyTo,
       'isReply': isReply,
-      'isLog': isLog,
+      'isLogMessage': isLog,
       'isForwarded': isForwarded,
       'isEdited': isEdited,
       'forwardFrom': forwardFrom,
       'readBy': readBy,
-      'is_seen': isSeen,
+      'isSeen': isSeen,
       'isDeleted': isDeleted,
-      'tagged_users': taggedUsers,
+      'taggedUsers': taggedUsers,
       // 'reactions': reactions,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -672,34 +672,34 @@ class SenderOfForward {
 
   SenderOfForward.fromJson(Map<String, dynamic> json) {
     id = json['_id'];
-    username = json['username'];
+    username = json['userName'];
     email = json['email'];
     status = json['status'];
     isActive = json['isActive'];
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     avatarUrl = json['avatarUrl'];
-    thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
-    lastActiveTime = json['last_active_time'];
+    thumbnailAvatarUrl = json['thumbnailAvatarUrl'];
+    lastActiveTime = json['lastActiveTime'];
     elsnerEmail = json['elsner_email'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['_id'] = this.id;
-    data['username'] = this.username;
+    data['userName'] = this.username;
     data['email'] = this.email;
     data['status'] = this.status;
     data['isActive'] = this.isActive;
-    data['custom_status'] = this.customStatus;
-    data['custom_status_emoji'] = this.customStatusEmoji;
+    data['customStatus'] = this.customStatus;
+    data['customStatusEmoji'] = this.customStatusEmoji;
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
     data['avatarUrl'] = this.avatarUrl;
-    data['thumbnail_avatarUrl'] = this.thumbnailAvatarUrl;
-    data['last_active_time'] = this.lastActiveTime;
+    data['thumbnailAvatarUrl'] = this.thumbnailAvatarUrl;
+    data['lastActiveTime'] = this.lastActiveTime;
     data['elsner_email'] = this.elsnerEmail;
     return data;
   }
@@ -739,17 +739,17 @@ class RepliesSenderInfo {
   factory RepliesSenderInfo.fromJson(Map<String, dynamic> json) {
     return RepliesSenderInfo(
       id: json['_id'] as String,
-      username: json['username'] as String,
+      username: json['userName'] as String,
       email: json['email'] as String,
       status: json['status'] as String,
       isActive: json['isActive'] as bool,
-      customStatus: json['custom_status'] as String? ?? '',
-      customStatusEmoji: json['custom_status_emoji'] as String? ?? '',
+      customStatus: json['customStatus'] as String? ?? '',
+      customStatusEmoji: json['customStatusEmoji'] as String? ?? '',
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       avatarUrl: json['avatarUrl'] as String,
-      thumbnailAvatarUrl: json['thumbnail_avatarUrl'] as String,
-      lastActiveTime: DateTime.parse(json['last_active_time'] as String),
+      thumbnailAvatarUrl: json['thumbnailAvatarUrl'] as String,
+      lastActiveTime: DateTime.parse(json['lastActiveTime'] as String),
       elsnerEmail: json['elsner_email'] as String,
     );
   }
@@ -757,17 +757,17 @@ class RepliesSenderInfo {
   Map<String, dynamic> toJson() {
     return {
       '_id': id,
-      'username': username,
+      'userName': username,
       'email': email,
       'status': status,
       'isActive': isActive,
-      'custom_status': customStatus,
-      'custom_status_emoji': customStatusEmoji,
+      'customStatus': customStatus,
+      'customStatusEmoji': customStatusEmoji,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'avatarUrl': avatarUrl,
-      'thumbnail_avatarUrl': thumbnailAvatarUrl,
-      'last_active_time': lastActiveTime.toIso8601String(),
+      'thumbnailAvatarUrl': thumbnailAvatarUrl,
+      'lastActiveTime': lastActiveTime.toIso8601String(),
       'elsner_email': elsnerEmail,
     };
   }

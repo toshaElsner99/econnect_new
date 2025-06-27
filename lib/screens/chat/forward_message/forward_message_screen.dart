@@ -152,7 +152,9 @@ class _ForwardMessageScreenState extends State<ForwardMessageScreen> {
                           itemBuilder: (context, index) {
                             final list = channelListProvider.combinedList[index];
                             String displayName = "";
-                            
+                            print("list = ${list}");
+                            print("list = ${list['type']}");
+                            print("list = ${list['userId']}");
                             if (list['type'] == "user") {
                               // Remove underscores from username for display
                               displayName = (list['username'] ?? list['fullName'] ?? "Unknown User").toString().replaceAll("_", " ");

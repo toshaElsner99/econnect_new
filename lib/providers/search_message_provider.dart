@@ -17,12 +17,20 @@ class SearchMessageProvider extends ChangeNotifier{
     };
     print("Request $requestBody");
     try{
-      final response = await ApiService.instance.request(endPoint: ApiString.searchMessages, method: Method.POST, reqBody: requestBody,needLoader: true);
+      final response = await ApiService.instance.request(
+          endPoint: ApiString.searchMessages,
+          method: Method.POST,
+          reqBody: requestBody,
+          needLoader: true);
       if (Cf.instance.statusCode200Check(response)) {
         print("Response>> $response");
 
         messageGroups.clear();
         messageGroups.addAll((response['data'] as List).map((message) {
+          print("before Parsed SearchMessage: $message");
+
+          final searchMessage = SearchMessage.fromJson(message);
+          print("Parsed SearchMessage: ${searchMessage.toJson()}");
           return SearchMessage.fromJson(message);
         }).toList());
       }
