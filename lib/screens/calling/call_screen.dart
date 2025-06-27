@@ -43,6 +43,7 @@ class _CallScreenState extends State<CallScreen> {
 
   Timer? _callTimeoutTimer;
   AudioPlayer? _ringPlayer;
+  AudioPlayer? _inRingPlayer;
 
   void startRinging() async {
     print("Come here to start ringing");
@@ -55,6 +56,19 @@ class _CallScreenState extends State<CallScreen> {
     await _ringPlayer?.stop();
     _ringPlayer?.dispose();
     _ringPlayer = null;
+  }
+
+  void startIncomingRinging() async {
+    print("Come here to start Incoming ringing");
+    _inRingPlayer = AudioPlayer();
+    await _inRingPlayer!.setReleaseMode(ReleaseMode.loop); // Loop the ringtone
+    await _inRingPlayer!.play(AssetSource(AppSound.incomingRing));
+  }
+
+  void stopIncomingRinging() async {
+    await _inRingPlayer?.stop();
+    _inRingPlayer?.dispose();
+    _inRingPlayer = null;
   }
 
   final _localRenderer = RTCVideoRenderer();
@@ -108,6 +122,7 @@ class _CallScreenState extends State<CallScreen> {
               targetId: widget.callerId,whoHangUpCallId: signInModel!.data!.user!.sId!);
           socketProvider.leaveCallEvent(callToUserId: widget.callerId,callFromUserId:  signInModel!.data!.user!.sId!);
           stopRinging();
+          stopIncomingRinging();
           if (mounted) {
             // Show timeout message similar to React JS
             ScaffoldMessenger.of(context).showSnackBar(
@@ -121,6 +136,8 @@ class _CallScreenState extends State<CallScreen> {
           }
         }
       });
+    }else{
+      startIncomingRinging();
     }
 
     // Listen for call accepted event for both incoming and outgoing calls
@@ -144,7 +161,7 @@ class _CallScreenState extends State<CallScreen> {
           Navigator.pop(context);
         }
       });
-      
+
       // Listen for call rejected events
       socketProvider.listenCallRejectedEvent(() {
         debugPrint('❌ Call was rejected');
@@ -247,7 +264,7 @@ class _CallScreenState extends State<CallScreen> {
         _remoteStream = event.streams[0];
         _remoteRenderer.srcObject = _remoteStream;
         debugPrint('✅ Set remote stream with ${_remoteStream?.getTracks().length} tracks');
-        
+
         // Handle audio tracks specifically
         final audioTracks = _remoteStream?.getAudioTracks();
         if (audioTracks != null && audioTracks.isNotEmpty) {
@@ -257,19 +274,19 @@ class _CallScreenState extends State<CallScreen> {
             track.enabled = true;
             debugPrint('🎵 Remote audio track enabled: ${track.enabled}, muted: ${track.muted}');
           }
-          
+
           // Force speakerphone on when we receive remote audio
           _setSpeaker(true);
         } else {
           debugPrint('❌ No remote audio tracks found');
         }
-        
+
         // Handle video tracks
         final videoTracks = _remoteStream?.getVideoTracks();
         if (videoTracks != null && videoTracks.isNotEmpty) {
           debugPrint('📹 Remote video track found: ${videoTracks.first.enabled}');
         }
-        
+
         // Check audio status after setting remote stream
         _checkAudioStatus();
       } else {
@@ -308,14 +325,14 @@ class _CallScreenState extends State<CallScreen> {
           _setSpeaker(true);
           // Ensure audio is properly initialized for the call
           _initializeAudioForCall();
-          
+
           // Ensure remote audio is enabled after a short delay
           Future.delayed(const Duration(milliseconds: 1000), () {
             _ensureRemoteAudioEnabled();
             _checkAudioStatus();
             _checkAudioState();
           });
-          
+
           // Show connection success message
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -388,7 +405,7 @@ class _CallScreenState extends State<CallScreen> {
 
           // Ensure audio is properly initialized
           _initializeAudioForCall();
-          
+
           // Update UI to show in-call state (similar to React JS)
           debugPrint('✅ Call accepted - both users now in call');
         }
@@ -472,7 +489,7 @@ class _CallScreenState extends State<CallScreen> {
 
               // Ensure audio is properly initialized
               _initializeAudioForCall();
-              
+
               // Update UI to show in-call state (similar to React JS)
               debugPrint('✅ Call accepted - both users now in call');
             }
@@ -781,7 +798,7 @@ class _CallScreenState extends State<CallScreen> {
                 );
 
                 _startTimer();
-                
+
                 // Update UI to show in-call state (similar to React JS)
                 debugPrint('✅ Call accepted - both users now in call');
               } catch (e) {
@@ -918,6 +935,9 @@ class _CallScreenState extends State<CallScreen> {
                   );
                   Navigator.pop(context);
                 }
+                stopRinging();
+                stopIncomingRinging();
+                // Navigator.of(context).pop();
               },
             ),
           ],
@@ -967,10 +987,10 @@ class _CallScreenState extends State<CallScreen> {
   void _initializeAudioForCall() {
     try {
       debugPrint('🎵 Initializing audio for call...');
-      
+
       // Force speakerphone on by default for calls
       _setSpeaker(true);
-      
+
       // Enable all local audio tracks
       if (_localStream != null) {
         final localAudioTracks = _localStream!.getAudioTracks();
@@ -985,7 +1005,7 @@ class _CallScreenState extends State<CallScreen> {
       } else {
         debugPrint('❌ Local stream is null');
       }
-      
+
       // Enable all remote audio tracks and ensure they're not muted
       if (_remoteStream != null) {
         final remoteAudioTracks = _remoteStream!.getAudioTracks();
@@ -1000,10 +1020,10 @@ class _CallScreenState extends State<CallScreen> {
       } else {
         debugPrint('❌ Remote stream is null');
       }
-      
+
       // Set audio session for calls
       _configureAudioSession();
-      
+
       debugPrint('🎵 Audio initialization complete');
     } catch (e) {
       debugPrint('❌ Error initializing audio: $e');
@@ -1014,10 +1034,10 @@ class _CallScreenState extends State<CallScreen> {
     try {
       // Configure audio session for voice calls
       await Helper.setSpeakerphoneOn(true);
-      
+
       // Additional audio configuration for better call quality
       debugPrint('🔊 Audio session configured for calls');
-      
+
       // Check audio state after configuration
       _checkAudioState();
     } catch (e) {
@@ -1028,36 +1048,36 @@ class _CallScreenState extends State<CallScreen> {
   void _checkAudioState() {
     try {
       debugPrint('🔍 Checking detailed audio state...');
-      
+
       // Check if remote stream has audio
       if (_remoteStream != null) {
         final audioTracks = _remoteStream!.getAudioTracks();
         debugPrint('🎵 Remote audio tracks count: ${audioTracks.length}');
-        
+
         for (int i = 0; i < audioTracks.length; i++) {
           final track = audioTracks[i];
           debugPrint('🎵 Remote audio track $i: enabled=${track.enabled}, muted=${track.muted}');
         }
       }
-      
+
       // Check if local stream has audio
       if (_localStream != null) {
         final audioTracks = _localStream!.getAudioTracks();
         debugPrint('🎤 Local audio tracks count: ${audioTracks.length}');
-        
+
         for (int i = 0; i < audioTracks.length; i++) {
           final track = audioTracks[i];
           debugPrint('🎤 Local audio track $i: enabled=${track.enabled}, muted=${track.muted}');
         }
       }
-      
+
       // Check peer connection state
       if (_peerConnection != null) {
         debugPrint('🔗 Peer connection state: ${_peerConnection!.connectionState}');
         debugPrint('🔗 Signaling state: ${_peerConnection!.signalingState}');
         debugPrint('🔗 ICE connection state: ${_peerConnection!.iceConnectionState}');
       }
-      
+
     } catch (e) {
       debugPrint('❌ Error checking audio state: $e');
     }
@@ -1167,10 +1187,10 @@ class _CallScreenState extends State<CallScreen> {
   void _forceAudioReinitialization() async {
     try {
       debugPrint('🔄 Force reinitializing audio...');
-      
+
       // Force speakerphone on again
       await _setSpeaker(true);
-      
+
       // Re-enable all remote audio tracks
       if (_remoteStream != null) {
         final audioTracks = _remoteStream!.getAudioTracks();
@@ -1179,7 +1199,7 @@ class _CallScreenState extends State<CallScreen> {
           debugPrint('🎵 Re-enabled remote audio track');
         }
       }
-      
+
       // Re-enable all local audio tracks
       if (_localStream != null) {
         final audioTracks = _localStream!.getAudioTracks();
@@ -1188,10 +1208,10 @@ class _CallScreenState extends State<CallScreen> {
           debugPrint('🎤 Re-enabled local audio track');
         }
       }
-      
+
       // Check audio state after reinitialization
       _checkAudioState();
-      
+
       debugPrint('✅ Audio reinitialization complete');
     } catch (e) {
       debugPrint('❌ Error reinitializing audio: $e');
@@ -1201,21 +1221,21 @@ class _CallScreenState extends State<CallScreen> {
   void _testAudioOutput() async {
     try {
       debugPrint('🔊 Testing audio output...');
-      
+
       // Create a simple audio test
       final testPlayer = AudioPlayer();
       await testPlayer.setReleaseMode(ReleaseMode.stop);
-      
+
       // Play a short beep sound to test audio output
       await testPlayer.play(AssetSource(AppSound.ring));
-      
+
       // Stop after 1 second
       Future.delayed(const Duration(seconds: 1), () {
         testPlayer.stop();
         testPlayer.dispose();
         debugPrint('🔊 Audio test completed');
       });
-      
+
     } catch (e) {
       debugPrint('❌ Error testing audio output: $e');
     }
