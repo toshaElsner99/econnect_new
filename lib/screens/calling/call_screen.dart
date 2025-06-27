@@ -40,6 +40,7 @@ class _CallScreenState extends State<CallScreen> {
 
   Timer? _timer;
   int _duration = 0;
+  late StreamSubscription _subscription;
 
   Timer? _callTimeoutTimer;
   AudioPlayer? _ringPlayer;
@@ -94,7 +95,7 @@ class _CallScreenState extends State<CallScreen> {
       _createPeerConnection().then((_) {
         debugPrint('📞 Peer connection initialized successfully for incoming call');
         // Set up signal listener after peer connection is ready
-        socketProvider.listenSignalForCallCandidate(_handleSdpSignal);
+
         // If we have signal data from the incoming call, set it as remote description
         if (widget.dataOfSocket != null && widget.dataOfSocket['signal'] != null) {
           debugPrint('📞 Setting initial remote description for incoming call');
@@ -107,7 +108,7 @@ class _CallScreenState extends State<CallScreen> {
 
     // Call _startCall for both incoming and outgoing calls
     if (widget.callDirection == CallDirection.outgoing) {
-      socketProvider.listenSignalForCallCandidate(_handleSdpSignal);
+
       _startCall();
       // Listen Incoming Call Event
       socketProvider.listenAcceptedCallEvent(_handleCallAccepted);
@@ -172,13 +173,19 @@ class _CallScreenState extends State<CallScreen> {
       });
     }
 
-    // Listen for SDP signals and ICE candidates
+    socketProvider.addListener(_onSocketUpdate);
 
 
     // Set up call accepted callback
     _setupCallAcceptedCallback();
   }
+  void _onSocketUpdate() {
+    final data = socketProvider.latestMessage;
 
+    print("Received message in ChatScreen: $data");
+    _handleSdpSignal(data);
+    // You can update your UI here or call setState
+  }
   Future<void> _initRenderers() async {
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();
@@ -433,10 +440,10 @@ class _CallScreenState extends State<CallScreen> {
     }
 
     try {
-      if (data != null && data['data'] != null) {
+      if (data != null && data != null) {
         // Handle SDP description (offer/answer)
-        if (data['data']['description'] != null) {
-          final description = data['data']['description'];
+        if (data['description'] != null) {
+          final description = data['description'];
           final type = description['type'];
           final currentState = _peerConnection!.signalingState;
 
@@ -496,12 +503,12 @@ class _CallScreenState extends State<CallScreen> {
           }
         }
         // Handle ICE candidate
-        else if (data['data']['candidate'] != null) {
+        else if (data['candidate'] != null) {
           debugPrint('🧊 Received ICE candidate from peer');
           final candidate = RTCIceCandidate(
-            data['data']['candidate'],
-            data['data']['sdpMid'],
-            data['data']['sdpMLineIndex'],
+            data['candidate'],
+            data['sdpMid'],
+            data['sdpMLineIndex'],
           );
           await _peerConnection!.addCandidate(candidate);
           debugPrint('🧊 Added ICE candidate to peer connection');
@@ -709,9 +716,9 @@ class _CallScreenState extends State<CallScreen> {
                 socketProvider.hangUpCallEvent(targetId:widget.callerId,whoHangUpCallId: signInModel!.data!.user!.sId!);
                 socketProvider.leaveCallEvent(callToUserId: widget.callerId,callFromUserId:  signInModel!.data!.user!.sId!);
                 stopRinging();
-                if (mounted) {
-                  Navigator.pop(context);
-                }
+                // if (mounted) {
+                //   Navigator.pop(context);
+                // }
               }),
           _buildPillButton(
             icon: Icons.call,
@@ -933,7 +940,7 @@ class _CallScreenState extends State<CallScreen> {
                       duration: const Duration(seconds: 2),
                     ),
                   );
-                  Navigator.pop(context);
+                  // Navigator.pop(context);
                 }
                 stopRinging();
                 stopIncomingRinging();

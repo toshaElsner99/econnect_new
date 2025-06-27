@@ -88,6 +88,10 @@ class SocketIoProvider extends ChangeNotifier {
   String leaveCall = "leaveCall";
   String inActive = "inActive";
 
+  dynamic _latestMessage;
+
+  dynamic get latestMessage => _latestMessage;
+
   void connectSocket([bool? connectFrom = false]) async {
     final isLoggedIn =
         await getBool(AppPreferenceConstants.isLoginPrefs) ?? false;
@@ -305,7 +309,7 @@ class SocketIoProvider extends ChangeNotifier {
       });
     });
     // Calling Feature Listeners
-    listenSignalForCall();
+    listenSignalForCallCandidate();
     getCallFromAnyUser();
     listenHangUpCallEvent();
   }
@@ -658,41 +662,20 @@ class SocketIoProvider extends ChangeNotifier {
     }
   }
 
-  listenSignalForCall(){
-    socket.on(signal, (data) {
-      print("Signal received >>> ");
-
-    });
-  }
+  // listenSignalForCall(){
+  //   socket.on(signal, (data) {
+  //     print("Signal received >>> $data");
+  //
+  //   });
+  // }
 
   // Enhanced signal listening for both SDP and ICE candidates
   void listenSignalForCallCandidate([Function(dynamic)? callback]) {
     print("listenSignalForCallCandidate");
     socket.off(signal);
     socket.on(signal, (data) {
-      print("listenSignalForCallCandidate Signal received >>> $data");
-    if(data != null ){
-      callback!(data);
-    }
-      // if (data != null && data['data'] != null) {
-      //   if (data['data']['type'] == 'offer' || data['data']['type'] == 'answer') {
-      //     // Handle SDP offer/answer
-      //     print("📞 Received SDP ${data['data']['type']}");
-      //
-      //     // Call the callback if provided
-      //     if (callback != null) {
-      //       callback(data);
-      //     }
-      //   } else if (data['data']['type'] == 'candidate') {
-      //     // Handle ICE candidate
-      //     print("🧊 Received ICE candidate");
-      //
-      //     // Call the callback if provided
-      //     if (callback != null) {
-      //       callback(data);
-      //     }
-      //   }
-      // }
+   _latestMessage = data;
+   notifyListeners();
     });
   }
 
