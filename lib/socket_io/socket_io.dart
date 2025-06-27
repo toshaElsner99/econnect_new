@@ -627,9 +627,13 @@ class SocketIoProvider extends ChangeNotifier {
     // If the user is available for call
     if (!isBusy) {
       print("User is available for call");
-      socket.off(signal);
       // Emit the signal event to the server with the SDP description
-      socket.emit(signal, {"toUserId": callToUserId, "data": description});
+      socket.emit(signal, {
+        "toUserId": callToUserId, 
+        "data": {
+          "description": description
+        }
+      });
       print("sendSignalForCall");
 
       // Start the call by emitting the callUser event
@@ -654,31 +658,41 @@ class SocketIoProvider extends ChangeNotifier {
     }
   }
 
+  listenSignalForCall(){
+    socket.on(signal, (data) {
+      print("Signal received >>> ");
+
+    });
+  }
+
   // Enhanced signal listening for both SDP and ICE candidates
-  void listenSignalForCall([Function(dynamic)? callback]) {
+  void listenSignalForCallCandidate([Function(dynamic)? callback]) {
+    print("listenSignalForCallCandidate");
     socket.off(signal);
     socket.on(signal, (data) {
-      print("Signal received >>> $data");
-
-      if (data != null && data['data'] != null) {
-        if (data['data']['type'] == 'offer' || data['data']['type'] == 'answer') {
-          // Handle SDP offer/answer
-          print("📞 Received SDP ${data['data']['type']}");
-
-          // Call the callback if provided
-          if (callback != null) {
-            callback(data);
-          }
-        } else if (data['data']['type'] == 'candidate') {
-          // Handle ICE candidate
-          print("🧊 Received ICE candidate");
-
-          // Call the callback if provided
-          if (callback != null) {
-            callback(data);
-          }
-        }
-      }
+      print("listenSignalForCallCandidate Signal received >>> $data");
+    if(data != null ){
+      callback!(data);
+    }
+      // if (data != null && data['data'] != null) {
+      //   if (data['data']['type'] == 'offer' || data['data']['type'] == 'answer') {
+      //     // Handle SDP offer/answer
+      //     print("📞 Received SDP ${data['data']['type']}");
+      //
+      //     // Call the callback if provided
+      //     if (callback != null) {
+      //       callback(data);
+      //     }
+      //   } else if (data['data']['type'] == 'candidate') {
+      //     // Handle ICE candidate
+      //     print("🧊 Received ICE candidate");
+      //
+      //     // Call the callback if provided
+      //     if (callback != null) {
+      //       callback(data);
+      //     }
+      //   }
+      // }
     });
   }
 
@@ -752,6 +766,28 @@ class SocketIoProvider extends ChangeNotifier {
     });
   }
 
+  listenUserBusyEvent([Function(String)? callback]) {
+    socket.off(userBusy);
+    socket.on(userBusy, (data) {
+      print("User busy event received >>> $data");
+      if (data != null && data['toUserId'] != null) {
+        // Call the callback if provided
+        if (callback != null) {
+          callback(data['toUserId']);
+        }
+        // Show user busy message
+        ScaffoldMessenger.of(navigatorKey.currentState!.context).showSnackBar(
+          SnackBar(
+            content: Text('User is currently busy in another call.'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        Navigator.of(navigatorKey.currentState!.context).pop();
+      }
+    });
+  }
+
   acceptCallEvent({required String callToUserId,required dynamic signal}) {
     socket.emit(acceptCall, {
       'toUserId' : callToUserId,
@@ -761,7 +797,52 @@ class SocketIoProvider extends ChangeNotifier {
     print("acceptCallEvent Emitted");
   }
 
+  sendIceCandidate({required String callToUserId, required dynamic candidate}) {
+    socket.emit(signal, {
+      'toUserId': callToUserId,
+      'data': {
+        'candidate': candidate.candidate,
+        'sdpMid': candidate.sdpMid,
+        'sdpMLineIndex': candidate.sdpMLineIndex,
+      }
+    });
+    print("🧊 ICE candidate emitted: ${candidate.candidate}");
+  }
+
+  sendAnswerSignal({required String callToUserId, required dynamic description}) {
+    socket.emit(signal, {
+      'toUserId': callToUserId,
+      'data': {
+        'description': description,
+      }
+    });
+    print("📞 Answer signal emitted: ${description['type']}");
+  }
+
+  sendPeerMediaToggle({required String callToUserId, required bool micOn, required bool cameraOn}) {
+    socket.emit(peerMediaToggle, {
+      'toUserId': callToUserId,
+      'micOn': micOn,
+      'cameraOn': cameraOn,
+    });
+    print("🎤 Peer media toggle emitted: micOn=$micOn, cameraOn=$cameraOn");
+  }
+
+  listenPeerMediaToggle([Function(bool, bool)? callback]) {
+    socket.off(peerMediaToggle);
+    socket.on(peerMediaToggle, (data) {
+      print("Peer media toggle received >>> $data");
+      if (data != null && data['micOn'] != null && data['cameraOn'] != null) {
+        // Call the callback if provided
+        if (callback != null) {
+          callback(data['micOn'], data['cameraOn']);
+        }
+      }
+    });
+  }
+
   listenAcceptedCallEvent([Function(dynamic)? callback]) {
+    socket.off(callAccepted);
     socket.on(callAccepted, (data){
       print("callAccepted Listened = $data");
 
@@ -783,5 +864,29 @@ class SocketIoProvider extends ChangeNotifier {
     });
   }
 
+  rejectCallEvent({required String callToUserId}) {
+    socket.emit(rejectCall, {"toUserId": callToUserId});
+    print("rejectCallEvent Emitted");
+  }
+
+  listenCallRejectedEvent([Function()? callback]) {
+    socket.off(callRejected);
+    socket.on(callRejected, (data) {
+      print("Call rejected event received >>> $data");
+      // Call the callback if provided
+      if (callback != null) {
+        callback();
+      }
+      // Show call rejected message
+      ScaffoldMessenger.of(navigatorKey.currentState!.context).showSnackBar(
+        SnackBar(
+          content: Text('Call rejected'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      Navigator.of(navigatorKey.currentState!.context).pop();
+    });
+  }
 
 }
