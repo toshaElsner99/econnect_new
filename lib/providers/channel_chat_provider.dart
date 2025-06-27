@@ -133,7 +133,7 @@ class ChannelChatProvider extends ChangeNotifier{
 
 
   unPinOnlyFromPinnedMessages({required String channelID,required String messageId,}) async {
-    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, false), method: Method.PUT);
+    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, false), method: Method.PUT,isRawPayload: false);
     if(Cf.instance.statusCode200Check(response)){
       getChannelChatApiCall(channelId: channelID, pageNo: 1,onlyReadInChat: true);
       getChannelPinnedMessage(channelID: channelID,needLoader: false);
@@ -142,7 +142,7 @@ class ChannelChatProvider extends ChangeNotifier{
   }
 
   Future<void> pinUnPinMessage({required String channelID,required String messageId,required bool pinned,bool isCalledForReply = false})async{
-    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
+    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT,isRawPayload: false);
     if(Cf.instance.statusCode200Check(response)){
       print("pinUnPinMessage = Success");
       socketProvider.pinUnPinMessageEventChannelChat(senderId: signInModel!.data?.user?.sId ?? "", channelId: channelID);
@@ -196,7 +196,7 @@ class ChannelChatProvider extends ChangeNotifier{
       for (var file in filesToUpload) {
         request.files.add(
           await http.MultipartFile.fromPath(
-            'files',
+            'image',
             file.path,
             contentType: MediaType.parse(lookupMimeType(file.path) ?? 'application/octet-stream'),
           ),
@@ -210,8 +210,9 @@ class ChannelChatProvider extends ChangeNotifier{
         if (jsonResponse['data'] != null && jsonResponse['data'] is List) {
           List<String> filePaths = [];
           for (var item in jsonResponse['data']) {
-            if (item['file_path'] != null) {
-              filePaths.add(item['file_path']);
+            print("this is the file response $item");
+            if (item['saveFileUploadData'] != null) {
+              filePaths.add(item['saveFileUploadData']['path']);
             }
           }
           print("filesPathRes>>>>> $filePaths");
@@ -688,7 +689,7 @@ class ChannelChatProvider extends ChangeNotifier{
 
   Future<void> getFileListingInChannelChat({required String channelId})async{
     final requestBody = {"channelId": channelId};
-    final response = await ApiService.instance.request(endPoint: ApiString.getFilesListingInChannelChat, method: Method.POST,reqBody: requestBody);
+    final response = await ApiService.instance.request(endPoint: ApiString.getFilesListingInChannelChat+channelId, method: Method.GET);
     if(Cf.instance.statusCode200Check(response)){
       filesListingInChannelChatModel = FilesListingInChannelChatModel.fromJson(response);
     }

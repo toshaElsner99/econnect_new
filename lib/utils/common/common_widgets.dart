@@ -1323,7 +1323,7 @@ class Cw {
         return '<span class="username">@${match.group(1)}</span>';
       },
     );
-
+    print("processedMessage = $processedMessage");
     // Then process usernames/fullnames without @ symbol
     if (commonProvider.getUserMentionModel?.data?.users != null) {
       for (var user in commonProvider.getUserMentionModel!.data!.users!) {
@@ -1358,6 +1358,7 @@ class Cw {
           }
         }
       }
+      print("processedMessage = $processedMessage");
     }
 
     // Replace "added to the channel by" with a dynamic value

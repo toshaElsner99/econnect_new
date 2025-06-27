@@ -1359,7 +1359,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Cw.instance.commonText(text: "${messageList.senderOfForward?.username}"),
+                                         Cw.instance.commonText(text: "${messageList.senderOfForward?.username}"),
                                           SizedBox(height: 3),
                                           Cw.instance.commonText(text: Cf.instance.formatDateString("${messageList.forwardInfo?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
@@ -1368,12 +1368,15 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   ],),
                                 ),
                                 messageList.forwardInfo != null ?
-                                Visibility(
-                                    visible: messageList.forwardInfo?.content != "",
-                                    child:
-                                    messageList.forwardInfo!.hrms_bdy != '' ?
-                                    Cw.instance.HtmlTextOnly(htmltext: "${messageList.forwardInfo?.content}") :
-                                    Cw.instance.commonHTMLText(message: "${messageList.forwardInfo?.content}"))  : SizedBox(),
+                                messageList.forwardInfo!.id == "685cfa51c264104e34ce4546" ?
+                                 Visibility(
+                                      visible: messageList.forwardInfo?.content != "",
+                                      child:
+                                      messageList.forwardInfo!.hrms_bdy != '' ?
+                                      Cw.instance.HtmlTextOnly(htmltext: "${messageList.forwardInfo?.content}") :
+                                      // Cw.instance.commonHTMLText(message: "${messageList.forwardInfo?.content}")),
+                                     Text("${messageList.forwardInfo?.content}"),
+                                )  : SizedBox() : SizedBox(),
                                 Visibility(
                                   visible: messageList.forwardInfo?.files.length != 0 ? true : false,
                                   child: ListView.builder(

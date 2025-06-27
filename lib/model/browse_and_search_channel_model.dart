@@ -94,30 +94,32 @@ class Users {
   });
 
   Users.fromJson(Map<String, dynamic> json) {
+    print("json['userId']${json['userId']}");
+    print("json[ ${json}");
     fullName = json['fullName'];
-    username = json['username'];
+    username = json['userName'];
     email = json['email'];
     elsnerEmail = json['elsner_email'];
     position = json['position'];
     avatarUrl = json['avatarUrl'];
-    thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
+    thumbnailAvatarUrl = json['thumbnailAvatarUrl'];
     hasRecentMessages = json['hasRecentMessages'];
     latestMessageDate = json['latestMessageDate'];
-    userId = json['userId'];
+    userId = json['_id'];
   }
 
   Map<String, dynamic> toJson() {
     return {
       'fullName': fullName,
-      'username': username,
+      'userName': username,
       'email': email,
       'elsner_email': elsnerEmail,
       'position': position,
       'avatarUrl': avatarUrl,
-      'thumbnail_avatarUrl': thumbnailAvatarUrl,
+      'thumbnailAvatarUrl': thumbnailAvatarUrl,
       'hasRecentMessages': hasRecentMessages,
       'latestMessageDate': latestMessageDate,
-      'userId': userId,
+      '_id': userId,
     };
   }
 }
@@ -132,7 +134,7 @@ class Channels {
 
   Channels.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
-    channelName = json['channelName'];
+    channelName = json['name'];
     isPrivate = json['isPrivate'];
     members = (json['members'] as List?)?.map((v) => Members.fromJson(v)).toList() ?? [];
   }
@@ -140,7 +142,7 @@ class Channels {
   Map<String, dynamic> toJson() {
     return {
       '_id': sId,
-      'channelName': channelName,
+      'name': channelName,
       'isPrivate': isPrivate,
       'members': members?.map((v) => v.toJson()).toList() ?? [],
     };

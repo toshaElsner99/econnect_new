@@ -364,7 +364,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
           appBar: AppBar(
             leading: IconButton(onPressed: (){
               Cf.instance.pop(popValue: true);
-              chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: false,onlyReadInChat: false);
+             // chatProvider.getMessagesList(oppositeUserId: widget.receiverId,currentPage: chatProvider.currentPagea,isFromMsgListen: false,onlyReadInChat: false);
             },
             icon: Icon(CupertinoIcons.back,color: Colors.white,)),
             bottom: PreferredSize(preferredSize: Size.zero , child: Divider(color: Colors.grey.shade800, height: 1,),),

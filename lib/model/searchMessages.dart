@@ -22,14 +22,14 @@ class SearchMessage {
   });
 
   factory SearchMessage.fromJson(Map<String, dynamic> json) => SearchMessage(
-    id: DateTime.parse(json["_id"]) as DateTime?,
+    id:json["_id"] == null ? null : DateTime.parse(json["_id"]) as DateTime? ,
     messages: List<Message>.from(json["messages"].map((x) => Message.fromJson(x))),
     totalMessages: json["totalMessages"],
     date: DateTime.parse(json["date"]),
   );
 
   Map<String, dynamic> toJson() => {
-    "_id":id==null?"": "${id!.year.toString().padLeft(4, '0')}-${id!.month.toString().padLeft(2, '0')}-${id!.day.toString().padLeft(2, '0')}",
+    "_id":id==null?"": "${id?.year.toString().padLeft(4, '0')}-${id?.month.toString().padLeft(2, '0')}-${id?.day.toString().padLeft(2, '0')}",
     "messages": List<dynamic>.from(messages.map((x) => x.toJson())),
     "totalMessages": totalMessages,
     "date": "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}",
@@ -84,10 +84,10 @@ class Message {
     "replyTo": replyTo,
     "isForwarded": isForwarded,
     "senderId": senderId,
-    "senderInfo": senderInfo!.toJson(),
+    "senderInfo": senderInfo?.toJson(),
     "channelInfo": channelInfo?.toJson(),
     "channelId": channelId,
-    "oppositeUserInfo": oppositeUserInfo!.toJson(),
+    "oppositeUserInfo": oppositeUserInfo?.toJson(),
     "receiverId": receiverId,
   };
 }
@@ -107,51 +107,51 @@ class ChannelInfo {
 
   factory ChannelInfo.fromJson(Map<String, dynamic> json) => ChannelInfo(
     id: json["_id"],
-    name: json["name"],
+    name: json["channelName"],
     ownerId: json["ownerId"],
     isDefault: json["isDefault"],
   );
 
   Map<String, dynamic> toJson() => {
     "_id": id,
-    "name": name,
+    "channelName": name,
     "ownerId": ownerId,
     "isDefault": isDefault,
   };
 }
 
 class ErInfo {
-  String id;
-  String username;
-  String email;
+  String? id;
+  String? username;
+  String? email;
   String status;
-  String thumbnailAvatarUrl;
-  String elsnerEmail;
+  String? thumbnailAvatarUrl;
+  String? elsnerEmail;
 
   ErInfo({
-    required this.id,
-    required this.username,
-    required this.email,
+     this.id,
+     this.username,
+     this.email,
     required this.status,
-    required this.thumbnailAvatarUrl,
-    required this.elsnerEmail,
+    this.thumbnailAvatarUrl,
+    this.elsnerEmail,
   });
 
   factory ErInfo.fromJson(Map<String, dynamic> json) => ErInfo(
-    id: json["_id"],
-    username: json["username"],
-    email: json["email"],
+    id: json["_id"] ?? "",
+    username: json["userName"] ?? "",
+    email: json["email"] ?? "",
     status: json["status"] ?? "offline",
-    thumbnailAvatarUrl: json["thumbnail_avatarUrl"],
-    elsnerEmail: json["elsner_email"],
+    thumbnailAvatarUrl: json["thumbnailAvatarUrl"] ?? "",
+    elsnerEmail: json["elsner_email"] ?? "",
   );
 
   Map<String, dynamic> toJson() => {
     "_id": id,
-    "username": username,
+    "userName": username,
     "email": email,
     // "status": statusValues.reverse[status],
-    "thumbnail_avatarUrl": thumbnailAvatarUrl,
+    "thumbnailAvatarUrl": thumbnailAvatarUrl,
     "elsner_email": elsnerEmail,
   };
 }

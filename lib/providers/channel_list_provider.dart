@@ -118,7 +118,10 @@ class ChannelListProvider extends ChangeNotifier{
     // final requestBody = {
     //   "userId": signInModel!.data?.user?.id,
     // };
-    final response = await ApiService.instance.request(endPoint: ApiString.directMessageChatList, method: Method.GET);
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.directMessageChatList,
+        method: Method.GET
+    );
     if(Cf.instance.statusCode200Check(response)){
       directMessageListModel = DirectMessageListModel.fromJson(response);
       // emit(ChannelListInitial());
@@ -156,6 +159,7 @@ void combineUserDataWithChannels() {
    
    // Add all users to the combined list
    browseAndSearchChannelModel?.data?.users?.forEach((user) {
+     print("ADDING = ${ user.userId}");
      combinedList.add({
        'type': 'user',
        'fullName': user.fullName,
@@ -218,6 +222,7 @@ bool isLoading = false;
   }
 
   Future<void> getUserSuggestionsListing() async {
+    print("the channel list provieder obne got called");
     final response = await ApiService.instance.request(
         endPoint: ApiString.userSuggestions,
         method: Method.GET,);
@@ -226,8 +231,8 @@ bool isLoading = false;
     }
   }
 
-  Future<void> searchUserByName({required String search}) async {
-    final requestBody = {"searchTerm": search};
+  Future<void> searchUserByName({required String search, required String userId}) async {
+    final requestBody = {"searchTerm": search,"userId":userId};
     final response = await ApiService.instance.request(
         endPoint: ApiString.searchUser,
         method: Method.POST,
@@ -319,6 +324,7 @@ bool isLoading = false;
       "userId": signInModel!.data!.user!.sId,
       "conversationUserId": conversationUserId,
     };
+    print("calling the close conversation api ");
     final response = await ApiService.instance.request(
         endPoint: ApiString.closeConversation,
         method: Method.POST,
@@ -388,13 +394,15 @@ Future<void> leaveChannel({
       "upsertedCount" : 0,
       "matchedCount": 1,
     };
+    print("readUnreadMessages In");
     final response = await ApiService.instance.request(
-        endPoint: isCallForReadMessage ? "${ApiString.messageSeen}$oppositeUserId/chat" : ApiString.messageUnread + oppositeUserId,
-        method: Method.POST,
-        reqBody: requestBody,
+        endPoint: isCallForReadMessage ? "${ApiString.messageSeen}$oppositeUserId" : ApiString.messageUnread + oppositeUserId,
+        method: Method.PUT,
+        // reqBody: requestBody,
       isRawPayload: false
     );
     if (Cf.instance.statusCode200Check(response)) {
+      print("readUnreadMessages 200");
       await getFavoriteList();
       await getChannelList();
       await getDirectMessageList();

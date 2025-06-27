@@ -246,7 +246,7 @@ class ChatProvider extends  ChangeNotifier {
     final requestBody = {
       "messageId": msgId
     };
-    final response = await ApiService.instance.request(endPoint: ApiString.replayMsgSeen, method: Method.POST,reqBody: requestBody);
+    final response = await ApiService.instance.request(endPoint: ApiString.replayMsgSeen+msgId, method: Method.PUT,isRawPayload: false);
   }
   Future<List<String>> uploadFiles(String screenName) async {
    try {
@@ -261,9 +261,10 @@ class ChatProvider extends  ChangeNotifier {
        'Authorization': "Bearer ${signInModel!.data?.authToken}",
      });
      for (var file in filesToUpload) {
+
        request.files.add(
          await http.MultipartFile.fromPath(
-           'files',
+           'image',
            file.path,
            contentType: MediaType.parse(lookupMimeType(file.path) ?? 'application/octet-stream'),
          ),
@@ -277,8 +278,10 @@ class ChatProvider extends  ChangeNotifier {
        if (jsonResponse['data'] != null && jsonResponse['data'] is List) {
          List<String> filePaths = [];
          for (var item in jsonResponse['data']) {
-           if (item['file_path'] != null) {
-             filePaths.add(item['file_path']);
+           print("this is the file response from 2 one  ${item["saveFileUploadData"]}");
+
+           if (item['saveFileUploadData'] != null && item['saveFileUploadData']['path'] != null) {
+             filePaths.add(item['saveFileUploadData']['path']);
            }
          }
          print("filesPathRes>>>>> $filePaths");
@@ -314,7 +317,7 @@ class ChatProvider extends  ChangeNotifier {
 
       request.files.add(
         await http.MultipartFile.fromPath(
-          'files',
+          'image',
           fileToUpload.path,
           contentType: MediaType.parse(lookupMimeType(fileToUpload.path) ?? 'application/octet-stream'),
         ),
@@ -326,7 +329,7 @@ class ChatProvider extends  ChangeNotifier {
       if (response.statusCode == 200) {
         var jsonResponse = jsonDecode(responseData.body);
         if (jsonResponse['data'] != null && jsonResponse['data'] is List && jsonResponse['data'].isNotEmpty) {
-          List<String> uploadedFilePaths = [jsonResponse['data'][0]['file_path'] ?? ''];
+          List<String> uploadedFilePaths = [jsonResponse['data'][0]['saveFileUploadData']['path'] ?? ''];
           print("filePathRes>>>>> $uploadedFilePaths");
           return uploadedFilePaths;
         } else {
@@ -450,7 +453,7 @@ class ChatProvider extends  ChangeNotifier {
     }
   }
   Future<void> pinUnPinMessage({required String receiverId,required String messageId,required bool pinned, bool callForUnpinPostOnly = false})async{
-    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
+    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT,isRawPayload: false);
     if(Cf.instance.statusCode200Check(response)){
       if(callForUnpinPostOnly){
         getMessagesList(oppositeUserId: receiverId,currentPage: 1,onlyReadInChat: true);
@@ -469,7 +472,7 @@ class ChatProvider extends  ChangeNotifier {
   }
 
   Future<void> pinUnPinMessageForReply({required String receiverId,required String messageId,required bool pinned})async{
-    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT);
+    final response = await ApiService.instance.request(endPoint: ApiString.pinMessage(messageId, pinned), method: Method.PUT,isRawPayload: false);
     if(Cf.instance.statusCode200Check(response)){
       if(pinned){
         pinMessageModelUpdate();

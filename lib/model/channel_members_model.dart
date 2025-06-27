@@ -99,13 +99,13 @@ class MemberDetails {
   MemberDetails.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     fullName = json['fullName'];
-    username = json['username'];
+    username = json['userName'];
     email = json['email'];
     status = json['status'];
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
     avatarUrl = json['avatarUrl'];
-    thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
+    thumbnailAvatarUrl = json['thumbnailAvatarUrl'];
     elsnerEmail = json['elsner_email'];
     isAdmin = json['isAdmin'];
   }
@@ -114,13 +114,13 @@ class MemberDetails {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['_id'] = this.sId;
     data['fullName'] = this.fullName;
-    data['username'] = this.username;
+    data['userName'] = this.username;
     data['email'] = this.email;
     data['status'] = this.status;
-    data['custom_status'] = this.customStatus;
-    data['custom_status_emoji'] = this.customStatusEmoji;
+    data['customStatus'] = this.customStatus;
+    data['customStatusEmoji'] = this.customStatusEmoji;
     data['avatarUrl'] = this.avatarUrl;
-    data['thumbnail_avatarUrl'] = this.thumbnailAvatarUrl;
+    data['thumbnailAvatarUrl'] = this.thumbnailAvatarUrl;
     data['elsner_email'] = this.elsnerEmail;
     data['isAdmin'] = this.isAdmin;
     return data;
