@@ -124,6 +124,7 @@ class ChannelListProvider extends ChangeNotifier{
     );
     if(Cf.instance.statusCode200Check(response)){
       directMessageListModel = DirectMessageListModel.fromJson(response);
+     // print("this is the issue :-${jsonEncode(directMessageListModel?.toJson())}");
       // emit(ChannelListInitial());
     }
     NotificationService.setBadgeCount();
@@ -298,6 +299,7 @@ bool isLoading = false;
     final requestBodyForUnMuteUser = {
        "userId" : userIdToMute,
     };
+    print("is muted ? :-${isForMute}");
     final response = await ApiService.instance.request(
         endPoint: isForMute == false ? ApiString.muteUser : ApiString.unMuteUser,
         method: Method.POST,

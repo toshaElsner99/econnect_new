@@ -79,6 +79,7 @@ class ChatListDirectMessage {
   String? latestMessage;
   String? latestMessageCreatedAt;
 
+
   ChatListDirectMessage({
     this.sId,
     this.username,
@@ -110,22 +111,22 @@ class ChatListDirectMessage {
 
   ChatListDirectMessage.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
-    username = json['username'];
+    username = json['userName'];
     fullName = json['fullName'];
     email = json['email'];
     status = json['status'];
     isActive = json['isActive'];
     loginActivity = json['loginActivity'] ?? [];
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
-    muteUsers = (json['mute_users'] as List?)?.cast<String>();
-    muteChannels = (json['mute_channels'] as List?)?.cast<String>();
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
+    muteUsers = (json['muteUsers'] as List?)?.cast<String>();
+    muteChannels = (json['muteChannels'] as List?)?.cast<String>();
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
     iV = json['__v'];
     lastActiveChat = json['lastActiveChat'] != null ? LastActiveChat.fromJson(json['lastActiveChat']) : null;
     avatarUrl = json['avatarUrl'];
-    thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
+    thumbnailAvatarUrl = json['thumbnailAvatarUrl'];
     isLeft = json['isLeft'];
     chatList = json['chatList'];
     // favouriteList = json['favouriteList'];
@@ -140,22 +141,22 @@ class ChatListDirectMessage {
   Map<String, dynamic> toJson() {
     return {
       '_id': sId,
-      'username': username,
+      'userName': username,
       'fullName': fullName,
       'email': email,
       'status': status,
       'isActive': isActive,
       'loginActivity': loginActivity,
-      'custom_status': customStatus,
-      'custom_status_emoji': customStatusEmoji,
-      'mute_users': muteUsers,
-      'mute_channels': muteChannels,
+      'customStatus': customStatus,
+      'customStatusEmoji': customStatusEmoji,
+      'muteUsers': muteUsers,
+      'muteChannels': muteChannels,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       '__v': iV,
       'lastActiveChat': lastActiveChat?.toJson(),
       'avatarUrl': avatarUrl,
-      'thumbnail_avatarUrl': thumbnailAvatarUrl,
+      'thumbnailAvatarUrl': thumbnailAvatarUrl,
       'isLeft': isLeft,
       'chatList': chatList,
       // 'favouriteList': favouriteList,

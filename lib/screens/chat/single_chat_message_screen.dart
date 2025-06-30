@@ -1368,7 +1368,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   ],),
                                 ),
                                 messageList.forwardInfo != null ?
-                                messageList.forwardInfo!.id == "685cfa51c264104e34ce4546" ?
+                                messageList.forwardInfo!.id != "" ?
                                  Visibility(
                                       visible: messageList.forwardInfo?.content != "",
                                       child:

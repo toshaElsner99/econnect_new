@@ -30,7 +30,7 @@ class ApiString{
   /*Changed*/static const muteUser = "muteManage/muteUser"; // done
   /*Changed*/static const unMuteUser = "muteManage/unmuteUser"; // done
   /*Changed*/static const closeConversation = "chatList/closeConversation"; // done
-  /*Changed*/static const messageUnread = "chatMessageAction/unreadMessage"; // done
+  /*Changed*/static const messageUnread = "chatMessageAction/unreadMessage/"; // done
   /*Changed*/static const messageSeen = "/chatMessageAction/seenMessage/";  //done
   /*Changed*/static const addTOFavorite = "favorite/addFavoriteChat";
   /*Changed*/static const leaveChannel = "channelManage/leaveChannel/"; // done
