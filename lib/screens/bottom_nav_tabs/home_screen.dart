@@ -19,6 +19,7 @@ import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 
 import '../../main.dart';
 import '../../notificationServices/pushNotificationService.dart';
@@ -71,6 +72,9 @@ class _HomeScreenState extends State<HomeScreen>
   // PageController for swiping between tabs
   late PageController _pageController;
 
+  // Map to store draft status for users
+  final Map<String, bool> _draftStatus = {};
+
   @override
   void initState() {
     super.initState();
@@ -93,6 +97,8 @@ class _HomeScreenState extends State<HomeScreen>
     });
     // Thread Updates
     updateThreads();
+    // Load draft status immediately when screen opens
+    _loadDraftStatusImmediately();
   }
 
   @override
@@ -101,7 +107,25 @@ class _HomeScreenState extends State<HomeScreen>
       Provider.of<ChannelListProvider>(context, listen: false)
           .refreshAllLists();
       Provider.of<SocketIoProvider>(context, listen: false).connectSocket(true);
+      // Refresh draft status immediately when app is resumed
+      _loadDraftStatusImmediately();
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh draft status when dependencies change (e.g., returning from chat screen)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshDraftStatus();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Refresh draft status when widget is updated
+    _refreshDraftStatus();
   }
 
   updateThreads() {
@@ -127,99 +151,120 @@ class _HomeScreenState extends State<HomeScreen>
     await NotificationService.setBadgeCount();
   }
 
+  // Method to load draft status if needed
+  Future<void> _loadDraftStatusIfNeeded(ChannelListProvider channelListProvider) async {
+    if (channelListProvider.combinedAllItems.isNotEmpty && _draftStatus.isEmpty) {
+      await _loadDraftStatus();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<ChannelListProvider, CommonProvider>(
       builder: (context, channelListProvider, commonProvider, child) {
+        // Load draft status when channel list data becomes available
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (channelListProvider.combinedAllItems.isNotEmpty && _draftStatus.isEmpty) {
+            _loadDraftStatus();
+          }
+        });
+        
         setBadge();
-        return GestureDetector(
-          onTap: () => FocusScope.of(context).unfocus(),
-          child: RefreshIndicator(
-            onRefresh: () async {
-              await Provider.of<ChannelListProvider>(context, listen: false)
-                  .refreshAllLists();
-              await Provider.of<CommonProvider>(context, listen: false)
-                  .getUserByIDCall();
-            },
-            child: Scaffold(
-              backgroundColor: AppPreferenceConstants.themeModeBoolValueGet
-                  ? null
-                  : AppColor.appBarColor,
-              appBar: AppBar(
-                toolbarHeight: 0,
-              ),
-              body: Column(
-                children: [
-                  // Header section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 15.0, vertical: 10),
-                    child: Row(
-                      children: [
-                        _buildHeader(),
-                        const Spacer(),
-                        _buildAddButton()
-                      ],
-                    ),
+        return FutureBuilder<void>(
+          future: _loadDraftStatusIfNeeded(channelListProvider),
+          builder: (context, snapshot) {
+            return GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await Provider.of<ChannelListProvider>(context, listen: false)
+                      .refreshAllLists();
+                  await Provider.of<CommonProvider>(context, listen: false)
+                      .getUserByIDCall();
+                  // Refresh draft status immediately after refreshing lists
+                  await _loadDraftStatusImmediately();
+                },
+                child: Scaffold(
+                  backgroundColor: AppPreferenceConstants.themeModeBoolValueGet
+                      ? null
+                      : AppColor.appBarColor,
+                  appBar: AppBar(
+                    toolbarHeight: 0,
                   ),
-                  // Search and tabs section
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                    child: Column(
-                      children: [
-                        _buildSearchField(),
-                        _buildTabsSection(),
-                      ],
-                    ),
-                  ),
-                  // DEMO BUTTONS for calling
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 15.0, vertical: 5),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CallScreen(
-                                  callerName: 'John Doe',
-                                  callerId: '12345',
-                                  imageUrl:
-                                      'https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg',
-                                  callDirection: CallDirection.outgoing,
-                                ),
-                              ),
-                            );
-                          },
-                          child: const Text('Test Outgoing Call'),
+                  body: Column(
+                    children: [
+                      // Header section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 15.0, vertical: 10),
+                        child: Row(
+                          children: [
+                            _buildHeader(),
+                            const Spacer(),
+                            _buildAddButton()
+                          ],
                         ),
-                        ElevatedButton(
-                          onPressed: () {
-                            CallingBanner.show(
-                              {
-                                'callerName': 'John Doe',
-                                'imageUrl':
-                                    'https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg',
+                      ),
+                      // Search and tabs section
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                        child: Column(
+                          children: [
+                            _buildSearchField(),
+                            _buildTabsSection(),
+                          ],
+                        ),
+                      ),
+                      // DEMO BUTTONS for calling
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 15.0, vertical: 5),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CallScreen(
+                                      callerName: 'John Doe',
+                                      callerId: '12345',
+                                      imageUrl:
+                                          'https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg',
+                                      callDirection: CallDirection.outgoing,
+                                    ),
+                                  ),
+                                );
                               },
-                              context,
-                            );
-                          },
-                          child: const Text('Test Incoming Call'),
+                              child: const Text('Test Outgoing Call'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                CallingBanner.show(
+                                  {
+                                    'callerName': 'John Doe',
+                                    'imageUrl':
+                                        'https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg',
+                                  },
+                                  context,
+                                );
+                              },
+                              child: const Text('Test Incoming Call'),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      // Content section
+                      Expanded(
+                          child: _buildScreenContent(
+                              channelListProvider, commonProvider)),
+                    ],
                   ),
-                  // Content section
-                  Expanded(
-                      child: _buildScreenContent(
-                          channelListProvider, commonProvider)),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -1100,11 +1145,19 @@ class _HomeScreenState extends State<HomeScreen>
     // Determine item type based on index
     final itemType = index == 0 ? 'favoriteUser' : 'user';
     
+    // Check if this user has a draft message
+    final hasDraft = _draftStatus[userId] ?? false;
+    
     return Container(
      // color: muteConversation ? AppColor.borderColor.withOpacity(0.05) : null,
      margin: const EdgeInsets.symmetric(vertical: 6),
      child: InkWell(
-       onTap: () => Cf.instance.pushScreen(screen: SingleChatMessageScreen(userName: username, oppositeUserId: userId,calledForFavorite: true,)),
+       onTap: () {
+         Cf.instance.pushScreen(screen: SingleChatMessageScreen(userName: username, oppositeUserId: userId,calledForFavorite: true,)).then((_) {
+           // Refresh draft status when returning from chat screen
+           _updateDraftStatusForUser(userId);
+         });
+       },
        onLongPress: () {
          // Get the appropriate provider data based on the type
          dynamic itemData;
@@ -1155,31 +1208,62 @@ class _HomeScreenState extends State<HomeScreen>
                isMuted: muteConversation,
              ),
              const SizedBox(width: 12),
-             ConstrainedBox(
-               constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
-               child: Cw.instance.commonText(
-                 text: username,
-                 color: muteConversation ? AppColor.borderColor : Colors.white.withOpacity(0.9),
-                 fontSize: 14,
-                 fontWeight: FontWeight.w500,
+             Expanded(
+               child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   Row(
+                     children: [
+                       ConstrainedBox(
+                         constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
+                         child: Cw.instance.commonText(
+                           text: username,
+                           color: muteConversation ? AppColor.borderColor : Colors.white.withOpacity(0.9),
+                           fontSize: 14,
+                           fontWeight: FontWeight.w500,
+                         ),
+                       ),
+                       Visibility(
+                         visible: userId == signInModel!.data?.user?.sId,
+                         child: Padding(
+                           padding: const EdgeInsets.only(left: 5.0),
+                           child: Cw.instance.commonText(text: "(you)",color: muteConversation ? AppColor.borderColor : Colors.white),
+                         )
+                       ),
+                       Visibility(
+                         visible: customStatusEmoji != "",
+                         child: Padding(
+                           padding: const EdgeInsets.only(left: 8.0),
+                           child: CachedNetworkImage(imageUrl: customStatusEmoji ?? "",height: 20,width: 20,),
+                         )
+                       ),
+                       // Draft indicator
+                       Visibility(
+                         visible: hasDraft,
+                         child: Padding(
+                           padding: const EdgeInsets.only(left: 8.0),
+                           child: Container(
+                             padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                             decoration: BoxDecoration(
+                               color: Colors.red.withOpacity(0.1),
+                               borderRadius: BorderRadius.circular(4),
+                               border: Border.all(color: Colors.red, width: 0.5),
+                             ),
+                             child: Cw.instance.commonText(
+                               text: "Draft",
+                               color: Colors.red,
+                               fontSize: 10,
+                               fontWeight: FontWeight.w600,
+                             ),
+                           ),
+                         ),
+                       ),
+                     ],
+                   ),
+                 ],
                ),
              ),
-             Visibility(
-               visible: userId == signInModel!.data?.user?.sId,
-               child: Padding(
-                 padding: const EdgeInsets.only(left: 5.0),
-                 child: Cw.instance.commonText(text: "(you)",color: muteConversation ? AppColor.borderColor : Colors.white),
-               )
-             ),
-             Visibility(
-               visible: customStatusEmoji != "",
-               child: Padding(
-                 padding: const EdgeInsets.only(left: 8.0),
-                 child: CachedNetworkImage(imageUrl: customStatusEmoji ?? "",height: 20,width: 20,),
-               )
-             ),
              // countMsgContainer(count : unSeenMsgCount ?? 0,isMuted: muteConversation),
-             Spacer(),
              // Visibility(
              //   visible: muteConversation,
              //   child: Image.asset(AppImage.muteNotification,height: 20,width: 20,color: muteConversation ? AppColor.borderColor : Colors.white,)
@@ -1195,13 +1279,19 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _buildChannelRow(ChannelList channel) {
     // print("channelID _buildChannelRow >>> ${channel.sId}");
     final muteChannel = signInModel!.data?.user?.muteChannels?.contains(channel.sId) ?? false;
+    // Check if this channel has a draft message
+    final hasDraft = _draftStatus["channel_${channel.sId}"] ?? false;
+    
     return Container(
       // color: muteChannel ? AppColor.borderColor.withOpacity(0.05) : null,
       margin: const EdgeInsets.symmetric(vertical: 6),
       child: InkWell(
         onTap: () {
           print("Channel Tapped");
-          Cf.instance.pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", /*channelName: channel.name!*/));
+          Cf.instance.pushScreen(screen: ChannelChatScreen(channelId: channel.sId ?? "", /*channelName: channel.name!*/)).then((_) {
+            // Refresh draft status when returning from channel chat screen
+            _updateChannelDraftStatus(channel.sId ?? "");
+          });
         },
         onLongPress: () {
           showOptionsDialog(
@@ -1222,15 +1312,47 @@ class _HomeScreenState extends State<HomeScreen>
             children: [
               Cw.instance.commonChannelIcon(isPrivate: channel.isPrivate == true ? true : false,isMuted: muteChannel),
               const SizedBox(width: 12),
-              ConstrainedBox(
-                constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
-                child: Cw.instance.commonText(
-                  text: channel.name ?? "",
-                  color: muteChannel ? AppColor.borderColor : Colors.white.withOpacity(0.9),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        ConstrainedBox(
+                          constraints: BoxConstraints(minWidth: 0,maxWidth:MediaQuery.of(context).size.width * 0.5),
+                          child: Cw.instance.commonText(
+                            text: channel.name ?? "",
+                            color: muteChannel ? AppColor.borderColor : Colors.white.withOpacity(0.9),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        // Draft indicator for channels
+                        Visibility(
+                          visible: hasDraft,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 8.0),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: Colors.red, width: 0.5),
+                              ),
+                              child: Cw.instance.commonText(
+                                text: "Draft",
+                                color: Colors.red,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               // countMsgContainer(count : channel.unreadCount ?? 0,isMuted: muteChannel),
@@ -2028,6 +2150,137 @@ class _HomeScreenState extends State<HomeScreen>
     }
     
     return options;
+  }
+
+  // Method to check if a user has a draft message
+  Future<bool> _hasDraftMessage(String userId) async {
+    final draftKey = "${AppPreferenceConstants.draftMessageKey}$userId";
+    final draftMessage = await getData(draftKey);
+    return draftMessage != null && draftMessage.trim().isNotEmpty;
+  }
+
+  // Method to load draft status for all users
+  Future<void> _loadDraftStatus() async {
+    final channelListProvider = Provider.of<ChannelListProvider>(context, listen: false);
+    
+    // Get all user IDs from favorites and direct messages
+    final Set<String> userIds = {};
+    
+    // Add favorite users
+    final favorites = channelListProvider.favoriteListModel?.data?.chatList ?? [];
+    for (var fav in favorites) {
+      if (fav.sId != null) {
+        userIds.add(fav.sId!);
+      }
+    }
+    
+    // Add direct message users
+    final directMessages = channelListProvider.directMessageListModel?.data?.chatList ?? [];
+    for (var dm in directMessages) {
+      if (dm.sId != null) {
+        userIds.add(dm.sId!);
+      }
+    }
+    
+    // Get all channel IDs
+    final Set<String> channelIds = {};
+    final channels = channelListProvider.channelListModel?.data ?? [];
+    for (var channel in channels) {
+      if (channel.sId != null) {
+        channelIds.add(channel.sId!);
+      }
+    }
+    
+    // Add favorite channels from favorite list model
+    final favoriteChannels = channelListProvider.favoriteListModel?.data?.favouriteChannels ?? [];
+    for (var favChannel in favoriteChannels) {
+      if (favChannel.sId != null) {
+        channelIds.add(favChannel.sId!);
+      }
+    }
+    
+    // Check draft status for each user and channel concurrently
+    final List<Future<void>> draftChecks = [];
+    
+    // Check user drafts
+    for (String userId in userIds) {
+      draftChecks.add(_checkUserDraft(userId));
+    }
+    
+    // Check channel drafts
+    for (String channelId in channelIds) {
+      draftChecks.add(_checkChannelDraft(channelId));
+    }
+    
+    // Wait for all draft checks to complete
+    await Future.wait(draftChecks);
+    
+    // Trigger rebuild if any drafts found
+    if (_draftStatus.values.any((hasDraft) => hasDraft)) {
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
+
+  // Helper method to check user draft status
+  Future<void> _checkUserDraft(String userId) async {
+    final hasDraft = await _hasDraftMessage(userId);
+    _draftStatus[userId] = hasDraft;
+  }
+
+  // Helper method to check channel draft status
+  Future<void> _checkChannelDraft(String channelId) async {
+    final hasDraft = await _hasChannelDraftMessage(channelId);
+    _draftStatus["channel_$channelId"] = hasDraft;
+  }
+
+  // Method to refresh draft status when lists are updated
+  Future<void> _refreshDraftStatus() async {
+    await _loadDraftStatus();
+  }
+
+  // Method to update draft status for a specific user
+  Future<void> _updateDraftStatusForUser(String userId) async {
+    final hasDraft = await _hasDraftMessage(userId);
+    if (_draftStatus[userId] != hasDraft) {
+      setState(() {
+        _draftStatus[userId] = hasDraft;
+      });
+    }
+  }
+
+  // Method to check if a channel has a draft message
+  Future<bool> _hasChannelDraftMessage(String channelId) async {
+    final draftKey = "${AppPreferenceConstants.draftMessageKey}channel_$channelId";
+    final draftMessage = await getData(draftKey);
+    return draftMessage != null && draftMessage.trim().isNotEmpty;
+  }
+
+  // Method to update draft status for a specific channel
+  Future<void> _updateChannelDraftStatus(String channelId) async {
+    final hasDraft = await _hasChannelDraftMessage(channelId);
+    final draftKey = "channel_$channelId";
+    if (_draftStatus[draftKey] != hasDraft) {
+      setState(() {
+        _draftStatus[draftKey] = hasDraft;
+      });
+    }
+  }
+
+  // Method to load draft status immediately when screen opens
+  Future<void> _loadDraftStatusImmediately() async {
+    // Load draft status immediately without waiting for other data
+    await _loadDraftStatus();
+    
+    // Also set up a timer to refresh draft status periodically
+    Timer.periodic(Duration(seconds: 30), (timer) {
+      if (mounted) {
+        _refreshDraftStatus();
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
 }
