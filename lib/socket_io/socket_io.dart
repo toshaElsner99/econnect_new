@@ -10,11 +10,14 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
+import '../model/get_user_model.dart';
 import '../providers/channel_list_provider.dart';
 import '../providers/chat_provider.dart';
 import '../providers/common_provider.dart';
 import '../notificationServices/pushNotificationService.dart';
 import '../screens/calling/call_screen.dart';
+import '../utils/api_service/api_service.dart';
+import '../utils/api_service/api_string_constants.dart';
 import '../utils/app_preference_constants.dart';
 import '../utils/common/prefrance_function.dart';
 import '../utils/common/common_function.dart';
@@ -27,6 +30,7 @@ class SocketIoProvider extends ChangeNotifier {
   static final socketBaseUrl =
       'wss://dev-econnect-sass-socket.elsnerdev.co/?userId=${signInModel!.data?.user?.sId}&transport=websocket';
   late IO.Socket socket;
+  GetUserModel? getUserModel;
 
   String connection = "connection";
   String disconnect = "disconnect";
@@ -695,23 +699,49 @@ class SocketIoProvider extends ChangeNotifier {
         "Done Emitting Audio Call User >>> $callToUserId, $callFromUserId, $callFromUserName, ${offer.sdp}, ${offer.type}");
   }
 
+  Future<bool> getCallingUserData({required String callerId})async{
+    try {
+      final response = await ApiService.instance.request(
+          endPoint: "${ApiString.getUserById}/${ /*userId ?? */callerId}",
+          method: Method.POST,
+          isRawPayload: false);
+      if (Cf.instance.statusCode200Check(response)) {
+        getUserModel = GetUserModel.fromJson(response);
+        notifyListeners();
+        return true;
+      }
+      return false;
+    }catch(e){
+      print("this is the error =>$e");
+      return false;
+    }
+  }
+
   getCallFromAnyUser() {
     socket.off(callIncoming);
-    socket.on(callIncoming, (data) {
+    socket.on(callIncoming, (data) async{
       print("Call Incoming >>> $data");
+      final success = await getCallingUserData(callerId: data['fromUserId'] ?? "");
+      if(success){
       Navigator.push(
         navigatorKey.currentContext!,
         MaterialPageRoute(
           builder: (context) => CallScreen(
             dataOfSocket: data,
-              callerName: 'John Doe',
+            callerName: getUserModel?.data?.user?.username ?? "Unknown",
+            //  callerName: 'John Doe',
               callerId: data['fromUserId'],
-              imageUrl:
-                  'https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg',
+             imageUrl: getUserModel?.data?.user?.avatarUrl ?? "",
+             // imageUrl: 'https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg',
               callDirection: CallDirection.incoming,
               ),
         ),
       );
+      }
+      else{
+        debugPrint("Failed to get the data -->");
+      }
+
       // Handle incoming call data
       // You can show a dialog or navigate to a call screen here
     });
