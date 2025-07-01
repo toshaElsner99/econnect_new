@@ -227,46 +227,6 @@ class _HomeScreenState extends State<HomeScreen>
                           ],
                         ),
                       ),
-                      // DEMO BUTTONS for calling
-                      // Padding(
-                      //   padding: const EdgeInsets.symmetric(
-                      //       horizontal: 15.0, vertical: 5),
-                      //   child: Row(
-                      //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      //     children: [
-                      //       ElevatedButton(
-                      //         onPressed: () {
-                      //           Navigator.push(
-                      //             context,
-                      //             MaterialPageRoute(
-                      //               builder: (context) => CallScreen(
-                      //                 callerName: 'John Doe',
-                      //                 //callerId: '12345',
-                      //                 imageUrl:
-                      //                     'https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg',
-                      //                 callDirection: CallDirection.outgoing, callerId: '',
-                      //               ),
-                      //             ),
-                      //           );
-                      //         },
-                      //         child: const Text('Test Outgoing Call'),
-                      //       ),
-                      //       ElevatedButton(
-                      //         onPressed: () {
-                      //           CallingBanner.show(
-                      //             {
-                      //               'callerName': 'John Doe',
-                      //               'imageUrl':
-                      //                   'https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg',
-                      //             },
-                      //             context,
-                      //           );
-                      //         },
-                      //         child: const Text('Test Incoming Call'),
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
                       // Content section
                       Expanded(
                           child: _buildScreenContent(
