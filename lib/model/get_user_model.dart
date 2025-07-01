@@ -552,7 +552,7 @@ class SenderInfo {
     return SenderInfo(
       id: json['_id'] as String?,
       fullName: json['fullName'] as String?,
-      username: json['username'] as String?,
+      username: json['userName'] as String?,
       email: json['email'] as String?,
       elsnerEmail: json['elsner_email'] as String?,
       isActive: json['isActive'] as bool?,
@@ -596,7 +596,7 @@ class ReceiverInfo {
     return ReceiverInfo(
       id: json['_id'] as String?,
       fullName: json['fullName'] as String?,
-      username: json['username'] as String?,
+      username: json['userName'] as String?,
       email: json['email'] as String?,
       elsnerEmail: json['elsner_email'] as String?,
       isActive: json['isActive'] as bool?,
@@ -722,7 +722,7 @@ class SecondUser {
   SecondUser.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     fullName = json['fullName'];
-    username = json['username'];
+    username = json['userName'];
     email = json['email'];
     elsnerEmail = json['elsner_email'];
     position = json['position'];
@@ -771,7 +771,7 @@ class SecondUser {
     final Map<String, dynamic> data = {};
     data['_id'] = sId;
     data['fullName'] = fullName;
-    data['username'] = username;
+    data['userName'] = username;
     data['email'] = email;
     data['elsner_email'] = elsnerEmail;
     data['position'] = position;

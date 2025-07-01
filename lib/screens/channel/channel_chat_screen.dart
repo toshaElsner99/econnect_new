@@ -2573,14 +2573,28 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   String _getDraftKey() {
     return "${AppPreferenceConstants.draftMessageKey}channel_${channelID}";
   }
-
   Future<void> _saveDraftMessage(String message) async {
-    if (message.trim().isNotEmpty) {
-      await setData(_getDraftKey(), message);
-    } else {
-      await _clearDraftMessage();
+    try {
+      final draftKey = "${AppPreferenceConstants.draftMessageKey}channel_$channelID";
+      if (message.trim().isNotEmpty) {
+        await setData(draftKey, message);
+        print("Saved draft for channel $channelID: $draftKey = $message");
+      } else {
+        await removeData(draftKey);
+        print("Removed draft for channel $channelID: $draftKey");
+      }
+    } catch (e) {
+      print("Error saving draft for channel $channelID: $e");
     }
   }
+
+  // Future<void> _saveDraftMessage(String message) async {
+  //   if (message.trim().isNotEmpty) {
+  //     await setData(_getDraftKey(), message);
+  //   } else {
+  //     await _clearDraftMessage();
+  //   }
+  // }
 
   Future<void> _loadDraftMessage() async {
     final draftMessage = await getData(_getDraftKey());

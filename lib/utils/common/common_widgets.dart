@@ -748,7 +748,7 @@ class Cw {
               userId: userID,
               username: signInModel!.data!.user!.userName ?? '',
               fullName: signInModel!.data!.user!.fullName ?? '',
-              email: signInModel!.data!.user!.companyEmail ?? '',
+              email: signInModel!.data!.user!.email ?? '',
               avatarUrl: signInModel!.data!.user!.avatarUrl ?? '',
               status: status
           );
@@ -764,7 +764,7 @@ class Cw {
                   userId: userID,
                   username: userModel.data!.user!.username ?? '',
                   fullName: userModel.data!.user!.fullName ?? '',
-                  email: userModel.data!.user!.elsnerEmail ?? '',
+                  email: userModel.data!.user!.email ?? '',
                   avatarUrl: userModel.data!.user!.avatarUrl ?? '',
                   status: userModel.data!.user!.status ?? 'offline'
               );
