@@ -1370,13 +1370,15 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 messageList.forwardInfo != null ?
                                 messageList.forwardInfo!.id != "" ?
                                  Visibility(
-                                      visible: messageList.forwardInfo?.content != "",
+                                   visible: messageList.forwardInfo?.content != "",
                                       child:
                                       messageList.forwardInfo!.hrms_bdy != '' ?
-                                      Cw.instance.HtmlTextOnly(htmltext: "${messageList.forwardInfo?.content}") :
+                                      Cw.instance.HtmlTextOnly(htmltext: "${messageList.forwardInfo?.content}")
+                                          :
                                       // Cw.instance.commonHTMLText(message: "${messageList.forwardInfo?.content}")),
-                                     Text("${messageList.forwardInfo?.content}"),
-                                )  : SizedBox() : SizedBox(),
+                                     Text("${messageList.forwardInfo?.content}"),)
+                                    :
+                                SizedBox() : SizedBox(),
                                 Visibility(
                                   visible: messageList.forwardInfo?.files.length != 0 ? true : false,
                                   child: ListView.builder(

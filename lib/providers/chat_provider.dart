@@ -523,7 +523,7 @@ class ChatProvider extends  ChangeNotifier {
   }
   Future<void> getFileListingInChat({required String oppositeUserId})async{
     final requestBody = {"oppositeUserId": oppositeUserId};
-    final response = await ApiService.instance.request(endPoint: ApiString.getFileListingInChat, method: Method.POST,reqBody: requestBody);
+    final response = await ApiService.instance.request(endPoint: ApiString.getFileListingInChat+"/"+oppositeUserId, method: Method.GET,reqBody: requestBody);
     if(Cf.instance.statusCode200Check(response)){
       filesListingInChatModel = FilesListingInChatModel.fromJson(response);
     }
