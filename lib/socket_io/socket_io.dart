@@ -614,6 +614,7 @@ class SocketIoProvider extends ChangeNotifier {
   registerUser() {
     print("registerUser");
     socket.emit(register, signInModel!.data?.user?.sId);
+    socket.off(register);
     socket.on(register, (data) {
       print("User registered to socket >>> $data");
     });

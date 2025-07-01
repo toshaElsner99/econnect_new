@@ -1,11 +1,26 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart'
-    show RTCVideoRenderer, RTCPeerConnection, MediaStream, RTCPeerConnectionState, createPeerConnection, navigator, RTCVideoView, RTCSessionDescription, RTCIceCandidate, Helper, RTCSignalingState;
+    show
+        RTCVideoRenderer,
+        RTCPeerConnection,
+        MediaStream,
+        RTCPeerConnectionState,
+        createPeerConnection,
+        navigator,
+        RTCVideoView,
+        RTCSessionDescription,
+        RTCIceCandidate,
+        Helper,
+        RTCSignalingState,
+        RTCVideoViewObjectFit;
 import 'package:provider/provider.dart';
 
 import '../../main.dart';
@@ -23,10 +38,11 @@ class CallScreen extends StatefulWidget {
 
   const CallScreen(
       {super.key,
-        required this.callerName,
-        required this.callerId,
-        required this.imageUrl,
-        required this.callDirection, this.dataOfSocket});
+      required this.callerName,
+      required this.callerId,
+      required this.imageUrl,
+      required this.callDirection,
+      this.dataOfSocket});
 
   @override
   State<CallScreen> createState() => _CallScreenState();
@@ -34,6 +50,8 @@ class CallScreen extends StatefulWidget {
 
 class _CallScreenState extends State<CallScreen> {
   bool isMuted = false;
+  bool isShowMutedIcon = false;
+  bool isRemoteVideoOn = false;
   bool isSpeakerOn = true;
   bool isVideoOn = false;
   bool _isCallAccepted = false;
@@ -93,22 +111,24 @@ class _CallScreenState extends State<CallScreen> {
       debugPrint('📞 Initializing peer connection for incoming call...');
       // Initialize peer connection for incoming calls
       _createPeerConnection().then((_) {
-        debugPrint('📞 Peer connection initialized successfully for incoming call');
+        debugPrint(
+            '📞 Peer connection initialized successfully for incoming call');
         // Set up signal listener after peer connection is ready
 
         // If we have signal data from the incoming call, set it as remote description
-        if (widget.dataOfSocket != null && widget.dataOfSocket['signal'] != null) {
+        if (widget.dataOfSocket != null &&
+            widget.dataOfSocket['signal'] != null) {
           debugPrint('📞 Setting initial remote description for incoming call');
           _setInitialRemoteDescription();
         }
       }).catchError((error) {
-        debugPrint('❌ Error initializing peer connection for incoming call: $error');
+        debugPrint(
+            '❌ Error initializing peer connection for incoming call: $error');
       });
     }
 
     // Call _startCall for both incoming and outgoing calls
     if (widget.callDirection == CallDirection.outgoing) {
-
       _startCall();
       // Listen Incoming Call Event
       socketProvider.listenAcceptedCallEvent(_handleCallAccepted);
@@ -120,15 +140,19 @@ class _CallScreenState extends State<CallScreen> {
             RTCPeerConnectionState.RTCPeerConnectionStateConnected) {
           debugPrint('📞 Call timed out');
           socketProvider.hangUpCallEvent(
-              targetId: widget.callerId,whoHangUpCallId: signInModel!.data!.user!.sId!);
-          socketProvider.leaveCallEvent(callToUserId: widget.callerId,callFromUserId:  signInModel!.data!.user!.sId!);
+              targetId: widget.callerId,
+              whoHangUpCallId: signInModel!.data!.user!.sId!);
+          socketProvider.leaveCallEvent(
+              callToUserId: widget.callerId,
+              callFromUserId: signInModel!.data!.user!.sId!);
           stopRinging();
           stopIncomingRinging();
           if (mounted) {
             // Show timeout message similar to React JS
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Call timed out – ${widget.callerName} did not answer. Try again'),
+                content: Text(
+                    'Call timed out – ${widget.callerName} did not answer. Try again'),
                 backgroundColor: Colors.orange,
                 duration: const Duration(seconds: 3),
               ),
@@ -137,7 +161,7 @@ class _CallScreenState extends State<CallScreen> {
           }
         }
       });
-    }else{
+    } else {
       startIncomingRinging();
     }
 
@@ -150,6 +174,11 @@ class _CallScreenState extends State<CallScreen> {
     // Listen for peer media toggle events
     socketProvider.listenPeerMediaToggle((micOn, cameraOn) {
       debugPrint('🎤 Peer media toggle: micOn=$micOn, cameraOn=$cameraOn');
+      print("Is icon show muted icon = $isShowMutedIcon");
+      isShowMutedIcon = !isShowMutedIcon;
+      isRemoteVideoOn = cameraOn;
+      print("Is icon show muted icon = $isShowMutedIcon");
+      setState(() {});
       // You can update UI based on peer's media state here
     });
 
@@ -175,10 +204,10 @@ class _CallScreenState extends State<CallScreen> {
 
     socketProvider.addListener(_onSocketUpdate);
 
-
     // Set up call accepted callback
     _setupCallAcceptedCallback();
   }
+
   void _onSocketUpdate() {
     final data = socketProvider.latestMessage;
 
@@ -186,6 +215,7 @@ class _CallScreenState extends State<CallScreen> {
     _handleSdpSignal(data);
     // You can update your UI here or call setState
   }
+
   Future<void> _initRenderers() async {
     await _localRenderer.initialize();
     await _remoteRenderer.initialize();
@@ -216,7 +246,9 @@ class _CallScreenState extends State<CallScreen> {
 
     try {
       _localStream = await navigator.mediaDevices.getUserMedia({
-        'video': true,
+        'video': {
+          'facingMode': 'user', // 'user' = front camera, 'environment' = rear
+        },
         'audio': {
           'echoCancellation': true,
           'noiseSuppression': true,
@@ -260,7 +292,8 @@ class _CallScreenState extends State<CallScreen> {
     // Log local audio tracks for debugging
     final localAudioTracks = _localStream?.getAudioTracks();
     if (localAudioTracks != null && localAudioTracks.isNotEmpty) {
-      debugPrint('🎤 Local audio track found: ${localAudioTracks.first.enabled}');
+      debugPrint(
+          '🎤 Local audio track found: ${localAudioTracks.first.enabled}');
     } else {
       debugPrint('❌ No local audio tracks found');
     }
@@ -270,16 +303,19 @@ class _CallScreenState extends State<CallScreen> {
       if (event.streams.isNotEmpty) {
         _remoteStream = event.streams[0];
         _remoteRenderer.srcObject = _remoteStream;
-        debugPrint('✅ Set remote stream with ${_remoteStream?.getTracks().length} tracks');
+        debugPrint(
+            '✅ Set remote stream with ${_remoteStream?.getTracks().length} tracks');
 
         // Handle audio tracks specifically
         final audioTracks = _remoteStream?.getAudioTracks();
         if (audioTracks != null && audioTracks.isNotEmpty) {
-          debugPrint('🎵 Remote audio track found: ${audioTracks.first.enabled}');
+          debugPrint(
+              '🎵 Remote audio track found: ${audioTracks.first.enabled}');
           // Ensure remote audio tracks are enabled and not muted
           for (var track in audioTracks) {
             track.enabled = true;
-            debugPrint('🎵 Remote audio track enabled: ${track.enabled}, muted: ${track.muted}');
+            debugPrint(
+                '🎵 Remote audio track enabled: ${track.enabled}, muted: ${track.muted}');
           }
 
           // Force speakerphone on when we receive remote audio
@@ -291,7 +327,8 @@ class _CallScreenState extends State<CallScreen> {
         // Handle video tracks
         final videoTracks = _remoteStream?.getVideoTracks();
         if (videoTracks != null && videoTracks.isNotEmpty) {
-          debugPrint('📹 Remote video track found: ${videoTracks.first.enabled}');
+          debugPrint(
+              '📹 Remote video track found: ${videoTracks.first.enabled}');
         }
 
         // Check audio status after setting remote stream
@@ -324,7 +361,7 @@ class _CallScreenState extends State<CallScreen> {
 
       switch (state) {
         case RTCPeerConnectionState.RTCPeerConnectionStateConnected:
-        // Call connected
+          // Call connected
           debugPrint('✅ Call connected successfully');
           // Check audio status when call connects
           _checkAudioStatus();
@@ -353,7 +390,7 @@ class _CallScreenState extends State<CallScreen> {
           break;
         case RTCPeerConnectionState.RTCPeerConnectionStateDisconnected:
         case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
-        // Call failed or disconnected
+          // Call failed or disconnected
           debugPrint('❌ Call disconnected or failed');
           if (mounted) Navigator.pop(context);
           break;
@@ -362,7 +399,7 @@ class _CallScreenState extends State<CallScreen> {
           if (mounted) Navigator.pop(context);
           break;
         default:
-        // Handle other states if needed
+          // Handle other states if needed
           break;
       }
     };
@@ -391,7 +428,8 @@ class _CallScreenState extends State<CallScreen> {
 
         // Validate the data structure - signal is nested
         if (data['signal']['sdp'] == null || data['signal']['type'] == null) {
-          debugPrint('❌ Invalid data structure for callAccepted: signal=${data['type']}');
+          debugPrint(
+              '❌ Invalid data structure for callAccepted: signal=${data['type']}');
           return;
         }
 
@@ -429,13 +467,15 @@ class _CallScreenState extends State<CallScreen> {
     // Wait for peer connection to be ready (with retry)
     int retryCount = 0;
     while (_peerConnection == null && retryCount < 10) {
-      debugPrint('⏳ Waiting for peer connection to be ready... (attempt ${retryCount + 1})');
+      debugPrint(
+          '⏳ Waiting for peer connection to be ready... (attempt ${retryCount + 1})');
       await Future.delayed(const Duration(milliseconds: 500));
       retryCount++;
     }
 
     if (_peerConnection == null) {
-      debugPrint('❌ Peer connection is null after retries, cannot handle signal');
+      debugPrint(
+          '❌ Peer connection is null after retries, cannot handle signal');
       return;
     }
 
@@ -450,13 +490,16 @@ class _CallScreenState extends State<CallScreen> {
           debugPrint('📞 Received SDP $type, current state: $currentState');
 
           // Check state before setting an offer
-          if (type == 'offer' && currentState != RTCSignalingState.RTCSignalingStateStable) {
+          if (type == 'offer' &&
+              currentState != RTCSignalingState.RTCSignalingStateStable) {
             debugPrint('⚠️ Cannot set remote offer in state: $currentState');
             return;
           }
 
           // Check state before setting an answer
-          if (type == 'answer' && currentState != RTCSignalingState.RTCSignalingStateHaveLocalOffer) {
+          if (type == 'answer' &&
+              currentState !=
+                  RTCSignalingState.RTCSignalingStateHaveLocalOffer) {
             debugPrint('⚠️ Cannot set remote answer in state: $currentState');
             return;
           }
@@ -588,49 +631,70 @@ class _CallScreenState extends State<CallScreen> {
         ),
       ),
       body: Stack(
+        fit: StackFit.loose,
+        alignment: Alignment.center,
         children: [
           Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
-                isVideoOn
-                    ? SizedBox(
-                    height: 200,
-                    child: RTCVideoView(_localRenderer, mirror: true))
-                    : ClipOval(
-                  child: CachedNetworkImage(
-                    imageUrl: widget.imageUrl,
-                    width: 150,
-                    height: 150,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => const CircleAvatar(
-                      radius: 75,
-                      backgroundColor: Colors.grey,
-                    ),
-                    errorWidget: (context, url, error) =>
-                    const CircleAvatar(
-                      radius: 75,
-                      backgroundColor: Colors.grey,
-                      child: Icon(Icons.person,
-                          color: Colors.white, size: 75),
+            child: _isCallAccepted && isRemoteVideoOn
+                ? SizedBox(
+                    // 200height: ,
+                    child: RTCVideoView(
+                    _remoteRenderer,
+                    mirror: true,
+                    objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                    placeholderBuilder: (con) {
+                      return Container(
+                        color: Colors.black,
+                      );
+                    },
+                  ))
+                : ClipOval(
+                    child: Stack(
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: widget.imageUrl,
+                          width: 150,
+                          height: 150,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const CircleAvatar(
+                            radius: 75,
+                            backgroundColor: Colors.grey,
+                          ),
+                          errorWidget: (context, url, error) =>
+                              const CircleAvatar(
+                            radius: 75,
+                            backgroundColor: Colors.grey,
+                            child: Icon(Icons.person,
+                                color: Colors.white, size: 75),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const Spacer(),
-                _buildBottomControls(),
-              ],
-            ),
           ),
+          if (!isShowMutedIcon)
+            Positioned(
+              // left: MediaQuery.of(context).size.width / 2 - 50,
+              top: 20,
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    decoration: BoxDecoration(color: Colors.grey.withAlpha(180),borderRadius: BorderRadius.circular(12)),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    child: Text("User is Muted"),
+                  ),
+                )),
           // Waiting message for outgoing calls (similar to React JS)
-          if (widget.callDirection == CallDirection.outgoing && !_isCallAccepted)
+          if (widget.callDirection == CallDirection.outgoing &&
+              !_isCallAccepted)
             Positioned(
               top: 100,
               left: 0,
               right: 0,
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   decoration: BoxDecoration(
                     color: Colors.black54,
                     borderRadius: BorderRadius.circular(20),
@@ -647,8 +711,8 @@ class _CallScreenState extends State<CallScreen> {
               ),
             ),
           // Remote video view when call is active and video is on
-          if (_isCallAccepted && isVideoOn)
-            Positioned(
+          if (isVideoOn)
+              Positioned(
               top: 100,
               right: 20,
               child: Container(
@@ -660,10 +724,61 @@ class _CallScreenState extends State<CallScreen> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: RTCVideoView(_remoteRenderer),
+                  child: RTCVideoView(
+                    _localRenderer,
+                    objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                    placeholderBuilder: (con) {
+                      return Container(
+                        color: Colors.black,
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
+             ),
+          // else
+          //   Positioned(
+          //     top: 100,
+          //     right: 20,
+          //     child: Container(
+          //       width: 120,
+          //       height: 160,
+          //       decoration: BoxDecoration(
+          //         borderRadius: BorderRadius.circular(12),
+          //         color: AppColor.commonAppColor,
+          //
+          //         border: Border.all(color: Colors.white, width: 2),
+          //       ),
+          //       child: Center(
+          //         child:  ClipRRect(
+          //           borderRadius: BorderRadius.circular(200),
+          //           child: CachedNetworkImage(
+          //             imageUrl: widget.imageUrl,
+          //             width: 50,
+          //             height: 50,
+          //             fit: BoxFit.cover,
+          //
+          //             placeholder: (context, url) => const CircleAvatar(
+          //               radius: 200,
+          //               backgroundColor: Colors.grey,
+          //             ),
+          //             errorWidget: (context, url, error) =>
+          //             const CircleAvatar(
+          //               radius: 150,
+          //               backgroundColor: Colors.grey,
+          //               child: Icon(Icons.person,
+          //                   color: Colors.white, size: 50),
+          //             ),
+          //           ),
+          //         ),
+          //       ),
+          //     ),
+          //     ),
+
+
+          // Status text showing call duration or calling status
+
+          Positioned(bottom: 15, child: _buildBottomControls()),
         ],
       ),
     );
@@ -713,13 +828,20 @@ class _CallScreenState extends State<CallScreen> {
               color: Colors.red,
               onPressed: () {
                 socketProvider.rejectCallEvent(callToUserId: widget.callerId);
-                socketProvider.hangUpCallEvent(targetId:widget.callerId,whoHangUpCallId: signInModel!.data!.user!.sId!);
-                socketProvider.leaveCallEvent(callToUserId: widget.callerId,callFromUserId:  signInModel!.data!.user!.sId!);
+                socketProvider.hangUpCallEvent(
+                    targetId: widget.callerId,
+                    whoHangUpCallId: signInModel!.data!.user!.sId!);
+                socketProvider.leaveCallEvent(
+                    callToUserId: widget.callerId,
+                    callFromUserId: signInModel!.data!.user!.sId!);
                 stopRinging();
                 // if (mounted) {
                 //   Navigator.pop(context);
                 // }
               }),
+          SizedBox(
+            width: 100,
+          ),
           _buildPillButton(
             icon: Icons.call,
             text: "Accept",
@@ -735,30 +857,36 @@ class _CallScreenState extends State<CallScreen> {
                   // Try to wait a bit and retry once
                   await Future.delayed(const Duration(milliseconds: 500));
                   if (_peerConnection == null) {
-                    debugPrint('❌ Peer connection still null after retry. Cannot accept call.');
+                    debugPrint(
+                        '❌ Peer connection still null after retry. Cannot accept call.');
                     return;
                   }
                 }
 
                 // Check if remote description is already set, if not set it
-                final currentRemoteDesc = await _peerConnection!.getRemoteDescription();
+                final currentRemoteDesc =
+                    await _peerConnection!.getRemoteDescription();
                 if (currentRemoteDesc == null) {
                   // First, ensure the remote description is set
-                  if (widget.dataOfSocket != null && widget.dataOfSocket['signal'] != null) {
-                    debugPrint('📞 Signal data found: Type ${widget.dataOfSocket['signal']['type']}');
+                  if (widget.dataOfSocket != null &&
+                      widget.dataOfSocket['signal'] != null) {
+                    debugPrint(
+                        '📞 Signal data found: Type ${widget.dataOfSocket['signal']['type']}');
 
-                  // Validate the data structure
-                  if (widget.dataOfSocket['signal']['sdp'] == null || widget.dataOfSocket['signal']['type'] == null) {
-                    debugPrint('❌ Invalid data structure for incoming call');
-                    return;
-                  }
+                    // Validate the data structure
+                    if (widget.dataOfSocket['signal']['sdp'] == null ||
+                        widget.dataOfSocket['signal']['type'] == null) {
+                      debugPrint('❌ Invalid data structure for incoming call');
+                      return;
+                    }
 
-                  final remoteDesc = RTCSessionDescription(
-                    widget.dataOfSocket['signal']['sdp'],
-                    widget.dataOfSocket['signal']['type'],
-                  );
+                    final remoteDesc = RTCSessionDescription(
+                      widget.dataOfSocket['signal']['sdp'],
+                      widget.dataOfSocket['signal']['type'],
+                    );
 
-                    debugPrint('📞 Setting remote description with type: ${remoteDesc.type}');
+                    debugPrint(
+                        '📞 Setting remote description with type: ${remoteDesc.type}');
                     await _peerConnection!.setRemoteDescription(remoteDesc);
                     debugPrint('📞 Remote description set successfully');
                   } else {
@@ -766,7 +894,8 @@ class _CallScreenState extends State<CallScreen> {
                     return;
                   }
                 } else {
-                  debugPrint('📞 Remote description already set, proceeding with answer creation');
+                  debugPrint(
+                      '📞 Remote description already set, proceeding with answer creation');
                 }
 
                 // Check if peer connection is ready for answer
@@ -800,10 +929,8 @@ class _CallScreenState extends State<CallScreen> {
 
                 // Also emit accept call event for backward compatibility
                 socketProvider.acceptCallEvent(
-                    callToUserId: widget.callerId,
-                    signal: answer.toMap()
-                );
-
+                    callToUserId: widget.callerId, signal: answer.toMap());
+                stopIncomingRinging();
                 _startTimer();
 
                 // Update UI to show in-call state (similar to React JS)
@@ -878,6 +1005,10 @@ class _CallScreenState extends State<CallScreen> {
                 );
               },
             ),
+            SizedBox(
+              width: 8,
+            ),
+
             _buildControlButton(
               icon: isSpeakerOn ? Icons.volume_up : Icons.volume_down,
               onPressed: () {
@@ -888,29 +1019,46 @@ class _CallScreenState extends State<CallScreen> {
                 _toggleSpeakerMode();
               },
             ),
-            // Debug button for audio testing
-            _buildControlButton(
-              icon: Icons.bug_report,
-              onPressed: () {
-                _checkAudioStatus();
-                _ensureRemoteAudioEnabled();
-                _setSpeaker(true);
-                _forceAudioReinitialization();
-                _testAudioOutput();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Audio debug: Reinitialized audio and checked status'),
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              },
+            SizedBox(
+              width: 8,
             ),
+
+         //    // Debug button for audio testing
+         //    _buildControlButton(
+         //      icon: Icons.screen_share,
+         //      onPressed: () async{
+         // await startScreenShareService();
+         //
+         //        final mediaConstraints = {
+         //          'video': {'mandatory': {}, 'optional': []},
+         //          'audio': true,
+         //        };
+         //        try {
+         //          _localStream = await navigator.mediaDevices.getDisplayMedia(mediaConstraints);
+         //        if(_localStream != null){
+         //          _localStream!.getTracks().forEach((track){
+         //            _peerConnection?.addTrack(track, _localStream!);
+         //          });
+         //
+         //        }
+         //          // Use this stream in your peer connection
+         //          print("Screen sharing started");
+         //        } catch (e) {
+         //          print("Error during screen sharing: $e");
+         //        }
+         //      },
+         //    ),
+         //    SizedBox(
+         //      width: 8,
+         //    ),
+
             _buildControlButton(
               icon: isMuted ? Icons.mic_off : Icons.mic,
               onPressed: () {
                 setState(() {
                   isMuted = !isMuted;
                 });
+
                 // Toggle audio track
                 _localStream?.getAudioTracks().forEach((track) {
                   track.enabled = !isMuted;
@@ -923,6 +1071,10 @@ class _CallScreenState extends State<CallScreen> {
                 );
               },
             ),
+            SizedBox(
+              width: 8,
+            ),
+
             _buildControlButton(
               icon: Icons.call_end,
               color: Colors.red,
@@ -1019,7 +1171,8 @@ class _CallScreenState extends State<CallScreen> {
         if (remoteAudioTracks.isNotEmpty) {
           for (var track in remoteAudioTracks) {
             track.enabled = true;
-            debugPrint('🎵 Remote audio track enabled: ${track.enabled}, muted: ${track.muted}');
+            debugPrint(
+                '🎵 Remote audio track enabled: ${track.enabled}, muted: ${track.muted}');
           }
         } else {
           debugPrint('❌ No remote audio tracks found');
@@ -1084,7 +1237,6 @@ class _CallScreenState extends State<CallScreen> {
         debugPrint('🔗 Signaling state: ${_peerConnection!.signalingState}');
         debugPrint('🔗 ICE connection state: ${_peerConnection!.iceConnectionState}');
       }
-
     } catch (e) {
       debugPrint('❌ Error checking audio state: $e');
     }
@@ -1242,9 +1394,26 @@ class _CallScreenState extends State<CallScreen> {
         testPlayer.dispose();
         debugPrint('🔊 Audio test completed');
       });
-
     } catch (e) {
       debugPrint('❌ Error testing audio output: $e');
     }
+  }
+}
+
+const MethodChannel _channel = MethodChannel('com.elsner.econnect/screen_share');
+
+Future<void> startScreenShareService() async {
+  try {
+    await _channel.invokeMethod('startService');
+  } on PlatformException catch (e) {
+    print("Failed to start service: '${e.message}'.");
+  }
+}
+
+Future<void> stopScreenShareService() async {
+  try {
+    await _channel.invokeMethod('stopService');
+  } on PlatformException catch (e) {
+    print("Failed to stop service: '${e.message}'.");
   }
 }
