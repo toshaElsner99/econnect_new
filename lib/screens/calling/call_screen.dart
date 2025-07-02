@@ -157,6 +157,7 @@ class _CallScreenState extends State<CallScreen> {
                 duration: const Duration(seconds: 3),
               ),
             );
+            print("21112001");
             Navigator.pop(context);
           }
         }
@@ -169,13 +170,16 @@ class _CallScreenState extends State<CallScreen> {
     socketProvider.listenAcceptedCallEvent(_handleCallAccepted);
 
     // Listen for hang up events
-    socketProvider.listenHangUpCallEvent();
+    socketProvider.listenHangUpCallEvent((isHangup){
+      stopIncomingRinging();
+    });
 
     // Listen for peer media toggle events
     socketProvider.listenPeerMediaToggle((micOn, cameraOn) {
       debugPrint('🎤 Peer media toggle: micOn=$micOn, cameraOn=$cameraOn');
       print("Is icon show muted icon = $isShowMutedIcon");
-      isShowMutedIcon = !isShowMutedIcon;
+      isShowMutedIcon = !micOn;
+      print("this is the value coming form the cameraon==> $cameraOn");
       isRemoteVideoOn = cameraOn;
       print("Is icon show muted icon = $isShowMutedIcon");
       setState(() {});
@@ -188,6 +192,7 @@ class _CallScreenState extends State<CallScreen> {
         debugPrint('❌ User $userId is busy');
         stopRinging();
         if (mounted) {
+          print("21112001");
           Navigator.pop(context);
         }
       });
@@ -196,8 +201,11 @@ class _CallScreenState extends State<CallScreen> {
       socketProvider.listenCallRejectedEvent(() {
         debugPrint('❌ Call was rejected');
         stopRinging();
+        stopIncomingRinging(); // Ensure incoming ringtone stops (for safety)
         if (mounted) {
-          Navigator.pop(context);
+          print("21112001");
+          print("21");
+          // Navigator.pop(context);
         }
       });
     }
@@ -363,6 +371,8 @@ class _CallScreenState extends State<CallScreen> {
         case RTCPeerConnectionState.RTCPeerConnectionStateConnected:
           // Call connected
           debugPrint('✅ Call connected successfully');
+          // Stop the ringtone when the call is connected
+          stopRinging();
           // Check audio status when call connects
           _checkAudioStatus();
           // Force speakerphone on by default
@@ -392,11 +402,17 @@ class _CallScreenState extends State<CallScreen> {
         case RTCPeerConnectionState.RTCPeerConnectionStateFailed:
           // Call failed or disconnected
           debugPrint('❌ Call disconnected or failed');
-          if (mounted) Navigator.pop(context);
+          if (mounted) {
+            print("21112001");
+            Navigator.pop(context);
+          };
           break;
         case RTCPeerConnectionState.RTCPeerConnectionStateClosed:
           debugPrint('🔒 Call connection closed');
-          if (mounted) Navigator.pop(context);
+          // if (mounted) {
+          //   // print("21112001");
+          //   // Navigator.pop(context);
+          // };
           break;
         default:
           // Handle other states if needed
@@ -438,22 +454,25 @@ class _CallScreenState extends State<CallScreen> {
           data['signal']['sdp'],
           data['signal']['type'],
         );
+
         await _peerConnection!.setRemoteDescription(remoteDesc);
         debugPrint('📞 Set remote description with answer from callee');
-
+// Stop the ringtone immediately when the call is accepted
+        stopRinging();
         // Start the timer to show call duration
         if (!_isCallAccepted) {
           setState(() {
             _isCallAccepted = true;
           });
+          stopRinging(); // for testing
           _startTimer();
-
           // Ensure audio is properly initialized
           _initializeAudioForCall();
 
           // Update UI to show in-call state (similar to React JS)
           debugPrint('✅ Call accepted - both users now in call');
         }
+        //stopRinging(); // for testing
       } catch (e) {
         debugPrint('❌ Error setting remote description with answer: $e');
       }
@@ -672,18 +691,18 @@ class _CallScreenState extends State<CallScreen> {
                     ),
                   ),
           ),
-          if (!isShowMutedIcon)
-            Positioned(
-              // left: MediaQuery.of(context).size.width / 2 - 50,
-              top: 20,
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    decoration: BoxDecoration(color: Colors.grey.withAlpha(180),borderRadius: BorderRadius.circular(12)),
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    child: Text("User is Muted"),
-                  ),
-                )),
+          // if (isShowMutedIcon)
+          //   Positioned(
+          //     // left: MediaQuery.of(context).size.width / 2 - 50,
+          //     top: 20,
+          //       child: Align(
+          //         alignment: Alignment.center,
+          //         child: Container(
+          //           decoration: BoxDecoration(color: Colors.grey.withAlpha(180),borderRadius: BorderRadius.circular(12)),
+          //           padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          //           child: Text("${widget.callerName} is Muted"),
+          //         ),
+          //       )),
           // Waiting message for outgoing calls (similar to React JS)
           if (widget.callDirection == CallDirection.outgoing &&
               !_isCallAccepted)
@@ -835,6 +854,7 @@ class _CallScreenState extends State<CallScreen> {
                     callToUserId: widget.callerId,
                     callFromUserId: signInModel!.data!.user!.sId!);
                 stopRinging();
+                stopIncomingRinging(); // Stops incoming ringtone
                 // if (mounted) {
                 //   Navigator.pop(context);
                 // }
@@ -850,6 +870,7 @@ class _CallScreenState extends State<CallScreen> {
               try {
                 debugPrint('📞 Accept button pressed');
                 debugPrint('📞 Data structure: ${widget.dataOfSocket}');
+                socketProvider.sendPeerMediaToggle(callToUserId: widget.callerId, micOn: true, cameraOn: false);
 
                 // Check if peer connection is initialized
                 if (_peerConnection == null) {
@@ -997,6 +1018,7 @@ class _CallScreenState extends State<CallScreen> {
                 _localStream?.getVideoTracks().forEach((track) {
                   track.enabled = isVideoOn;
                 });
+
                 // Emit peer media toggle event
                 socketProvider.sendPeerMediaToggle(
                   callToUserId: widget.callerId,
@@ -1010,11 +1032,11 @@ class _CallScreenState extends State<CallScreen> {
             ),
 
             _buildControlButton(
-              icon: isSpeakerOn ? Icons.volume_up : Icons.volume_down,
+              icon: isSpeakerOn ? Icons.volume_up : Icons.volume_off_rounded,
               onPressed: () {
-                setState(() {
-                  isSpeakerOn = !isSpeakerOn;
-                });
+                // setState(() {
+                //   isSpeakerOn = !isSpeakerOn;
+                // });
                 // Toggle speaker mode
                 _toggleSpeakerMode();
               },
@@ -1127,6 +1149,8 @@ class _CallScreenState extends State<CallScreen> {
   void _toggleSpeakerMode() async {
     try {
       isSpeakerOn = !isSpeakerOn;
+      setState(() {
+      });
       await _setSpeaker(isSpeakerOn);
       debugPrint('🔊 Speaker mode toggled: ${isSpeakerOn ? "ON" : "OFF"}');
     } catch (e) {

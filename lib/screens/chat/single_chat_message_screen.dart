@@ -703,6 +703,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         ],
       ),
       actions: [
+        if(oppositeUserId != signInModel!.data?.user?.sId)
         GestureDetector(
           onTap: () {
             // Navigator.push(

@@ -28,7 +28,7 @@ class SocketIoProvider extends ChangeNotifier {
 
   //New Socket URL
   static final socketBaseUrl =
-      'wss://dev-econnect-sass-socket.elsnerdev.co/?userId=${signInModel!.data?.user?.sId}&transport=websocket';
+      'wss://econnect-socket.weekmate.in/?userId=${signInModel!.data?.user?.sId}&transport=websocket';
   late IO.Socket socket;
   GetUserModel? getUserModel;
 
@@ -315,7 +315,7 @@ class SocketIoProvider extends ChangeNotifier {
     // Calling Feature Listeners
     listenSignalForCallCandidate();
     getCallFromAnyUser();
-    listenHangUpCallEvent();
+    // listenHangUpCallEvent();
   }
 
   /// This is for single chat screen ///
@@ -638,7 +638,7 @@ class SocketIoProvider extends ChangeNotifier {
       print("User is available for call");
       // Emit the signal event to the server with the SDP description
       socket.emit(signal, {
-        "toUserId": callToUserId, 
+        "toUserId": callToUserId,
         "data": {
           "description": description
         }
@@ -657,6 +657,7 @@ class SocketIoProvider extends ChangeNotifier {
     } else {
       // User is busy, show a popup and pop the current screen
       print("User is busy, cannot accept call");
+      print("21112001");
       Navigator.of(navigatorKey.currentState!.context).pop();
       Cf.showCommonDialog(
         navigatorKey.currentState!.context,
@@ -770,12 +771,18 @@ class SocketIoProvider extends ChangeNotifier {
   leaveCallEvent({required String callToUserId,required String callFromUserId}){
     socket.emit(leaveCall, {"userId": callFromUserId, "otherUserID": callToUserId});
     print("User left the call");
+
   }
 
-  listenHangUpCallEvent(){
+  listenHangUpCallEvent([Function(bool)? callback]){
     socket.off(hangUp);
     socket.on(hangUp, (data) {
+
       print("Hang up call event received >>> $data");
+      print("21112001");
+      if(callback != null){
+        callback(true);
+      }
       Navigator.of(navigatorKey.currentState!.context).pop();
     });
   }
@@ -797,6 +804,7 @@ class SocketIoProvider extends ChangeNotifier {
             duration: const Duration(seconds: 3),
           ),
         );
+        print("21112001");
         Navigator.of(navigatorKey.currentState!.context).pop();
       }
     });
@@ -899,7 +907,7 @@ class SocketIoProvider extends ChangeNotifier {
           duration: const Duration(seconds: 3),
         ),
       );
-      Navigator.of(navigatorKey.currentState!.context).pop();
+      // Navigator.of(navigatorKey.currentState!.context).pop();
     });
   }
 
