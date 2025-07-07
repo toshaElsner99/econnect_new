@@ -135,6 +135,7 @@ class Messages {
   List<RepliesSenderInfo>? repliesSenderInfo;
   bool? isMedia;
   bool? isPinned;
+  bool? isCalling;
   Forward? forwardInfo;
   SenderOfForward? senderOfForward;
 
@@ -163,6 +164,7 @@ class Messages {
     this.isPinned,
     this.forwardInfo,
     this.senderOfForward,
+    this.isCalling
   });
 
   Messages.fromJson(Map<String, dynamic> json) {
@@ -222,7 +224,7 @@ class Messages {
 
       isMedia = json['isMedia'];
       isPinned = json['isPinned'];
-
+isCalling = json["isCalling"];
       if (json['forwards'] != null) {
         forwardInfo = Forward.fromJson(json['forwards']);
       }

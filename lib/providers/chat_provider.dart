@@ -347,12 +347,15 @@ class ChatProvider extends  ChangeNotifier {
   }
 
 
-  Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID,bool? isEditFromReply = false})async{
+  Future<void> sendMessage({required dynamic content , required String receiverId, List<String>? files,String? replyId , String? editMsgID,bool? isEditFromReply = false , bool? isCalling = false})async{
     final requestBody = {
       "content": content,
       "receiverId": receiverId,
       "senderId": signInModel!.data?.user?.sId,
     };
+    if (isCalling ?? false) {
+      requestBody["isCalling"] = true;
+    }
     if (replyId != null && replyId.isNotEmpty) {
       requestBody['isReply'] = true;
       requestBody['replyTo'] = replyId;
@@ -367,7 +370,6 @@ class ChatProvider extends  ChangeNotifier {
     final todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
     final response = await ApiService.instance.request(endPoint: ApiString.sendMessage, method: Method.POST,reqBody: requestBody);
-    print("Send Message requestBody -= $requestBody");
     if(Cf.instance.statusCode200Check(response)){
       /// Socket Emit ///
       socketProvider.sendMessagesSC(response: response['data'],emitReplyMsg: replyId != null ? true : false);
