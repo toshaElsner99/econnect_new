@@ -136,15 +136,11 @@ class SocketIoProvider extends ChangeNotifier {
     });
 
     socket.onReconnect((attempt) {
-      print('Reconnected after $attempt attempts');
+      registerUser();
+      listenForNotifications();
     });
 
-    // socket.onAny((event, data) {
-    //   // print("connected>>>> ${socket.connected}");
-    //   // print("Received event: $event >>> $data");
-    // });
     registerUser();
-    // Remove duplicate listeners and implement a single optimized handler
     listenForNotifications();
   }
 
@@ -158,17 +154,6 @@ class SocketIoProvider extends ChangeNotifier {
     );
   }
 
-  // pinUnPinMessageEvent({required String senderId,required String receiverId,required isEmitForChannel}){
-  //   pragma("pinUnPinMessageEvent>>>>Called");
-  //   if(isEmitForChannel == false){
-  //     socket.emit(pinMessage,{{"senderId": senderId,"receiverId": receiverId}});
-  //     socket.on(pinMessage, (data) => print("pinUnPinMessageEvent>>>> $data"),);
-  //   }else{
-  //
-  //     socket.emit(messagePinnedToChannel,{{"senderId": senderId,"channelId": receiverId}});
-  //     socket.on(messagePinnedToChannel, (data) => print("pinUnPinMessageEvent>>>> $data"),);
-  //   }
-  // }
   pinUnPinMessageEventSingleChat(
       {required String senderId, required String receiverId}) {
     socket.emit(pinMessage, {"senderId": senderId, "receiverId": receiverId});
@@ -220,34 +205,23 @@ class SocketIoProvider extends ChangeNotifier {
 
   sendMessagesSC(
       {required Map<String, dynamic> response, bool emitReplyMsg = false}) {
-    print("emit>>>>> Send Message $response");
-    // print("emit>>>>> For reply $emitReplyMsg");
     String a = emitReplyMsg ? sendReplyMessage : sendMessage;
-    print("emit>>>>> For reply $a");
     socket.emit(emitReplyMsg ? sendReplyMessage : sendMessage, response);
-    // socket.on(  emitReplyMsg ? sendReplyMessage : sendMessage, (data) {
-    //   print("sendReplyMessage>>>>>DD $data");
-    // },);
   }
 
   deleteMessagesSC({required Map<String, dynamic> response}) {
-    print("emit>>>>> Delete Message $response");
     socket.emit(deleteMessagesEmit, response);
   }
 
   deleteMessagesFromChannelSC({required Map<String, dynamic> response}) {
-    print("emit>>>>> Delete Message $response");
     socket.emit(deleteMessagesChannelEmit, response);
   }
 
   void listenForNotifications() {
-    // Remove any existing listeners to avoid duplicates
     socket.off(notification);
 
     socket.on(notification, (data) {
       print("Received Notification >>> $data");
-
-      // Refresh the list with the latest data
       final channelListProvider = Provider.of<ChannelListProvider>(
           navigatorKey.currentState!.context,
           listen: false);
@@ -667,14 +641,6 @@ class SocketIoProvider extends ChangeNotifier {
       //  emit a hangup event
     }
   }
-
-  // listenSignalForCall(){
-  //   socket.on(signal, (data) {
-  //     print("Signal received >>> $data");
-  //
-  //   });
-  // }
-
   // Enhanced signal listening for both SDP and ICE candidates
   void listenSignalForCallCandidate([Function(dynamic)? callback]) {
     print("listenSignalForCallCandidate");
@@ -868,19 +834,11 @@ class SocketIoProvider extends ChangeNotifier {
     socket.on(callAccepted, (data){
       print("callAccepted Listened = $data");
 
-      // Handle the call accepted event - both users should now be connected
       if (data != null && data['signal'] != null) {
-        // For the caller (outgoing call), set the remote description with the answer
-        // This completes the WebRTC handshake
         print("Call accepted - setting remote description with answer");
-
-        // Call the callback if provided
         if (callback != null) {
           callback(data);
         }
-
-        // You can access the current call screen context here if needed
-        // For now, we'll just log the successful connection
         print("✅ Call connection established between both users");
       }
     });
