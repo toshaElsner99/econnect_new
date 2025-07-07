@@ -118,6 +118,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> with 
   }
 
   @override
+
+
+
+
   void initState() {
     super.initState();
     oppositeUserId = widget.oppositeUserId;
@@ -1043,6 +1047,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> with 
                     hasShownNewMessageDivider = true; // Mark that we've shown the divider for this group
                   }
 
+                  if(message.isCalling ?? false){
+                    if(message.content!.contains('rejected') || message.content!.contains('failed')  || message.content!.contains('Missed') || message.content!.contains("ended") )   {
+                   return callMessageWidget(index: messageIndex, messageList: message, message: message.content!,isRed: true, time:  DateTime.parse(message.createdAt!).toString());      }
+                    else{
+                      return callMessageWidget(index: messageIndex, messageList: message, message: message.content!,isRed: false,time: DateTime.parse(message.createdAt!).toString());
+                    }
+                  }
+
                   return AnimatedContainer(
                     duration: Duration(milliseconds: 300),
                     color: isHighlighted ? Colors.yellow.withOpacity(0.3) : Colors.transparent,
@@ -1066,7 +1078,43 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> with 
     },);
   }
 
-
+  Widget callMessageWidget({
+    required String time,
+    required int index,
+    required Messages messageList,
+    required String message,
+    bool isCalling = false,
+    bool showNewMessageDivider = false,
+    bool isRed =false
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.call,
+            size: 20,
+            color: isRed ? Colors.red : Colors.green,
+          ),
+          SizedBox(width: 10),
+          Flexible(
+            child: Cw.commonText(
+              text:  message.replaceAll(RegExp(r'<[^>]*>'), '').trim(),
+              fontSize: 14,
+              color: isRed ? Colors.red : Colors.green,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
 
   Widget chatBubble({

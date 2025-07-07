@@ -21,9 +21,11 @@ import 'package:flutter_webrtc/flutter_webrtc.dart'
         Helper,
         RTCSignalingState,
         RTCVideoViewObjectFit;
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../main.dart';
+import '../../providers/chat_provider.dart';
 import '../../socket_io/socket_io.dart';
 import '../../utils/app_sound_constants.dart';
 
@@ -96,6 +98,8 @@ class _CallScreenState extends State<CallScreen> {
   MediaStream? _localStream;
   MediaStream? _remoteStream;
 
+
+
   final socketProvider = Provider.of<SocketIoProvider>(
       navigatorKey.currentState!.context,
       listen: false);
@@ -148,6 +152,8 @@ class _CallScreenState extends State<CallScreen> {
           stopRinging();
           stopIncomingRinging();
           if (mounted) {
+            sendCallEventMessage(receiverId: widget.callerId, callStatus: 'missed');
+
             // Show timeout message similar to React JS
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -189,6 +195,10 @@ class _CallScreenState extends State<CallScreen> {
     // Listen for user busy events (for outgoing calls)
     if (widget.callDirection == CallDirection.outgoing) {
       socketProvider.listenUserBusyEvent((userId) {
+        sendCallEventMessage(
+          receiverId: widget.callerId,
+          callStatus: 'failed',
+        );
         debugPrint('❌ User $userId is busy');
         stopRinging();
         if (mounted) {
@@ -215,6 +225,45 @@ class _CallScreenState extends State<CallScreen> {
     // Set up call accepted callback
     _setupCallAcceptedCallback();
   }
+
+
+  // for the call message
+  Future<void> sendCallEventMessage({
+    required String receiverId,
+    required String callStatus, // started, rejected, failed, missed
+  }) async {
+    String content;
+
+    switch (callStatus) {
+      case 'started':
+        content = 'Call started at ';
+        break;
+      case 'ended':
+        content = 'Call ended at ';
+        break;
+      case 'rejected':
+        content = 'Call rejected ';
+        break;
+      case 'failed':
+        content = 'Call failed' ;
+        break;
+      case 'missed':
+        content = 'Missed call ';
+        break;
+      default:
+        content = 'Call failed ';
+    }
+
+    await  Provider.of<ChatProvider>(context,listen: false).sendMessage(
+      content: content,
+      receiverId: receiverId,
+      isCalling: true
+    );
+  }
+
+
+
+
 
   void _onSocketUpdate() {
     final data = socketProvider.latestMessage;
@@ -403,6 +452,10 @@ class _CallScreenState extends State<CallScreen> {
           // Call failed or disconnected
           debugPrint('❌ Call disconnected or failed');
           if (mounted) {
+            sendCallEventMessage(
+              receiverId: widget.callerId,
+              callStatus: 'failed',
+            );
             print("21112001");
             Navigator.pop(context);
           };
@@ -457,6 +510,10 @@ class _CallScreenState extends State<CallScreen> {
 
         await _peerConnection!.setRemoteDescription(remoteDesc);
         debugPrint('📞 Set remote description with answer from callee');
+        sendCallEventMessage(
+          receiverId: widget.callerId,
+          callStatus: 'started',
+        );
 // Stop the ringtone immediately when the call is accepted
         stopRinging();
         // Start the timer to show call duration
@@ -807,6 +864,7 @@ class _CallScreenState extends State<CallScreen> {
               color: Colors.red,
               onPressed: () {
                 socketProvider.rejectCallEvent(callToUserId: widget.callerId);
+                sendCallEventMessage(receiverId: widget.callerId, callStatus: 'rejected');
                 socketProvider.hangUpCallEvent(
                     targetId: widget.callerId,
                     whoHangUpCallId: signInModel!.data!.user!.sId!);
@@ -1066,6 +1124,22 @@ class _CallScreenState extends State<CallScreen> {
                 socketProvider.leaveCallEvent(callToUserId: widget.callerId,callFromUserId:  signInModel!.data!.user!.sId!);
                 _cleanup();
                 if (mounted) {
+
+                  if (_peerConnection?.connectionState !=
+                      RTCPeerConnectionState.RTCPeerConnectionStateConnected){
+                    sendCallEventMessage(
+                      receiverId: widget.callerId,
+                      callStatus: 'missed',
+                    );
+                  }
+                  if (_peerConnection?.connectionState ==
+                      RTCPeerConnectionState.RTCPeerConnectionStateConnected){
+                    sendCallEventMessage(
+                      receiverId: widget.callerId,
+                      callStatus: 'ended',
+                    );
+                  }
+
                   // Show end call message similar to React JS
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
