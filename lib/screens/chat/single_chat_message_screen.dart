@@ -44,6 +44,8 @@ import '../camera_preview/camera_preview.dart';
 import '../channel/channel_chat_screen.dart';
 import '../find_message_screen/find_message_screen.dart';
 import 'package:e_connect/utils/common/shimmer_loading.dart';
+import 'package:e_connect/utils/chat/audio_recording_mixin.dart';
+import 'package:e_connect/utils/chat/draft_message_utils.dart';
 
 class SingleChatMessageScreen extends StatefulWidget {
   final String userName;
@@ -61,7 +63,7 @@ class SingleChatMessageScreen extends StatefulWidget {
 }
 
 
-class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
+class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> with AudioRecordingMixin {
   final chatProvider = Provider.of<ChatProvider>(navigatorKey.currentState!.context,listen: false);
   final commonProvider = Provider.of<CommonProvider>(navigatorKey.currentState!.context,listen: false);
   final channelListProvider = Provider.of<ChannelListProvider>(navigatorKey.currentState!.context,listen: false);
@@ -69,7 +71,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   final FocusNode _focusNode = FocusNode();
   String? lastSentMessage;
-  final Map<String, dynamic> userCache = {};
   GetUserModelSecondUser? userDetails;
   String currentUserMessageId = "";
   final LayerLink _layerLink = LayerLink();
@@ -87,23 +88,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
   bool NeedTocallJumpToMessage = false;
   String messageGroupId = "";
   String messageId = "";
-  late AudioRecorder _record = AudioRecorder();
-  bool _isRecording = false;
-  String? _audioPath;
-  Duration _recordingDuration = Duration.zero;
-  Timer? _recordingTimer;
-  bool _showAudioPreview = false;
-  String? _previewAudioPath;
-  final Map<String, Duration> _audioDurations = {};
-  final _audioPlayer = AudioPlayer();
   String? highlightedMessageId;
   bool _showScrollToBottomButton = false;
   bool reloading = false;
   bool isFromJump = false;
-
-  // Replace voice_message_player related variables with:
-  final Map<String, AudioPlayer> _audioPlayers = {};
-  AudioPlayer? _currentlyPlayingPlayer;
 
   // Add this method to scroll to bottom
   void reloadPageOne() {
@@ -121,115 +109,12 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     setState(() {});
   }
 
-  Future<void> _initializeRecorder() async {
-    _record = AudioRecorder();
-    bool hasPermission = await _record.hasPermission();
-    if (!hasPermission) {
-      // print("Recording permission denied!");
-    }
-  }
+  // Audio recording methods are now provided by AudioRecordingMixin
 
-  void _startRecordingTimer() {
-    _recordingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        _recordingDuration += Duration(seconds: 1);
-      });
-    });
-  }
-
-  void _stopRecordingTimer() {
-    _recordingTimer?.cancel();
-    _recordingTimer = null;
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final hours = twoDigits(duration.inHours);
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return duration.inHours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
-  }
-
-  Future<String> _getFilePath() async {
-    final dir = await getApplicationDocumentsDirectory();
-    return '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-  }
-
-  Future<void> _toggleRecording() async {
-    if (_isRecording) {
-      final path = await _record.stop();
-      _stopRecordingTimer();
-      setState(() {
-        _isRecording = false;
-        _audioPath = path;
-        _showAudioPreview = true;
-        _previewAudioPath = path;
-      });
-      // print("Recording saved at: $_audioPath");
-    } else {
-      if (await _record.hasPermission()) {
-        final path = await _getFilePath();
-        await _record.start(RecordConfig(encoder: AudioEncoder.aacLc), path: path);
-        setState(() {
-          _isRecording = true;
-          _recordingDuration = Duration.zero;
-          _showAudioPreview = false;
-        });
-        _startRecordingTimer();
-      }
-    }
-  }
-
-  void _cancelRecording() async {
-    if (_isRecording) {
-      await _record.stop();
-      _stopRecordingTimer();
-      setState(() {
-        _isRecording = false;
-        _recordingDuration = Duration.zero;
-        _showAudioPreview = false;
-      });
-    }
-  }
-
-  sendAudio() async{
-    if (_audioPath != null) {
-      try {
-        final uploadedFiles =
-            await chatProvider.uploadFilesForAudio([_audioPath!]);
-        // print("uploadFiles>>>> $uploadedFiles");
-        // Send the message with the uploaded files
-        await chatProvider.sendMessage(
-          content: "",
-          receiverId: oppositeUserId,
-          files: uploadedFiles,
-        );
-
-        // Clear the audio state after successful send
-        setState(() {
-          _audioPath = null;
-          _showAudioPreview = false;
-          _recordingDuration = Duration.zero;
-        });
-        
-        // Clear draft message after sending audio
-        await _clearDraftMessage();
-      } catch (e) {
-        // print("Error sending audio message: $e");
-        // You might want to show an error message to the user here
-      }
-    }
-  }
-
-  void _sendAudioMessage() async {
-    if(_showScrollToBottomButton){
-      reloadPageOne();
-      Future.delayed(Duration(seconds: 3),() async{
-        sendAudio();
-      });
-    }else {
-      sendAudio();
-    }
+  // Implement required method from AudioRecordingMixin
+  @override
+  Future<void> clearDraftMessage() async {
+    await DraftMessageUtils.clearDraftMessage(oppositeUserId, isChannel: false);
   }
 
   @override
@@ -247,10 +132,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }else{
       initializeScreen(1,isFromJump,"","");
     }
-    _initializeRecorder();
+    initializeRecorder();
     _loadDraftMessage();
   }
-
 
   initializeScreen(int pageNo,bool isfromJump,String msgGroup,String msgId){
     scrollController.addListener(() {_saveScrollPosition();});
@@ -294,17 +178,15 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     _messageController.addListener(_onTextChanged);
   }
 
-  void fetchOppositeUserDetails()async{
+  void fetchOppositeUserDetails()async {
     userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: oppositeUserId);
   }
+
   void _fetchAndCacheUserDetails() async {
     userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: oppositeUserId);
-    setState(()  {
-      userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser;
-      userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
-    });
-    // print("userCache>>>>> ${userCache[oppositeUserId]}");
+    // User data is now automatically cached by the CommonProvider
   }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -312,19 +194,15 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     _removeMentionOverlay();
     _fileServiceProvider = Provider.of<FileServiceProvider>(context, listen: false);
   }
+
   @override
   void dispose() {
     // Save draft message before disposing
-    _saveDraftMessage(_messageController.text);
+    DraftMessageUtils.saveDraftMessage(oppositeUserId, _messageController.text, isChannel: false);
     
-    // Dispose all audio players
-    for (var player in _audioPlayers.values) {
-      player.dispose();
-    }
-    _audioPlayers.clear();
-    _audioDurations.clear();
-    _recordingTimer?.cancel();
-    _record.dispose();
+    // Dispose audio recording resources
+    disposeAudioRecording();
+    
     _messageController.removeListener(_onTextChanged);
     _messageController.dispose();
     _focusNode.dispose();
@@ -338,14 +216,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     socketProvider.cleanupChatListeners();
     super.dispose();
   }
+
   void _clearInputAndDismissKeyboard() {
     _focusNode.unfocus();
     _messageController.clear();
     _messageController.clear();
     FocusScope.of(context).unfocus();
     // Clear draft message when input is cleared
-    _clearDraftMessage();
+    DraftMessageUtils.clearDraftMessage(oppositeUserId, isChannel: false);
   }
+
   void _removeMentionOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = null;
@@ -441,6 +321,25 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     }
   }
 
+ Widget textFieldToSendMessage(){
+   return Padding(
+     padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+     child: Column(
+       mainAxisSize: MainAxisSize.min,
+       children: [
+         if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == true)...{
+           if(commonProvider.getUserModelSecondUser?.data?.user?.sId == "681d8ff1deb78a151b87a770")...{
+             userNotPutAnyMessageText(commonProvider.getUserModelSecondUser!.data!.user!.fullName!)
+           }else...{
+             userLeftedText()
+           }
+
+         }else...{
+           inputTextFieldWithEditor()
+         }
+       ],),
+   );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -461,23 +360,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           child:  Scaffold(
             appBar: buildAppBar(commonProvider, chatProvider),
             resizeToAvoidBottomInset: true,
-            bottomNavigationBar: Padding(
-              padding:  EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if(commonProvider.getUserModelSecondUser?.data?.user?.isLeft == true)...{
-                    if(commonProvider.getUserModelSecondUser?.data?.user?.sId == "681d8ff1deb78a151b87a770")...{
-                      userNotPutAnyMessageText(commonProvider.getUserModelSecondUser!.data!.user!.fullName!)
-                    }else...{
-                      userLeftedText()
-                    }
-
-                  }else...{
-                    inputTextFieldWithEditor()
-                  }
-                ],),
-            ),
+            bottomNavigationBar: textFieldToSendMessage(),
             floatingActionButton: _showScrollToBottomButton
                 ? FloatingActionButton(
               backgroundColor: AppColor.blueColor,
@@ -588,11 +471,6 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           icon: Icon(CupertinoIcons.back, color: Colors.white),
           onPressed: () {
             Cf.instance.pop();
-            // if(widget.isFromNotification ?? false) {
-            //   pushAndRemoveUntil(screen: HomeScreen());
-            // }else{
-            //   pop();
-            // }
             channelListProvider.readUnreadMessages(
               oppositeUserId: oppositeUserId,
               isCalledForFav: widget.calledForFavorite ?? false,
@@ -608,8 +486,8 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           Row(
             children: [
               Flexible(
-                child: Cw.instance.commonText(
-                  text: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
+                child: Cw.commonText(
+                  text: userName == "" ? commonProvider.getUserDisplayName(oppositeUserId) : userName,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -627,14 +505,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Cw.instance.getCommonStatusIcons(
+              Cw.getCommonStatusIcons(
                 size: 15,
                 status: userDetails?.data?.user?.status ?? "offline",
                 assetIcon: false,
               ),
               const SizedBox(width: 5),
               Flexible(
-                child: Cw.instance.commonText(
+                child: Cw.commonText(
                   text: (oppositeUserId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1 && chatProvider.isTypingFor == false)
                       ? "Typing..."
                       : Cf.instance.getLastOnlineStatus(
@@ -667,15 +545,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               /// Pinned Messages & Navigation
               GestureDetector(
                 onTap: () => Cf.instance.pushScreen(
-                  screen: PinnedPostsScreen(
-                    userName: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
-                    oppositeUserId: oppositeUserId,
-                    userCache: userCache,
-                  ),
+                                      screen: PinnedPostsScreen(
+                      userName: userName == "" ? commonProvider.getUserDisplayName(oppositeUserId) : userName,
+                      oppositeUserId: oppositeUserId,
+                    ),
                 ),
                 child: Row(
                   children: [
-                    Cw.instance.commonText(
+                    Cw.commonText(
                       text: "${commonProvider.getUserModelSecondUser?.data?.user?.pinnedMessageCount ?? 0}",
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -692,7 +569,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               GestureDetector(
                 onTap: () => Cf.instance.pushScreen(
                   screen: FilesListingScreen(
-                      userName: userName == "" ? userCache[oppositeUserId]?.data?.user?.username ?? "Loading..." : userName,
+                      userName: userName == "" ? commonProvider.getUserDisplayName(oppositeUserId) : userName,
                       oppositeUserId: oppositeUserId
                   ),
                 ),
@@ -717,12 +594,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => CallScreen(
-                  callerName: userCache[oppositeUserId]?.data?.user?.fullName ?? userCache[oppositeUserId]?.data?.user?.username ?? "Unknown",
+                  callerName: commonProvider.getUserDisplayName(oppositeUserId),
                   callerId: oppositeUserId,
-                  imageUrl:
-                  userCache[oppositeUserId]?.data?.user?.avatarUrl ??
-                      userCache[oppositeUserId]?.data?.user?.thumbnailAvatarUrl ??
-                      "",
+                  imageUrl: commonProvider.getUserAvatarUrl(oppositeUserId),
                   callDirection: CallDirection.outgoing
                 ),
               ),
@@ -759,42 +633,17 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                     messageGroupId =value['messageGroupId'];
                   });
 
-                  // }
 
                 }else{
-                  // print("Channel Id : ${value['channelId']}");
                   Cf.instance.pushReplacement(screen: ChannelChatScreen(channelId: value['channelId'] ?? "",isFromJump: true,jumpData: value));
                 }
-                // print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
-              }
-
-              // if(value != null){
-              //   if(!value['needToOpenChannelChat']){
-              //     if(!(oppositeUserId == value['id'])){
-              //       setState(() {
-              //         oppositeUserId = signInModel!.data!.user!.id == value['id'] ? value['oppositeUserID'] : value['id'] ;
-              //         userName = signInModel!.data!.user!.id == value['id'] ? value['oppositeUserName'] : value['name'];
-              //         initializeScreen();
-              //         // chatProvider.messageGroups.indexWhere((test)=> test.)
-              //       });
-              //
-              //     }
-              //
-              //   }else{
-              //     print("Channel Id : ${value['channelId']}");
-              //     pushReplacement(screen: ChannelChatScreen(channelId: value['channelId'] ?? ""));
-              //   }
-              //   print("Name ${value['name']} and id ${value['id']} and needToOpenchanelChatScreen ${value['needToOpenChannelChat']}");
-              // }
-
-            });
-            // showChatSettingsBottomSheet(userId: oppositeUserId);
+              }});
           },
         ),
         IconButton(
           icon: const Icon(Icons.more_vert, color: AppColor.whiteColor),
           onPressed: () {
-            Cw.instance.showChatSettingsBottomSheet(userId: oppositeUserId);
+            Cw.showChatSettingsBottomSheet(userId: oppositeUserId);
           },
         ),
       ],
@@ -823,7 +672,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         );
       }
       // Clear draft message after sending
-      await _clearDraftMessage();
+      await DraftMessageUtils.clearDraftMessage(oppositeUserId, isChannel: false);
       _clearInputAndDismissKeyboard();
     }
   }
@@ -849,7 +698,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
                   children: [
-                    if (!_isRecording && !_showAudioPreview) ...[
+                    if (!isRecording && !showAudioPreview) ...[
                       /// ADD ICON  ////
                       GestureDetector(
                         onTap: () => mediaSheet(context),
@@ -878,7 +727,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   link: _layerLink,
                                   child: KeyboardActions(
                                     disableScroll: true,
-                                    config: Cw.instance.keyboardConfigIos(_focusNode),
+                                    config: Cw.keyboardConfigIos(_focusNode),
                                     child: TextField(
                                       maxLines: 5,
                                       minLines: 1,
@@ -907,14 +756,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         ),
                       ),
                     ],
-                    if (_isRecording) ...[
+                    if (isRecording) ...[
                       Expanded(
                         child: Row(
                           children: [
                             Icon(Icons.mic, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red, size: 24),
                             SizedBox(width: 8),
                             Text(
-                              _formatDuration(_recordingDuration),
+                              formatDuration(recordingDuration),
                               style: TextStyle(
                                 color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red,
                                 fontSize: 16,
@@ -926,21 +775,21 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       ),
                       IconButton(
                         icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
-                        onPressed: _cancelRecording,
+                        onPressed: cancelRecording,
                       ),
                       IconButton(
                         icon: Icon(Icons.stop, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
-                        onPressed: _toggleRecording,
+                        onPressed: toggleRecording,
                       ),
                     ],
-                    if (_showAudioPreview) ...[
+                    if (showAudioPreview) ...[
                       Expanded(
                         child: Row(
                           children: [
                             Icon(Icons.audio_file, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor, size: 24),
                             SizedBox(width: 8),
                             Text(
-                              _formatDuration(_recordingDuration),
+                              formatDuration(recordingDuration),
                               style: TextStyle(
                                 color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
                                 fontSize: 16,
@@ -954,17 +803,25 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
                         onPressed: () {
                           setState(() {
-                            _showAudioPreview = false;
-                            _audioPath = null;
+                            showAudioPreview = false;
+                            audioPath = null;
                           });
                         },
                       ),
                       IconButton(
                         icon: Icon(Icons.send, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white :  AppColor.blueColor),
-                        onPressed: _sendAudioMessage,
+                        onPressed: () => sendAudioMessage(
+                          showScrollToBottomButton: _showScrollToBottomButton,
+                          reloadPageOne: reloadPageOne,
+                          sendAudioFunction: () => sendAudioSingleChat(
+                            oppositeUserId: oppositeUserId,
+                            showScrollToBottomButton: _showScrollToBottomButton,
+                            reloadPageOne: reloadPageOne,
+                          ),
+                        ),
                       ),
                     ],
-                    if (!_isRecording && !_showAudioPreview) ...[
+                    if (!isRecording && !showAudioPreview) ...[
                       if(fileServiceProvider.getFilesForScreen(AppString.singleChat).isNotEmpty || _messageController.text.isNotEmpty )...{
                         GestureDetector(
                           onTap: () async {
@@ -998,7 +855,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: _toggleRecording,
+                          onTap: toggleRecording,
                           child: Container(
                             padding: EdgeInsets.all(5),
                             decoration: BoxDecoration(
@@ -1013,7 +870,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   ],
                 ),
               ),
-              Cw.instance.selectedFilesWidget(screenName: AppString.singleChat),
+              Cw.selectedFilesWidget(screenName: AppString.singleChat),
             ],
           ),
         ),
@@ -1125,7 +982,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
             if(!isFromJump && value.totalPages > value.currentPagea) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Cw.instance.customLoading(),
+                child: Cw.customLoading(),
               );
             }else if(value.totalPages == value.currentPagea){
               return ChatProfileHeader(
@@ -1142,6 +999,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
           String date = mergedMessagesByDate.keys.elementAt(index);
           List<Messages> messagesForDate = mergedMessagesByDate[date]!;
           String? previousSenderId;
+          bool hasShownNewMessageDivider = false; // Track if we've shown the divider for this date group
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1158,7 +1016,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         color: AppColor.blueColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Cw.instance.commonText(
+                      child: Cw.commonText(
                         text: Cf.instance.formatDateTime(DateTime.parse(date)),
                         fontSize: 12,
                         color: AppColor.whiteColor,
@@ -1177,6 +1035,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   bool showUserDetails = previousSenderId != message.senderId;
                   previousSenderId = message.senderId;
                   bool isHighlighted = message.sId.toString() == highlightedMessageId;
+                  
+                  // Check if this message should show the new message divider
+                  bool shouldShowNewMessageDivider = false;
+                  if (message.isSeen == false && message.senderId != signInModel!.data?.user?.sId && !hasShownNewMessageDivider) {
+                    shouldShowNewMessageDivider = true;
+                    hasShownNewMessageDivider = true; // Mark that we've shown the divider for this group
+                  }
 
                   return AnimatedContainer(
                     duration: Duration(milliseconds: 300),
@@ -1189,6 +1054,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                       message: message.content!,
                       time: DateTime.parse(message.createdAt!).toString(),
                       showUserDetails: showUserDetails,
+                      showNewMessageDivider: shouldShowNewMessageDivider,
                     ),
                   );
                 },
@@ -1211,21 +1077,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     required String message,
     required String time,
     bool showUserDetails = true,
+    bool showNewMessageDivider = false,
   })  {
-    // if (!userCache.containsKey(userId))  {
-    //   commonProvider.getUserByIDCall2(userId: userId);
-    // }
-    dynamic user = userCache[userId];
-    // print("userID = $userId");
-    // print("user = ${(user?.data!.user!)}");
-    // print("DATa = ${jsonEncode(user?.data!.user!)}");
-    // print("NAME = ${user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown'}");
-    // print("Sender Info => ${messageList.senderOfForward}");
     return Consumer<CommonProvider>(builder: (context, commonProvider, child) {
-      // if (!userCache.containsKey(userId) && commonProvider.getUserModel!.data!.user!.sId! == userId) {
-      //   commonProvider.getUserByIDCall2(userId: userId);
-      //   userCache[userId] = commonProvider.getUserModel!;
-      // }
 
       bool pinnedMsg = messageList.isPinned ?? false;
       bool isEdited = messageList.isEdited ?? false;
@@ -1236,18 +1090,18 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
         child: Column(
           children: [
             Visibility(
-                visible: (messageList.isSeen == false && userId != signInModel!.data?.user?.sId),
-                child: Cw.instance.newMessageDivider()),
+                visible: showNewMessageDivider,
+                child: Cw.newMessageDivider()),
             Visibility(
                 visible: pinnedMsg,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40.0,vertical: 5),
                   child: Row(
                     children: [
-                      Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,),
+                      Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                        child: Cw.instance.commonText(text: "Pinned",color: AppColor.blueColor),
+                        child: Cw.commonText(text: "Pinned",color: AppColor.blueColor),
                       ),
                     ],
                   ),
@@ -1260,13 +1114,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
-                    child: Cw.instance.profileIconWithStatus(
-                        userID: "${user?.data!.user!.sId}",
-                        status: "${user?.data!.user!.status}",
-                        otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',
+                    child: Cw.profileIconWithStatus(
+                        userID: userId,
+                        status: commonProvider.getUserStatus(userId),
+                        otherUserProfile: commonProvider.getUserAvatarUrl(userId),
                         radius: 17,
-                        needToShowIcon: false,
-                        borderColor: AppColor.blueColor, userName: user?.data?.user?.username ?? user?.data?.user?.fullName ?? ""
+                        needToShowIcon: true,
+                        borderColor: AppColor.blueColor, 
+                        userName: commonProvider.getUserDisplayName(userId)
                     ),
                   )
                 } else ...{
@@ -1281,11 +1136,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            Cw.instance.commonText(
+                            Cw.commonText(
                                 height: 1.2,
-                                text:
-                                user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', fontWeight: FontWeight.bold),
-                            if (signInModel!.data?.user!.sId == user?.data!.user!.sId) ...{
+                                text: commonProvider.getUserDisplayName(userId), 
+                                fontWeight: FontWeight.bold),
+                            if (signInModel!.data?.user!.sId == userId) ...{
                               if (commonProvider.customStatusUrl.isNotEmpty) ...{
                                 SizedBox(width: 8,),
                                 CachedNetworkImage(
@@ -1294,7 +1149,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   imageUrl: commonProvider.customStatusUrl,
                                 ),
                               }
-                            } else if (userDetails?.data?.user?.customStatusEmoji != "" && userDetails?.data?.user?.customStatusEmoji != null && userDetails?.data?.user?.sId == user?.data!.user!.sId) ...{
+                            } else if (userDetails?.data?.user?.customStatusEmoji != "" && userDetails?.data?.user?.customStatusEmoji != null && userDetails?.data?.user?.sId == userId) ...{
                               Padding(
                                 padding: const EdgeInsets.only(left: 5.0),
                                 child: CachedNetworkImage(
@@ -1305,7 +1160,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             },
                             Padding(
                               padding: const EdgeInsets.only(left: 5.0),
-                              child: Cw.instance.commonText(
+                              child: Cw.commonText(
                                   height: 1.2,
                                   text: Cf.instance.formatTime(time), color: Colors.grey, fontSize: 12
                               ),
@@ -1324,7 +1179,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: Cw.instance.commonHTMLText(message: message),
+                                    child: Cw.commonHTMLText(message: message),
                                   ),
 
                                   if (isEdited)
@@ -1345,7 +1200,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                               color: AppColor.borderColor,
                                             ),
                                             const SizedBox(width: 2),
-                                            Cw.instance.commonText(
+                                            Cw.commonText(
                                               text: "Edited",
                                               fontSize: 10,
                                               color: AppColor.borderColor,
@@ -1375,11 +1230,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Cw.instance.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                Cw.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    Cw.instance.profileIconWithStatus(
+                                    Cw.profileIconWithStatus(
                                         userID: messageList.senderOfForward?.id ?? "" ,
                                         status: messageList.senderOfForward?.status ?? "offline",
                                         needToShowIcon: false,
@@ -1392,9 +1247,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                         Cw.instance.commonText(text: "${messageList.senderOfForward?.username}"),
+                                         Cw.commonText(text: "${messageList.senderOfForward?.username}"),
                                           SizedBox(height: 3),
-                                          Cw.instance.commonText(text: Cf.instance.formatDateString("${messageList.forwardInfo?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          Cw.commonText(text: Cf.instance.formatDateString("${messageList.forwardInfo?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),
@@ -1406,9 +1261,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                    visible: messageList.forwardInfo?.content != "",
                                       child:
                                       messageList.forwardInfo!.hrms_bdy != '' ?
-                                      Cw.instance.HtmlTextOnly(htmltext: "${messageList.forwardInfo?.content}")
+                                      Cw.HtmlTextOnly(htmltext: "${messageList.forwardInfo?.content}")
                                           :
-                                      // Cw.instance.commonHTMLText(message: "${messageList.forwardInfo?.content}")),
+                                      // Cw.commonHTMLText(message: "${messageList.forwardInfo?.content}")),
                                      Text("${messageList.forwardInfo?.content}"),)
                                     :
                                 SizedBox() : SizedBox(),
@@ -1423,20 +1278,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                       String originalFileName = Cf.instance.getFileName(messageList.forwardInfo!.files[index]);
                                       String formattedFileName = Cf.instance.formatFileName(originalFileName);
                                       String fileType = Cf.instance.getFileExtension(originalFileName);
-                                      // print("FILENAME :- ${messageList.forwardInfo!.files[index]}");
-                                      // print("FILENAME :- $originalFileName");
-                                      // print("FILENAME :- $formattedFileName");
                                       bool isAudioFile = fileType.toLowerCase() == 'm4a' ||
                                           fileType.toLowerCase() == 'mp3' ||
                                           fileType.toLowerCase() == 'wav';
                                       if (isAudioFile) {
-                                        // print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
                                         return AudioPlayerWidget(
                                           audioUrl: filesUrl ?? "",
-                                          audioPlayers: _audioPlayers,
-                                          audioDurations: _audioDurations,
-                                          onPlaybackStart: _handleAudioPlayback,
-                                          currentlyPlayingPlayer: _currentlyPlayingPlayer,
+                                          audioPlayers: audioPlayers,
+                                          audioDurations: audioDurations,
+                                          onPlaybackStart: handleAudioPlayback,
+                                          currentlyPlayingPlayer: currentlyPlayingPlayer,
                                           isForwarded: true, // Set to true for forwarded messages
                                         );
                                       }
@@ -1455,7 +1306,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                             Flexible(
                                                 flex: 10,
                                                 fit: FlexFit.loose,
-                                                child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
+                                                child: Cw.commonText(text: formattedFileName,maxLines: 1)),
                                             Spacer(),
                                             GestureDetector(
                                                 onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -1496,10 +1347,10 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               // print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
                               return AudioPlayerWidget(
                                 audioUrl: filesUrl,
-                                audioPlayers: _audioPlayers,
-                                audioDurations: _audioDurations,
-                                onPlaybackStart: _handleAudioPlayback,
-                                currentlyPlayingPlayer: _currentlyPlayingPlayer,
+                                audioPlayers: audioPlayers,
+                                audioDurations: audioDurations,
+                                onPlaybackStart: handleAudioPlayback,
+                                currentlyPlayingPlayer: currentlyPlayingPlayer,
                                 isForwarded: false, // Set to false for normal messages
                               );
                             }
@@ -1519,7 +1370,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   Flexible(
                                     flex: 10,
                                     fit: FlexFit.loose,
-                                    child: Cw.instance.commonText(text: formattedFileName, maxLines: 1),
+                                    child: Cw.commonText(text: formattedFileName, maxLines: 1),
                                   ),
                                   Spacer(),
                                   GestureDetector(
@@ -1543,10 +1394,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         visible: messageList.replies?.isNotEmpty ?? false,
                         child: GestureDetector(
                           onTap: () {
-                            // print("Simple Passing = ${messageId.toString()}");
                             Cf.instance.pushScreen(screen:
                             ReplyMessageScreen(
-                              userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',
+                              userName: commonProvider.getUserDisplayName(userId),
                               messageId: messageId.toString(),
                               receiverId: oppositeUserId,
                             ),
@@ -1576,7 +1426,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                         Stack(
                                           clipBehavior: Clip.none,
                                           children: [
-                                            Cw.instance.profileIconWithStatus(
+                                            Cw.profileIconWithStatus(
                                               userName: messageList.repliesSenderInfo![0].username,
                                               userID: messageList.repliesSenderInfo![0].id,
                                               status: "",
@@ -1588,7 +1438,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                             if (messageList.repliesSenderInfo!.length > 1)
                                               Positioned(
                                                 left: 16,
-                                                child: Cw.instance.profileIconWithStatus(
+                                                child: Cw.profileIconWithStatus(
                                                   userName: messageList.repliesSenderInfo![0].username,
                                                   userID: messageList.repliesSenderInfo![1].id,
                                                   status: "",
@@ -1634,7 +1484,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   ),
                                 ),
 
-                                Cw.instance.commonText(
+                                Cw.commonText(
                                   text: "${messageList.replyCount} ${messageList.replyCount! > 1 ? 'replies' : 'reply'}",
                                   fontSize: 12,
                                   color: AppColor.borderColor,
@@ -1644,7 +1494,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                 Flexible(
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
-                                    child: Cw.instance.commonText(
+                                    child: Cw.commonText(
                                       text: Cf.instance.getTimeAgo(
                                           (messageList.replies != null && messageList.replies!.isNotEmpty)
                                               ? messageList.replies!.last.createdAt.toString()
@@ -1708,14 +1558,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                                   width: 1.5,
                                                 ),
                                               ),
-                                              child: Cw.instance.profileIconWithStatus(
+                                              child: Cw.profileIconWithStatus(
                                                   userID: visibleUsers[i] ?? "",
                                                   status: "",
                                                   needToShowIcon: false,
                                                   radius: 14,
-                                                  otherUserProfile: userCache[visibleUsers[i]]?.data?.user?.thumbnailAvatarUrl ?? '',
-                                                  borderColor: AppColor.blueColor,
-                                                  userName: userCache[visibleUsers[i]]?.data?.user?.username ?? userCache[visibleUsers[i]]?.data?.user?.fullName ?? 'Unknown',
+                                                                                                otherUserProfile: commonProvider.getUserAvatarUrl(visibleUsers[i] ?? ''),
+                                              borderColor: AppColor.blueColor,
+                                              userName: commonProvider.getUserDisplayName(visibleUsers[i] ?? ''),
                                                   onTap: () => _showReactionsList(context, messageList.reactions!)
                                               ),
                                             ),
@@ -1734,7 +1584,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                   spacing: 4,
                                   runSpacing: 4,
                                   alignment: WrapAlignment.start,
-                                  children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
+                                  children: Cw.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
                                     reaction.userId == signInModel!.data?.user?.sId &&
                                         reaction.emoji == entry.key);
@@ -1795,7 +1645,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                 ),
                 Visibility(
                     visible: userDetails?.data?.user?.isLeft == false,
-                    child: Cw.instance.popMenu2(context,
+                    child: Cw.popMenu2(context,
                         isPinned: pinnedMsg,
                         hasAudioFile: (messageList.files?.any((file) {
                           String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
@@ -1812,14 +1662,14 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                         onOpened: () {},
                         onClosed: () {},
                         onReact: () {
-                          Cw.instance.showReactionBar(context, messageId.toString(), oppositeUserId, "Chat");
+                          Cw.showReactionBar(context, messageId.toString(), oppositeUserId, "Chat");
                         },
                         isForwarded: messageList.isForwarded! ? false : true,
                         opened: false,
                         createdAt: messageList.createdAt!,
                         currentUserId: userId,
-                        onForward: ()=> Cf.instance.pushScreen(screen: ForwardMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown',time: Cf.instance.formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: user?.data!.user!.thumbnailAvatarUrl ?? '',forwardMsgId: messageId,)),
-                        onReply: () => Cf.instance.pushScreen(screen: ReplyMessageScreen(userName: user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', messageId: messageId.toString(),receiverId: oppositeUserId,)).then((value) {
+                        onForward: ()=> Cf.instance.pushScreen(screen: ForwardMessageScreen(userName: commonProvider.getUserDisplayName(userId),time: Cf.instance.formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: commonProvider.getUserAvatarUrl(userId),forwardMsgId: messageId,)),
+                        onReply: () => Cf.instance.pushScreen(screen: ReplyMessageScreen(userName: commonProvider.getUserDisplayName(userId), messageId: messageId.toString(),receiverId: oppositeUserId,)).then((value) {
                           // print("value>>> $value");
                           if (messageList.replies != null && messageList.replies!.isNotEmpty) {
                             for (var reply in messageList.replies!) {
@@ -1840,9 +1690,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                           // print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                           _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                           // Clear draft message when editing
-                          _clearDraftMessage();
+                          DraftMessageUtils.clearDraftMessage(oppositeUserId, isChannel: false);
                         }),
-                        onDelete: () => Cw.instance.deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: oppositeUserId)))),
+                        onDelete: () => Cw.deleteMessageDialog(context,()=> chatProvider.deleteMessage(messageId: messageId.toString(), receiverId: oppositeUserId)))),
               ],
             ),
           ],
@@ -1862,7 +1712,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
     });
 
     // Save draft message
-    _saveDraftMessage(text);
+    DraftMessageUtils.saveDraftMessage(oppositeUserId, text, isChannel: false);
 
     if (cursorPosition > 0) {
       // Check if @ was just typed
@@ -1985,7 +1835,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                user?.username ?? 'Unknown',
+                                                user?.username ?? user?.fullName ?? 'Unknown',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 14,
@@ -2260,13 +2110,13 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                   itemBuilder: (context, index) {
                     final userId = userReactions.keys.elementAt(index);
                     final userEmojis = userReactions[userId]!;
-                    final user = userCache[userId]?.data?.user;
+                    final user = commonProvider.getUserFromCacheSync(userId)?.data?.user;
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
                         children: [
-                          Cw.instance.profileIconWithStatus(
+                          Cw.profileIconWithStatus(
                               userID: userId,
                               status: "",
                               needToShowIcon: false,
@@ -2281,7 +2131,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  user?.username ?? "Unknown",
+                                  user?.username ?? user?.fullName ?? commonProvider.getUserDisplayName(userId),
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
@@ -2314,41 +2164,16 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> {
       ),
     );
   }
-
-
-  void _handleAudioPlayback(String audioUrl, AudioPlayer player) {
-    // If there's already an audio playing and it's different from the new one
-    if (_currentlyPlayingPlayer != null && _currentlyPlayingPlayer != player) {
-      _currentlyPlayingPlayer!.stop();
-    }
-    setState(() => _currentlyPlayingPlayer = player);
-  }
-
+  // Audio playback handling is now provided by AudioRecordingMixin
   // Draft message methods
-  String _getDraftKey() {
-    return "${AppPreferenceConstants.draftMessageKey}${oppositeUserId}";
-  }
-
-  Future<void> _saveDraftMessage(String message) async {
-    if (message.trim().isNotEmpty) {
-      await setData(_getDraftKey(), message);
-    } else {
-      await _clearDraftMessage();
-    }
-  }
-
   Future<void> _loadDraftMessage() async {
-    final draftMessage = await getData(_getDraftKey());
+    final draftMessage = await DraftMessageUtils.loadDraftMessage(oppositeUserId, isChannel: false);
     if (draftMessage != null && draftMessage.trim().isNotEmpty) {
       setState(() {
         _messageController.text = draftMessage;
         _isTextFieldEmpty = false;
       });
     }
-  }
-
-  Future<void> _clearDraftMessage() async {
-    await removeData(_getDraftKey());
   }
 }
 

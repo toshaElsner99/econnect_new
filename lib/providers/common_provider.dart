@@ -3,6 +3,7 @@ import 'package:e_connect/model/get_user_model.dart';
 import 'package:e_connect/providers/sign_in_provider.dart';
 import 'package:e_connect/utils/api_service/api_service.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
+import 'package:e_connect/utils/services/user_cache_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
@@ -24,6 +25,9 @@ class CommonProvider extends ChangeNotifier {
   bool isMutedUser = false;
   GetUserMentionModel? getUserMentionModel;
   List<Users>? allUsers;
+
+  // Global user cache service instance
+  final UserCacheService _userCacheService = UserCacheService();
 
   void updatesCustomStatus(){
     selectedIndexOfStatus = null;
@@ -48,12 +52,12 @@ class CommonProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-
-
   Future<void> logOut() async {
     var signInProvider = Provider.of<SignInProvider>(navigatorKey.currentState!.context,listen: false);
     await signInProvider.fcmTokenRemoveInAPI();
     await clearData();
+    // Clear user cache on logout
+    _userCacheService.clearCache();
     Cf.instance.pushAndRemoveUntil(screen: SignInScreen());
     await NotificationService.clearBadgeCount();
     await NotificationService.clearAllNotifications();
@@ -75,6 +79,7 @@ class CommonProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+  
   Future<void> updateCustomStatusCall({required String status, String emojiUrl = ""}) async {
     final requestBody = {
       "custom_status": status,
@@ -100,19 +105,26 @@ class CommonProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-
   Future<void> getUserByIDCall() async {
-    final response = await ApiService.instance.request(endPoint: "${ApiString.getUserById}/${/*userId ?? */signInModel!.data?.user?.sId ?? ""}", method: Method.POST,isRawPayload: false);
-    if (Cf.instance.statusCode200Check(response)) {
-      getUserModel = GetUserModel.fromJson(response);
-      // getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
-      // isMutedUser = signInModel!.data?.user!.muteUsers!.contains(userId) ?? false;
-      setCustomTextController.text = getUserModel?.data?.user?.customStatus ?? "";
-      customStatusTitle = getUserModel?.data?.user?.customStatus ?? "";
-      customStatusUrl = getUserModel?.data?.user?.customStatusEmoji ?? "";
-      notifyListeners();
+    try {
+      final response = await ApiService.instance.request(endPoint: "${ApiString.getUserById}/${/*userId ?? */signInModel!.data?.user?.sId ?? ""}", method: Method.POST,isRawPayload: false);
+      if (Cf.instance.statusCode200Check(response)) {
+        getUserModel = GetUserModel.fromJson(response);
+        // Cache the current user data
+        if (getUserModel != null && signInModel?.data?.user?.sId != null) {
+          _userCacheService.cacheUser(signInModel!.data!.user!.sId!, getUserModel!);
+        }
+        setCustomTextController.text = getUserModel?.data?.user?.customStatus ?? "";
+        customStatusTitle = getUserModel?.data?.user?.customStatus ?? "";
+        customStatusUrl = getUserModel?.data?.user?.customStatusEmoji ?? "";
+        notifyListeners();
+      }
+    } catch (e) {
+      print("Error in getUserByIDCall: $e");
+      // Optionally show user feedback or handle gracefully
     }
   }
+  
   bool isLoadingGetUser = false;
 
   Future<GetUserModelSecondUser?> getUserByIDCallForSecondUser({String? userId}) async {
@@ -123,12 +135,23 @@ class CommonProvider extends ChangeNotifier {
         notifyListeners();
       }
 
+      // Try to get from cache first
+      final cachedUser = _userCacheService.getSecondUserDataSync(userId ?? "");
+      if (cachedUser != null) {
+        getUserModelSecondUser = cachedUser;
+        return cachedUser;
+      }
+
+      // Fetch from API if not in cache
       final response = await ApiService.instance.request(
         endPoint: "${ApiString.getUserById}/$userId", method: Method.POST,isRawPayload: false);
       print("this is the GetUserModelSecondUser!!! ${response}");
       if (Cf.instance.statusCode200Check(response)) {
         getUserModelSecondUser = GetUserModelSecondUser.fromJson(response);
-        // print("getUserByIDCallForSecondUser>>>${getUserModelSecondUser?.data?.user?.pinnedMessageCount}");
+        // Cache the user data
+        if (getUserModelSecondUser != null && userId != null) {
+          _userCacheService.cacheSecondUser(userId, getUserModelSecondUser!);
+        }
         return getUserModelSecondUser;
       }
     }catch (e){
@@ -139,6 +162,14 @@ class CommonProvider extends ChangeNotifier {
   }}
 
   Future<GetUserModel?> getUserByIDCall2({String? userId}) async {
+    // Try to get from cache first
+    final cachedUser = _userCacheService.getUserDataSync(userId ?? signInModel!.data?.user?.sId ?? "");
+    if (cachedUser != null) {
+      getUserModel = cachedUser;
+      return cachedUser;
+    }
+
+    // Fetch from API if not in cache
     final response = await ApiService.instance.request(
         endPoint: "${ApiString.getUserById}/${userId ?? signInModel!.data?.user?.sId}",
         method: Method.POST,
@@ -146,46 +177,97 @@ class CommonProvider extends ChangeNotifier {
     );
     if (Cf.instance.statusCode200Check(response)) {
       getUserModel = GetUserModel.fromJson(response);
+      // Cache the user data
+      if (getUserModel != null && userId != null) {
+        _userCacheService.cacheUser(userId, getUserModel!);
+      }
       print("getUserByIDCall2>>>${getUserModel?.data?.user?.pinnedMessageCount}");
       return getUserModel;
     }
     notifyListeners();
   }
+  
   Future<void> getUserApi({required String id})async{
-    final requestBody = {"type": "message", "id": id};
-    final response = await ApiService.instance.request(endPoint: ApiString.getUser, method: Method.GET,reqBody: requestBody);
-    if (Cf.instance.statusCode200Check(response)) {
-      getUserMentionModel = GetUserMentionModel.fromJson(response);
-      getUserMentionModel?.saveToPrefs(id);
-      await GetUserMentionModel.loadFromPrefs(id);
-      getUserMentionModel = (await GetUserMentionModel.loadFromPrefs(id))!;
+    try {
+      final requestBody = {"type": "message", "id": id};
+      final response = await ApiService.instance.request(endPoint: ApiString.getUser, method: Method.GET,reqBody: requestBody);
+      if (Cf.instance.statusCode200Check(response)) {
+        getUserMentionModel = GetUserMentionModel.fromJson(response);
+        try {
+          getUserMentionModel?.saveToPrefs(id);
+          await GetUserMentionModel.loadFromPrefs(id);
+          getUserMentionModel = (await GetUserMentionModel.loadFromPrefs(id))!;
+        } catch (e) {
+          print("Error saving/loading user mention model: $e");
+        }
+      }
+    } catch (e) {
+      print("Error in getUserApi: $e");
     }
   }
 
-  // Future<void> getAllUsers() async {
-  //   try {
-  //     print("Fetching all users...");
-  //     final requestBody = {"type": "message"};
-  //     final response = await ApiService.instance.request(
-  //       endPoint: ApiString.getUser,
-  //       method: Method.POST,
-  //       reqBody: requestBody
-  //     );
-  //     if (statusCode200Check(response)) {
-  //       getUserMentionModel = GetUserMentionModel.fromJson(response);
-  //       allUsers = getUserMentionModel?.data?.users;
-  //       print("Users fetched successfully. Count: ${allUsers?.length ?? 0}");
-  //     } else {
-  //       print("Failed to fetch users. Status code: ${response['statusCode']}");
-  //     }
-  //   } catch (e) {
-  //     print("Error fetching users: $e");
-  //     allUsers = [];  // Initialize to empty list on error
-  //   } finally {
-  //     notifyListeners();
-  //   }
-  // }
+  // Global user cache service getters
+  UserCacheService get userCacheService => _userCacheService;
 
+  /// Get user data from global cache
+  Future<GetUserModel?> getUserFromCache(String userId) async {
+    return await _userCacheService.getUserData(userId);
+  }
+
+  /// Get second user data from global cache
+  Future<GetUserModelSecondUser?> getSecondUserFromCache(String userId) async {
+    return await _userCacheService.getSecondUserData(userId);
+  }
+
+  /// Get user data synchronously from cache
+  GetUserModel? getUserFromCacheSync(String userId) {
+    return _userCacheService.getUserDataSync(userId);
+  }
+
+  /// Get second user data synchronously from cache
+  GetUserModelSecondUser? getSecondUserFromCacheSync(String userId) {
+    return _userCacheService.getSecondUserDataSync(userId);
+  }
+
+  /// Get user display name from cache
+  String getUserDisplayName(String userId) {
+    return _userCacheService.getUserDisplayName(userId);
+  }
+
+  /// Get user display name with API fallback
+  Future<String> getUserDisplayNameAsync(String userId) async {
+    return await _userCacheService.getUserDisplayNameAsync(userId);
+  }
+
+  /// Get user avatar URL from cache
+  String getUserAvatarUrl(String userId) {
+    return _userCacheService.getUserAvatarUrl(userId);
+  }
+
+  /// Get user avatar URL with API fallback
+  Future<String> getUserAvatarUrlAsync(String userId) async {
+    return await _userCacheService.getUserAvatarUrlAsync(userId);
+  }
+
+  /// Get user status from cache
+  String getUserStatus(String userId) {
+    return _userCacheService.getUserStatus(userId);
+  }
+
+  /// Get user status with API fallback
+  Future<String> getUserStatusAsync(String userId) async {
+    return await _userCacheService.getUserStatusAsync(userId);
+  }
+
+  /// Check if user exists in cache
+  bool hasUserInCache(String userId) {
+    return _userCacheService.hasUser(userId);
+  }
+
+  /// Preload multiple users
+  Future<void> preloadUsers(List<String> userIds) async {
+    await _userCacheService.preloadUsers(userIds);
+  }
 
   List<Users>? filterUsers(String? searchQuery) {
     if (searchQuery == null || searchQuery.isEmpty) {

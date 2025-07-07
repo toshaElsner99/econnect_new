@@ -58,11 +58,7 @@ class _HomeScreenState extends State<HomeScreen>
       onTap: () => Cf.instance.pushScreen(screen: OpenDirectMessage()),
     ),
   ];
-  final Map<String, bool> _isExpanded = {
-    'FAVORITES': true,
-    'CHANNEL': true,
-    'DIRECT MESSAGE': true,
-  };
+
   bool _isInitialized = false;
 
   // Selected tab index
@@ -78,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen>
   // Key for persisting draft IDs
   static const String _draftIdsKey =
       "${AppPreferenceConstants.draftMessageKey}_ids";
+
   @override
   void initState() {
     super.initState();
@@ -102,8 +99,6 @@ class _HomeScreenState extends State<HomeScreen>
     });
     // Thread Updates
     updateThreads();
-    // Load draft status immediately when screen opens
-    //  _loadDraftStatusImmediately();
   }
 
   @override
@@ -156,12 +151,6 @@ class _HomeScreenState extends State<HomeScreen>
     await NotificationService.setBadgeCount();
   }
 
-  // // Method to load draft status if needed
-  // Future<void> _loadDraftStatusIfNeeded(ChannelListProvider channelListProvider) async {
-  //   if (channelListProvider.combinedAllItems.isNotEmpty && _draftStatus.isEmpty) {
-  //     await _loadDraftStatus();
-  //   }
-  // }
   Future<void> _loadDraftStatusIfNeeded(
       ChannelListProvider channelListProvider) async {
     if (_draftStatus.isEmpty) {
@@ -290,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen>
                           // Show count only for Threads tab
                           if (index == 3 &&
                               threadProvider.unreadThreadCount > 0) ...[
-                            Cw.instance.commonText(
+                            Cw.commonText(
                               text: threadProvider.unreadThreadCount.toString(),
                               color: AppColor.lightBlueBgColor,
                               fontSize: 14,
@@ -298,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                             const SizedBox(width: 8),
                           ],
-                          Cw.instance.commonText(
+                          Cw.commonText(
                               text: _tabTitles[index],
                               color: _selectedTabIndex != index
                                   ? AppColor.white
@@ -482,437 +471,9 @@ class _HomeScreenState extends State<HomeScreen>
                 .getUserByIDCall();
             await Provider.of<ChannelListProvider>(context, listen: false)
                 .refreshAllLists();
-          },
+          }
         ),
       ),
-    );
-  }
-
-  Widget _buildPopupMenuForFavorite({ChatList? favorite}) {
-    return Consumer2<ChannelListProvider, CommonProvider>(
-      builder: (context, channelListProvider, commonProvider, child) {
-        return SizedBox(
-          height: 30,
-          width: 30,
-          child: PopupMenuButton<String>(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 150),
-            icon: Icon(
-              Icons.more_vert,
-              size: 25,
-              color: Colors.white,
-            ),
-            // offset: Offset(0, 10),
-            onSelected: (value) {
-              print("Selected: $value");
-              if (value == "unread") {
-                // print("unREADMESSAGE>>>>> ${favorite!.unseenMessagesCount}");
-                channelListProvider.readUnreadMessages(
-                    oppositeUserId: favorite?.sId ?? "",
-                    isCalledForFav: true,
-                    isCallForReadMessage:
-                        (favorite?.unseenMessagesCount ?? 0) > 0
-                            ? true
-                            : false);
-              } else if (value == "favorite") {
-                channelListProvider.removeFromFavorite(
-                    favouriteUserId: favorite?.sId ?? "");
-              } else if (value == "mute") {
-                channelListProvider.muteUser(
-                    userIdToMute: favorite?.sId ?? "",
-                    isForMute: commonProvider
-                            .getUserModel?.data?.user?.muteUsers
-                            ?.contains(favorite?.sId) ??
-                        false);
-              } else if (value == "leave") {
-                channelListProvider.closeConversation(
-                    conversationUserId: favorite?.sId ?? "",
-                    isCalledForFav: true);
-              }
-            },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem(
-                height: 35,
-                value: "unread",
-                child: Row(
-                  children: [
-                    Icon(Icons.mark_chat_unread_outlined, size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(
-                        text: (favorite?.unseenMessagesCount ?? 0) > 0
-                            ? "Mark as read"
-                            : "Mark as unread"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "favorite",
-                child: Row(
-                  children: [
-                    Icon(Icons.star, size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(text: "Unfavorite"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "mute",
-                child: Row(
-                  children: [
-                    Icon(
-                        commonProvider.getUserModel?.data?.user?.muteUsers
-                                    ?.contains(favorite?.sId) ??
-                                false != true
-                            ? Icons.notifications_none
-                            : Icons.notifications_off_outlined,
-                        size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(
-                        text: commonProvider
-                                    .getUserModel?.data?.user!.muteUsers!
-                                    .contains(favorite?.sId) !=
-                                true
-                            ? "Mute Conversation"
-                            : "Unmute Conversation"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "leave",
-                child: Row(
-                  children: [
-                    Icon(Icons.exit_to_app, size: 20, color: Colors.red),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(
-                      text: "Close Conversation",
-                      color: Colors.red,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPopupMenuForDirectMessage(
-      {ChatListDirectMessage? chatLisDirectMessage}) {
-    return Consumer2<ChannelListProvider, CommonProvider>(
-      builder: (context, channelListProvider, commonProvider, child) {
-        return SizedBox(
-          height: 30,
-          width: 30,
-          child: PopupMenuButton<String>(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 150),
-            icon: Icon(
-              Icons.more_vert,
-              size: 25,
-              color: Colors.white,
-            ),
-            onSelected: (value) {
-              print("Selected: $value");
-              if (value == "unread") {
-                // print("unREADMESSAGE>>>>> ${chatLisDirectMessage!.unseenMessagesCount}");
-                channelListProvider.readUnreadMessages(
-                    oppositeUserId: chatLisDirectMessage?.sId ?? "",
-                    isCalledForFav: true,
-                    isCallForReadMessage:
-                        (chatLisDirectMessage?.unseenMessagesCount ?? 0) > 0
-                            ? true
-                            : false);
-              } else if (value == "favorite") {
-                channelListProvider.addUserToFavorite(
-                    favouriteUserId: chatLisDirectMessage?.sId ?? "");
-              } else if (value == "mute") {
-                channelListProvider.muteUser(
-                    userIdToMute: chatLisDirectMessage?.sId ?? "",
-                    isForMute: commonProvider
-                            .getUserModel?.data?.user?.muteUsers
-                            ?.contains(chatLisDirectMessage?.sId) ??
-                        false);
-              } else if (value == "leave") {
-                channelListProvider.closeConversation(
-                    conversationUserId: chatLisDirectMessage?.sId ?? "",
-                    isCalledForFav: false);
-              }
-            },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem(
-                height: 35,
-                value: "unread",
-                child: Row(
-                  children: [
-                    Icon(Icons.mark_chat_unread_outlined, size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(
-                        text: chatLisDirectMessage!.unseenMessagesCount! > 0
-                            ? "Mark as read"
-                            : "Mark as unread"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "favorite",
-                child: Row(
-                  children: [
-                    Icon(Icons.star_border, size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(text: "Favorite"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "mute",
-                child: Row(
-                  children: [
-                    Icon(
-                        commonProvider.getUserModel?.data?.user?.muteUsers
-                                    ?.contains(chatLisDirectMessage.sId) ??
-                                false != true
-                            ? Icons.notifications_none
-                            : Icons.notifications_off_outlined,
-                        size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(
-                        text: commonProvider.getUserModel?.data?.user?.muteUsers
-                                    ?.contains(chatLisDirectMessage.sId) !=
-                                true
-                            ? "Mute Conversation"
-                            : "Unmute Conversation"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "leave",
-                child: Row(
-                  children: [
-                    Icon(Icons.exit_to_app, size: 20, color: Colors.red),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(
-                        text: "Close Conversation", color: Colors.red),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPopupMenuForFavChannel({FavouriteChannels? favouriteChannels}) {
-    return Consumer2<ChannelListProvider, CommonProvider>(
-      builder: (context, channelListProvider, commonProvider, child) {
-        return SizedBox(
-          height: 30,
-          width: 30,
-          child: PopupMenuButton<String>(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 150),
-            icon: Icon(
-              Icons.more_vert,
-              size: 25,
-              color: Colors.white,
-            ),
-            onSelected: (value) {
-              print("Selected: $value");
-              if (value == "unread") {
-                print(
-                    "unREADMESSAGE>>>>> ${favouriteChannels!.unseenMessagesCount}");
-                channelListProvider.readUnReadChannelMessage(
-                    oppositeUserId: favouriteChannels.sId ?? "",
-                    isCallForReadMessage:
-                        favouriteChannels.unseenMessagesCount! > 0
-                            ? true
-                            : false);
-              } else if (value == "favorite") {
-                channelListProvider.removeChannelFromFavorite(
-                    favoriteChannelID: favouriteChannels?.sId ?? "");
-              } else if (value == "mute") {
-                channelListProvider.muteUnMuteChannels(
-                    channelId: favouriteChannels?.sId ?? "",
-                    isMutedChannel: signInModel!.data?.user?.muteChannels!
-                            .contains(favouriteChannels?.sId ?? "") ??
-                        false);
-              } else if (value == "leave") {
-                leaveChannelDialog(favouriteChannels?.sId ?? "");
-              }
-            },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem(
-                height: 35,
-                value: "unread",
-                child: Row(
-                  children: [
-                    Icon(Icons.mark_chat_unread_outlined, size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(
-                        text: favouriteChannels!.unseenMessagesCount! > 0
-                            ? "Mark as read"
-                            : "Mark as unread"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "favorite",
-                child: Row(
-                  children: [
-                    Icon(Icons.star, size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(text: "Unfavorite"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "mute",
-                child: Row(
-                  children: [
-                    Icon(
-                        signInModel!.data?.user?.muteChannels!
-                                    .contains(favouriteChannels.sId) ??
-                                false
-                            ? Icons.notifications_none
-                            : Icons.notifications_off_outlined,
-                        size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(
-                        text: signInModel!.data?.user?.muteChannels!
-                                    .contains(favouriteChannels.sId) ??
-                                false
-                            ? "Unmute Channel"
-                            : "Mute Channel"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "leave",
-                child: Row(
-                  children: [
-                    Icon(Icons.exit_to_app, size: 20, color: Colors.red),
-                    SizedBox(width: 10),
-                    Cw.instance
-                        .commonText(text: "Leave Channel", color: Colors.red),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildPopupMenuForChannel({ChannelList? channelListModel}) {
-    return Consumer2<ChannelListProvider, CommonProvider>(
-      builder: (context, channelListProvider, commonProvider, child) {
-        return SizedBox(
-          height: 30,
-          width: 30,
-          child: PopupMenuButton<String>(
-            padding: EdgeInsets.zero,
-            constraints: BoxConstraints(minWidth: 150),
-            icon: Icon(
-              Icons.more_vert,
-              size: 25,
-              color: Colors.white,
-            ),
-            onSelected: (value) {
-              print("Selected: $value");
-              if (value == "unread") {
-                print("unREADMESSAGE>>>>> ${channelListModel!.unreadCount}");
-                channelListProvider.readUnReadChannelMessage(
-                    oppositeUserId: channelListModel.sId ?? "",
-                    isCallForReadMessage:
-                        channelListModel.unreadCount! > 0 ? true : false);
-              } else if (value == "favorite") {
-                channelListProvider.addChannelToFavorite(
-                    channelId: channelListModel?.sId ?? "");
-              } else if (value == "mute") {
-                channelListProvider.muteUnMuteChannels(
-                    channelId: channelListModel?.sId ?? "",
-                    isMutedChannel: signInModel!.data?.user!.muteChannels!
-                            .contains(channelListModel?.sId) ??
-                        false);
-              } else if (value == "leave") {
-                leaveChannelDialog(channelListModel?.sId ?? "");
-              }
-            },
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem(
-                height: 35,
-                value: "unread",
-                child: Row(
-                  children: [
-                    Icon(Icons.mark_chat_unread_outlined, size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(
-                        text: channelListModel!.unreadCount! > 0
-                            ? "Mark as read"
-                            : "Mark as unread"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "favorite",
-                child: Row(
-                  children: [
-                    Icon(Icons.star_border, size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(text: "Favorite"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "mute",
-                child: Row(
-                  children: [
-                    Icon(
-                        signInModel!.data?.user!.muteChannels!
-                                    .contains(channelListModel.sId) ??
-                                false
-                            ? Icons.notifications_none
-                            : Icons.notifications_off_outlined,
-                        size: 20),
-                    SizedBox(width: 10),
-                    Cw.instance.commonText(
-                        text: signInModel!.data?.user!.muteChannels!
-                                    .contains(channelListModel.sId) ??
-                                false
-                            ? "Unmute Channel"
-                            : "Mute Channel"),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                height: 35,
-                value: "leave",
-                child: Row(
-                  children: [
-                    Icon(Icons.exit_to_app, size: 20, color: Colors.red),
-                    SizedBox(width: 10),
-                    Cw.instance
-                        .commonText(text: "Leave Channel", color: Colors.red),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -942,7 +503,7 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Cw.instance.commonText(
+                          Cw.commonText(
                               text: "Confirm Leave Channel",
                               color: Colors.white),
                           GestureDetector(
@@ -957,7 +518,7 @@ class _HomeScreenState extends State<HomeScreen>
                     Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 20.0, horizontal: 20),
-                      child: Cw.instance.commonText(
+                      child: Cw.commonText(
                           text: "Are you sure you want to Leave this Channel?"),
                     ),
                     Divider(),
@@ -975,7 +536,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   color: Colors.grey.withOpacity(0.1)),
                               padding: EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 10),
-                              child: Cw.instance.commonText(text: "Cancel"),
+                              child: Cw.commonText(text: "Cancel"),
                             ),
                           ),
                           GestureDetector(
@@ -992,7 +553,7 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                               padding: EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 10),
-                              child: Cw.instance.commonText(
+                              child: Cw.commonText(
                                   text: "Leave", color: Colors.white),
                             ),
                           ),
@@ -1025,7 +586,7 @@ class _HomeScreenState extends State<HomeScreen>
           children: [
             Icon(CupertinoIcons.search, color: AppColor.white, size: 20),
             SizedBox(width: 10),
-            Cw.instance.commonText(
+            Cw.commonText(
                 text: "Search...",
                 color: AppColor.white,
                 fontWeight: FontWeight.w400)
@@ -1047,7 +608,7 @@ class _HomeScreenState extends State<HomeScreen>
         child: Row(
           children: [
             // User profile image
-            Cw.instance.profileIconWithStatus(
+            Cw.profileIconWithStatus(
                 userID: commonProvider.getUserModel?.data?.user?.sId ?? "",
                 status: commonProvider.getUserModel?.data?.user?.status ??
                     "offline",
@@ -1069,7 +630,7 @@ class _HomeScreenState extends State<HomeScreen>
               children: [
                 Row(
                   children: [
-                    Cw.instance.commonText(
+                    Cw.commonText(
                       text: (commonProvider
                               .getUserModel?.data?.user?.fullName ??
                           commonProvider.getUserModel?.data?.user?.username ??
@@ -1098,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen>
                         "")
                     .isNotEmpty) ...[
                   SizedBox(height: 4),
-                  Cw.instance.commonText(
+                  Cw.commonText(
                     text:
                         commonProvider.getUserModel?.data?.user?.customStatus ??
                             "",
@@ -1249,7 +810,7 @@ class _HomeScreenState extends State<HomeScreen>
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           child: Row(
             children: [
-              Cw.instance.profileIconWithStatus(
+              Cw.profileIconWithStatus(
                 userName: username,
                 userID: userId,
                 otherUserProfile: imageUrl,
@@ -1269,7 +830,7 @@ class _HomeScreenState extends State<HomeScreen>
                               minWidth: 0,
                               maxWidth:
                                   MediaQuery.of(context).size.width * 0.5),
-                          child: Cw.instance.commonText(
+                          child: Cw.commonText(
                             text: username,
                             color: muteConversation
                                 ? AppColor.borderColor
@@ -1282,7 +843,7 @@ class _HomeScreenState extends State<HomeScreen>
                             visible: userId == signInModel!.data?.user?.sId,
                             child: Padding(
                               padding: const EdgeInsets.only(left: 5.0),
-                              child: Cw.instance.commonText(
+                              child: Cw.commonText(
                                   text: "(you)",
                                   color: muteConversation
                                       ? AppColor.borderColor
@@ -1308,7 +869,7 @@ class _HomeScreenState extends State<HomeScreen>
                         child: Container(
                           padding: EdgeInsets.symmetric(vertical: 2),
 
-                          child: Cw.instance.commonText(
+                          child: Cw.commonText(
                             text: "Draft",
                             color: Colors.green,
                             fontSize: 12,
@@ -1373,7 +934,7 @@ class _HomeScreenState extends State<HomeScreen>
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           child: Row(
             children: [
-              Cw.instance.commonChannelIcon(
+              Cw.commonChannelIcon(
                   isPrivate: channel.isPrivate == true ? true : false,
                   isMuted: muteChannel),
               const SizedBox(width: 12),
@@ -1385,7 +946,7 @@ class _HomeScreenState extends State<HomeScreen>
                       constraints: BoxConstraints(
                           minWidth: 0,
                           maxWidth: MediaQuery.of(context).size.width * 0.5),
-                      child: Cw.instance.commonText(
+                      child: Cw.commonText(
                         text: channel.name ?? "",
                         color: muteChannel
                             ? AppColor.borderColor
@@ -1400,7 +961,7 @@ class _HomeScreenState extends State<HomeScreen>
                       visible: hasDraft,
                       child: Container(
                         padding: EdgeInsets.only(top: 3),
-                        child: Cw.instance.commonText(
+                        child: Cw.commonText(
                           text: "Draft",
                           color: Colors.green,
                           fontSize: 12,
@@ -1441,7 +1002,7 @@ class _HomeScreenState extends State<HomeScreen>
               borderRadius: BorderRadius.circular(5)),
           padding: EdgeInsets.symmetric(vertical: 3, horizontal: 7),
           margin: EdgeInsets.only(left: 5),
-          child: Cw.instance.commonText(text: "$count", color: Colors.black),
+          child: Cw.commonText(text: "$count", color: Colors.black),
         ));
   }
 
@@ -1498,7 +1059,7 @@ class _HomeScreenState extends State<HomeScreen>
               size: 24,
             ),
             const SizedBox(width: 16),
-            Cw.instance.commonText(
+            Cw.commonText(
               text: option.title,
               color: Colors.grey[800],
               fontSize: 16,
@@ -1543,14 +1104,14 @@ class _HomeScreenState extends State<HomeScreen>
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           child: Row(
             children: [
-              Cw.instance.commonChannelIcon(
+              Cw.commonChannelIcon(
                   isPrivate: isPrivate ?? false, isMuted: muteChannel),
               const SizedBox(width: 12),
               ConstrainedBox(
                 constraints: BoxConstraints(
                     minWidth: 0,
                     maxWidth: MediaQuery.of(context).size.width * 0.5),
-                child: Cw.instance.commonText(
+                child: Cw.commonText(
                   text: name ?? "",
                   color: muteChannel
                       ? AppColor.borderColor
@@ -1626,7 +1187,7 @@ class _HomeScreenState extends State<HomeScreen>
                     shape: BoxShape.circle,
                   ),
                   child: Center(
-                    child: Cw.instance.commonText(
+                    child: Cw.commonText(
                       text: unSeenMsgCount.toString(),
                       color: Colors.white,
                       fontSize: 15, // Increased font size
@@ -1988,7 +1549,7 @@ class _HomeScreenState extends State<HomeScreen>
               //     overflow: TextOverflow.ellipsis,
               //   ),
               // ),
-              Cw.instance.commonText(
+              Cw.commonText(
                 text: channelName.toUpperCase(),
                 color: AppColor.borderColor,
                 fontSize: 12,
@@ -2001,7 +1562,7 @@ class _HomeScreenState extends State<HomeScreen>
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Cw.instance.profileIconWithStatus(
+                Cw.profileIconWithStatus(
                   userName: thread.mainMessageSenderInfo?.fullName ??
                       thread.mainMessageSenderInfo?.username ??
                       "",
@@ -2016,7 +1577,7 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Cw.instance.commonText(
+                      Cw.commonText(
                         text: thread.mainMessageSenderInfo?.fullName ??
                             thread.mainMessageSenderInfo?.username ??
                             "",
@@ -2027,7 +1588,7 @@ class _HomeScreenState extends State<HomeScreen>
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 4),
-                      Cw.instance.commonHTMLText(
+                      Cw.commonHTMLText(
                           message: thread.mainMessageContent ?? "",
                           color: AppColor.white),
                       SizedBox(height: 8),
@@ -2039,7 +1600,7 @@ class _HomeScreenState extends State<HomeScreen>
                             color: AppColor.white.withOpacity(0.6),
                           ),
                           SizedBox(width: 8),
-                          Cw.instance.commonText(
+                          Cw.commonText(
                             text:
                                 "${thread.totalUnseenReplies} new ${thread.totalUnseenReplies == 1 ? 'reply' : 'replies'}",
                             color: AppColor.white.withOpacity(0.6),
@@ -2111,7 +1672,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       SizedBox(width: 16),
                       Expanded(
-                        child: Cw.instance.commonText(
+                        child: Cw.commonText(
                           text: option['title'] ?? '',
                           color: option['color'] ?? Colors.white,
                           fontSize: 16,
@@ -2357,76 +1918,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // // Method to load draft status for all users
-  // Future<void> _loadDraftStatus() async {
-  //   final channelListProvider = Provider.of<ChannelListProvider>(context, listen: false);
-  //
-  //   // Get all user IDs from favorites and direct messages
-  //   final Set<String> userIds = {};
-  //
-  //   // Add favorite users
-  //   final favorites = channelListProvider.favoriteListModel?.data?.chatList ?? [];
-  //   for (var fav in favorites) {
-  //     if (fav.sId != null) {
-  //       userIds.add(fav.sId!);
-  //     }
-  //   }
-  //
-  //   // Add direct message users
-  //   final directMessages = channelListProvider.directMessageListModel?.data?.chatList ?? [];
-  //   for (var dm in directMessages) {
-  //     if (dm.sId != null) {
-  //       userIds.add(dm.sId!);
-  //     }
-  //   }
-  //
-  //   // Get all channel IDs
-  //   final Set<String> channelIds = {};
-  //   final channels = channelListProvider.channelListModel?.data ?? [];
-  //   for (var channel in channels) {
-  //     if (channel.sId != null) {
-  //       channelIds.add(channel.sId!);
-  //     }
-  //   }
-  //
-  //   // Add favorite channels from favorite list model
-  //   final favoriteChannels = channelListProvider.favoriteListModel?.data?.favouriteChannels ?? [];
-  //   for (var favChannel in favoriteChannels) {
-  //     if (favChannel.sId != null) {
-  //       channelIds.add(favChannel.sId!);
-  //     }
-  //   }
-  //
-  //   // Check draft status for each user and channel concurrently
-  //   final List<Future<void>> draftChecks = [];
-  //
-  //   // Check user drafts
-  //   for (String userId in userIds) {
-  //     draftChecks.add(_checkUserDraft(userId));
-  //   }
-  //
-  //   // Check channel drafts
-  //   for (String channelId in channelIds) {
-  //     draftChecks.add(_checkChannelDraft(channelId));
-  //   }
-  //
-  //   // Wait for all draft checks to complete
-  //   await Future.wait(draftChecks);
-  //
-  //   // Trigger rebuild if any drafts found
-  //   if (_draftStatus.values.any((hasDraft) => hasDraft)) {
-  //     if (mounted) {
-  //       setState(() {});
-  //     }
-  //   }
-  // }
-
-  // Helper method to check user draft status
-  // Future<void> _checkUserDraft(String userId) async {
-  //   final hasDraft = await _hasDraftMessage(userId);
-  //   _draftStatus[userId] = hasDraft;
-  // }
-
   Future<void> _checkUserDraft(String userId) async {
     try {
       final hasDraft = await _hasDraftMessage(userId);
@@ -2453,11 +1944,6 @@ class _HomeScreenState extends State<HomeScreen>
       print("Error checking channel draft for $channelId: $e");
     }
   }
-  // Helper method to check channel draft status
-  // Future<void> _checkChannelDraft(String channelId) async {
-  //   final hasDraft = await _hasChannelDraftMessage(channelId);
-  //   _draftStatus["channel_$channelId"] = hasDraft;
-  // }
 
   // Method to refresh draft status when lists are updated
   Future<void> _refreshDraftStatus() async {
@@ -2474,12 +1960,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // Method to check if a channel has a draft message
-  // Future<bool> _hasChannelDraftMessage(String channelId) async {
-  //   final draftKey = "${AppPreferenceConstants.draftMessageKey}channel_$channelId";
-  //   final draftMessage = await getData(draftKey);
-  //   return draftMessage != null && draftMessage.trim().isNotEmpty;
-  // }
   Future<bool> _hasChannelDraftMessage(String channelId) async {
     try {
       final draftKey =
@@ -2504,20 +1984,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // Method to load draft status immediately when screen opens
-  // Future<void> _loadDraftStatusImmediately() async {
-  //   // Load draft status immediately without waiting for other data
-  //   await _loadDraftStatus();
-  //
-  //   // Also set up a timer to refresh draft status periodically
-  //   Timer.periodic(Duration(seconds: 30), (timer) {
-  //     if (mounted) {
-  //       _refreshDraftStatus();
-  //     } else {
-  //       timer.cancel();
-  //     }
-  //   });
-  // }
   Future<void> _loadDraftStatusImmediately() async {
     await _loadDraftStatus();
     Timer.periodic(Duration(seconds: 30), (timer) {

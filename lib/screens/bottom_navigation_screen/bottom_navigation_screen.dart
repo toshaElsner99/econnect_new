@@ -27,8 +27,13 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
   }
 
   load() async {
-    await commonProvider.getUserByIDCall();
-    signInModel = (await SignInModel.loadFromPrefs())!;
+    try {
+      await commonProvider.getUserByIDCall();
+      signInModel = (await SignInModel.loadFromPrefs())!;
+    } catch (e) {
+      print("Error loading user data in bottom navigation: $e");
+      // Optionally show user feedback or handle gracefully
+    }
   }
   @override
   Widget build(BuildContext context) {

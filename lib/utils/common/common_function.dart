@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_connect/utils/api_service/api_string_constants.dart';
 import 'package:e_connect/utils/app_color_constants.dart';
 import 'package:e_connect/utils/app_image_assets.dart';
+import 'package:e_connect/utils/app_preference_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -183,29 +184,33 @@ Widget getFileIconInChat({required String fileType, String? pngUrl}) {
   }
 
   if (iconPath != null && !iconPath.contains(ApiString.profileBaseUrl)) {
-    return Image.asset(iconPath, width: 40, height: 40, fit: BoxFit.contain);
+    return Image.asset(iconPath, width: 40, height: 40, fit: BoxFit.contain, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black);
   } else if (pngUrl != null && pngUrl.isNotEmpty) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          navigatorKey.currentState!.context,
-          MaterialPageRoute(
-            builder: (context) => ImageViewerScreen(imageUrl: pngUrl),
-          ),
-        );
+        try {
+          Navigator.push(
+            navigatorKey.currentState!.context,
+            MaterialPageRoute(
+              builder: (context) => ImageViewerScreen(imageUrl: pngUrl),
+            ),
+          );
+        } catch (e) {
+          print("Error navigating to image viewer: $e");
+        }
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 2),
-        color: AppColor.lightGreyColor.withOpacity(0.6),
+        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[800]!.withOpacity(0.6) : AppColor.lightGreyColor.withOpacity(0.6),
         child: CachedNetworkImage(imageUrl: pngUrl, width: 30, height: 40, fit: BoxFit.contain,
           errorWidget: (context, url, error) {
-            return Image.asset(AppImage.commonFile, width: 40, height: 40,fit: BoxFit.contain,);
+            return Image.asset(AppImage.commonFile, width: 40, height: 40, fit: BoxFit.contain, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black);
           },
         ),
       ),
     );
   } else {
-    return Image.asset(AppImage.commonFile, width: 40, height: 40);
+    return Image.asset(AppImage.commonFile, width: 40, height: 40, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black);
   }
 }
 
@@ -240,29 +245,46 @@ String getFileType(String path) {
 
 
 Future<dynamic> pushScreen({required Widget screen}) async {
- return Navigator.push(
-    navigatorKey.currentState!.context,
-    MaterialPageRoute(builder: (context) => screen,),
-  );
+  try {
+    return await Navigator.push(
+      navigatorKey.currentState!.context,
+      MaterialPageRoute(builder: (context) => screen,),
+    );
+  } catch (e) {
+    print("Error pushing screen: $e");
+    return null;
+  }
 }
 
 Future<void> pushReplacement({required Widget screen}) async {
-  Navigator.pushReplacement(
-    navigatorKey.currentState!.context,
-    MaterialPageRoute(builder: (context) => screen),
-  ).then((value) {});
+  try {
+    await Navigator.pushReplacement(
+      navigatorKey.currentState!.context,
+      MaterialPageRoute(builder: (context) => screen),
+    );
+  } catch (e) {
+    print("Error pushing replacement screen: $e");
+  }
 }
 
 void pushAndRemoveUntil({required Widget screen}) {
-  Navigator.pushAndRemoveUntil(
-    navigatorKey.currentState!.context,
-    MaterialPageRoute(builder: (context) => screen),
-        (route) => false,
-  );
+  try {
+    Navigator.pushAndRemoveUntil(
+      navigatorKey.currentState!.context,
+      MaterialPageRoute(builder: (context) => screen),
+          (route) => false,
+    );
+  } catch (e) {
+    print("Error pushing and removing until screen: $e");
+  }
 }
 
 Future<void> pop({bool? popValue}) async {
-  Navigator.pop(navigatorKey.currentState!.context,popValue);
+  try {
+    Navigator.pop(navigatorKey.currentState!.context, popValue);
+  } catch (e) {
+    print("Error popping screen: $e");
+  }
 }
 
 bool statusCode200Check(Map<String, dynamic> response, [bool checkForKarmaRes = false]) {
@@ -350,9 +372,19 @@ Widget getFileIcon(String? extension, String? filePath) {
   }
 
   if (isImage(extension)) {
-    return Image.file(
-        File(filePath),
-        fit: BoxFit.cover);
+    try {
+      return Image.file(
+          File(filePath),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print("Error loading file image: $error");
+            return Image.asset(AppImage.commonFile, fit: BoxFit.contain);
+          },
+      );
+    } catch (e) {
+      print("Error creating file image widget: $e");
+      return Image.asset(AppImage.commonFile, fit: BoxFit.contain);
+    }
   }
 
   String iconPath;

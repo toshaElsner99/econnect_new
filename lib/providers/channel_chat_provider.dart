@@ -183,7 +183,7 @@ class ChannelChatProvider extends ChangeNotifier{
 
   Future<List<String>> uploadFiles(String screenName) async {
     try {
-      Cw.instance.startLoading();
+      Cw.startLoading();
       List<PlatformFile> selectedFiles = FileServiceProvider.instance.getFilesForScreen(screenName);
       List<File> filesToUpload = selectedFiles.map((platformFile) {
         return File(platformFile.path!);
@@ -226,7 +226,7 @@ class ChannelChatProvider extends ChangeNotifier{
     }catch (e){
       throw Exception("$e");
     }finally{
-      Cw.instance.stopLoading();
+      Cw.stopLoading();
     }
   }
 
@@ -428,7 +428,7 @@ class ChannelChatProvider extends ChangeNotifier{
                   // Check if the response has success field and it's true
                   if (karmaResponse['success'] == true) {
                     print("Karma sent successfully: ${karmaResponse['message']}");
-                    Cw.instance.commonShowToast("${karmaResponse['message']}", Colors.green);
+                    Cw.commonShowToast("${karmaResponse['message']}", Colors.green);
                   } else {
                     // If karma API fails with specific messages, don't send the message
                     print("Karma send failed: ${karmaResponse['message']}");
@@ -436,37 +436,37 @@ class ChannelChatProvider extends ChangeNotifier{
                         karmaResponse['message'] == "Insufficient Waffle balance") {
                       shouldSendMessage = false;
                       // Show error message to the user
-                      Cw.instance.commonShowToast("${karmaResponse['message']}", Colors.red);
+                      Cw.commonShowToast("${karmaResponse['message']}", Colors.red);
                       return;
                     } else {
                       // Handle other error cases
                       shouldSendMessage = false;
-                      Cw.instance.commonShowToast("${karmaResponse['message']}", Colors.red);
+                      Cw.commonShowToast("${karmaResponse['message']}", Colors.red);
                       return;
                     }
                   }
                 } catch (e) {
                   print("Error sending karma: $e");
-                  Cw.instance.commonShowToast("Failed to send karma. Please try again.", Colors.red);
+                  Cw.commonShowToast("Failed to send karma. Please try again.", Colors.red);
                   shouldSendMessage = false;
                   return;
                 }
               } else {
                 print("Cannot send Karma to yourself");
-                Cw.instance.commonShowToast("You cannot send Waffle to yourself", Colors.red);
+                Cw.commonShowToast("You cannot send Waffle to yourself", Colors.red);
                 shouldSendMessage = false;
                 return;
               }
             } else {
               print("User not found in channel members");
-              Cw.instance.commonShowToast("User not found in channel members", Colors.red);
+              Cw.commonShowToast("User not found in channel members", Colors.red);
               shouldSendMessage = false;
               return;
             }
           }
         } catch (e) {
           print("Error processing karma message: $e");
-          Cw.instance.commonShowToast("Error processing karma message", Colors.red);
+          Cw.commonShowToast("Error processing karma message", Colors.red);
           shouldSendMessage = false;
           return;
         }
@@ -526,7 +526,7 @@ class ChannelChatProvider extends ChangeNotifier{
       }
     } catch (e) {
       print("Error sending message: $e");
-      Cw.instance.commonShowToast("Failed to send message. Please try again.", Colors.red);
+      Cw.commonShowToast("Failed to send message. Please try again.", Colors.red);
     }
     notifyListeners();
   }
@@ -541,7 +541,7 @@ class ChannelChatProvider extends ChangeNotifier{
 
   Future<void> getChannelPinnedMessage({required String channelID,bool needLoader = true})async{
     final requestBody = {"channelId": channelID};
-    final response = await ApiService.instance.request(endPoint: ApiString.getChannelPinnedMessage, method: Method.POST,reqBody: requestBody,needLoader: needLoader);
+    final response = await ApiService.instance.request(endPoint: ApiString.getChannelPinnedMessage+channelID, method: Method.GET,needLoader: needLoader);
     if(Cf.instance.statusCode200Check(response)){
       channelPinnedMessageModel = ChannelPinnedMessageModel.fromJson(response);
       notifyListeners();

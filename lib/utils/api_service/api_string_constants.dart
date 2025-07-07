@@ -31,7 +31,7 @@ class ApiString{
   /*Changed*/static const muteUser = "muteManage/muteUser"; // done
   /*Changed*/static const unMuteUser = "muteManage/unmuteUser"; // done
   /*Changed*/static const closeConversation = "chatList/closeConversation"; // done
-  /*Changed*/static const messageUnread = "chatMessageAction/unreadMessage"; // done
+  /*Changed*/static const messageUnread = "chatMessageAction/unreadMessage/"; // done
   /*Changed*/static const messageSeen = "/chatMessageAction/seenMessage/";  //done
   /*Changed*/static const addTOFavorite = "favorite/addFavoriteChat";
   /*Changed*/static const leaveChannel = "channelManage/leaveChannel/"; // done
@@ -72,10 +72,10 @@ class ApiString{
   /*Changed*/static unReadChannelMessage(String channelId) => "channelManage/unreadMessage/$channelId"; // done
   static const getChannelChat = "channelMessage/getMessages"; // done
   /*Changed*/static toggleAdminAndMember(String channelId) => "channelManage/toggleAdmin/$channelId";
-  /*Changed*/static removeMember(String channelId, String memberId) => "channelManage/removeMember/$channelId/$memberId";
+  /*Changed*/static removeMember(String channelId) => "channelManage/removeMember/$channelId";
   /*Changed*/static renameChannel(String channelId) => "channelManage/editChannel/$channelId";
   /*Changed*/static const getFilesListingInChannelChat = "channelMessage/getFileList/"; //done
-  static const getChannelPinnedMessage = "messages/channel/get-pinned-message-for-channel"; // done
+  /*Changed*/static const getChannelPinnedMessage = "/channelMessage/getPinnedMessages/"; // done
   // static deleteMessageFromChannel (String messageId) => "messages/delete/$messageId";
   /*Changed*/static const String addChannelTO = "channelManage/addChannel";// Done
 

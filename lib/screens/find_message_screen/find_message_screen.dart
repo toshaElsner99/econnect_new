@@ -45,7 +45,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
               context,
             ),
           ),
-          title: Cw.instance.commonText(
+          title: Cw.commonText(
             text: 'Find Messages',
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -57,7 +57,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
             // Search Field
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Cw.instance.commonTextFormField(
+              child: Cw.commonTextFormField(
                 controller: _searchController,
                 hintText: 'Search Messages',
                 prefixIcon: const Icon(CupertinoIcons.search),
@@ -75,7 +75,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                   print(value.messageGroups.length);
                   if (value.messageGroups.length == 0) {
                     return Center(
-                      child: Cw.instance.commonText(text: "No data found"),
+                      child: Cw.commonText(text: "No data found"),
                     );
                   }
                   return ListView.builder(
@@ -99,7 +99,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8.0),
-                                    child: Cw.instance.commonText(
+                                    child: Cw.commonText(
                                         text: dateFormatted,
                                         fontSize: 13,
                                         color: Colors.grey),
@@ -135,26 +135,30 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                         print(
                                             "Message group id ${messageData.id}");
                                         print("Message id ${message.id}");
-                                        Navigator.pop(context, {
-                                          "id": message.senderInfo?.id,
-                                          "oppositeUserID":
-                                          message.oppositeUserInfo?.id,
-                                          "oppositeUserName": message
-                                              .oppositeUserInfo?.username,
-                                          "name": message.senderInfo!.username,
-                                          "needToOpenChannelChat":
-                                          message.channelInfo != null
-                                              ? true
-                                              : false,
-                                          "channelId":
-                                          message.channelInfo != null
-                                              ? message.channelInfo?.id
-                                              : "",
-                                          "pageNO": pageNumber,
-                                          "messageGroupId":
-                                          messageData.id.toString(),
-                                          "messageId": message.id.toString()
-                                        });
+                                        try {
+                                          Navigator.pop(context, {
+                                            "id": message.senderInfo?.id,
+                                            "oppositeUserID":
+                                            message.oppositeUserInfo?.id,
+                                            "oppositeUserName": message
+                                                .oppositeUserInfo?.username,
+                                            "name": message.senderInfo!.username,
+                                            "needToOpenChannelChat":
+                                            message.channelInfo != null
+                                                ? true
+                                                : false,
+                                            "channelId":
+                                            message.channelInfo != null
+                                                ? message.channelInfo?.id
+                                                : "",
+                                            "pageNO": pageNumber,
+                                            "messageGroupId":
+                                            messageData.id.toString(),
+                                            "messageId": message.id.toString()
+                                          });
+                                        } catch (e) {
+                                          print("Error navigating back from find message: $e");
+                                        }
                                       });
                                     },
                                     child: Column(
@@ -164,7 +168,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                         SizedBox(
                                           height: 8,
                                         ),
-                                        Cw.instance.commonText(
+                                        Cw.commonText(
                                             text: channel != ""
                                                 ? channel
                                                 : "Direct Message (With ${message.oppositeUserInfo?.username})",
@@ -239,7 +243,7 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                         shape: BoxShape.circle,
                                                       ),
                                                     ),
-                                                    Cw.instance.getCommonStatusIcons(
+                                                    Cw.getCommonStatusIcons(
                                                         status: message
                                                             .senderInfo!
                                                             .status,
@@ -263,11 +267,11 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                 crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                                 children: [
-                                                  Cw.instance.commonText(
+                                                  Cw.commonText(
                                                       text: sender!,
                                                       fontSize: 18),
                                                   SizedBox(height: 10),
-                                                  Cw.instance.commonHTMLText(
+                                                  Cw.commonHTMLText(
                                                       message: content),
                                                 ],
                                               ),

@@ -251,7 +251,7 @@ class ChatProvider extends  ChangeNotifier {
   }
   Future<List<String>> uploadFiles(String screenName) async {
    try {
-     Cw.instance.startLoading();
+     Cw.startLoading();
      List<PlatformFile> selectedFiles = FileServiceProvider.instance.getFilesForScreen(screenName);
      List<File> filesToUpload = selectedFiles.map((platformFile) {
        return File(platformFile.path!);
@@ -296,12 +296,12 @@ class ChatProvider extends  ChangeNotifier {
    }catch (e){
      throw Exception("$e");
    }finally{
-     Cw.instance.stopLoading();
+     Cw.stopLoading();
    }
   }
   Future<List<String>> uploadFilesForAudio(List<String> filePaths) async {
     try {
-      Cw.instance.startLoading();
+      Cw.startLoading();
 
       if (filePaths.isEmpty) {
         throw Exception("No file path provided for upload");
@@ -342,7 +342,7 @@ class ChatProvider extends  ChangeNotifier {
     } catch (e) {
       throw Exception("$e");
     } finally {
-      Cw.instance.stopLoading();
+      Cw.stopLoading();
     }
   }
 

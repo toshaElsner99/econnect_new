@@ -229,7 +229,7 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
   Widget memberTile(MemberDetails member) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Cw.instance.profileIconWithStatus(
+      leading: Cw.profileIconWithStatus(
         userName: member.username.toString(),
         userID: member.sId!,
         otherUserProfile: member.avatarUrl,
@@ -621,7 +621,7 @@ class _AddPeopleToChannelState extends State<AddPeopleToChannel> {
                   itemBuilder: (context, index) {
                     final user = filteredUsers[index];
                     return ListTile(
-                      leading: Cw.instance.profileIconWithStatus(
+                      leading: Cw.profileIconWithStatus(
                         userName: user.username.toString(),
                         userID: user.userId ?? '',
                         otherUserProfile: user.avatarUrl,

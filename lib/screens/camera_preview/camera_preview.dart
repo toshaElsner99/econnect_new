@@ -33,7 +33,6 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   List<AssetEntity> _recentAssets = [];
   List<AssetPathEntity> _albums = [];
   AssetPathEntity? _selectedAlbum;
-  bool _showingPhotos = true; // true for Photos tab, false for Albums tab
   bool _isRearCamera = true; // Track current camera
 
   @override
@@ -41,7 +40,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     initializeCamera();
-    _loadGallery();
+    // _loadGallery();
   }
 
   @override
@@ -215,20 +214,32 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
 
   void saveAndExit() {
     if (_capturedImage != null || _capturedVideo != null) {
-      final File fileToUse = _capturedImage ?? _capturedVideo!;
-      final String extension = fileToUse.path.split('.').last;
-      final String fileName = fileToUse.path.split('/').last;
+      try {
+        final File fileToUse = _capturedImage ?? _capturedVideo!;
+        final String extension = fileToUse.path.split('.').last;
+        final String fileName = fileToUse.path.split('/').last;
 
-      final platformFile = PlatformFile(
-        path: fileToUse.path,
-        name: fileName,
-        size: fileToUse.lengthSync(),
-        bytes: fileToUse.readAsBytesSync(),
-      );
+        final platformFile = PlatformFile(
+          path: fileToUse.path,
+          name: fileName,
+          size: fileToUse.lengthSync(),
+          bytes: fileToUse.readAsBytesSync(),
+        );
 
-      FileServiceProvider.instance.addFilesForScreen(widget.screenName, [platformFile]);
+        FileServiceProvider.instance.addFilesForScreen(widget.screenName, [platformFile]);
+      } catch (e) {
+        print("Error saving captured file: $e");
+        // Show user feedback
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save captured file')),
+        );
+      }
     }
-    Navigator.pop(context);
+    try {
+      Navigator.pop(context);
+    } catch (e) {
+      print("Error popping camera preview: $e");
+    }
   }
 
   void toggleVideoPlayback() {
@@ -306,46 +317,62 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
   }
 
   Future<void> _openAssetPicker() async {
-    final List<AssetEntity>? result = await AssetPicker.pickAssets(
-      context,
-      pickerConfig: AssetPickerConfig(
-        maxAssets: 5, // Allow up to 5 selections
-        requestType: RequestType.common,
-        specialPickerType: SpecialPickerType.noPreview,
-        themeColor: Theme.of(context).primaryColor,
-      ),
-    );
+    try {
+      final List<AssetEntity>? result = await AssetPicker.pickAssets(
+        context,
+        pickerConfig: AssetPickerConfig(
+          maxAssets: 5, // Allow up to 5 selections
+          requestType: RequestType.common,
+          specialPickerType: SpecialPickerType.noPreview,
+          themeColor: Theme.of(context).primaryColor,
+        ),
+      );
 
-    if (result != null && result.isNotEmpty) {
-      try {
-        List<PlatformFile> selectedFiles = [];
-        
-        for (var asset in result) {
-          final File? file = await asset.file;
-          if (file != null) {
-            final platformFile = PlatformFile(
-              path: file.path,
-              name: file.path.split('/').last,
-              size: file.lengthSync(),
-              bytes: file.readAsBytesSync(),
-            );
-            selectedFiles.add(platformFile);
+      if (result != null && result.isNotEmpty) {
+        try {
+          List<PlatformFile> selectedFiles = [];
+          
+          for (var asset in result) {
+            try {
+              final File? file = await asset.file;
+              if (file != null) {
+                final platformFile = PlatformFile(
+                  path: file.path,
+                  name: file.path.split('/').last,
+                  size: file.lengthSync(),
+                  bytes: file.readAsBytesSync(),
+                );
+                selectedFiles.add(platformFile);
+              }
+            } catch (e) {
+              print("Error processing asset: $e");
+              // Continue with other assets
+            }
           }
-        }
-        
-        if (selectedFiles.isNotEmpty) {
-          FileServiceProvider.instance.addFilesForScreen(
-            widget.screenName, 
-            selectedFiles
+          
+          if (selectedFiles.isNotEmpty) {
+            FileServiceProvider.instance.addFilesForScreen(
+              widget.screenName, 
+              selectedFiles
+            );
+            try {
+              Navigator.pop(context);
+            } catch (e) {
+              print("Error popping after asset selection: $e");
+            }
+          }
+        } catch (e) {
+          print("Error selecting media: $e");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to select media'))
           );
-          Navigator.pop(context);
         }
-      } catch (e) {
-        print("Error selecting media: $e");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to select media'))
-        );
       }
+    } catch (e) {
+      print("Error opening asset picker: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to open media picker'))
+      );
     }
   }
 
@@ -363,11 +390,11 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
       appBar: AppBar(
         toolbarHeight: 35,
         backgroundColor: Colors.black,
-        leading: Cw.instance.commonBackButton(),
+        leading: Cw.commonBackButton(),
         centerTitle: true,
         title: Visibility(
           visible: _isVideoMode,
-          child: Cw.instance.commonText(text: "3:00", color: Colors.white)
+          child: Cw.commonText(text: "3:00", color: Colors.white)
         ),
         actions: [
           if (cameras != null && cameras!.length > 1)
@@ -385,13 +412,6 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (_capturedImage == null && _capturedVideo == null) ...[
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.center,
-              //   children: [
-              //     commonBackButton(),
-              //
-              //   ],
-              // ),
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -474,7 +494,7 @@ class _CameraScreenState extends State<CameraScreen> with WidgetsBindingObserver
                                     ),
                                   ),
                                 ),
-                                Cw.instance.commonText(text: !_isVideoMode ? "CAPTURE" : "RECORD",color: Colors.white,fontSize: 13)
+                                Cw.commonText(text: !_isVideoMode ? "CAPTURE" : "RECORD",color: Colors.white,fontSize: 13)
                               ],
                             ),
                           ),

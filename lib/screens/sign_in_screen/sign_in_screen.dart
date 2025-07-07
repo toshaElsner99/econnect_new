@@ -117,14 +117,14 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
           ),
         ),
         const SizedBox(height: 24),
-        Cw.instance.commonText(
+        Cw.commonText(
           text: AppString.welcomeTO,
           fontSize: 16,
           color: Colors.white.withOpacity(0.7),
           letterSpacing: 1.5,
         ),
         const SizedBox(height: 8),
-        Cw.instance.commonText(
+        Cw.commonText(
           text: AppString.elsnerEconnectPortal,
           fontSize: 24,
           fontWeight: FontWeight.bold,
@@ -153,7 +153,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Cw.instance.commonText(
+            Cw.commonText(
               text: AppString.signIN,
               fontSize: 28,
               fontWeight: FontWeight.w600,
@@ -220,7 +220,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Cw.instance.commonTextFormField(
+      child: Cw.commonTextFormField(
         focusNode: fNode,
         controller: controller,
         hintText: hintText,
@@ -247,7 +247,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   }
 
   Widget _buildSignInButton(SignInProvider signInProvider) {
-    return Cw.instance.commonElevatedButton(onPressed: () =>  signInProvider.signINCALL(), buttonText: AppString.signIN);
+    return Cw.commonElevatedButton(onPressed: () =>  signInProvider.signINCALL(), buttonText: AppString.signIN);
   }
 
   Widget _buildDividerWithText() {
@@ -261,7 +261,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Cw.instance.commonText(
+          child: Cw.commonText(
             text: "OR Continue With",
             fontSize: 14,
             color: Colors.grey[600],
@@ -283,7 +283,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
         if(signInProvider.domainList.isNotEmpty) {
           signInProvider.signInWithGoogle(context);
         } else {
-          Cw.instance.commonShowToast("Domain not found", Colors.white);
+          Cw.commonShowToast("Domain not found", Colors.white);
         }
       },
       child: Image.asset(
@@ -303,7 +303,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
           color: Colors.grey[400],
         ),
         const SizedBox(width: 8),
-        Cw.instance.commonText(
+        Cw.commonText(
           text: "Secure Login",
           fontSize: 14,
           color: Colors.grey[600],
@@ -341,7 +341,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                       style: TextStyle(color: AppColor.commonAppColor),
                     ),
                     const SizedBox(height: 16),
-                    Cw.instance.commonTextFormField(
+                    Cw.commonTextFormField(
                       controller: emailController,
                       hintText: 'Email',
                       prefixIcon: Icon(Icons.email, color: AppColor.commonAppColor),

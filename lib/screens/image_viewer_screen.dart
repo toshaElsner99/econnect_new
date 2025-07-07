@@ -30,7 +30,7 @@ class ImageViewerScreen extends StatelessWidget {
           color: Colors.black,
         ),
         loadingBuilder: (context, event) => Center(
-          child: Cw.instance.customLoading(),
+          child: Cw.customLoading(),
         ),
         errorBuilder: (context, error, stackTrace) => Center(
           child: Icon(

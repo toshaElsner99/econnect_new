@@ -54,10 +54,10 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            Cw.instance.commonText(text: "Files", fontSize: 16),
+            Cw.commonText(text: "Files", fontSize: 16),
             Padding(
               padding: const EdgeInsets.only(left: 5),
-              child: Cw.instance.commonText(
+              child: Cw.commonText(
                 text: " | ${widget.userName}",
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -70,18 +70,10 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
       body: Consumer<ChatProvider>(
         builder: (context, chatProvider, child) {
           final messages = chatProvider.filesListingInChatModel?.data?.messages;
-
-          return messages?.length == 0 ? Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset(AppImage.fileIcon,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,height: 100,width: 100,),
-                SizedBox(height: 10),
-                Cw.instance.commonText(text: "No file posts yet",fontSize: 18),
-              ],
-            ),
-          ) : Column(
+          if (messages?.length == 0) {
+            return noFilesWidget();
+          } else {
+            return Column(
             children: [
               Visibility(
                 visible: messages != null && messages.isNotEmpty,
@@ -89,7 +81,7 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
                   alignment: Alignment.centerLeft,
                   child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: Cw.instance.commonText(
+                    child: Cw.commonText(
                       text: "Recent files",
                       color: AppColor.borderColor,
                       fontSize: 20,
@@ -138,7 +130,7 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
                             children: [
                               Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$fileUrl"),
                               SizedBox(width: 20),
-                              Cw.instance.commonText(text: formattedFileName, maxLines: 1,overflow: TextOverflow.ellipsis),
+                              Cw.commonText(text: formattedFileName, maxLines: 1,overflow: TextOverflow.ellipsis),
                               Spacer(),
                               GestureDetector(
                                 onTap: () => Provider.of<DownloadFileProvider>(context, listen: false).downloadFile(
@@ -163,7 +155,22 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
               ),
             ],
           );
+          }
         },
+      ),
+    );
+  }
+
+  noFilesWidget(){
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset(AppImage.fileIcon,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,height: 100,width: 100,),
+          SizedBox(height: 10),
+          Cw.commonText(text: "No file posts yet",fontSize: 18),
+        ],
       ),
     );
   }

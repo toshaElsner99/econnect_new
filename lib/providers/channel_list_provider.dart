@@ -147,7 +147,7 @@ class ChannelListProvider extends ChangeNotifier{
       Cf.instance.pushScreen(screen: ChannelChatScreen(channelId: response["data"]["_id"]));
       getChannelList();
     }else if(response['statusCode'] == 403) {
-      Cw.instance.commonShowToast("Channel Name is already used",Colors.red);
+      Cw.commonShowToast("Channel Name is already used",Colors.red);
     }
     notifyListeners();
   }
@@ -361,23 +361,35 @@ Future<void> leaveChannel({
   required String channelId,
   bool isFromMembersScreen = false,
 }) async {
-  // print("userId>>>${signInModel!.data?.user?.id}");
-  final response = await ApiService.instance.request(
-      endPoint: ApiString.leaveChannel + channelId,
-      method: Method.POST,
-    isRawPayload: false
-  );
+  try {
+    // print("userId>>>${signInModel!.data?.user?.id}");
+    final response = await ApiService.instance.request(
+        endPoint: ApiString.leaveChannel + channelId,
+        method: Method.POST,
+      isRawPayload: false
+    );
 
-  if (Cf.instance.statusCode200Check(response)) {
-    if(isFromMembersScreen) {
-      Navigator.pushAndRemoveUntil(
-        navigatorKey.currentState!.context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false,);
-    } else {
-      await getChannelList();
-      await getFavoriteList();
-      await getDirectMessageList();
+    if (Cf.instance.statusCode200Check(response)) {
+      if(isFromMembersScreen) {
+        try {
+          Navigator.pushAndRemoveUntil(
+            navigatorKey.currentState!.context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()), (route) => false,);
+        } catch (e) {
+          print("Error navigating after leaving channel: $e");
+        }
+      } else {
+        try {
+          await getChannelList();
+          await getFavoriteList();
+          await getDirectMessageList();
+        } catch (e) {
+          print("Error refreshing lists after leaving channel: $e");
+        }
+      }
     }
+  } catch (e) {
+    print("Error leaving channel: $e");
   }
   notifyListeners();
 }
@@ -552,9 +564,10 @@ Future<void> removeMember(
   var request = http.Request(
       'PUT',
       Uri.parse(
-          ApiString.baseUrl + ApiString.removeMember(channelId, userId)));
+          ApiString.baseUrl + ApiString.removeMember(channelId)));
   // print("URL = ${ApiString.baseUrl + ApiString.removeMember(channelId, userId)}");
   request.headers.addAll(headers);
+  request.body = json.encode({"memberId": userId});
 
   http.StreamedResponse response = await request.send();
   // print("response status code =${response.statusCode}");

@@ -64,7 +64,7 @@ class SignInProvider extends ChangeNotifier {
         Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
       }
     } else {
-      Cw.instance.commonShowToast("Please enter your email and password", Colors.red);
+      Cw.commonShowToast("Please enter your email and password", Colors.red);
     }
   }
 
@@ -93,18 +93,18 @@ class SignInProvider extends ChangeNotifier {
           if (idToken != null && idToken.isNotEmpty) {
             await sendGoogleEmailToBackend(email);
           } else {
-            Cw.instance.commonShowToast("Failed to get authentication token", Colors.white);
+            Cw.commonShowToast("Failed to get authentication token", Colors.white);
           }
         } catch (e) {
           print("❌ Google authentication failed: $e");
-          Cw.instance.commonShowToast("❌ Authentication failed: $e", Colors.white);
+          Cw.commonShowToast("❌ Authentication failed: $e", Colors.white);
         }
       // } else {
-      //   Cw.instance.commonShowToast("❌ Email domain not allowed", Colors.white);
+      //   Cw.commonShowToast("❌ Email domain not allowed", Colors.white);
       // }
     } catch (e) {
       print("❌ Google sign-in failed: $e");
-      Cw.instance.commonShowToast("❌ Google sign-in failed", Colors.white);
+      Cw.commonShowToast("❌ Google sign-in failed", Colors.white);
     }
   }
 
@@ -135,54 +135,75 @@ class SignInProvider extends ChangeNotifier {
           // clearField();
           Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket();
         } else {
-          Cw.instance.commonShowToast("Invalid login response", Colors.white);
+          Cw.commonShowToast("Invalid login response", Colors.white);
         }
       } else {
-        Cw.instance.commonShowToast("Sign in Failed", Colors.white);
+        Cw.commonShowToast("Sign in Failed", Colors.white);
       }
     } catch (e) {
       print("Google sign-in backend error: $e");
-      Cw.instance.commonShowToast("Sign in Failed: $e", Colors.white);
+      Cw.commonShowToast("Sign in Failed: $e", Colors.white);
     }
   }
 
   fcmTokenSendInAPI() async {
-    String? fcmToken = "";
+    try {
+      String? fcmToken = "";
 
-    fcmToken = await FirebaseMessaging.instance.getToken();
-    await setData(AppPreferenceConstants.fcmToken, fcmToken ?? "");
-
-    print("FCM_Token From login :::::> $fcmToken");
-    if (fcmToken != null && signInModel!.data?.authToken != null) {
-      final requestBody = {"deviceToken": fcmToken};
+      fcmToken = await FirebaseMessaging.instance.getToken();
       try {
-        final response = await ApiService.instance.request(
-            endPoint: ApiString.addDeviceToken,
-            method: Method.POST,
-            reqBody: requestBody);
-        if (Cf.instance.statusCode200Check(response)) {
-          print("FCM Token Send Successfully");
-        }
+        await setData(AppPreferenceConstants.fcmToken, fcmToken ?? "");
       } catch (e) {
-        print("Error sending FCM token: $e");
+        print("Error saving FCM token to preferences: $e");
       }
+
+      print("FCM_Token From login :::::> $fcmToken");
+      if (fcmToken != null && signInModel!.data?.authToken != null) {
+        final requestBody = {"deviceToken": fcmToken};
+        try {
+          final response = await ApiService.instance.request(
+              endPoint: ApiString.addDeviceToken,
+              method: Method.POST,
+              reqBody: requestBody);
+          if (Cf.instance.statusCode200Check(response)) {
+            print("FCM Token Send Successfully");
+          }
+        } catch (e) {
+          print("Error sending FCM token: $e");
+        }
+      }
+    } catch (e) {
+      print("Error in fcmTokenSendInAPI: $e");
     }
   }
 
   fcmTokenRemoveInAPI() async {
-    String? fcmToken = "";
-    fcmToken = await getData(AppPreferenceConstants.fcmToken);
-
-    print("FCM_Token From logout :::::> $fcmToken");
-    if (fcmToken != null) {
-      final requestBody = {"deviceToken": fcmToken};
-      final response = await ApiService.instance.request(
-          endPoint: ApiString.removeDeviceToken,
-          method: Method.POST,
-          reqBody: requestBody);
-      if (Cf.instance.statusCode200Check(response)) {
-        print("FCM Token Removed Successfully");
+    try {
+      String? fcmToken = "";
+      try {
+        fcmToken = await getData(AppPreferenceConstants.fcmToken);
+      } catch (e) {
+        print("Error getting FCM token from preferences: $e");
+        return;
       }
+
+      print("FCM_Token From logout :::::> $fcmToken");
+      if (fcmToken != null) {
+        final requestBody = {"deviceToken": fcmToken};
+        try {
+          final response = await ApiService.instance.request(
+              endPoint: ApiString.removeDeviceToken,
+              method: Method.POST,
+              reqBody: requestBody);
+          if (Cf.instance.statusCode200Check(response)) {
+            print("FCM Token Removed Successfully");
+          }
+        } catch (e) {
+          print("Error removing FCM token: $e");
+        }
+      }
+    } catch (e) {
+      print("Error in fcmTokenRemoveInAPI: $e");
     }
   }
   /// Domain List Api Call ///

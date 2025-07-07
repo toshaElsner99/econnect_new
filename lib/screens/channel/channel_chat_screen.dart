@@ -44,6 +44,8 @@ import '../chat/single_chat_message_screen.dart';
 import '../find_message_screen/find_message_screen.dart';
 import 'channel_info_screen/channel_info_screen.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:e_connect/utils/chat/audio_recording_mixin.dart';
+import 'package:e_connect/utils/chat/draft_message_utils.dart';
 
 
 class ChannelChatScreen extends StatefulWidget {
@@ -59,7 +61,7 @@ class ChannelChatScreen extends StatefulWidget {
   State<ChannelChatScreen> createState() => _ChannelChatScreenState();
 }
 
-class _ChannelChatScreenState extends State<ChannelChatScreen> {
+class _ChannelChatScreenState extends State<ChannelChatScreen> with AudioRecordingMixin {
   late ConfettiController _confettiController1,_confettiController2;
   final socketProvider = Provider.of<SocketIoProvider>(navigatorKey.currentState!.context,listen: false);
   final channelChatProviderInit = Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false);
@@ -211,7 +213,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     });
 
     // Save draft message
-    _saveDraftMessage(text);
+    DraftMessageUtils.saveDraftMessage(channelID, text, isChannel: true);
 
     if (cursorPosition > 0) {
       // Check if @ was just typed
@@ -330,7 +332,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                user.username ?? 'Unknown',
+                                                user.username ?? user.fullName ?? 'Unknown',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 14,
@@ -508,130 +510,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     return matchingMembers;
   }
 
-  late AudioRecorder _record = AudioRecorder();
-  bool _isRecording = false;
-  String? _audioPath;
-  Duration _recordingDuration = Duration.zero;
-  Timer? _recordingTimer;
-  bool _showAudioPreview = false;
-  String? _previewAudioPath;
   bool isFromJump = false;
-  final Map<String, Duration> _audioDurations = {};
-  final _audioPlayer = AudioPlayer();
 
-  // Replace voice_message_player related variables with:
-  final Map<String, AudioPlayer> _audioPlayers = {};
-  AudioPlayer? _currentlyPlayingPlayer;
+  // Audio recording methods are now provided by AudioRecordingMixin
 
-  Future<void> _initializeRecorder() async {
-    _record = AudioRecorder();
-    bool hasPermission = await _record.hasPermission();
-    if (!hasPermission) {
-      print("Recording permission denied!");
-    }
-  }
-
-  void _startRecordingTimer() {
-    _recordingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        _recordingDuration += Duration(seconds: 1);
-      });
-    });
-  }
-
-  void _stopRecordingTimer() {
-    _recordingTimer?.cancel();
-    _recordingTimer = null;
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final hours = twoDigits(duration.inHours);
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return duration.inHours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
-  }
-
-  Future<String> _getFilePath() async {
-    final dir = await getApplicationDocumentsDirectory();
-    return '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-  }
-
-  Future<void> _toggleRecording() async {
-    if (_isRecording) {
-      final path = await _record.stop();
-      _stopRecordingTimer();
-      setState(() {
-        _isRecording = false;
-        _audioPath = path;
-        _showAudioPreview = true;
-        _previewAudioPath = path;
-      });
-      print("Recording saved at: $_audioPath");
-    } else {
-      if (await _record.hasPermission()) {
-        final path = await _getFilePath();
-        await _record.start(RecordConfig(encoder: AudioEncoder.aacLc), path: path);
-        setState(() {
-          _isRecording = true;
-          _recordingDuration = Duration.zero;
-          _showAudioPreview = false;
-        });
-        _startRecordingTimer();
-      }
-    }
-  }
-
-  void _cancelRecording() async {
-    if (_isRecording) {
-      await _record.stop();
-      _stopRecordingTimer();
-      setState(() {
-        _isRecording = false;
-        _recordingDuration = Duration.zero;
-        _showAudioPreview = false;
-      });
-    }
-  }
-
-  sendAudio() async{
-    final chatProvider = Provider.of<ChatProvider>(context,listen: false);
-    if (_audioPath != null) {
-      try {
-        final uploadedFiles = await chatProvider.uploadFilesForAudio([_audioPath!]);
-        print("uploadFiles>>>> $uploadedFiles");
-        // Send the message with the uploaded files
-
-        await channelChatProviderInit.sendMessage(content: "", channelId: channelID, files: uploadedFiles);
-
-
-
-        // Clear the audio state after successful send
-        setState(() {
-          _audioPath = null;
-          _showAudioPreview = false;
-          _recordingDuration = Duration.zero;
-        });
-        
-        // Clear draft message after sending audio
-        await _clearDraftMessage();
-      } catch (e) {
-        print("Error sending audio message: $e");
-        // You might want to show an error message to the user here
-      }
-    }
-  }
-
-  void _sendAudioMessage() async {
-    if(_showScrollToBottomButton){
-      reloadPageOne();
-      Future.delayed(Duration(seconds: 3),() async{
-        sendAudio();
-      });
-    }else{
-      sendAudio();
-    }
-
+  // Implement required method from AudioRecordingMixin
+  @override
+  Future<void> clearDraftMessage() async {
+    await DraftMessageUtils.clearDraftMessage(channelID, isChannel: true);
   }
 
   @override
@@ -652,7 +538,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     }else{
       initializedScreen(1,isFromJump,"","");
     }
-      _initializeRecorder();
+      initializeRecorder();
       _loadDraftMessage();
   }
 
@@ -693,16 +579,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   @override
   void dispose() {
     // Save draft message before disposing
-    _saveDraftMessage(_messageController.text);
+    DraftMessageUtils.saveDraftMessage(channelID, _messageController.text, isChannel: true);
     
     socketProvider.cleanupChatListeners();
-    for (var player in _audioPlayers.values) {
-      player.dispose();
-    }
-    _audioPlayers.clear();
-    _audioDurations.clear();
-    _recordingTimer?.cancel();
-    _record.dispose();
+    // Dispose audio recording resources
+    disposeAudioRecording();
     _confettiController1.stop();
     _confettiController2.stop();
     _confettiController1.dispose();
@@ -746,7 +627,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Cw.instance.commonText(
+                  Cw.commonText(
                     text: "Rename Channel",
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -758,7 +639,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              Cw.instance.commonText(
+              Cw.commonText(
                 text: "Display Name",
                 fontSize: 14,
                 color: AppColor.borderColor,
@@ -792,7 +673,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Cw.instance.commonText(
+                    child: Cw.commonText(
                       text: "Cancel",
                       color: AppColor.whiteColor,
                     ),
@@ -816,10 +697,10 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         )
                             .then((_) => Cf.instance.pop());
                       }else {
-                        Cw.instance.commonShowToast("Add channel name to proceed");
+                        Cw.commonShowToast("Add channel name to proceed");
                       }
                     },
-                    child: Cw.instance.commonText(
+                    child: Cw.commonText(
                       text: "Save",
                       color: AppColor.whiteColor,
                     ),
@@ -877,7 +758,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         }),);
       }
       // Clear draft message after sending
-      await _clearDraftMessage();
+      await DraftMessageUtils.clearDraftMessage(channelID, isChannel: true);
       _clearInputAndDismissKeyboard();
     }
   }
@@ -902,7 +783,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
                   children: [
-                    if (!_isRecording && !_showAudioPreview) ...[
+                    if (!isRecording && !showAudioPreview) ...[
                       /// ADD ICON  ////
                       GestureDetector(
                         onTap: () => mediaSheet(context),
@@ -931,7 +812,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   link: _layerLink,
                                   child: KeyboardActions(
                                     disableScroll: true,
-                                    config: Cw.instance.keyboardConfigIos(_focusNode),
+                                    config: Cw.keyboardConfigIos(_focusNode),
                                     child: TextField(
                                       maxLines: 5,
                                       minLines: 1,
@@ -960,14 +841,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         ),
                       ),
                     ],
-                    if (_isRecording) ...[
+                    if (isRecording) ...[
                       Expanded(
                         child: Row(
                           children: [
                             Icon(Icons.mic, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red, size: 24),
                             SizedBox(width: 8),
                             Text(
-                              _formatDuration(_recordingDuration),
+                              formatDuration(recordingDuration),
                               style: TextStyle(
                                 color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red,
                                 fontSize: 16,
@@ -979,21 +860,21 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       ),
                       IconButton(
                         icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
-                        onPressed: _cancelRecording,
+                        onPressed: cancelRecording,
                       ),
                       IconButton(
                         icon: Icon(Icons.stop, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
-                        onPressed: _toggleRecording,
+                        onPressed: toggleRecording,
                       ),
                     ],
-                    if (_showAudioPreview) ...[
+                    if (showAudioPreview) ...[
                       Expanded(
                         child: Row(
                           children: [
                             Icon(Icons.audio_file, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor, size: 24),
                             SizedBox(width: 8),
                             Text(
-                              _formatDuration(_recordingDuration),
+                              formatDuration(recordingDuration),
                               style: TextStyle(
                                 color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.blueColor,
                                 fontSize: 16,
@@ -1007,18 +888,26 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         icon: Icon(Icons.close, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.red),
                         onPressed: () {
                           setState(() {
-                            _showAudioPreview = false;
-                            _audioPath = null;
+                            showAudioPreview = false;
+                            audioPath = null;
                           });
                         },
                       ),
                       IconButton(
                         icon: Icon(Icons.send, color:AppPreferenceConstants.themeModeBoolValueGet ? Colors.white :  AppColor.blueColor),
-                        onPressed: _sendAudioMessage,
+                        onPressed: () => sendAudioMessage(
+                          showScrollToBottomButton: _showScrollToBottomButton,
+                          reloadPageOne: reloadPageOne,
+                          sendAudioFunction: () => sendAudioChannelChat(
+                            channelId: channelID,
+                            showScrollToBottomButton: _showScrollToBottomButton,
+                            reloadPageOne: reloadPageOne,
+                          ),
+                        ),
                       ),
                     ],
                     /// SEND MESSAGE & CAMERA,MIC ///
-                    if (!_isRecording && !_showAudioPreview) ...[
+                    if (!isRecording && !showAudioPreview) ...[
                       if(fileServiceProvider.getFilesForScreen(AppString.channelChat).isNotEmpty || _messageController.text.isNotEmpty)...{
                         GestureDetector(
                           onTap: () async {
@@ -1052,7 +941,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               child: Icon(Icons.camera_alt_outlined, color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black , size: 30),
                             )),
                         GestureDetector(
-                          onTap: _toggleRecording,
+                          onTap: toggleRecording,
                           child: Container(
                             padding: EdgeInsets.all(5),
                             decoration: BoxDecoration(
@@ -1067,7 +956,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   ],
                 ),
               ),
-              Cw.instance.selectedFilesWidget(screenName: AppString.channelChat),
+              Cw.selectedFilesWidget(screenName: AppString.channelChat),
             ],
           ),
         ),
@@ -1150,7 +1039,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     _focusNode.unfocus();
     _messageController.clear();
     // Clear draft message when input is cleared
-    _clearDraftMessage();
+    DraftMessageUtils.clearDraftMessage(channelID, isChannel: true);
   }
 
   @override
@@ -1192,7 +1081,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   Row(
                     children: [
                       Flexible(
-                        child: Cw.instance.commonText(
+                        child: Cw.commonText(
                           text: channelChatProvider.isChannelChatLoading ? "Loading..." :  channelChatProvider.getChannelInfo?.data?.name ?? "",
                           maxLines: 1,
                           fontSize: 14,
@@ -1236,7 +1125,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             children: [
                               Image.asset(AppImage.person, height: 18, width: 18, color: AppColor.white),
                               SizedBox(width: 4),
-                              Cw.instance.commonText(
+                              Cw.commonText(
                                 text: "${channelChatProvider.getChannelInfo?.data?.members?.length ?? 0}",
                                 fontSize: 15,
                                 color: AppColor.white,
@@ -1260,7 +1149,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             children: [
                               Image.asset(AppImage.pinIcon, height: 18, width: 18, color: Colors.white),
                               SizedBox(width: 4),
-                              Cw.instance.commonText(
+                              Cw.commonText(
                                 text: "${channelChatProvider.getChannelInfo?.data?.pinnedMessagesCount ?? 0}",
                                 fontSize: 15,
                                 color: AppColor.white,
@@ -1439,7 +1328,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         child: Column(
                           children: [
                             if (typingMessage.isNotEmpty)
-                              Cw.instance.commonText(
+                              Cw.commonText(
                                 text: typingMessage,
                                 fontSize: 14,
                                 color: Colors.grey.shade600,
@@ -1532,9 +1421,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Cw.instance.commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
+            Cw.commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
             SizedBox(height: 10),
-            Cw.instance.commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${Cf.instance.formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
+            Cw.commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${Cf.instance.formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
                 fontSize: 14,height: 1.35),
             Visibility(
               visible: isCurrentUserAdmin,
@@ -1579,7 +1468,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
             if(!isFromJump && channelChatProvider.totalPages > channelChatProvider.currentPage) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Cw.instance.customLoading(),
+                child: Cw.customLoading(),
               );
             }else if(channelChatProvider.totalPages == channelChatProvider.currentPage){
               return Padding(
@@ -1588,9 +1477,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Cw.instance.commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
+                    Cw.commonText(text: channelChatProvider.getChannelInfo?.data?.name ?? "",fontSize: 22),
                     SizedBox(height: 10),
-                    Cw.instance.commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${Cf.instance.formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
+                    Cw.commonText(text: "This is the start of the ${channelChatProvider.getChannelInfo?.data?.name ?? ""} channel by ${channelChatProvider.getChannelInfo?.data?.ownerId?.username ?? ""} on ${Cf.instance.formatDateWithYear(channelChatProvider.getChannelInfo?.data?.createdAt ?? "")}. Any member can join and read this channel.",
                         fontSize: 14,height: 1.35),
                     Visibility(
                       visible: isCurrentUserAdmin,
@@ -1634,6 +1523,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
           String date = mergedMessagesByDate.keys.elementAt(index);
           List<Message> messagesForDate = mergedMessagesByDate[date]!;
           String? previousSenderId;
+          bool hasShownNewMessageDivider = false; // Track if we've shown the divider for this date group
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1650,7 +1540,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         color: AppColor.blueColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Cw.instance.commonText(
+                      child: Cw.commonText(
                         text: Cf.instance.formatDateTime(DateTime.parse(date)),
                         fontSize: 12,
                         color: AppColor.whiteColor,
@@ -1669,6 +1559,13 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   bool showUserDetails = previousSenderId != message.senderId;
                   previousSenderId = message.senderId;
                   bool isHighlighted = message.id.toString() == highlightedMessageId;
+                  
+                  // Check if this message should show the new message divider
+                  bool shouldShowNewMessageDivider = false;
+                  if (message.isSeen == false && message.senderId != signInModel!.data?.user?.sId && !hasShownNewMessageDivider) {
+                    shouldShowNewMessageDivider = true;
+                    hasShownNewMessageDivider = true; // Mark that we've shown the divider for this group
+                  }
 
                   return AnimatedContainer(
                     duration: Duration(milliseconds: 300),
@@ -1681,6 +1578,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       messageId: message.id.toString(),
                       message: message.content ?? "",
                       time: DateTime.parse(message.createdAt.toString()).toString(),
+                      showNewMessageDivider: shouldShowNewMessageDivider,
                     ),
                   );
                 },
@@ -1774,6 +1672,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
     required String message,
     required String time,
     bool showUserDetails = true,
+    bool showNewMessageDivider = false,
   })  {
     return Consumer2<ChannelChatProvider,CommonProvider>(builder: (context, channelChatProvider,commonProvider, child) {
       final user = channelChatProvider.getUserById(userId);
@@ -1852,18 +1751,18 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
         child: Column(
           children: [
             Visibility(
-                visible: (messageList.isSeen == false && userId != signInModel!.data?.user?.sId),
-                child: Cw.instance.newMessageDivider()),
+                visible: showNewMessageDivider,
+                child: Cw.newMessageDivider()),
             Visibility(
                 visible: pinnedMsg,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40.0,vertical: 5),
                   child: Row(
                     children: [
-                      Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,),
+                      Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 5.0),
-                        child: Cw.instance.commonText(text: "Pinned",color: AppColor.blueColor),
+                        child: Cw.commonText(text: "Pinned",color: AppColor.blueColor),
                       ),
                     ],
                   ),
@@ -1877,7 +1776,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2.5),
                     // child: profileIconWithStatus(userID: messageList.senderInfo?.id ?? "", status: messageList.senderInfo?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? "",radius: 17),
-                    child: Cw.instance.profileIconWithStatus(userID:  messageList.senderInfo?.id ?? user?.sId ?? "", status:  messageList.senderInfo?.status ?? user?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? user?.avatarUrl ?? "",radius: 17,userName: messageList.senderInfo?.username ?? ""),
+                    child: Cw.profileIconWithStatus(userID:  messageList.senderInfo?.id ?? user?.sId ?? "", status:  messageList.senderInfo?.status ?? user?.status ?? "offline",otherUserProfile: messageList.senderInfo?.avatarUrl ?? user?.avatarUrl ?? "",radius: 17,userName: messageList.senderInfo?.username ?? ""),
                   )
                 } else ...{
                   SizedBox(width: 50)
@@ -1891,7 +1790,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            Cw.instance.commonText(height: 1.2, text: messageList.senderInfo?.username ?? user?.username ?? "", fontWeight: FontWeight.bold),
+                            Cw.commonText(height: 1.2, text: messageList.senderInfo?.username ?? user?.username ?? "", fontWeight: FontWeight.bold),
                             Visibility(
                               visible: (messageList.senderInfo?.customStatusEmoji != null && messageList.senderInfo!.customStatusEmoji!.isNotEmpty) ||
                                   (user?.customStatusEmoji != null && user!.customStatusEmoji!.isNotEmpty),
@@ -1905,7 +1804,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               ),
                             ),
                             Padding(padding: const EdgeInsets.only(left: 5.0),
-                              child: Cw.instance.commonText(height: 1.2, text: Cf.instance.formatTime(time), color: Colors.grey, fontSize: 12),
+                              child: Cw.commonText(height: 1.2, text: Cf.instance.formatTime(time), color: Colors.grey, fontSize: 12),
                             ),
                           ],
                         ),
@@ -1933,7 +1832,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child:messageList.hrms_bdy != '' ? Cw.instance.HtmlTextOnly(htmltext: message) : Cw.instance.commonHTMLText(message: message.replaceAll(":waffle", ""),userId: messageList.senderInfo?.id ?? "",isLog: messageList.isLog ?? false,userName: messageList.senderInfo?.username ?? ""),
+                                    child:messageList.hrms_bdy != '' ? Cw.HtmlTextOnly(htmltext: message) : Cw.commonHTMLText(message: message.replaceAll(":waffle", ""),userId: messageList.senderInfo?.id ?? "",isLog: messageList.isLog ?? false,userName: messageList.senderInfo?.username ?? ""),
                                   ),
                                   if (isEdited)
                                     WidgetSpan(
@@ -1955,7 +1854,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                               color: AppColor.borderColor,
                                             ),
                                             const SizedBox(width: 2),
-                                            Cw.instance.commonText(
+                                            Cw.commonText(
                                               text: "Edited",
                                               fontSize: 10,
                                               color: AppColor.borderColor,
@@ -1986,19 +1885,19 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Cw.instance.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                Cw.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    Cw.instance.profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl ?? "",userName: messageList.senderOfForward?.username ?? ''),
+                                    Cw.profileIconWithStatus(userID: messageList.senderOfForward?.id ?? "", status: messageList.senderOfForward?.status ?? "offline" ,needToShowIcon: false,otherUserProfile: messageList.senderOfForward?.avatarUrl ?? "",userName: messageList.senderOfForward?.username ?? ''),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Cw.instance.commonText(text: messageList.senderOfForward?.username ?? "unknown"),
+                                          Cw.commonText(text: messageList.senderOfForward?.username ?? "unknown"),
                                           SizedBox(height: 3),
-                                          Cw.instance.commonText(text: Cf.instance.formatDateString("${messageList.forwards?.createdAt ?? ""}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          Cw.commonText(text: Cf.instance.formatDateString("${messageList.forwards?.createdAt ?? ""}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),
@@ -2007,7 +1906,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                 messageList.forwards != null ?
                                 Visibility(
                                     visible:messageList.forwards?.content != "",
-                                    child: messageList.forwards!.hrms_bdy != '' ? Cw.instance.HtmlTextOnly(htmltext: "${messageList.forwards?.content!}") : Cw.instance.commonHTMLText(message: "${messageList.forwards?.content}")) : SizedBox(),
+                                    child: messageList.forwards!.hrms_bdy != '' ? Cw.HtmlTextOnly(htmltext: "${messageList.forwards?.content!}") : Cw.commonHTMLText(message: "${messageList.forwards?.content}")) : SizedBox(),
                                 Visibility(
                                   visible: messageList.forwards?.files?.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -2024,14 +1923,14 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                           fileType.toLowerCase() == 'wav';
                                       if (isAudioFile) {
                                         print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
-                                        return AudioPlayerWidget(
-                                          audioUrl: filesUrl ?? "",
-                                          audioPlayers: _audioPlayers,
-                                          audioDurations: _audioDurations,
-                                          onPlaybackStart: _handleAudioPlayback,
-                                          currentlyPlayingPlayer: _currentlyPlayingPlayer,
-                                          isForwarded: true,
-                                        );
+                                                                      return AudioPlayerWidget(
+                                audioUrl: filesUrl ?? "",
+                                audioPlayers: audioPlayers,
+                                audioDurations: audioDurations,
+                                onPlaybackStart: handleAudioPlayback,
+                                currentlyPlayingPlayer: currentlyPlayingPlayer,
+                                isForwarded: true,
+                              );
                                       }
                                       return Container(
                                         margin: EdgeInsets.only(top: 5,right: 10),
@@ -2047,7 +1946,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                             Flexible(
                                                 flex: 10,
                                                 fit: FlexFit.loose,
-                                                child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
+                                                child: Cw.commonText(text: formattedFileName,maxLines: 1)),
                                             Spacer(),
                                             GestureDetector(
                                                 onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -2081,10 +1980,10 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               print("Rendering Audio Player for: ${ApiString.profileBaseUrl}$filesUrl");
                               return AudioPlayerWidget(
                                 audioUrl: filesUrl ?? "",
-                                audioPlayers: _audioPlayers,
-                                audioDurations: _audioDurations,
-                                onPlaybackStart: _handleAudioPlayback,
-                                currentlyPlayingPlayer: _currentlyPlayingPlayer,
+                                audioPlayers: audioPlayers,
+                                audioDurations: audioDurations,
+                                onPlaybackStart: handleAudioPlayback,
+                                currentlyPlayingPlayer: currentlyPlayingPlayer,
                                 isForwarded: false,
                               );
                             }
@@ -2102,7 +2001,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   Flexible(
                                       flex: 10,
                                       fit: FlexFit.loose,
-                                      child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
+                                      child: Cw.commonText(text: formattedFileName,maxLines: 1)),
                                   Spacer(),
                                   GestureDetector(
                                       onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -2148,7 +2047,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                         Stack(
                                           clipBehavior: Clip.none,
                                           children: [
-                                            Cw.instance.profileIconWithStatus(
+                                            Cw.profileIconWithStatus(
                                               userID: messageList.repliesSenderInfo?[0].id ?? "",
                                               userName: messageList.repliesSenderInfo?[0].username ?? "",
                                               status: "",
@@ -2159,7 +2058,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                             if (messageList.repliesSenderInfo!.length > 1)
                                               Positioned(
                                                 left: 16,
-                                                child: Cw.instance.profileIconWithStatus(
+                                                child: Cw.profileIconWithStatus(
                                                   userID: messageList.repliesSenderInfo?[1].id ?? "",
                                                   userName: messageList.repliesSenderInfo?[1].username ?? "",
                                                   status: "",
@@ -2220,7 +2119,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   ),
                                 ),
 
-                                Cw.instance.commonText(
+                                Cw.commonText(
                                   text: "${messageList.replyCount} ${messageList.replyCount! > 1 ? 'replies' : 'reply'}",
                                   fontSize: 12,
                                   color: AppColor.borderColor,
@@ -2230,7 +2129,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                 Flexible(
                                   child: FittedBox(
                                     fit: BoxFit.scaleDown,
-                                    child: Cw.instance.commonText(
+                                    child: Cw.commonText(
                                       text: Cf.instance.getTimeAgo(
                                           (messageList.replies != null && messageList.replies!.isNotEmpty)
                                               ? messageList.replies!.last.createdAt.toString()
@@ -2308,7 +2207,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                                 ),
                                               ),
                                               child: i < 2 || remainingUsers == 0 ?
-                                              Cw.instance.profileIconWithStatus(
+                                              Cw.profileIconWithStatus(
                                                 userID: visibleUsers[i],
                                                 userName: i < usernames.length ? usernames[i] : "",
                                                 status: "",
@@ -2352,7 +2251,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                                   spacing: 4,
                                   runSpacing: 4,
                                   alignment: WrapAlignment.start,
-                                  children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
+                                  children: Cw.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
                                     reaction.userId == signInModel!.data?.user?.sId &&
                                         reaction.emoji == entry.key);
@@ -2414,7 +2313,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                 // Spacer(),
                 Visibility(
                   visible: !(messageList.isLog ?? false),
-                  child: Cw.instance.popMenu2(
+                  child: Cw.popMenu2(
                       context,
                       hasAudioFile: (messageList.files?.any((file) {
                         String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
@@ -2434,11 +2333,11 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       onOpened: () {},
                       onClosed: () {},
                       onReact: () {
-                        Cw.instance.showReactionBar(context, messageId, channelID, "Channel");
+                        Cw.showReactionBar(context, messageId, channelID, "Channel");
                       },
                       isForwarded: messageList.isForwarded! ? false : true,
                       opened: false,
-                      onForward: () => Cf.instance.pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? 'Unknown',time: Cf.instance.formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? '',forwardMsgId: messageId,isForBdy: messageList.hrms_bdy != '' ? true : false,)),
+                      onForward: () => Cf.instance.pushScreen(screen: ForwardMessageScreen(userName: messageList.senderInfo?.username ?? commonProvider.getUserDisplayName(userId),time: Cf.instance.formatDateString1(time),msgToForward: message,userID: userId,otherUserProfile: messageList.senderInfo?.avatarUrl ?? commonProvider.getUserAvatarUrl(userId),forwardMsgId: messageId,isForBdy: messageList.hrms_bdy != '' ? true : false,)),
                       onReply: () => Cf.instance.pushScreen(screen: ReplyMessageScreenChannel(msgID: messageId.toString(),channelName: channelChatProvider.getChannelInfo?.data?.name ?? "",channelId: channelID,)),
                       onPin: () => channelChatProvider.pinUnPinMessage(channelID: channelID, messageId: messageId, pinned: pinnedMsg = !pinnedMsg ),
                       onCopy: () => Cf.instance.copyToClipboard(context, parse(message).body?.text ?? ""),
@@ -2450,9 +2349,9 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                         print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                         _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                         // Clear draft message when editing
-                        _clearDraftMessage();
+                        DraftMessageUtils.clearDraftMessage(channelID, isChannel: true);
                       }),
-                      onDelete: () => Cw.instance.deleteMessageDialog(context, ()=> Provider.of<ChannelChatProvider>(context,listen: false).deleteMessageFromChannel(messageId: messageId,))
+                      onDelete: () => Cw.deleteMessageDialog(context, ()=> Provider.of<ChannelChatProvider>(context,listen: false).deleteMessageFromChannel(messageId: messageId,))
                   ),
                 )
               ],
@@ -2464,6 +2363,8 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
   }
 
   void _showReactionsList(BuildContext context, dynamic reactions) {
+    final commonProvider = Provider.of<CommonProvider>(context, listen: false);
+    
     // Group reactions by user
     final Map<String, List<String>> userReactions = {};
     for (var reaction in reactions) {
@@ -2513,7 +2414,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
                         children: [
-                          Cw.instance.profileIconWithStatus(
+                          Cw.profileIconWithStatus(
                             userID: userId,
                             userName: user?.username ?? '',
                             status: "",
@@ -2528,7 +2429,7 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  user?.username ?? "Unknown",
+                                  user?.username ?? commonProvider.getUserDisplayName(userId),
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
@@ -2561,52 +2462,16 @@ class _ChannelChatScreenState extends State<ChannelChatScreen> {
       ),
     );
   }
-  void _handleAudioPlayback(String audioUrl, AudioPlayer player) {
-    // If there's already an audio playing and it's different from the new one
-    if (_currentlyPlayingPlayer != null && _currentlyPlayingPlayer != player) {
-      _currentlyPlayingPlayer!.stop();
-    }
-    setState(() => _currentlyPlayingPlayer = player);
-  }
+
 
   // Draft message methods
-  String _getDraftKey() {
-    return "${AppPreferenceConstants.draftMessageKey}channel_${channelID}";
-  }
-  Future<void> _saveDraftMessage(String message) async {
-    try {
-      final draftKey = "${AppPreferenceConstants.draftMessageKey}channel_$channelID";
-      if (message.trim().isNotEmpty) {
-        await setData(draftKey, message);
-        print("Saved draft for channel $channelID: $draftKey = $message");
-      } else {
-        await removeData(draftKey);
-        print("Removed draft for channel $channelID: $draftKey");
-      }
-    } catch (e) {
-      print("Error saving draft for channel $channelID: $e");
-    }
-  }
-
-  // Future<void> _saveDraftMessage(String message) async {
-  //   if (message.trim().isNotEmpty) {
-  //     await setData(_getDraftKey(), message);
-  //   } else {
-  //     await _clearDraftMessage();
-  //   }
-  // }
-
   Future<void> _loadDraftMessage() async {
-    final draftMessage = await getData(_getDraftKey());
+    final draftMessage = await DraftMessageUtils.loadDraftMessage(channelID, isChannel: true);
     if (draftMessage != null && draftMessage.trim().isNotEmpty) {
       setState(() {
         _messageController.text = draftMessage;
         _isTextFieldEmpty = false;
       });
     }
-  }
-
-  Future<void> _clearDraftMessage() async {
-    await removeData(_getDraftKey());
   }
 }

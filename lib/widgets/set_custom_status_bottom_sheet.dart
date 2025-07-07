@@ -94,7 +94,7 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
                 size: 24,
               ),
             ),
-            Cw.instance.commonText(
+            Cw.commonText(
               text: 'Set a custom status',
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -105,7 +105,7 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
                 commonProvider.updateCustomStatusCall(status: commonProvider.setCustomTextController.text,emojiUrl: commonProvider.selectedIndexOfStatus == null ? "" : getEmojiAndText(commonProvider: commonProvider));
                 Navigator.pop(context);
               },
-              child: Cw.instance.commonText(
+              child: Cw.commonText(
                 text: 'DONE',
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -195,7 +195,7 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Cw.instance.commonText(
+            child: Cw.commonText(
               text: 'SUGGESTIONS',
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -260,7 +260,7 @@ class _CustomStatusSheetState extends State<CustomStatusSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Cw.instance.commonText(
+                  Cw.commonText(
                       text: title,
                       fontSize: 16,
                       color: Colors.black
