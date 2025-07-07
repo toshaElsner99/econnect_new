@@ -21,10 +21,9 @@ import '../reply_message_screen/reply_message_screen.dart';
 class PinnedPostsScreen extends StatefulWidget {
   final String userName;
   final String oppositeUserId;
-  final Map<String,dynamic> userCache;
 
   const PinnedPostsScreen(
-      {super.key, required this.userName, required this.oppositeUserId,required this.userCache});
+      {super.key, required this.userName, required this.oppositeUserId});
 
   @override
   State<PinnedPostsScreen> createState() => _PinnedPostsScreenState();
@@ -69,10 +68,10 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            Cw.instance.commonText(text: "Pinned Posts", fontSize: 16),
+            Cw.commonText(text: "Pinned Posts", fontSize: 16),
             Padding(
               padding: const EdgeInsets.only(left: 5),
-              child: Cw.instance.commonText(
+              child: Cw.commonText(
                 text: " | ${widget.userName}",
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -106,7 +105,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                               borderRadius: BorderRadius.circular(30),
                               border: Border.all(color: Colors.grey.shade600)
                           ),
-                          child: Cw.instance.commonText(text : date, fontWeight: FontWeight.w600, fontSize: 14,),
+                          child: Cw.commonText(text : date, fontWeight: FontWeight.w600, fontSize: 14,),
                         ),
                         Expanded(child: Divider(color: Colors.grey.shade600,)),
                       ],
@@ -118,7 +117,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                       itemCount: messagesForDate.length,
                       itemBuilder: (context, index) {
                         final messages = messagesForDate[index];
-                        final user = widget.userCache[messages.senderId];
+                        // User data will be accessed through global cache
                         return Padding(
                           padding:  EdgeInsets.only(top : index == 0 ? 0 : 15.0),
                           child: Row(
@@ -126,7 +125,14 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                             children: [
                               Padding(
                                 padding: EdgeInsets.only(right: 10),
-                                child: Cw.instance.profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data?.user?.thumbnailAvatarUrl ?? '',radius: 15,needToShowIcon: false,userName: user?.data?.user?.username ?? ""),
+                                child: Cw.profileIconWithStatus(
+                                  userID: messages.senderId ?? "",
+                                  status: commonProvider.getUserStatus(messages.senderId ?? ""),
+                                  otherUserProfile: commonProvider.getUserAvatarUrl(messages.senderId ?? ""),
+                                  radius: 15,
+                                  needToShowIcon: true,
+                                  userName: commonProvider.getUserDisplayName(messages.senderId ?? "")
+                                ),
                               ),
                               Flexible(
                                 child: Column(
@@ -139,13 +145,13 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisAlignment: MainAxisAlignment.start,
                                         children: [
-                                          Cw.instance.commonText(
+                                          Cw.commonText(
                                               height: 1.2,
-                                              text:
-                                              user?.data!.user!.fullName ?? user?.data!.user!.username ?? 'Unknown', fontWeight: FontWeight.bold),
+                                              text: commonProvider.getUserDisplayName(messages.senderId ?? ""),
+                                              fontWeight: FontWeight.bold),
                                           Padding(
                                             padding: const EdgeInsets.only(left: 5.0),
-                                            child: Cw.instance.commonText(
+                                            child: Cw.commonText(
                                                 height: 1.2,
                                                 text: Cf.instance.formatTime(messages.createdAt.toString()), color: Colors.grey, fontSize: 12
                                             ),
@@ -165,9 +171,9 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                                   height: 30,
                                                   child: Row(
                                                     children: [
-                                                      Image.asset(AppImage.pinTiltIcon,height: 20,width: 20,color: Colors.white,),
+                                                      Image.asset(AppImage.pinTiltIcon,height: 20,width: 20,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,),
                                                       SizedBox(width: 10,),
-                                                      Cw.instance.commonText(text: 'Unpin from Channel',color: Colors.white),
+                                                      Cw.commonText(text: 'Unpin from Channel',color: Colors.white),
                                                     ],
                                                   ),
                                                 ),
@@ -178,7 +184,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                         ],
                                       ),
                                     ),
-                                    Cw.instance.commonHTMLText(message: messages.content!),
+                                    Cw.commonHTMLText(message: messages.content!),
                                     Visibility(
                                         visible: messages.isForwarded ?? false,
                                         child: Container(
@@ -192,25 +198,25 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Cw.instance.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                              Cw.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
                                               Padding(
                                                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                                                 child: Row(children: [
-                                                  Cw.instance.profileIconWithStatus(userID: messages.senderOfForwardSecondUser?.id ?? "", status: messages.senderOfForwardSecondUser?.status ?? "offline",needToShowIcon: false,otherUserProfile: messages.senderOfForwardSecondUser?.thumbnailAvatarUrl,userName: messages.senderOfForwardSecondUser?.username ?? ""),
+                                                  Cw.profileIconWithStatus(userID: messages.senderOfForwardSecondUser?.id ?? "", status: messages.senderOfForwardSecondUser?.status ?? "offline",needToShowIcon: false,otherUserProfile: messages.senderOfForwardSecondUser?.thumbnailAvatarUrl,userName: messages.senderOfForwardSecondUser?.username ?? ""),
                                                   Padding(
                                                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                                     child: Column(
                                                       crossAxisAlignment: CrossAxisAlignment.start,
                                                       children: [
-                                                        Cw.instance.commonText(text: "${messages.senderOfForwardSecondUser?.username}"),
+                                                        Cw.commonText(text: "${messages.senderOfForwardSecondUser?.username}"),
                                                         SizedBox(height: 3),
-                                                        Cw.instance.commonText(text: Cf.instance.formatDateString("${messages.senderOfForwardSecondUser?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                                        Cw.commonText(text: Cf.instance.formatDateString("${messages.senderOfForwardSecondUser?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                                       ],
                                                     ),
                                                   ),
                                                 ],),
                                               ),
-                                              Cw.instance.commonHTMLText(message: "${messages.forwardMSGInfoSecondUser?.content}"),
+                                              Cw.commonHTMLText(message: "${messages.forwardMSGInfoSecondUser?.content}"),
                                               Visibility(
                                                 visible: messages.forwardMSGInfoSecondUser?.files?.length != 0 ? true : false,
                                                 child: ListView.builder(
@@ -236,7 +242,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                                           Flexible(
                                                               flex: 10,
                                                               fit: FlexFit.loose,
-                                                              child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
+                                                              child: Cw.commonText(text: formattedFileName,maxLines: 1)),
                                                           Spacer(),
                                                           GestureDetector(
                                                               onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -278,7 +284,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                                 Flexible(
                                                     flex: 10,
                                                     fit: FlexFit.loose,
-                                                    child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
+                                                    child: Cw.commonText(text: formattedFileName,maxLines: 1)),
                                                 Spacer(),
                                                 GestureDetector(
                                                     onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -291,7 +297,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                     Visibility(
                                       visible:messages.replyCount != 0,
                                       child: GestureDetector(
-                                        onTap: () =>  Cf.instance.pushReplacement(screen: ReplyMessageScreen(userName: user?.data?.user?.fullName ?? user?.data?.user?.username ?? 'Unknown', messageId: messages.id ?? "", receiverId: widget.oppositeUserId,),),
+                                        onTap: () =>  Cf.instance.pushReplacement(screen: ReplyMessageScreen(userName: commonProvider.getUserDisplayName(messages.senderId ?? ""), messageId: messages.id ?? "", receiverId: widget.oppositeUserId,),),
                                         child: Container(
                                           // color: Colors.red,
                                           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -299,7 +305,14 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                             children: [
                                               Padding(
                                                 padding: EdgeInsets.only(right: 10),
-                                                child: Cw.instance.profileIconWithStatus(userID: "${user?.data!.user!.sId}", status: "",otherUserProfile: user?.data?.user?.thumbnailAvatarUrl ?? '',radius: 10,needToShowIcon: false,userName: user?.data?.user?.username),
+                                                child: Cw.profileIconWithStatus(
+                                                  userID: messages.senderId ?? "",
+                                                  status: commonProvider.getUserStatus(messages.senderId ?? ""),
+                                                  otherUserProfile: commonProvider.getUserAvatarUrl(messages.senderId ?? ""),
+                                                  radius: 10,
+                                                  needToShowIcon: true,
+                                                  userName: commonProvider.getUserDisplayName(messages.senderId ?? "")
+                                                ),
                                               ),
                                               Padding(
                                                 padding: EdgeInsets.only(left: 0.0,right: 4.0),
@@ -314,7 +327,7 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
                                                 ),
                                               ),
 
-                                              Cw.instance.commonText(
+                                              Cw.commonText(
                                                 text: "${messages.replyCount} ${messages.replyCount! > 1 ? 'replies' : 'reply'}",
                                                 fontSize: 12,
                                                 color: AppColor.borderColor,

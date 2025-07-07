@@ -323,7 +323,7 @@ class User {
       loginActivity: json['loginActivity'] as List<dynamic>?,
       customStatus: json['custom_status'] as String?,
       customStatusEmoji: json['custom_status_emoji'] as String?,
-      muteUsers: (json['mute_users'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      muteUsers: (json['muteUsers'] as List<dynamic>?)?.map((e) => e as String).toList(),
       isLeft: json['isLeft'] as bool?,
       customStatusHistory: (json['custom_status_history'] as List<dynamic>?)
           ?.map((e) => CustomStatusHistory.fromJson(e))
@@ -736,9 +736,9 @@ class SecondUser {
     }
     customStatus = json['custom_status'] ?? "";
     customStatusEmoji = json['custom_status_emoji'] ?? "";
-    if (json['mute_users'] != null) {
+    if (json['muteUsers'] != null) {
       muteUsers = <dynamic>[];
-      json['mute_users'].forEach((v) {
+      json['muteUsers'].forEach((v) {
         muteUsers!.add(v);
       });
     }
@@ -783,7 +783,7 @@ class SecondUser {
     data['custom_status'] = customStatus ?? "";
     data['custom_status_emoji'] = customStatusEmoji ?? "";
     if (muteUsers != null) {
-      data['mute_users'] = muteUsers!.map((v) => v).toList();
+      data['muteUsers'] = muteUsers!.map((v) => v).toList();
     }
     data['isLeft'] = isLeft ?? false;
     if (customStatusHistory != null) {

@@ -155,10 +155,10 @@ class SplashProvider extends ChangeNotifier {
               children: [
                 Image.asset(Platform.isAndroid ? AppImage.playStoreIcon : AppImage.appStoreIcon, height: 20, width: 20),
                 const SizedBox(width: 10),
-                Cw.instance.commonText(text: 'Update Required', fontSize: 17),
+                Cw.commonText(text: 'Update Required', fontSize: 17),
               ],
             ),
-            content: Cw.instance.commonText(
+            content: Cw.commonText(
               text: isForceUpdate
                   ? 'A new version of the app is available. Please update to continue using the app.'
                   : 'A new version of the app is available. Would you like to update now?',
@@ -182,7 +182,7 @@ class SplashProvider extends ChangeNotifier {
                     whereToGO();
                   }
                 },
-                child: Cw.instance.commonText(
+                child: Cw.commonText(
                   text: isForceUpdate ? 'Cancel' : "Later",
                   fontSize: 15,
                   color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white :Colors.black,
@@ -200,7 +200,7 @@ class SplashProvider extends ChangeNotifier {
                   ),
                 ),
                 onPressed: () => openStore(),
-                child: Cw.instance.commonText(text: 'Update', fontSize: 15, color: Colors.white, fontWeight: FontWeight.w600),
+                child: Cw.commonText(text: 'Update', fontSize: 15, color: Colors.white, fontWeight: FontWeight.w600),
               ),
             ],
           ),

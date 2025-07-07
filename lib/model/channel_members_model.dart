@@ -99,7 +99,8 @@ class MemberDetails {
   MemberDetails.fromJson(Map<String, dynamic> json) {
     sId = json['_id'];
     fullName = json['fullName'];
-    username = json['userName'];
+    // Handle both 'userName' and 'username' fields from API
+    username = json['userName'] ?? json['username'];
     email = json['email'];
     status = json['status'];
     customStatus = json['customStatus'];

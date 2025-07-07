@@ -31,14 +31,14 @@ class ChannelInfoScreen extends StatelessWidget {
       // backgroundColor: Colors.black,
       appBar: AppBar(
         // backgroundColor: Colors.black,
-        leading: Cw.instance.commonBackButton(),
+        leading: Cw.commonBackButton(),
         title: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Cw.instance.commonText(text: "Info", fontSize: 16),
+            Cw.commonText(text: "Info", fontSize: 16),
             const SizedBox(height: 4),
-            Cw.instance.commonText(text: channelName,maxLines: 1,fontSize: 12,color: AppColor.borderColor),
+            Cw.commonText(text: channelName,maxLines: 1,fontSize: 12,color: AppColor.borderColor),
           ],
         ),
       ),

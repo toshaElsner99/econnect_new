@@ -33,9 +33,13 @@ class GetUserMentionModel {
   // }
   Future<void> saveToPrefs(String id) async {
     if (statusCode == 200) {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = jsonEncode(toJson());
-      await prefs.setString('getUserMentionModel_$id', jsonString);
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final jsonString = jsonEncode(toJson());
+        await prefs.setString('getUserMentionModel_$id', jsonString);
+      } catch (e) {
+        print("Error saving GetUserMentionModel to preferences for id '$id': $e");
+      }
     }
   }
 
@@ -48,18 +52,26 @@ class GetUserMentionModel {
   //   return null;
   // }
   static Future<GetUserMentionModel?> loadFromPrefs(String id) async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString('getUserMentionModel_$id');
-    if (jsonString != null) {
-      final jsonMap = jsonDecode(jsonString);
-      return GetUserMentionModel.fromJson(jsonMap);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString('getUserMentionModel_$id');
+      if (jsonString != null) {
+        final jsonMap = jsonDecode(jsonString);
+        return GetUserMentionModel.fromJson(jsonMap);
+      }
+    } catch (e) {
+      print("Error loading GetUserMentionModel from preferences for id '$id': $e");
     }
     return null;
   }
 
   static Future<void> clearFromPrefs() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('getUserMentionModel');
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('getUserMentionModel');
+    } catch (e) {
+      print("Error clearing GetUserMentionModel from preferences: $e");
+    }
   }
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();

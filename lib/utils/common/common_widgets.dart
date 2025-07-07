@@ -102,7 +102,7 @@ class ProfilePreviewSheet extends StatelessWidget {
             size: 24,
           ),
           const SizedBox(width: 16),
-          Cw.instance.commonText(
+          Cw.commonText(
             text: 'Profile Settings',
             fontSize: 18,
             color: Colors.black,
@@ -131,7 +131,7 @@ class ProfilePreviewSheet extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Cw.instance.commonText(
+        Cw.commonText(
           text: title,
           fontSize: 16,
           color: Colors.black,
@@ -150,7 +150,7 @@ class ProfilePreviewSheet extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Cw.instance.commonText(
+                child: Cw.commonText(
                   text: value,
                   color: Colors.black,
                   fontSize: 16,
@@ -172,7 +172,7 @@ class ProfilePreviewSheet extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Cw.instance.commonText(
+        Cw.commonText(
           text: 'Profile Picture',
           color: Colors.black,
           fontSize: 16,
@@ -194,7 +194,7 @@ class ProfilePreviewSheet extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(60),
-                  child: Cw.instance.commonImageHolder(radius: 60),
+                  child: Cw.commonImageHolder(radius: 60),
                 ),
               ),
             ],
@@ -207,18 +207,24 @@ class ProfilePreviewSheet extends StatelessWidget {
 
 
 class Cw {
-  Cw._privateConstructor();
-  static final Cw instance = Cw._privateConstructor();
+  // Cw._privateConstructor();
+  // static final Cw instance = Cw._privateConstructor();
 
-  startLoading() {
+  static final Cw instance = Cw._internal();
+  factory Cw() {
+    return instance;
+  }
+  Cw._internal();
+
+  static startLoading() {
     navigatorKey.currentState!.context.read<LoadingProvider>().startLoading();
   }
 
-  stopLoading() {
+  static stopLoading() {
     navigatorKey.currentState!.context.read<LoadingProvider>().stopLoading();
   }
 
-  void commonProfilePreview(BuildContext context) {
+  static void commonProfilePreview(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -228,7 +234,7 @@ class Cw {
   }
 
 
-  Widget previewImageDialog(BuildContext context, String imageUrl) {
+  static Widget previewImageDialog(BuildContext context, String imageUrl) {
     return WillPopScope(
       onWillPop: () async => false,
       child: Dialog(
@@ -272,7 +278,7 @@ class Cw {
     );
   }
 
-  ToastFuture commonShowToast(String msg, [Color? bgColor]) {
+  static ToastFuture commonShowToast(String msg, [Color? bgColor]) {
     final effectiveBgColor = bgColor ??
         (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors
             .black);
@@ -298,7 +304,7 @@ class Cw {
   }
 
 
-  Widget getCommonStatusIcons(
+  static Widget getCommonStatusIcons(
       {required String status, double size = 25, bool assetIcon = true}) {
     if (status == AppString.online.toLowerCase()) {
       return assetIcon ? Image.asset(
@@ -323,12 +329,14 @@ class Cw {
     } else {
       return assetIcon ? Image.asset(
         AppImage.offlineIcon, height: size, width: size,) : Icon(
-        Icons.circle_outlined, color: AppColor.borderColor, size: size,);
+        Icons.circle_outlined, 
+        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[400] : AppColor.borderColor, 
+        size: size,);
     }
   }
 
 
-  Widget popMenuChannel(BuildContext context, {
+  static Widget popMenuChannel(BuildContext context, {
     required bool opened,
     required bool isPinned,
     required VoidCallback onOpened,
@@ -440,7 +448,7 @@ class Cw {
   }
 
 
-  Widget popMenu2(BuildContext context, {
+  static Widget popMenu2(BuildContext context, {
     required bool opened,
     required bool isPinned,
     required VoidCallback onOpened,
@@ -555,7 +563,7 @@ class Cw {
     );
   }
 
-  Widget popMenuForReply2(BuildContext context, {
+  static Widget popMenuForReply2(BuildContext context, {
     required bool opened,
     required bool isPinned,
     required VoidCallback onOpened,
@@ -660,17 +668,20 @@ class Cw {
     );
   }
 
-  PopupMenuItem<int> _menuItem(int value, IconData icon, String text,
-      {Color color = Colors.white}) {
+  static PopupMenuItem<int> _menuItem(int value, IconData icon, String text,
+      {Color? color}) {
+    final iconColor = color ?? (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black);
+    final textColor = color ?? (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black);
+    
     return PopupMenuItem<int>(
       value: value,
       child: Row(
         children: [
-          Icon(icon, color: color, size: 18),
+          Icon(icon, color: iconColor, size: 18),
           const SizedBox(width: 10),
           FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(text, style: TextStyle(color: color))),
+              child: Text(text, style: TextStyle(color: textColor))),
         ],
       ),
     );
@@ -679,12 +690,12 @@ class Cw {
 
   Widget commonPopUpForMsg(
       {double size = 20, Function? delete, Function? pinMessage }) {
-    final color = AppColor.borderColor;
+    final color = AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey),
-        color: CupertinoColors.darkBackgroundGray, // Adjust based on theme
+        border: Border.all(color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[700]! : Colors.grey),
+        color: AppPreferenceConstants.themeModeBoolValueGet ? AppColor.darkAppBarColor : CupertinoColors.darkBackgroundGray,
       ),
       padding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
       child: Row(
@@ -722,7 +733,7 @@ class Cw {
   }
 
 
-  Widget profileIconWithStatus({
+  static Widget profileIconWithStatus({
     required String userID,
     required String status,
     required String userName,
@@ -785,7 +796,7 @@ class Cw {
             ),
             child: CircleAvatar(
               radius: radius,
-              backgroundColor: Colors.grey[200],
+              backgroundColor: AppPreferenceConstants.themeModeBoolValueGet ? Colors.grey[800] : Colors.grey[200],
               child: ClipOval(
                 child: CachedNetworkImage(
                   color: isMuted ? Colors.black26 : null,
@@ -806,7 +817,9 @@ class Cw {
                         ? name[0].toUpperCase()
                         : '?'; // First letter or 'U' if empty
                     return Center(child: commonText(
-                        text: firstLetter)); // Display the first letter of the username
+                        text: firstLetter,
+                        color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,
+                    )); // Display the first letter of the username
                   },
                 ),
               ),
@@ -1072,7 +1085,7 @@ class Cw {
     },);
   }
 
-  Row newMessageDivider() {
+  static Row newMessageDivider() {
     return Row(children: [
       Expanded(child: Divider(color: Colors.orange,)),
       Container(
@@ -1093,14 +1106,14 @@ class Cw {
     ],);
   }
 
-  Widget commonBackButton() {
+  static Widget commonBackButton() {
     return IconButton(
         icon: const Icon(CupertinoIcons.back, color: Colors.white,),
         color: Colors.white,
         onPressed: () => Cf.instance.pop());
   }
 
-  Widget commonLogoutDialog() {
+  static Widget commonLogoutDialog() {
     return PopScope(
       canPop: false,
       child: Dialog(
@@ -1244,7 +1257,7 @@ class Cw {
     );
   }
 
-  void showLogoutDialog(BuildContext context,) {
+  static void showLogoutDialog(BuildContext context,) {
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -1262,7 +1275,7 @@ class Cw {
     );
   }
 
-  Widget commonText({
+  static Widget commonText({
     required String text,
     Color? color,
     double? fontSize,
@@ -1310,7 +1323,7 @@ class Cw {
     return document.body?.text ?? '';
   }
 
-  Widget commonHTMLText(
+  static Widget commonHTMLText(
       {required String message, String userId = "", bool isLog = false, String userName = "", color}) {
     final commonProvider = Provider.of<CommonProvider>(
         navigatorKey.currentState!.context, listen: false);
@@ -1471,7 +1484,7 @@ class Cw {
     );
   }
 
-  Widget HtmlTextOnly({required String htmltext}){
+  static Widget HtmlTextOnly({required String htmltext}){
 
     log("Images1 ");
     String a = '''$htmltext''';
@@ -1600,7 +1613,7 @@ class Cw {
   }
   /// ✅ Function to Open URL in Browser
 
-  void _openUrl(String url) async {
+  static void _openUrl(String url) async {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       throw 'Could not launch $url';
@@ -1608,7 +1621,7 @@ class Cw {
   }
 
 
-  Widget commonChannelIcon(
+  static Widget commonChannelIcon(
       {required bool isPrivate, bool? isShowPersons = false, Color? color, bool isMuted = false}) {
     return Container(
       width: 35,
@@ -1775,7 +1788,7 @@ class Cw {
     );
   }
 
-  KeyboardActionsConfig keyboardConfigIos(FocusNode focusNode) {
+  static KeyboardActionsConfig keyboardConfigIos(FocusNode focusNode) {
     return KeyboardActionsConfig(
       keyboardActionsPlatform: KeyboardActionsPlatform.IOS,
       keyboardBarColor: AppPreferenceConstants.themeModeBoolValueGet
@@ -1808,7 +1821,7 @@ class Cw {
   }
 
 
-  Widget commonTextFormField({
+  static Widget commonTextFormField({
     required TextEditingController controller,
     String? labelText,
     required String hintText,
@@ -1891,7 +1904,7 @@ class Cw {
     );
   }
 
-  Widget commonImageHolder({
+  static Widget commonImageHolder({
     double radius = 25,
     bool isMyProfile = true,
     String? otherUserProfile,
@@ -1926,7 +1939,7 @@ class Cw {
   }
 
 
-  Widget commonElevatedButton({
+  static Widget commonElevatedButton({
     required VoidCallback onPressed,
     required String buttonText,
     Color? color = Colors.white,
@@ -1964,7 +1977,7 @@ class Cw {
   }
 
 
-  Widget commonButtonForHeaderFavoriteInfoCallMute({required String icon,
+  static Widget commonButtonForHeaderFavoriteInfoCallMute({required String icon,
     required bool needAssetIcon,
     IconData? iconData,
     required String label,
@@ -2014,7 +2027,7 @@ class Cw {
     );
   }
 
-  Widget customLoading() {
+  static Widget customLoading() {
     return Center(
       child: SpinKitCircle(
         color: AppPreferenceConstants.themeModeBoolValueGet
@@ -2025,7 +2038,7 @@ class Cw {
     );
   }
 
-  void showChatSettingsBottomSheet({required String userId}) {
+  static void showChatSettingsBottomSheet({required String userId}) {
     showModalBottomSheet(
       context: navigatorKey.currentState!.context,
       backgroundColor: Colors.transparent,
@@ -2137,7 +2150,7 @@ class Cw {
   }
 
 
-  Future<dynamic> deleteMessageDialog(BuildContext context,
+  static Future<dynamic> deleteMessageDialog(BuildContext context,
       Function deleteMsgFun) {
     return showDialog(context: context, builder: (context) {
       return Consumer2<ChannelListProvider, CommonProvider>(
@@ -2222,7 +2235,7 @@ class Cw {
   }
 
 
-  Widget selectedFilesWidget({required String screenName}) {
+  static Widget selectedFilesWidget({required String screenName}) {
     return Consumer<FileServiceProvider>(
       builder: (context, provider, _) {
         List<PlatformFile> selectedFiles = provider.getFilesForScreen(
@@ -2296,7 +2309,7 @@ class Cw {
     );
   }
 
-  void showCameraOptionsBottomSheet(BuildContext context, String screenName) {
+  static void showCameraOptionsBottomSheet(BuildContext context, String screenName) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppPreferenceConstants.themeModeBoolValueGet
@@ -2350,7 +2363,7 @@ class Cw {
     );
   }
 
-  void showUserProfilePopup(BuildContext context, {
+  static void showUserProfilePopup(BuildContext context, {
     required String userId,
     required String username,
     required String fullName,
@@ -2525,7 +2538,7 @@ class Cw {
     );
   }
 
-  Widget reactionBar({
+  static Widget reactionBar({
     required BuildContext context,
     required Function(String) onReactionSelected,
   }) {
@@ -2597,7 +2610,7 @@ class Cw {
     );
   }
 
-  void showReactionBar(BuildContext context, String messageId,
+  static void showReactionBar(BuildContext context, String messageId,
       String receiverId, String isFrom) {
     final RenderBox? button = context.findRenderObject() as RenderBox?;
     if (button == null) return;
@@ -2659,7 +2672,7 @@ class Cw {
     );
   }
 
-  Widget messageReactions({
+  static Widget messageReactions({
     required List<String> reactions,
     double size = 16,
   }) {
@@ -2694,7 +2707,7 @@ class Cw {
     );
   }
 
-  Map<String, int> groupReactions(List<dynamic> reactions) {
+  static Map<String, int> groupReactions(List<dynamic> reactions) {
     final Map<String, int> groupedReactions = {};
     for (var reaction in reactions) {
       if (reaction.emoji != null) {

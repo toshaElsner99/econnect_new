@@ -45,7 +45,7 @@ class ApiService {
     }
 
     if (!_networkStatusService.connectionValue) {
-      Cw.instance.commonShowToast("No Internet Connection");
+      Cw.commonShowToast("No Internet Connection");
       return;
     }
 
@@ -72,7 +72,7 @@ class ApiService {
     _logRequest('$uri', method, reqBody, requestHeaders);
 
     try {
-      if (needLoader == true) Cw.instance.startLoading();
+      if (needLoader == true) Cw.startLoading();
 
       // Encode request body as JSON for raw payload
       dynamic processedBody = reqBody;
@@ -113,7 +113,7 @@ class ApiService {
       // commonShowToast("Something Went Wrong $e", Colors.red);
       throw Exception("Something Went Wrong ${e}");
     } finally {
-      Cw.instance.stopLoading();
+      Cw.stopLoading();
     }
   }
 
@@ -162,7 +162,7 @@ class ApiService {
     if (responseData is Map<String, dynamic> && responseData.containsKey('message')) {
       final String message = responseData['message'].toString();
       final bool isSuccess = (responseData['statusCode'] == 200 || responseData['statusCode'] == 201 || responseData['status'] == 1);
-      Cw.instance.commonShowToast(message, isSuccess ? Colors.green : Colors.red);
+      Cw.commonShowToast(message, isSuccess ? Colors.green : Colors.red);
     }
   }
 }

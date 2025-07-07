@@ -42,7 +42,7 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: Cw.instance.commonBackButton(),
+        leading: Cw.commonBackButton(),
         bottom: PreferredSize(
           preferredSize: Size.zero,
           child: Divider(color: Colors.grey.shade800, height: 1),
@@ -50,10 +50,10 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
         titleSpacing: 0,
         title: Row(
           children: [
-            Cw.instance.commonText(text: "Files", fontSize: 16),
+            Cw.commonText(text: "Files", fontSize: 16),
             Padding(
               padding: const EdgeInsets.only(left: 5),
-              child: Cw.instance.commonText(
+              child: Cw.commonText(
                 text: " | ${widget.channelName}",
                 fontSize: 12,
                 maxLines: 1,
@@ -75,7 +75,7 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
               children: [
                 Image.asset(AppImage.fileIcon,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,height: 100,width: 100,),
                 SizedBox(height: 10),
-                Cw.instance.commonText(text: "No file posts yet",fontSize: 18),
+                Cw.commonText(text: "No file posts yet",fontSize: 18),
               ],
             ),
           ) : Column(
@@ -86,7 +86,7 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
                   alignment: Alignment.centerLeft,
                   child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: Cw.instance.commonText(
+                    child: Cw.commonText(
                       text: "Recent files",
                       color: AppColor.borderColor,
                       fontSize: 20,
@@ -134,7 +134,7 @@ class _FilesListingScreenState extends State<FilesListingScreen> {
                             children: [
                               Cf.instance.getFileIconInChat(fileType: fileType, pngUrl: "${ApiString.profileBaseUrl}$fileUrl"),
                               SizedBox(width: 20),
-                              Cw.instance.commonText(text: formattedFileName, maxLines: 1,overflow: TextOverflow.ellipsis),
+                              Cw.commonText(text: formattedFileName, maxLines: 1,overflow: TextOverflow.ellipsis),
                               Spacer(),
                               GestureDetector(
                                 onTap: () => Provider.of<DownloadFileProvider>(context, listen: false).downloadFile(

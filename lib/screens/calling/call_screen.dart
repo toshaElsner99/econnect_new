@@ -745,6 +745,7 @@ class _CallScreenState extends State<CallScreen> {
                   borderRadius: BorderRadius.circular(10),
                   child: RTCVideoView(
                     _localRenderer,
+                    mirror: true,
                     objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
                     placeholderBuilder: (con) {
                       return Container(
@@ -755,47 +756,6 @@ class _CallScreenState extends State<CallScreen> {
                 ),
               ),
              ),
-          // else
-          //   Positioned(
-          //     top: 100,
-          //     right: 20,
-          //     child: Container(
-          //       width: 120,
-          //       height: 160,
-          //       decoration: BoxDecoration(
-          //         borderRadius: BorderRadius.circular(12),
-          //         color: AppColor.commonAppColor,
-          //
-          //         border: Border.all(color: Colors.white, width: 2),
-          //       ),
-          //       child: Center(
-          //         child:  ClipRRect(
-          //           borderRadius: BorderRadius.circular(200),
-          //           child: CachedNetworkImage(
-          //             imageUrl: widget.imageUrl,
-          //             width: 50,
-          //             height: 50,
-          //             fit: BoxFit.cover,
-          //
-          //             placeholder: (context, url) => const CircleAvatar(
-          //               radius: 200,
-          //               backgroundColor: Colors.grey,
-          //             ),
-          //             errorWidget: (context, url, error) =>
-          //             const CircleAvatar(
-          //               radius: 150,
-          //               backgroundColor: Colors.grey,
-          //               child: Icon(Icons.person,
-          //                   color: Colors.white, size: 50),
-          //             ),
-          //           ),
-          //         ),
-          //       ),
-          //     ),
-          //     ),
-
-
-          // Status text showing call duration or calling status
 
           Positioned(bottom: 15, child: _buildBottomControls()),
         ],

@@ -32,24 +32,37 @@ class SignInModel {
 
   Future<void> saveToPrefs() async {
     if (statusCode == 200) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String jsonString = jsonEncode(toJson());
-      await prefs.setString('signInModel', jsonString);
+      try {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        String jsonString = jsonEncode(toJson());
+        await prefs.setString('signInModel', jsonString);
+      } catch (e) {
+        print("Error saving SignInModel to preferences: $e");
+        // Optionally show user feedback or handle gracefully
+      }
     }
   }
 
   static Future<SignInModel?> loadFromPrefs() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? jsonString = prefs.getString('signInModel');
-    if (jsonString != null) {
-      return SignInModel.fromJson(jsonDecode(jsonString));
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? jsonString = prefs.getString('signInModel');
+      if (jsonString != null) {
+        return SignInModel.fromJson(jsonDecode(jsonString));
+      }
+    } catch (e) {
+      print("Error loading SignInModel from preferences: $e");
     }
     return null;
   }
 
   static Future<void> clearFromPrefs() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('signInModel');
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('signInModel');
+    } catch (e) {
+      print("Error clearing SignInModel from preferences: $e");
+    }
   }
 }
 

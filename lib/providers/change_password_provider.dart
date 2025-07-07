@@ -25,19 +25,19 @@ class ChangePasswordProvider extends ChangeNotifier {
       );
 
       if (Cf.instance.statusCode200Check(response)) {
-        Cw.instance.commonShowToast(
+        Cw.commonShowToast(
           response['message'] ?? "Password changed successfully",
           Colors.green,
         );
       } else {
-        Cw.instance.commonShowToast(
+        Cw.commonShowToast(
           response['message'] ?? "Failed to change password",
           Colors.red,
         );
       }
     } catch (e) {
       print("Error changing password: $e");
-      Cw.instance.commonShowToast(
+      Cw.commonShowToast(
         "Error changing password: $e",
         Colors.red,
       );

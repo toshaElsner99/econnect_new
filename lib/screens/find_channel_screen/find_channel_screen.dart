@@ -51,7 +51,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
             icon: const Icon(Icons.close,color: Colors.white,),
             onPressed: () => Navigator.pop(context),
           ),
-          title: Cw.instance.commonText(
+          title: Cw.commonText(
             text: 'Find Channel',
             fontSize: 20,
             fontWeight: FontWeight.w600,
@@ -64,7 +64,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
               // Search Field
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Cw.instance.commonTextFormField(
+                child: Cw.commonTextFormField(
                   focusNode: node,
                   controller: _searchController,
                   hintText: 'Search users or channels',
@@ -84,7 +84,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                           children: [
                             Image.asset(AppImage.persons,height: 20,width: 20,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,),
                             SizedBox(width: 5,),
-                            Cw.instance.commonText(
+                            Cw.commonText(
                               text: 'Users',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -96,7 +96,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                           child: Center(
-                            child: Cw.instance.commonText(
+                            child: Cw.commonText(
                               text: 'No users found',
                               color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.grey[600],
                               fontSize: 14,
@@ -123,7 +123,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                           children: [
                             Image.asset(AppImage.globalIcon,width: 20,height: 20,color:  AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,),
                             SizedBox(width: 5,),
-                            Cw.instance.commonText(
+                            Cw.commonText(
                               text: 'Channels',
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -135,7 +135,7 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                           child: Center(
-                            child: Cw.instance.commonText(
+                            child: Cw.commonText(
                               text: 'No channels found',
                               color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.grey[600],
                               fontSize: 14,
@@ -164,15 +164,29 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
   }
 
   Widget _buildUserTile(Users user) {
+    final displayName = user.fullName ?? user.username ?? "";
+    final avatarUrl = user.thumbnailAvatarUrl ?? user.avatarUrl ?? "";
+    
     return ListTile(
-      onTap: () => Cf.instance.pushReplacement(screen: SingleChatMessageScreen(userName:  user.fullName ?? user.username ?? "", oppositeUserId: user.userId ?? "",needToCallAddMessage: true,)),
+      onTap: () => Cf.instance.pushReplacement(screen: SingleChatMessageScreen(userName: displayName, oppositeUserId: user.userId ?? "",needToCallAddMessage: true,)),
       leading: CircleAvatar(
-        backgroundImage: CachedNetworkImageProvider(
-          ApiString.profileBaseUrl + (user.thumbnailAvatarUrl ?? ""),
-        ),
+        backgroundColor: avatarUrl.isNotEmpty ? null : AppColor.blueColor,
+        backgroundImage: avatarUrl.isNotEmpty 
+          ? CachedNetworkImageProvider(ApiString.profileBaseUrl + avatarUrl)
+          : null,
+        child: avatarUrl.isEmpty && displayName.isNotEmpty
+          ? Text(
+              displayName[0].toUpperCase(),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+          : null,
       ),
-      title: Cw.instance.commonText(
-        text: user.fullName ?? user.username ?? "",
+      title: Cw.commonText(
+        text: displayName,
         fontSize: 15,
         fontWeight: FontWeight.w500,
       ),
@@ -200,29 +214,12 @@ class _FindChannelScreenState extends State<FindChannelScreen> {
           ),
         ),
       ),
-      title: Cw.instance.commonText(
+      title: Cw.commonText(
         text: channel.channelName ?? "",
         // color: Colors.black87,
         fontSize: 15,
         fontWeight: FontWeight.w500,
       ),
-      // subtitle: Row(
-      //   children: [
-      //     SizedBox(height: 10,),
-      //     Image.asset(
-      //       AppImage.person,
-      //       height: 12,
-      //       width: 12,
-      //       color: Colors.grey[600],
-      //     ),
-      //     const SizedBox(width: 4),
-      //     commonText(
-      //       text: "${channel.members?.length ?? 0}",
-      //       color: Colors.grey[600],
-      //       fontSize: 12,
-      //     ),
-      //   ],
-      // ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }

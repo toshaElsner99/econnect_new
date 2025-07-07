@@ -66,7 +66,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
   bool _showMentionList = false;
   final _textFieldKey = GlobalKey();
   int _mentionCursorPosition = 0;
-  final Map<String, dynamic> userCache = {};
+  // User data will be accessed through global cache
   GetUserModelSecondUser? userDetails;
   bool _isTextFieldEmpty = true;
   late AudioRecorder _record = AudioRecorder();
@@ -215,15 +215,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
 
   void _fetchAndCacheUserDetails() async {
     userDetails = await commonProvider.getUserByIDCallForSecondUser(userId: widget.receiverId);
-    // await commonProvider.getUserByIDCallForSecondUser(userId: signInModel!.data!.user!.id);
-    setState(()  {
-      userCache["${commonProvider.getUserModelSecondUser?.data!.user!.sId}"] = commonProvider.getUserModelSecondUser!;
-      userCache["${commonProvider.getUserModel?.data!.user!.sId}"] = commonProvider.getUserModel!;
-    });
-    // print("user>>>>>> ${userCache}");
-    // print("user>>>>>> ${userDetails?.data!.user!.username}");
-    // print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.username}");
-    // print("user>>>>>> ${commonProvider.getUserModelSecondUser?.data!.user!.sId}");
+    // User data is now automatically cached by the CommonProvider
   }
   late FileServiceProvider _fileServiceProvider;
   @override
@@ -372,11 +364,11 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Cw.instance.commonText(text: "Thread", fontSize: 16,),
+                Cw.commonText(text: "Thread", fontSize: 16,),
               Consumer<ChatProvider>(builder: (context, value, child) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 1.5),
-                  child: Cw.instance.commonText(text:
+                  child: Cw.commonText(text:
                   (widget.receiverId == value.oppUserIdForTyping && value.msgLength == 1 && value.isTypingFor == true && value.parentId == widget.messageId)
                       ? "Typing..." : widget.userName,
                       fontSize: 12,fontWeight: FontWeight.w400),
@@ -431,7 +423,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                         color: AppColor.blueColor,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Cw.instance.commonText(
+                      child: Cw.commonText(
                         text: formatDateTime(DateTime.parse(grpId!)),
                         fontSize: 12,
                         color: AppColor.whiteColor,
@@ -488,9 +480,9 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 40.0,vertical: 5),
                   child: Row(
                     children: [
-                      Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,),
+                      Image.asset(AppImage.pinMessageIcon,height: 12,width: 12,color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black,),
                       SizedBox(width: 5,),
-                      Cw.instance.commonText(text: "Pinned",color: AppColor.blueColor)
+                      Cw.commonText(text: "Pinned",color: AppColor.blueColor)
                     ],
                   ),
                 )),
@@ -501,7 +493,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   /// Profile  Section ///
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12),
-                    child: Cw.instance.profileIconWithStatus(userID: "${messageList.senderId!.sId}", status: "${messageList.senderId!.status}",otherUserProfile: messageList.senderId?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderId?.userName ?? ""),
+                    child: Cw.profileIconWithStatus(userID: "${messageList.senderId!.sId}", status: "${messageList.senderId!.status}",otherUserProfile: messageList.senderId?.thumbnailAvatarUrl ?? "",radius: 17,userName: messageList.senderId?.userName ?? ""),
                   ),
 
                 Expanded(
@@ -511,12 +503,12 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                       Row(
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
-                            Cw.instance.commonText(
+                            Cw.commonText(
                                 height: 1.2,
                                 text:
                                 messageList.senderId?.userName ?? messageList.senderId!.fullName ?? 'Unknown', fontWeight: FontWeight.bold),
                             SizedBox(width: 5),
-                            Cw.instance.commonText(
+                            Cw.commonText(
                                 height: 1.2,
                                 text: Cf.instance.formatTime(time), color: Colors.grey, fontSize: 12
                             ),
@@ -533,7 +525,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                   WidgetSpan(
                                     alignment: PlaceholderAlignment.baseline,
                                     baseline: TextBaseline.alphabetic,
-                                    child: Cw.instance.commonHTMLText(message: message),
+                                    child: Cw.commonHTMLText(message: message),
                                   ),
 
                                   if (isEdited)
@@ -556,7 +548,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                               color: AppColor.borderColor,
                                             ),
                                             const SizedBox(width: 2),
-                                            Cw.instance.commonText(
+                                            Cw.commonText(
                                               text: "Edited",
                                               fontSize: 10,
                                               color: AppColor.borderColor,
@@ -586,25 +578,25 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Cw.instance.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
+                                Cw.commonText(text: "Forwarded",color: AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : AppColor.borderColor,fontWeight: FontWeight.w500),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                                   child: Row(children: [
-                                    Cw.instance.profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl, userName: messageList.forwardFrom?.senderId?.userName ?? ''),
+                                    Cw.profileIconWithStatus(userID: messageList.forwardFrom?.sId ?? "", status: messageList.forwardFrom?.senderId?.status ?? "offline",needToShowIcon: false,otherUserProfile: messageList.forwardFrom?.senderId?.avatarUrl, userName: messageList.forwardFrom?.senderId?.userName ?? ''),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Cw.instance.commonText(text: messageList.forwardFrom?.senderId?.userName ?? messageList.forwardFrom?.senderId?.fullName ?? ""),
+                                          Cw.commonText(text: messageList.forwardFrom?.senderId?.userName ?? messageList.forwardFrom?.senderId?.fullName ?? ""),
                                           SizedBox(height: 3),
-                                          Cw.instance.commonText(text: Cf.instance.formatDateString("${messageList.forwardFrom?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
+                                          Cw.commonText(text: Cf.instance.formatDateString("${messageList.forwardFrom?.createdAt}"),color: AppColor.borderColor,fontWeight: FontWeight.w500),
                                         ],
                                       ),
                                     ),
                                   ],),
                                 ),
-                                Cw.instance.commonHTMLText(message: "${messageList.forwardFrom?.content}"),
+                                Cw.commonHTMLText(message: "${messageList.forwardFrom?.content}"),
                                 Visibility(
                                   visible: messageList.forwardFrom?.files?.length != 0 ? true : false,
                                   child: ListView.builder(
@@ -644,7 +636,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                             Flexible(
                                                 flex: 10,
                                                 fit: FlexFit.loose,
-                                                child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
+                                                child: Cw.commonText(text: formattedFileName,maxLines: 1)),
                                             Spacer(),
                                             GestureDetector(
                                                 onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -703,7 +695,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                   Flexible(
                                       flex: 10,
                                       fit: FlexFit.loose,
-                                      child: Cw.instance.commonText(text: formattedFileName,maxLines: 1)),
+                                      child: Cw.commonText(text: formattedFileName,maxLines: 1)),
                                   Spacer(),
                                   GestureDetector(
                                       onTap: () => Provider.of<DownloadFileProvider>(context,listen: false).downloadFile(fileUrl: "${ApiString.profileBaseUrl}$filesUrl", context: context),
@@ -761,14 +753,14 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                                   width: 1.5,
                                                 ),
                                               ),
-                                              child: Cw.instance.profileIconWithStatus(
+                                              child: Cw.profileIconWithStatus(
                                                 userID: visibleUsers[i] ?? "",
                                                 status: "",
                                                 needToShowIcon: false,
                                                 radius: 14,
-                                                otherUserProfile: userCache[visibleUsers[i]]?.data?.user?.thumbnailAvatarUrl ?? '',
+                                                otherUserProfile: commonProvider.getUserAvatarUrl(visibleUsers[i] ?? ''),
                                                 borderColor: AppColor.blueColor,
-                                                userName: userCache[visibleUsers[i]]?.data?.user?.username ?? userCache[visibleUsers[i]]?.data?.user?.fullName ?? 'Unknown',
+                                                userName: commonProvider.getUserDisplayName(visibleUsers[i] ?? ''),
                                                 onTap: () => _showReactionsList(context, messageList.reactions!),
                                               ),
                                             ),
@@ -787,7 +779,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                   spacing: 4,
                                   runSpacing: 4,
                                   alignment: WrapAlignment.start,
-                                  children: Cw.instance.groupReactions(messageList.reactions!).entries.map((entry) {
+                                  children: Cw.groupReactions(messageList.reactions!).entries.map((entry) {
                                     bool hasUserReacted = messageList.reactions!.any((reaction) =>
                                     reaction.userId!.sId == signInModel!.data?.user?.sId &&
                                         reaction.emoji == entry.key);
@@ -847,7 +839,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                     ],
                   ),
                 ),
-                Cw.instance.popMenuForReply2(context,
+                Cw.popMenuForReply2(context,
                   isPinned: pinnedMsg,
                   hasAudioFile: (messageList.files?.any((file) {
                     String fileType = Cf.instance.getFileExtension(Cf.instance.getFileName(file));
@@ -864,7 +856,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   onOpened: () {}  ,
                   onClosed: () {} ,
                   onReact: () {
-                    Cw.instance.showReactionBar(context, messageId.toString(), userId, "Reply");
+                    Cw.showReactionBar(context, messageId.toString(), userId, "Reply");
                   },
                   opened:  false,
                   currentUserId: messageList.senderId?.sId ?? "",
@@ -879,7 +871,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                     // print("currentMessageId>>>>> $currentUserMessageId && 67c6af1c8ac51e0633f352b7");
                     _messageController.text = _messageController.text.substring(0, position) + message + _messageController.text.substring(position);
                   }),
-                  onDelete: () => Cw.instance.deleteMessageDialog(context, ()=> chatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.messageId)),
+                  onDelete: () => Cw.deleteMessageDialog(context, ()=> chatProvider.deleteMessageForReply(messageId: messageId.toString(),firsMessageId: widget.messageId)),
                   createdAt:"${messageList.createdAt}",)
               ],
             ),
@@ -939,7 +931,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                   link: _layerLink,
                                   child: KeyboardActions(
                                     disableScroll: true,
-                                    config: Cw.instance.keyboardConfigIos(_focusNode),
+                                    config: Cw.keyboardConfigIos(_focusNode),
                                     child: TextField(
                                       maxLines: 5,
                                       minLines: 1,
@@ -1101,7 +1093,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   ],
                 ),
               ),
-              Cw.instance.selectedFilesWidget(screenName: AppString.singleChatReply),
+              Cw.selectedFilesWidget(screenName: AppString.singleChatReply),
             ],
           ),
         ),
@@ -1331,7 +1323,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                user?.username ?? 'Unknown',
+                                                user?.username ?? user?.fullName ?? 'Unknown',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize: 14,
@@ -1524,13 +1516,13 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
                   itemBuilder: (context, index) {
                     final userId = userReactions.keys.elementAt(index);
                     final userEmojis = userReactions[userId]!;
-                    final user = userCache[userId]?.data?.user;
+                    final user = commonProvider.getUserFromCacheSync(userId)?.data?.user;
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: Row(
                         children: [
-                          Cw.instance.profileIconWithStatus(
+                          Cw.profileIconWithStatus(
                               userID: userId,
                               status: "",
                               needToShowIcon: false,

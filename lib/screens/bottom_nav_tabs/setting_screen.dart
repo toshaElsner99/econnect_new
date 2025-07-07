@@ -51,7 +51,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         children: [
                           _buildProfileTile(),
                           _buildThemeModeTile(themeProvider),
-                        _buildChangePasswordTile()
+                          _buildChangePasswordTile()
                         ],
                       ),
                       _buildSection(
@@ -101,16 +101,16 @@ class _SettingScreenState extends State<SettingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Cw.instance.commonImageHolder(radius: 50),
+          Cw.commonImageHolder(radius: 50),
           const SizedBox(height: 16),
-          Cw.instance.commonText(
+          Cw.commonText(
             text: signInModel!.data?.user?.fullName ?? signInModel!.data?.user?.userName ?? "",
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
           const SizedBox(height: 8),
-          Cw.instance.commonText(
+          Cw.commonText(
             text: "@${signInModel!.data?.user?.userName}",
             color: Colors.white.withOpacity(0.7),
             fontSize: 14,
@@ -141,7 +141,7 @@ class _SettingScreenState extends State<SettingScreen> {
     print("STATUSS >>> ${commonProvider.getUserModel?.data?.user!.status!}");
     return _buildTile(
       onTap: () => _showStatusBottomSheet(context),
-      leading: Cw.instance.getCommonStatusIcons(
+      leading: Cw.getCommonStatusIcons(
         status: "${commonProvider.getUserModel?.data?.user!.status!}",
         assetIcon: false,
       ),
@@ -177,7 +177,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Widget _buildProfileTile() {
     return GestureDetector(
-      onTap: () => Cw.instance.commonProfilePreview(context),
+      onTap: () => Cw.commonProfilePreview(context),
       child: _buildTile(
         leading: Image.asset(AppImage.person,width: 22,height: 22,color:  Colors.white.withOpacity(0.8),),
         title: AppString.profile,
@@ -226,7 +226,7 @@ class _SettingScreenState extends State<SettingScreen> {
 
   Widget _buildLogoutTile() {
     return _buildTile(
-      onTap: ()=> Cw.instance.showLogoutDialog(context),
+      onTap: ()=> Cw.showLogoutDialog(context),
       leading: Image.asset(
         AppImage.logOut,
         height: 24,
@@ -256,7 +256,7 @@ class _SettingScreenState extends State<SettingScreen> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Cw.instance.commonText(
+              child: Cw.commonText(
                 text: title,
                 color: textColor ?? Colors.white.withOpacity(0.9),
                 fontSize: 15,
@@ -304,7 +304,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   // Status text
                   Padding(
                     padding: EdgeInsets.only(left: 16, bottom: 16),
-                    child: Cw.instance.commonText(
+                    child: Cw.commonText(
                       text: AppString.status,
                       color: Colors.black,
                       fontSize: 24,
@@ -380,7 +380,7 @@ class _SettingScreenState extends State<SettingScreen> {
           children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(width: 16),
-            Cw.instance.commonText(
+            Cw.commonText(
               text: text,
               color: Colors.black,
               fontSize: 16,
@@ -437,7 +437,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         ),
 
                         // Title
-                        Cw.instance.commonText(
+                        Cw.commonText(
                           text: AppString.changePassword,
                           color: Colors.black,
                           fontSize: 24,
@@ -446,7 +446,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         const SizedBox(height: 24),
 
                         // New Password Field
-                        Cw.instance.commonText(
+                        Cw.commonText(
                           text: "New Password",
                           color: Colors.black,
                           fontSize: 16,
@@ -458,7 +458,7 @@ class _SettingScreenState extends State<SettingScreen> {
                             color: Colors.grey[100],
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Cw.instance.commonTextFormField(
+                          child: Cw.commonTextFormField(
                             controller: newPasswordController,
                             hintText: "Enter new password",
                             obscureText: isNewPasswordVisible,
@@ -486,7 +486,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         const SizedBox(height: 16),
 
                         // Confirm Password Field
-                        Cw.instance.commonText(
+                        Cw.commonText(
                           text: "Confirm New Password",
                           color: Colors.black,
                           fontSize: 16,
@@ -498,7 +498,7 @@ class _SettingScreenState extends State<SettingScreen> {
                             color: Colors.grey[100],
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Cw.instance.commonTextFormField(
+                          child: Cw.commonTextFormField(
                             controller: confirmPasswordController,
                             hintText: "Confirm new password",
                             obscureText: isConfirmPasswordVisible,
@@ -531,7 +531,7 @@ class _SettingScreenState extends State<SettingScreen> {
                         // Submit Button
                         SizedBox(
                           width: double.infinity,
-                          child: Cw.instance.commonElevatedButton(
+                          child: Cw.commonElevatedButton(
                             onPressed: () {
                               if (formKey.currentState!.validate()) {
                                 changePasswordProvider.changePasswordCall(
