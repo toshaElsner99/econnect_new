@@ -520,7 +520,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> with 
                   text: (oppositeUserId == chatProvider.oppUserIdForTyping && chatProvider.msgLength == 1 && chatProvider.isTypingFor == false)
                       ? "Typing..."
                       : Cf.instance.getLastOnlineStatus(
-                    userDetails?.data?.user?.status ?? ".....",
+                    userDetails?.data?.user?.status == 'do_not_disturb' ? AppString.dnd.toLowerCase() : userDetails?.data?.user?.status ?? "",
                     userDetails?.data?.user?.lastActiveTime,
                   ),
                   height: 1,
@@ -1046,8 +1046,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> with 
                     shouldShowNewMessageDivider = true;
                     hasShownNewMessageDivider = true; // Mark that we've shown the divider for this group
                   }
-
-                  if(message.isCalling ?? false){
+                  if(message.isCalling  == true){
                     if(message.content!.contains('rejected') || message.content!.contains('failed')  || message.content!.contains('Missed') || message.content!.contains("ended") )   {
                    return callMessageWidget(index: messageIndex, messageList: message, message: message.content!,isRed: true, time:  DateTime.parse(message.createdAt!).toString());      }
                     else{

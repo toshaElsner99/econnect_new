@@ -257,7 +257,7 @@ class _SettingScreenState extends State<SettingScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: Cw.commonText(
-                text: title,
+                text: title  == 'Do_not_disturb' ? AppString.dnd : title,
                 color: textColor ?? Colors.white.withOpacity(0.9),
                 fontSize: 15,
                 fontWeight: FontWeight.w500,

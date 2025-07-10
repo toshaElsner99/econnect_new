@@ -122,8 +122,8 @@
 //         loginActivity!.add(v);
 //       });
 //     }
-//     customStatus = json['custom_status'];
-//     customStatusEmoji = json['custom_status_emoji'];
+//     customStatus = json['customStatus'];
+//     customStatusEmoji = json['customStatusEmoji'];
 //     if (json['mute_users'] != null) {
 //       muteUsers = <dynamic>[];
 //       json['mute_users'].forEach((v) {
@@ -176,8 +176,8 @@
 //     if (loginActivity != null) {
 //       data['loginActivity'] = loginActivity!.map((v) => v).toList();
 //     }
-//     data['custom_status'] = customStatus;
-//     data['custom_status_emoji'] = customStatusEmoji;
+//     data['customStatus'] = customStatus;
+//     data['customStatusEmoji'] = customStatusEmoji;
 //     if (muteUsers != null) {
 //       data['mute_users'] = muteUsers!.map((v) => v).toList();
 //     }
@@ -321,8 +321,8 @@ class User {
       status: json['status'] as String?,
       isActive: json['isActive'] as bool?,
       loginActivity: json['loginActivity'] as List<dynamic>?,
-      customStatus: json['custom_status'] as String?,
-      customStatusEmoji: json['custom_status_emoji'] as String?,
+      customStatus: json['customStatus'] as String?,
+      customStatusEmoji: json['customStatusEmoji'] as String?,
       muteUsers: (json['muteUsers'] as List<dynamic>?)?.map((e) => e as String).toList(),
       isLeft: json['isLeft'] as bool?,
       customStatusHistory: (json['custom_status_history'] as List<dynamic>?)
@@ -371,8 +371,8 @@ class CustomStatusHistory {
 
   factory CustomStatusHistory.fromJson(Map<String, dynamic> json) {
     return CustomStatusHistory(
-      customStatus: json['custom_status'] as String?,
-      customStatusEmoji: json['custom_status_emoji'] as String?,
+      customStatus: json['customStatus'] as String?,
+      customStatusEmoji: json['customStatusEmoji'] as String?,
       updatedBy: json['updatedBy'] as String?,
       updatedAt: json['updatedAt'] as String?,
       id: json['_id'] as String?,
@@ -734,8 +734,8 @@ class SecondUser {
         loginActivity!.add(v);
       });
     }
-    customStatus = json['custom_status'] ?? "";
-    customStatusEmoji = json['custom_status_emoji'] ?? "";
+    customStatus = json['customStatus'] ?? "";
+    customStatusEmoji = json['customStatusEmoji'] ?? "";
     if (json['muteUsers'] != null) {
       muteUsers = <dynamic>[];
       json['muteUsers'].forEach((v) {
@@ -780,8 +780,8 @@ class SecondUser {
     if (loginActivity != null) {
       data['loginActivity'] = loginActivity!.map((v) => v).toList();
     }
-    data['custom_status'] = customStatus ?? "";
-    data['custom_status_emoji'] = customStatusEmoji ?? "";
+    data['customStatus'] = customStatus ?? "";
+    data['customStatusEmoji'] = customStatusEmoji ?? "";
     if (muteUsers != null) {
       data['muteUsers'] = muteUsers!.map((v) => v).toList();
     }

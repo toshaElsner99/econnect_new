@@ -670,8 +670,8 @@ class Cw {
 
   static PopupMenuItem<int> _menuItem(int value, IconData icon, String text,
       {Color? color}) {
-    final iconColor = color ?? (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black);
-    final textColor = color ?? (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.black);
+    final iconColor = color ?? (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.white);
+    final textColor = color ?? (AppPreferenceConstants.themeModeBoolValueGet ? Colors.white : Colors.white);
     
     return PopupMenuItem<int>(
       value: value,

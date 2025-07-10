@@ -8,7 +8,7 @@ class AppString {
   static const String connect = "Connect";
   static const String welcomeTO = "WELCOME TO,";
   static const String elsnerEconnectPortal = "Elsner eConnect Portal";
-  static const String loginId = "Login Id";
+  static const String emailId = "Email Id";
   static const String password = "Password";
   static const String signIN = "Sign In";
   static const String signINWithGoogle = "Sign In With Google";

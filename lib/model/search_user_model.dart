@@ -129,8 +129,8 @@ class Users {
     status = json['status'];
     isActive = json['isActive'];
     loginActivity = json['loginActivity'] != null ? List<dynamic>.from(json['loginActivity']) : null;
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
     muteUsers = json['mute_users']?.cast<String>();
     muteChannels = json['mute_channels']?.cast<String>();
     if (json['custom_status_history'] != null) {
@@ -166,8 +166,8 @@ class Users {
     if (loginActivity != null) {
       data['loginActivity'] = loginActivity;
     }
-    data['custom_status'] = customStatus;
-    data['custom_status_emoji'] = customStatusEmoji;
+    data['customStatus'] = customStatus;
+    data['customStatusEmoji'] = customStatusEmoji;
     data['mute_users'] = muteUsers;
     data['mute_channels'] = muteChannels;
     if (customStatusHistory != null) {
@@ -224,8 +224,8 @@ class CustomStatusHistory {
   });
 
   CustomStatusHistory.fromJson(Map<String, dynamic> json) {
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
     updatedBy = json['updatedBy'];
     updatedAt = json['updatedAt'];
     sId = json['userId'];
@@ -233,8 +233,8 @@ class CustomStatusHistory {
 
   Map<String, dynamic> toJson() {
     return {
-      'custom_status': customStatus,
-      'custom_status_emoji': customStatusEmoji,
+      'customStatus': customStatus,
+      'customStatusEmoji': customStatusEmoji,
       'updatedBy': updatedBy,
       'updatedAt': updatedAt,
       'userId': sId,

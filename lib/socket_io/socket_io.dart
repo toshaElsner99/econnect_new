@@ -219,7 +219,6 @@ class SocketIoProvider extends ChangeNotifier {
 
   void listenForNotifications() {
     socket.off(notification);
-
     socket.on(notification, (data) {
       print("Received Notification >>> $data");
       final channelListProvider = Provider.of<ChannelListProvider>(
@@ -605,7 +604,7 @@ class SocketIoProvider extends ChangeNotifier {
   }
 
   void sendSignalForCall(
-      String callToUserId, dynamic description, dynamic offer) {
+      String callToUserId, dynamic description, dynamic offer,String fromUserId) {
     bool isBusy = checkUserIsBusyOrNot(callToUserId) ?? false;
     // If the user is available for call
     if (!isBusy) {
@@ -615,7 +614,8 @@ class SocketIoProvider extends ChangeNotifier {
         "toUserId": callToUserId,
         "data": {
           "description": description
-        }
+        },
+        "fromUserId": fromUserId
       });
       print("sendSignalForCall");
 
@@ -628,6 +628,7 @@ class SocketIoProvider extends ChangeNotifier {
             '',
         offer,
       );
+
     } else {
       // User is busy, show a popup and pop the current screen
       print("User is busy, cannot accept call");
@@ -642,11 +643,12 @@ class SocketIoProvider extends ChangeNotifier {
     }
   }
   // Enhanced signal listening for both SDP and ICE candidates
-  void listenSignalForCallCandidate([Function(dynamic)? callback]) {
+  void listenSignalForCallCandidate() {
     print("listenSignalForCallCandidate");
-    socket.off(signal);
+    // socket.off(signal);
     socket.on(signal, (data) {
-   _latestMessage = data;
+      print("listenSignalForCallCandidate inside");
+      _latestMessage = data;
    notifyListeners();
     });
   }
@@ -785,24 +787,26 @@ class SocketIoProvider extends ChangeNotifier {
     print("acceptCallEvent Emitted");
   }
 
-  sendIceCandidate({required String callToUserId, required dynamic candidate}) {
+  sendIceCandidate({required String callToUserId, required dynamic candidate,required String fromUserId}) {
     socket.emit(signal, {
       'toUserId': callToUserId,
       'data': {
         'candidate': candidate.candidate,
         'sdpMid': candidate.sdpMid,
         'sdpMLineIndex': candidate.sdpMLineIndex,
-      }
+      },
+      'fromUserId': fromUserId
     });
     print("🧊 ICE candidate emitted: ${candidate.candidate}");
   }
 
-  sendAnswerSignal({required String callToUserId, required dynamic description}) {
+  sendAnswerSignal({required String callToUserId, required dynamic description,required String fromUserId}) {
     socket.emit(signal, {
       'toUserId': callToUserId,
       'data': {
         'description': description,
-      }
+      },
+      'fromUserId': fromUserId
     });
     print("📞 Answer signal emitted: ${description['type']}");
   }
