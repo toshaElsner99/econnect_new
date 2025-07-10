@@ -126,8 +126,8 @@
 //     status = json['status'];
 //     isActive = json['isActive'];
 //     loginActivity = json['loginActivity'] ?? []; // Handle as a list of dynamic
-//     customStatus = json['custom_status'];
-//     customStatusEmoji = json['custom_status_emoji'];
+//     customStatus = json['customStatus'];
+//     customStatusEmoji = json['customStatusEmoji'];
 //     muteUsers = json['mute_users'].cast<String>();
 //     muteChannels = json['mute_channels'].cast<String>();
 //     if (json['custom_status_history'] != null) {
@@ -165,8 +165,8 @@
 //     if (loginActivity != null) {
 //       data['loginActivity'] = loginActivity;
 //     }
-//     data['custom_status'] = customStatus;
-//     data['custom_status_emoji'] = customStatusEmoji;
+//     data['customStatus'] = customStatus;
+//     data['customStatusEmoji'] = customStatusEmoji;
 //     data['mute_users'] = muteUsers;
 //     data['mute_channels'] = muteChannels;
 //     if (customStatusHistory != null) {
@@ -210,8 +210,8 @@
 //         this.sId});
 //
 //   CustomStatusHistory.fromJson(Map<String, dynamic> json) {
-//     customStatus = json['custom_status'];
-//     customStatusEmoji = json['custom_status_emoji'];
+//     customStatus = json['customStatus'];
+//     customStatusEmoji = json['customStatusEmoji'];
 //     updatedBy = json['updatedBy'];
 //     updatedAt = json['updatedAt'];
 //     sId = json['_id'];
@@ -219,8 +219,8 @@
 //
 //   Map<String, dynamic> toJson() {
 //     final Map<String, dynamic> data = new Map<String, dynamic>();
-//     data['custom_status'] = this.customStatus;
-//     data['custom_status_emoji'] = this.customStatusEmoji;
+//     data['customStatus'] = this.customStatus;
+//     data['customStatusEmoji'] = this.customStatusEmoji;
 //     data['updatedBy'] = this.updatedBy;
 //     data['updatedAt'] = this.updatedAt;
 //     data['_id'] = this.sId;
@@ -382,8 +382,8 @@ class ChatList {
     if (json['loginActivity'] != null) {
       loginActivity = json['loginActivity']; // Assuming loginActivity can be of any type
     }
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
     muteUsers = List<String>.from(json['mute_users'] ?? []);
     muteChannels = List<String>.from(json['mute_channels'] ?? []);
     if (json['custom_status_history'] != null) {
@@ -418,8 +418,8 @@ class ChatList {
     if (this.loginActivity != null) {
       data['loginActivity'] = this.loginActivity; // Assuming loginActivity can be of any type
     }
-    data['custom_status'] = this.customStatus;
-    data['custom_status_emoji'] = this.customStatusEmoji;
+    data['customStatus'] = this.customStatus;
+    data['customStatusEmoji'] = this.customStatusEmoji;
     data['mute_users'] = this.muteUsers;
     data['mute_channels'] = this.muteChannels;
     if (this.customStatusHistory != null) {
@@ -462,8 +462,8 @@ class CustomStatusHistory {
         this.sId});
 
   CustomStatusHistory.fromJson(Map<String, dynamic> json) {
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
     updatedBy = json['updatedBy'];
     updatedAt = json['updatedAt'];
     sId = json['_id'];
@@ -471,8 +471,8 @@ class CustomStatusHistory {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
-    data['custom_status'] = this.customStatus;
-    data['custom_status_emoji'] = this.customStatusEmoji;
+    data['customStatus'] = this.customStatus;
+    data['customStatusEmoji'] = this.customStatusEmoji;
     data['updatedBy'] = this.updatedBy;
     data['updatedAt'] = this.updatedAt;
     data['_id'] = this.sId;

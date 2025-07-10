@@ -6,6 +6,7 @@ import 'package:e_connect/socket_io/socket_io.dart';
 import 'package:e_connect/utils/common/common_widgets.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:intl/intl.dart';
 import 'package:mime/mime.dart';
@@ -291,6 +292,8 @@ class ChatProvider extends  ChangeNotifier {
          throw Exception("Unexpected response structure");
        }
      } else {
+       Cw.commonShowToast(jsonDecode(responseData.body)['message'],  Colors.green );
+
        throw Exception('Failed to upload files: ${responseData.body}');
      }
    }catch (e){

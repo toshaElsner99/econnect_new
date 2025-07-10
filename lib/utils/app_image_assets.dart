@@ -46,6 +46,7 @@ class AppImage {
   static const googleSignIn = "$path/google.gif";
   static const changePassword = "$path/change_password.png";
   static const call = "$path/telephone.png";
+  static const pinicon = "$path/pinIcon.png";
 
   /// networkUrls
   ///

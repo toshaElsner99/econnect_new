@@ -251,8 +251,8 @@ class UserId {
 //     username = json['username'];
 //     email = json['email'];
 //     status = json['status'];
-//     customStatus = json['custom_status'];
-//     customStatusEmoji = json['custom_status_emoji'];
+//     customStatus = json['customStatus'];
+//     customStatusEmoji = json['customStatusEmoji'];
 //     avatarUrl = json['avatarUrl'];
 //     thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
 //     elsnerEmail = json['elsner_email'];
@@ -265,8 +265,8 @@ class UserId {
 //     data['username'] = this.username;
 //     data['email'] = this.email;
 //     data['status'] = this.status;
-//     data['custom_status'] = this.customStatus;
-//     data['custom_status_emoji'] = this.customStatusEmoji;
+//     data['customStatus'] = this.customStatus;
+//     data['customStatusEmoji'] = this.customStatusEmoji;
 //     data['avatarUrl'] = this.avatarUrl;
 //     data['thumbnail_avatarUrl'] = this.thumbnailAvatarUrl;
 //     data['elsner_email'] = this.elsnerEmail;
@@ -347,8 +347,8 @@ class SenderId {
     userName = json['username'];
     email = json['email'];
     status = json['status'];
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
     avatarUrl = json['avatarUrl'];
     thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
     elsnerEmail = json['elsner_email'];
@@ -361,8 +361,8 @@ class SenderId {
     data['username'] = userName;
     data['email'] = email;
     data['status'] = status;
-    data['custom_status'] = customStatus;
-    data['custom_status_emoji'] = customStatusEmoji;
+    data['customStatus'] = customStatus;
+    data['customStatusEmoji'] = customStatusEmoji;
     data['avatarUrl'] = avatarUrl;
     data['thumbnail_avatarUrl'] = thumbnailAvatarUrl;
     data['elsner_email'] = elsnerEmail;
@@ -614,8 +614,8 @@ class SenderId {
 //     username = json['username'];
 //     email = json['email'];
 //     status = json['status'];
-//     customStatus = json['custom_status'];
-//     customStatusEmoji = json['custom_status_emoji'];
+//     customStatus = json['customStatus'];
+//     customStatusEmoji = json['customStatusEmoji'];
 //     avatarUrl = json['avatarUrl'];
 //     thumbnailAvatarUrl = json['thumbnail_avatarUrl'];
 //     elsnerEmail = json['elsner_email'];
@@ -628,8 +628,8 @@ class SenderId {
 //     data['username'] = this.username;
 //     data['email'] = this.email;
 //     data['status'] = this.status;
-//     data['custom_status'] = this.customStatus;
-//     data['custom_status_emoji'] = this.customStatusEmoji;
+//     data['customStatus'] = this.customStatus;
+//     data['customStatusEmoji'] = this.customStatusEmoji;
 //     data['avatarUrl'] = this.avatarUrl;
 //     data['thumbnail_avatarUrl'] = this.thumbnailAvatarUrl;
 //     data['elsner_email'] = this.elsnerEmail;

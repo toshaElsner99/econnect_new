@@ -237,8 +237,8 @@ class CustomStatusHistory {
   });
 
   CustomStatusHistory.fromJson(Map<String, dynamic> json) {
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
     updatedBy = json['updatedBy'];
     updatedAt = json['updatedAt'];
     sId = json['_id'];
@@ -246,8 +246,8 @@ class CustomStatusHistory {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = {};
-    data['custom_status'] = customStatus;
-    data['custom_status_emoji'] = customStatusEmoji;
+    data['customStatus'] = customStatus;
+    data['customStatusEmoji'] = customStatusEmoji;
     data['updatedBy'] = updatedBy;
     data['updatedAt'] = updatedAt;
     data['_id'] = sId;

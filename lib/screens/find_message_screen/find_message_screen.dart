@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../main.dart';
 import '../../providers/search_message_provider.dart';
+import '../../utils/app_color_constants.dart';
 
 class FindMessageScreen extends StatefulWidget {
   const FindMessageScreen({super.key});
@@ -215,9 +216,11 @@ class _FindMessageScreenState extends State<FindMessageScreen> {
                                                             strokeWidth: 2,
                                                           ),
                                                       errorWidget: (context,
-                                                          url, error) =>
-                                                          Icon(Icons.error,
-                                                              size: 25),
+                                                          url, error) {
+                                                        return Cw.profileIconWithStatus(userID: message.senderInfo?.id ?? ""
+                                                          , status: message.senderInfo?.status ?? "", userName: message.senderInfo?.username ??"",radius: 25, needToShowIcon: true,
+                                                          borderColor: AppColor.blueColor,);
+                                                      },
                                                     ),
                                                   ),
                                                 ),

@@ -82,10 +82,10 @@ class CommonProvider extends ChangeNotifier {
   
   Future<void> updateCustomStatusCall({required String status, String emojiUrl = ""}) async {
     final requestBody = {
-      "custom_status": status,
+      "customStatus": status,
       "user_id": signInModel!.data?.user?.sId,
       "is_custom_status": "true",
-      if (emojiUrl.isNotEmpty) "custom_status_emoji": emojiUrl,
+      if (emojiUrl.isNotEmpty) "customStatusEmoji": emojiUrl,
     };
     
     final response = await ApiService.instance.request(

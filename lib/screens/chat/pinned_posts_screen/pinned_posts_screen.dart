@@ -86,6 +86,21 @@ class _PinnedPostsScreenState extends State<PinnedPostsScreen> {
           final messages = commonProvider.getUserModelSecondUser ?.data?.user?.pinmessage ?? [];
           final groupedMessages = _groupMessagesByDate(messages);
 
+          if(groupedMessages.keys.length == 0){
+            return Align(
+              alignment: Alignment.center,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(AppImage.pinicon,height: 125,width: 125,),
+                  SizedBox(height: 15,),
+                  Text("No pinned posts yet",style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold),)
+                ],
+              ),
+            );
+          }
+
           return ListView.builder(
             itemCount: groupedMessages.keys.length,
             itemBuilder: (context, index) {

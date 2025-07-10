@@ -163,7 +163,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
             _buildTextField(
               signInProvider: signInProvider,
               controller: signInProvider.emailController,
-              hintText: AppString.loginId,
+              hintText: AppString.emailId,
               prefixIcon: const Icon(CupertinoIcons.person,color: Colors.black,),
               fNode: emailNode,
               isEmail: true,

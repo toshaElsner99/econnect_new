@@ -116,8 +116,8 @@ class ChatListDirectMessage {
     status = json['status'];
     isActive = json['isActive'];
     loginActivity = json['loginActivity'] ?? [];
-    customStatus = json['custom_status'];
-    customStatusEmoji = json['custom_status_emoji'];
+    customStatus = json['customStatus'];
+    customStatusEmoji = json['customStatusEmoji'];
     muteUsers = (json['mute_users'] as List?)?.cast<String>();
     muteChannels = (json['mute_channels'] as List?)?.cast<String>();
     createdAt = json['createdAt'];
@@ -146,8 +146,8 @@ class ChatListDirectMessage {
       'status': status,
       'isActive': isActive,
       'loginActivity': loginActivity,
-      'custom_status': customStatus,
-      'custom_status_emoji': customStatusEmoji,
+      'customStatus': customStatus,
+      'customStatusEmoji': customStatusEmoji,
       'mute_users': muteUsers,
       'mute_channels': muteChannels,
       'createdAt': createdAt,

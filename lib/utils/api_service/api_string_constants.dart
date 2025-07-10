@@ -89,5 +89,5 @@ class ApiString{
   /*Changed*/static const getUnreadThread = "unreadThread/getUnreadThread"; // done
   ///New Get Thread list account api
   /*Changed*/ static const getUnreadThreadCounts = "unreadThread/getUnreadThreadCount"; // done
-  /*Changed*/static const forgotPassword = "auth/forgtpassword";
+  /*Changed*/static const forgotPassword = "auth/forgotPassword";
 }

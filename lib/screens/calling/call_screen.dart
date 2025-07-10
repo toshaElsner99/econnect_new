@@ -224,6 +224,7 @@ class _CallScreenState extends State<CallScreen> {
 
     // Set up call accepted callback
     _setupCallAcceptedCallback();
+
   }
 
 
@@ -287,7 +288,11 @@ class _CallScreenState extends State<CallScreen> {
       await _peerConnection!.setLocalDescription(offer);
       final desc = await _peerConnection!.getLocalDescription();
       debugPrint('📞 Created offer: ${offer.sdp}');
-      socketProvider.sendSignalForCall(widget.callerId, desc!.toMap(), offer);
+      socketProvider.sendSignalForCall(widget.callerId, desc!.toMap(), offer,signInModel!.data!.user!.sId!);
+      sendCallEventMessage(
+        receiverId: widget.callerId,
+        callStatus: 'started',
+      );
     }
   }
 
@@ -401,12 +406,23 @@ class _CallScreenState extends State<CallScreen> {
       socketProvider.sendIceCandidate(
         callToUserId: widget.callerId,
         candidate: candidate,
+        fromUserId: signInModel!.data!.user!.sId!
       );
     };
 
     _peerConnection?.onRenegotiationNeeded = () async {
       try {
         debugPrint('🔄 Renegotiation needed');
+        // Create a new SDP offer
+        final offer = await _peerConnection!.createOffer();
+        await _peerConnection!.setLocalDescription(offer);
+        final desc = await _peerConnection!.getLocalDescription();
+        // Send the new offer to the remote peer via the signaling server
+        socketProvider.sendSignalForCall(
+          widget.callerId,
+          offer.toMap(),
+          desc, signInModel!.data!.user!.sId!
+        );
         // Handle renegotiation if needed
       } catch (e) {
         debugPrint('❌ Error during renegotiation: $e');
@@ -477,11 +493,7 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   void _setupCallAcceptedCallback() {
-    // This will be called when the callAccepted event is received
-    // We need to handle setting the remote description for outgoing calls
     if (widget.callDirection == CallDirection.outgoing) {
-      // For outgoing calls, we need to wait for the answer from the callee
-      // This will be handled in the socket listener
     }
   }
 
@@ -510,10 +522,7 @@ class _CallScreenState extends State<CallScreen> {
 
         await _peerConnection!.setRemoteDescription(remoteDesc);
         debugPrint('📞 Set remote description with answer from callee');
-        sendCallEventMessage(
-          receiverId: widget.callerId,
-          callStatus: 'started',
-        );
+
 // Stop the ringtone immediately when the call is accepted
         stopRinging();
         // Start the timer to show call duration
@@ -598,6 +607,7 @@ class _CallScreenState extends State<CallScreen> {
             socketProvider.sendAnswerSignal(
               callToUserId: widget.callerId,
               description: await _peerConnection!.getLocalDescription(),
+              fromUserId: signInModel!.data!.user!.sId!
             );
 
             debugPrint('📞 Answer created and sent');
@@ -964,6 +974,7 @@ class _CallScreenState extends State<CallScreen> {
                 socketProvider.sendAnswerSignal(
                   callToUserId: widget.callerId,
                   description: localDesc!.toMap(),
+                  fromUserId: signInModel!.data!.user!.sId!
                 );
 
                 // Also emit accept call event for backward compatibility

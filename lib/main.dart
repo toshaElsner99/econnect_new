@@ -10,6 +10,7 @@ import 'package:e_connect/providers/thread_provider.dart';
 import 'package:e_connect/providers/change_password_provider.dart';
 import 'package:e_connect/providers/forgot_password_provider.dart';
 import 'package:e_connect/screens/bottom_navigation_screen/bottom_navigation_screen_cubit.dart';
+import 'package:e_connect/screens/calling/call_screen.dart';
 import 'package:e_connect/screens/splash_screen/splash_screen.dart';
 import 'package:e_connect/providers/file_service_provider.dart';
 import 'package:e_connect/socket_io/socket_io.dart';
@@ -21,6 +22,7 @@ import 'package:e_connect/utils/loading_widget/loading_widget.dart';
 import 'package:e_connect/utils/network_connectivity/network_connectivity.dart';
 import 'package:e_connect/utils/theme/theme_cubit.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:oktoast/oktoast.dart';
@@ -94,9 +96,38 @@ class AppLifecycleObserver with WidgetsBindingObserver {
   }
 }
 
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message)async{
+  // This method will be called when the app is in the background or terminated
+  // and a notification is received.
+  // You can handle the notification here, such as showing a local notification.
+  print("Handling a background message: ${message.messageId}");
+if(message.data['type'] == "incoming_call"){
+  Navigator.push(
+    navigatorKey.currentContext!,
+    MaterialPageRoute(
+      builder: (context) => CallScreen(
+        dataOfSocket: message.data['metaData'] ?? {},
+        callerName: message.data['fromUserName'] ?? "Unknown",
+        //  callerName: 'John Doe',
+        callerId: message.data['senderId'],
+        imageUrl: "",
+        // imageUrl: 'https://t3.ftcdn.net/jpg/02/99/04/20/360_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg',
+        callDirection: CallDirection.incoming,
+      ),
+    ),
+  );
+  Provider.of<SocketIoProvider>(navigatorKey.currentState!.context, listen: false).connectSocket(true);
+}
+  // You can also call NotificationService to show a local notification
+
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
   await Firebase.initializeApp();
   await NotificationService.initializeNotifications();
   await NotificationService.clearAllNotifications();
