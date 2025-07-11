@@ -157,36 +157,28 @@ class ChatProvider extends  ChangeNotifier {
   }
 
   getTypingUpdate() {
-    try {
-      socketProvider.socket.on(socketProvider.userTyping, (data){
-        print("Event: >>> Data: $data");
-        if (data['type'] == "userTyping" && data['data'] is List) {
-          var typingData = data['data'];
-          if (typingData.isNotEmpty) {
-            msgLength = data['msgLength'] ?? 0;
-            isTypingFor = data['isReply'] ?? false;
-            parentId = data['parentId'] ?? "";
-            oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
-            notifyListeners();
-            // print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor && $parentId ");
-          } else {
-            msgLength = 0;
-            oppUserIdForTyping = "";
-            isTypingFor = null;
-            parentId = "";
-            notifyListeners();
-            print("Data array is empty.");
-          }
+    socketProvider.socket.onAny((event,data){
+      print("Event: >>> Data: $data");
+      if (data['type'] == "userTyping" && data['data'] is List) {
+        var typingData = data['data'];
+        if (typingData.isNotEmpty) {
+          msgLength = data['msgLength'] ?? 0;
+          isTypingFor = data['isReply'] ?? false;
+          parentId = data['parentId'] ?? "";
+          oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
+          notifyListeners();
+          // print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor && $parentId ");
         } else {
-          print("Received data is not of the expected structure.");
+          msgLength = 0;
+          oppUserIdForTyping = "";
+          isTypingFor = null;
+          parentId = "";
+          notifyListeners();
+          print("Data array is empty.");
         }
-      });
-
-    } catch (e) {
-      print("Error processing the socket event: $e");
-    } finally {
-      notifyListeners();
-    }
+      } else {
+        print("Received data is not of the expected structure.");
+      }});
   }
   void disposeReplyMSG(){
     socketProvider.socket.off("reply_notification");
@@ -282,8 +274,8 @@ class ChatProvider extends  ChangeNotifier {
          for (var item in jsonResponse['data']) {
            print("this is the file response from 2 one  ${item["saveFileUploadData"]}");
 
-           if (item['saveFileUploadData'] != null && item['saveFileUploadData']['path'] != null) {
-             filePaths.add(item['saveFileUploadData']['path']);
+           if (item['saveFileUploadData'] != null && item['saveFileUploadData']['fileSection'] != null && item['saveFileUploadData']['name'] != null) {
+             filePaths.add("${item['saveFileUploadData']['fileSection']}/${item['saveFileUploadData']['name']}");
            }
          }
          print("filesPathRes>>>>> $filePaths");

@@ -541,7 +541,9 @@ Future<void> toggleAdminAndMember(
   http.StreamedResponse response = await request.send();
   // print("response =${response.statusCode}");
   if (response.statusCode == 200) {
-    await Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,listen: false).getChannelMembersList(channelId);
+    print("got called this time");
+    print("✅ RESPONSE[200] => PATH: ${ApiString.baseUrl + ApiString.toggleAdminAndMember(channelId)}");
+
     socketProvider.memberAdminToggleSC(response: {
       "data": {
         "senderId": signInModel!.data!.user!.sId,
@@ -549,7 +551,7 @@ Future<void> toggleAdminAndMember(
       }
     });
   } else {
-    print(response.reasonPhrase);
+    print("RESPONSE[${response.statusCode}] ${ response.reasonPhrase}");
   }
 }
 
@@ -573,6 +575,7 @@ Future<void> removeMember(
   // print("response status code =${response.statusCode}");
   
   if (response.statusCode == 200) {
+    print("✅ RESPONSE[200] => PATH:${  ApiString.baseUrl + ApiString.removeMember(channelId)}");
     final responseString = await response.stream.bytesToString();
     final responseData = json.decode(responseString);
     // print("Response data: $responseData");

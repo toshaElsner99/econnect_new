@@ -1048,9 +1048,9 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> with 
                   }
                   if(message.isCalling  == true){
                     if(message.content!.contains('rejected') || message.content!.contains('failed')  || message.content!.contains('Missed') || message.content!.contains("ended") )   {
-                   return callMessageWidget(index: messageIndex, messageList: message, message: message.content!,isRed: true, time:  DateTime.parse(message.createdAt!).toString());      }
+                   return callMessageWidget( userId: message.senderId!,index: messageIndex, messageList: message, message: message.content!,isRed: true, time:  DateTime.parse(message.createdAt ?? "").toString());      }
                     else{
-                      return callMessageWidget(index: messageIndex, messageList: message, message: message.content!,isRed: false,time: DateTime.parse(message.createdAt!).toString());
+                      return callMessageWidget( userId: message.senderId!,index: messageIndex, messageList: message, message: message.content!,isRed: false,time: DateTime.parse(message.createdAt ?? "").toString());
                     }
                   }
 
@@ -1078,6 +1078,7 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> with 
   }
 
   Widget callMessageWidget({
+    required String userId,
     required String time,
     required int index,
     required Messages messageList,
@@ -1103,7 +1104,11 @@ class _SingleChatMessageScreenState extends State<SingleChatMessageScreen> with 
           SizedBox(width: 10),
           Flexible(
             child: Cw.commonText(
-              text:  message.replaceAll(RegExp(r'<[^>]*>'), '').trim(),
+             // text:  "${message.replaceAll(RegExp(r'<[^>]*>'), '').trim()}",
+              text: (message!.contains('Missed') && userId == signInModel!.data?.user?.sId)
+                  ? 'Call failed'
+                  : message.replaceAll(RegExp(r'<[^>]*>'), '').trim()
+              ,
               fontSize: 14,
               color: isRed ? Colors.red : Colors.green,
               maxLines: 2,

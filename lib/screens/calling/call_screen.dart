@@ -28,7 +28,7 @@ import '../../main.dart';
 import '../../providers/chat_provider.dart';
 import '../../socket_io/socket_io.dart';
 import '../../utils/app_sound_constants.dart';
-
+import '../../utils/common/common_function.dart';
 enum CallDirection { incoming, outgoing }
 
 class CallScreen extends StatefulWidget {
@@ -237,22 +237,22 @@ class _CallScreenState extends State<CallScreen> {
 
     switch (callStatus) {
       case 'started':
-        content = 'Call started at ';
+        content = 'Call started at ${Cf.instance.formatTime(DateTime.now().toString())}';
         break;
       case 'ended':
-        content = 'Call ended at ';
+        content = 'Call ended at ${Cf.instance.formatTime(DateTime.now().toString())} ';
         break;
       case 'rejected':
-        content = 'Call rejected ';
+        content = 'Call rejected';
         break;
       case 'failed':
         content = 'Call failed' ;
         break;
       case 'missed':
-        content = 'Missed call ';
+        content = 'Missed call at ${Cf.instance.formatTime(DateTime.now().toString())}';
         break;
       default:
-        content = 'Call failed ';
+        content = 'Call failed';
     }
 
     await  Provider.of<ChatProvider>(context,listen: false).sendMessage(

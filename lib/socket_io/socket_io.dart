@@ -521,10 +521,13 @@ class SocketIoProvider extends ChangeNotifier {
   }
 
   listenMemberUpdates({required String channelID}) {
+    print("cahnel member cahnged");
     socket.off(channelMemberUpdateNotification);
     socket.on(
       channelMemberUpdateNotification,
       (data) {
+        print("cahnel member cahnged in listen");
+
         Provider.of<ChannelChatProvider>(navigatorKey.currentState!.context,
                 listen: false)
             .getChannelMembersList(channelID);

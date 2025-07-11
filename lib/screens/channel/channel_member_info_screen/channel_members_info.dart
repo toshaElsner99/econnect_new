@@ -102,6 +102,11 @@ class _ChannelMembersInfoState extends State<ChannelMembersInfo> {
               .where((MemberDetails member) => member.isAdmin != true)
               .toList();
 
+          if(provider.channelMembersList.any((MemberDetails mem)=> mem.sId == signInModel!.data?.user?.sId && mem.isAdmin == false)){
+            // setState(() {
+              isManageMode = false;
+            // });
+          }
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             children: [

@@ -1,7 +1,7 @@
 class ApiString{
 
   static const String baseUrl= 'https://econnect.weekmate.in/v1/'; /// THIS NEW DEVELOPMENT URL
-  static const String profileBaseUrl = 'https://econnect.weekmate.in/'; /// Profile Image
+  static const String profileBaseUrl = 'https://econnect.weekmate.in/public/'; /// Profile Image
 
   // static const String baseUrl= 'https://dev-econnect-sass.elsnerdev.co/v1/'; /// THIS NEW DEVELOPMENT URL
   // static const String profileBaseUrl = 'https://dev-econnect-sass.elsnerdev.co/'; /// Profile Image
