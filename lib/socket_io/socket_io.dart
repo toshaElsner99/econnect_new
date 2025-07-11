@@ -368,6 +368,13 @@ class SocketIoProvider extends ChangeNotifier {
                 onlyReadInChat: false);
       }
     });
+
+    socket.on(userTypingGet, (data){
+      print("📡 Event triggered inside the typing ");
+      print("Event: >>> Data: $data");
+      Provider.of<ChatProvider>(navigatorKey.currentState!.context,
+          listen: false).getTypingUpdate(data);
+    });
   }
 
   /// This is for channel chat screen ///

@@ -179,7 +179,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
             ),
             // Forgot Password Link
             Align(
-              alignment: Alignment.centerRight,
+              alignment: Alignment.center,
               child: TextButton(
                 onPressed: () => _showForgotPasswordDialog(context),
                 child: Text(

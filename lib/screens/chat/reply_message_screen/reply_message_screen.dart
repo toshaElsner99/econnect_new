@@ -198,7 +198,7 @@ class _ReplyMessageScreenState extends State<ReplyMessageScreen> {
         msgId: widget.messageId,
       );
       chatProvider.getReplyListUpdateSC(widget.messageId);
-      chatProvider.getTypingUpdate();
+
       socketProvider.listenDeleteMessageSocketForReply(msgId: widget.messageId);
       socketProvider.socketListenPinMessageInReplyScreen(msgId: widget.messageId);
       socketProvider.socketListenReactMessageInReplyScreen(msgId: widget.messageId);

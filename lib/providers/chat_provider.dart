@@ -156,29 +156,54 @@ class ChatProvider extends  ChangeNotifier {
     notifyListeners();
   }
 
-  getTypingUpdate() {
-    socketProvider.socket.onAny((event,data){
-      print("Event: >>> Data: $data");
-      if (data['type'] == "userTyping" && data['data'] is List) {
-        var typingData = data['data'];
-        if (typingData.isNotEmpty) {
-          msgLength = data['msgLength'] ?? 0;
-          isTypingFor = data['isReply'] ?? false;
-          parentId = data['parentId'] ?? "";
-          oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
-          notifyListeners();
-          // print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor && $parentId ");
-        } else {
-          msgLength = 0;
-          oppUserIdForTyping = "";
-          isTypingFor = null;
-          parentId = "";
-          notifyListeners();
-          print("Data array is empty.");
-        }
+  getTypingUpdate(dynamic data) {
+    if (data['type'] == "userTyping" && data['data'] is List) {
+      var typingData = data['data'];
+      if (typingData.isNotEmpty) {
+        msgLength = data['msgLength'] ?? 0;
+        isTypingFor = data['isReply'] ?? false;
+        parentId = data['parentId'] ?? "";
+        oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
+        notifyListeners();
+        // print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor && $parentId ");
       } else {
-        print("Received data is not of the expected structure.");
-      }});
+        msgLength = 0;
+        oppUserIdForTyping = "";
+        isTypingFor = null;
+        parentId = "";
+        notifyListeners();
+        print("Data array is empty.");
+      }
+    } else {
+      print("Received data is not of the expected structure.");
+    }
+
+
+
+
+    // socketProvider.socket.onAny((event,data){
+    //   print("📡 Event triggered inside the typing : $event");
+    //   print("Event: >>> Data for the typing: $data");
+    //   if (data['type'] == "userTyping" && data['data'] is List) {
+    //     var typingData = data['data'];
+    //     if (typingData.isNotEmpty) {
+    //       msgLength = data['msgLength'] ?? 0;
+    //       isTypingFor = data['isReply'] ?? false;
+    //       parentId = data['parentId'] ?? "";
+    //       oppUserIdForTyping = msgLength == 1 ? typingData[0]['sender'] : "";
+    //       notifyListeners();
+    //       // print("Sender ID: $oppUserIdForTyping, Message Length: $msgLength & $isTypingFor && $parentId ");
+    //     } else {
+    //       msgLength = 0;
+    //       oppUserIdForTyping = "";
+    //       isTypingFor = null;
+    //       parentId = "";
+    //       notifyListeners();
+    //       print("Data array is empty.");
+    //     }
+    //   } else {
+    //     print("Received data is not of the expected structure.");
+    //   }});
   }
   void disposeReplyMSG(){
     socketProvider.socket.off("reply_notification");
